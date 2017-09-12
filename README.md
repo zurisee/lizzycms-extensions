@@ -9,12 +9,12 @@ Stay tuned - more to come soon.
 
 ## Installation
 
-- Clone Lizzy into subfolder of your project, name the subfolder '_lizzy/'
-- copy _lizzy/index.php to project folder
-- open index.php in your browser -> installation will be completed automatically
-- reload and you ready to role
+- Clone Lizzy into a subfolder of your project, name the subfolder '_lizzy/'
+- Copy `_lizzy/index.php` to your project folder
+- Open the project folder in your browser -> installation will be completed automatically
+- Reload and you ready to role
 
-Note: this creates a skeleton website.
+**Note**: this creates a skeleton website - no need to strip it first.
 
 To add content, edit the file `pages/content.md`.
 
