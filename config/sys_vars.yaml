@@ -1,0 +1,107 @@
+# Transvar Definition File
+# -- generic definitions
+
+space: "&nbsp;&nbsp;"
+
+vgap: "<div class='vgap' style='margin:1em 0;'>&nbsp;</div>\n"
+
+clear: '<div style="clear:both;"></div>'
+
+cancel:
+    de: abbrechen
+    en: cancel
+Cancel: 
+    de: Abbrechen
+    en: Cancel
+
+Done:
+    de: Beenden
+    en: Done
+
+Save:
+    de: Speichern
+    en: Save
+
+opens mail app: 
+    de: 'Öffnet in Mail-Anwendung'
+    en: opens in your mail-application
+
+opens in new win:
+    de: Öffnet in neuem Fester
+    en: Opens in new window
+
+Username:
+    de: Benutzername
+    en: Username
+
+Password:
+    de: Kennwort
+    en: Password
+
+Submit:
+    de: Absenden
+    en: Submit
+Login:
+    de: Anmelden
+    en: Login
+
+Login comment:
+    de: Um diese Seite zu sehen, benötigen Sie gültige Zugangsdaten.
+    en: To see this page you need valid credentials.
+
+Logout:
+    de: Abmelden
+    en: Logout
+
+Login failed:
+    de: Benutzername oder Kennwort sind falsch.<br>Bitte versuchen Sie es erneut.
+    en: User unknown or password incorrect.<br>Please try again.
+
+Insufficient privileges:
+    de: Ihre Zugangsberechtigung ist nicht hinreichend für diese Seite.
+    en: Your user privileges are insufficient to view this page.
+
+Err empty username:
+    de: Bitte geben Sie Ihren Benutzernahmen ein
+    en: Please enter your user name
+
+Err empty password:
+    de: Bitte geben Sie Ihr Kennwort ein
+    en: Please enter your password
+
+LoginLink:
+    de: Anmelden
+    en: Login
+
+Logged in as:
+    de: Angemeldet als
+    en: Logged in as
+   
+validity-period expired:
+    de: Bitte melden Sie sich erneut an, da zu viel Zeit verstrichen ist seit Ihrer letzten Anmeldung.
+    en: Please login again, session time has expired.
+
+Warning insecure connection:
+    de: "Achtung: die Verbindung zum Webhost ist nicht gesichert (https). Sie können sich deshalb nicht anmelden."
+    en: "Warning: your connection to this webhost is insecure (https). For this reason you cannot login."
+
+turn edit mode off:
+    de: Bearbeiten Aus
+    en: Editing Off
+
+turn edit mode on:
+    de: Bearbeiten Ein
+    en: Editing On
+
+Page:
+    de: Seite
+    en: Page
+    
+page:
+    de: Seite
+    en: page
+    
+of:
+    de: von
+    en: of
+    

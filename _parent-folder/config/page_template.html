@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+	<title>{{ page_title }}</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
+	<link href="~sys/css/lizzy_basics.css" rel="stylesheet" />
+	<link href="~/css/_styles.css" rel="stylesheet" />
+	<script src="~sys/js/auxiliary.js" type="text/javascript"></script>
+{{^head_injections }}
+</head>
+<body class='{{ page_name_class }}{{^debug_class }}'>
+  <div class='page'>
+
+
+
+		<header class='header'>
+{{^ header }}
+{{ nav() }}
+		</header>
+
+
+
+		<main class='main'>
+{{ content }}
+		</main>
+
+
+
+		<footer class='footer'>
+{{^ footer }}
+		</footer>
+
+  </div><!-- /.page -->
+
+
+{{^body_end_injections }}
+</body>
+</html>
+

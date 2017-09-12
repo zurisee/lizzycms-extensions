@@ -1,0 +1,31 @@
+# Transvar Definition File
+
+page_title: $page_name / Lizzy Sample Page
+
+nextPageLabel: "<span class='nextLinkArrow' title='{{ to next page }}'></span>"
+prevPageLabel: "<span class='prevLinkArrow' title='{{ to prev page }}'></span>"
+to next page:
+    de: zur nächsten Seite
+    en: to next page
+
+to prev page:
+    de: zur vorherigen Seite
+    en: to previous page
+
+variable name: replacement value
+
+
+
+__END__
+
+Explanations:
+
+# Simple Replacements:
+    
+key: value
+
+# Variables with language variants:
+key:
+    de: Wert
+    en: value
+

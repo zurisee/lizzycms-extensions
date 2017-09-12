@@ -1,0 +1,11 @@
+{
+    "require": {
+        "symfony/yaml": "^3.2",
+        "cebe/markdown": "^1.1",
+        "leafo/lessphp": "^0.5.0",
+        "corveda/php-sandbox": "^2.0",
+        "leafo/scssphp": "^0.6.7",
+        "voku/simple_html_dom": "^3.1",
+        "whichbrowser/parser": "^2.0"
+    }
+}

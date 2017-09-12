@@ -1,0 +1,33 @@
+# Macro Enroll()
+'Enroll me': 'Hier eintragen'
+'Enroll now': 'Jetzt eintragen'
+
+'Enroll delete': 'Eintrag löschen:'
+'Enroll delete now': 'Eintrag löschen'
+
+'enroll entry already exists': 'Dieser Name ist bereits eingetragen'
+
+'enroll name required': 'Geben Sie Ihren'
+
+'illegal email address': 'Ungültige E-Mail Adresse'
+
+'enroll email wrong': 'E-Mail Adresse stimmt nicht überein'
+
+'enroll entry too old': 'Eintrag kann nur in den ersten 24 Stunden gelöscht werden'
+
+'no enroll entry found': 'Kein passender Eintrag vorhanden'
+
+'Enroll add': 'Eintragen:'
+'Enroll add comment': '<p><strong>Bemerkung</strong>:</p>
+<p>Sie können Ihren Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p>
+<p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
+
+'Enroll delete comment': '<p><strong>Bemerkung</strong>:</p>
+<p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben,
+mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+
+'Enroll delete too late comment': '
+<p>Es ist zu viel Zeit verstrichen, um Ihren Eintrag selbstständig zu löschen.</p>
+<p>Sie können sich für eine Änderung direkt an uns wenden.</p>'
+
+'Enroll delete for': 'Name'

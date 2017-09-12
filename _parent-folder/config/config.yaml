@@ -1,0 +1,69 @@
+# Default Template to be used:
+#pageTemplateFile: my_template.html
+
+# Sitemap / Site-Structure-Definition:
+#sitemapFile: my_sitemap.txt
+
+# Misc settings:
+caching: false
+pageSwitcher: true
+permitUserVarDefs: true
+permitUserCode: true //sandboxed
+loadJQuery: true
+quickview: true
+enableEditing: true
+
+#logPath: .#logs/
+
+__END__
+
+Explanations
+============
+'permitUserCode': for undefined Variables, Lizzy will look in '_config/' for a PHP-file with a matching name and execute it - provided this option is enabled
+For 'permitUserCode: sandboxed' :
+    -> will block any functions, unless listed in '_config/sandbox_allowed_functions.yaml'
+    -> to access runtime values, add variable name to '_config/sandbox_available_variables.yaml'
+
+'loadJQuery': make sure that jQuery gets loaded, normally that is done automatically by modules that requires it.
+
+
+'userVariables':
+Filename-pattern to identify files that should be loaded as ("transvar-)variables.
+'userComputedVariablesFile':
+Filename of PHP-code that will generate ("transvar-)variables.
+'pageTemplateFile':
+Name of file that will be used as the template. Must be located in $userCodePath
+'sitemapFile':
+Name of file that defines the site structure. Build hierarchie simply by indenting.
+'defaultLanguage':
+Default language as two-character code, e.g. "en"
+'multiLanguageSupport':
+[true|false] whether support for multiple languages should be active.
+'caching':
+[true|false] whether caching should be active.
+'pagesPath':
+Name of folder in which all pages reside.
+'stylesPath':
+Name of folder in which style sheets reside
+'logPath':
+Name of folder to which logging output should be sent. Or "false" for disabling logging.
+'dataPath':
+(obsolete) Name of folder in which data is located by default.
+'userCodePath':
+Name of folder in which user-provided PHP-code must reside.
+'usersFile':
+Name of file (in $configPath) that defines user privileges and hashed passwords etc.
+'autoAttrFile':
+Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.
+'permitUserCode':
+[true|false] Only if true, user-provided code can be executed. And only if located in $userCodePath
+'pageSwitcher':
+[true|false] whether code should be added to support page switching (by arrow-keys or swipe gestures)
+'autoLoadJQuery':
+[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)
+'loadJQuery':
+[true|false] synonym for "autoLoadJQuery"
+'jQueryModule':
+One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.
+'supportedLanguages':
+Comma-separated list of language-codes. E.g. "en, de, fr"

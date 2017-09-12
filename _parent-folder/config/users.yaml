@@ -1,0 +1,20 @@
+# Access Restrictions
+
+# The standard password is 'insecure-pw' - please change immediately!
+
+admin:
+	password:	$2y$10$koBJgyhl0QgBwmiE/.MdXOXR0mrTG29bjq37VHxBdZJJTDY2GE/n2
+	group:		admins
+	roles:      admin
+	validity-period: 600
+
+#test:
+#	password:	$2y$10$Pnfo9Rp1AQxWn8MiYY./xeSQzy.zrDZZOLGOsPKt/ycakhkYjwzaK
+#	group:		testgroup
+#	validity-period: 10
+#
+#user:
+#	password:	$2y$10$Si6sdFALvmIS2J2XoN4EquZoAwV4nuidOIk3ukW0nqOjm4jLmnlP.
+#	group:		testgroup
+#	roles:      editor
+#	validity-period: 3600

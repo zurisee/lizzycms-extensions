@@ -1,0 +1,398 @@
+/* Lizzy Basic CSS */
+
+html {
+  box-sizing: border-box;
+}
+body, main {
+	position: relative;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+html body, section {
+	position: relative;
+	padding: 0;
+}
+div, section {
+	box-sizing: border-box;
+	vertical-align: top;
+}
+
+p {
+	padding: 0;
+	margin: 0.2em 0 0.5em 0;
+	line-height: 1.4em;
+}
+li {
+	padding: 0;
+	margin: 0.2em 0 0.2em 0;
+	line-height: 1.4em;
+}
+li > p {
+	margin: 0;
+
+}
+
+
+a {
+	text-decoration: none;
+	border-bottom: 1px dotted gray;
+}
+a:hover, a:focus {
+	border-bottom: 1px solid gray;
+}
+a:focus {
+	box-shadow: 0 0 5px magenta;
+}
+nav a {
+	border-bottom: none;
+}
+.sup {
+	 vertical-align: super;
+	 font-size: 60%;
+}
+
+.Right {
+	float:right;
+	margin: 0 0 1em 20px;
+	max-width: 50%;
+}
+.Left {
+	float:left;
+	margin: 0 20px 1em 0;
+	max-width: 50%;
+}
+.Left img {
+	max-width: 100%;
+}
+.dispno {
+	display: none;
+}
+.disp-none,
+.dispblock {
+	display: block;
+}
+.sr-only,
+.invisible {
+	position: absolute !important;
+	right: 200vw;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	display: inline;
+	clip: rect(1px, 1px, 1px, 1px);
+}
+.skiplinks a {
+	position: absolute;
+	top: 0;
+	right: 100%;
+}
+.skiplinks a:focus {
+	right: auto;
+	left: 5vh;
+	top: 5vh;
+	padding: 1em 2em;
+	text-align: center;
+	z-index: 999;
+	background: #d9ff72;
+}
+.footnote-ref {
+	font-size: 70%;
+	vertical-align: super;
+}
+.tabulator_wrapper span {
+	display: inline-block;
+	line-height: 1.4em;
+	vertical-align: top;
+}
+.tabulator_wrapper span:not(:last-child) {
+	width: 6em;
+}
+
+.underline {
+	text-decoration: underline;
+}
+.vgap {
+	height: 0;
+}
+.inline-tabulator {
+	display: inline-block;
+	width: 6em;
+}
+
+.dl-as-table {
+  /*content:'styles.scss:36';*/ }
+  .dl-as-table dl {
+    /*content:'styles.scss:37';*/
+    display: flex;
+    flex-flow: row;
+    flex-wrap: wrap;
+    max-width: 600px;
+    overflow: visible; }
+  .dl-as-table dl dt {
+    /*content:'styles.scss:44';*/
+    flex: 0 0 5em;
+    text-overflow: ellipsis;
+    overflow: hidden; }
+  .dl-as-table dl dd {
+    /*content:'styles.scss:49';*/
+    flex: 0 0 calc(100% - 5em);
+    margin-left: auto;
+    text-align: left;
+    text-overflow: ellipsis;
+    overflow: hidden; }
+
+.lizzy-h-space {
+	display: inline-block;
+	width: 2em;
+}
+.h-v-centered,
+.v-h-centered {
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+
+.logo a, .logo a:hover {
+	border-bottom: none;
+}
+kbd {
+	padding: 0 3px;
+	background: #ddd;
+	border-radius: 3px;
+}
+samp {
+	padding: 0 3px;
+	background: #efefff;
+	border-radius: 3px;
+}
+var {
+	padding: 2px 4px 0 4px;
+	background: #555;
+	color: #ffb;
+	border-radius: 3px;
+	font-weight: bold;
+	font-style: normal;
+}
+
+.authors_directive_tag {
+	display: inline-block;
+	background: #fee;
+	padding: 3px 6px;
+	border: #aff;
+	border-radius: 5px;
+}
+
+.login_wrapper form {
+	margin: 1em 0;
+	border: 1px dotted gray;
+	padding: 20px;
+	max-width: 20em;
+}
+.login_wrapper label {
+	display: block;
+	margin: 4px 0;
+}
+.login_wrapper .c1 {
+	display: inline-block;
+	width: 7em;
+}
+
+.login_wrapper input {
+	width: 12em;
+}
+.login_wrapper output.err_msg {
+	display: block;
+	line-height: 1.4em;
+	padding: 2px 8px;
+	margin-bottom: 0.5em;
+	border: 1px solid #fdd;
+	background: #fee;
+}
+.login_wrapper output.err_msg:empty, .login_message:empty {
+	display: none;
+}
+.login_message {
+	color: red;
+	margin: 5px 0;
+}
+
+.CodeMirror-code,
+.editor-toolbar {
+	font-size: 12pt;
+}
+
+
+/* --- fade out effect --- */
+@-webkit-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+@-moz-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+.Warning, .WarningBox {
+    opacity:1;  /* make things visible upon start */
+    -webkit-animation:fadeOut ease-out;
+    -moz-animation:fadeOut ease-out;
+    animation:fadeOut ease-out;
+    
+    -webkit-animation-fill-mode:forwards; 
+    -moz-animation-fill-mode:forwards;
+    animation-fill-mode:forwards;
+ 
+    -webkit-animation-duration:5s;
+    -moz-animation-duration:5s;
+    animation-duration:5s;
+}
+.Warning:hover, .WarningBox:hover {
+    -webkit-animation:none;
+}
+.MsgBox, .WarningBox {
+	position: absolute!important;
+	top: 5px;
+	left: calc(50% - 5em);
+	line-height: 2em;
+	padding:0 10px;
+	background: #fbfb77;
+	opacity: 0.8;
+	color: black;
+    box-shadow: 0 0 5px grey;
+	z-index: 99;
+}
+#log {
+	height: 10em;
+	background: #edd;
+	margin: 20px 0 10px 0;
+	padding-bottom: 1em;
+	padding: 10px 20px;
+	overflow: auto;
+	border: 1px solid red;
+}
+#log h1 {
+	font-size: 11pt;
+	margin: 0 0 0.5em 0;
+}
+#log p {
+	font-size: 8pt;
+	margin: 0 0 0.5em 0;
+}
+
+.overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: calc(100vw - 20px);
+	height: calc(100vh - 20px);
+	margin: 10px;
+	padding: 20px;
+	background: #eee;
+	border: 1px solid red;
+	box-shadow: 0 0 15px 5px #444;
+	box-sizing: border-box;
+	z-index: 999;
+}
+
+.able div {
+	box-sizing: content-box;
+}
+
+/* --- Tables ----------------- */
+table.lizzyTable {
+	border-collapse: collapse;
+	width: 100%;
+}
+.lizzyTable td, .lizzyTable th {
+	border: 1px solid #aaa;
+	padding: 5px 10px;
+	height: 1.6em;
+	min-width: 6em;
+	text-align: left;
+}
+.lizzyTable th {
+	background: #eee;
+}
+
+/* --- DivTables --------------- */
+.divtable {
+	display: table;
+	border-collapse: collapse;
+}
+.divtable .row {
+	display:table-row;
+	vertical-align: top;
+}
+.divtable .row > div {
+	display: table-cell;
+	min-width: 10em;
+	height: 1.6em;
+	line-height: 1.6em;
+	border: 1px solid #bbb;
+	padding: 5px 10px;
+	margin: 0px;
+}
+.divtable .row > div.hdrCell {
+	background: #ddd;
+	font-weight: bold;
+}
+
+
+
+/* === Mobile ========================================= */
+.ios_button {
+  color: #666;
+  font-family: helvetica, arial, sans-serif;
+  border-radius: 4px;
+  border: 1px solid #bcbcbc;
+  -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  background: -webkit-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+  background: -ms-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+  background: linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+}
+
+
+
+/* === Media Queries =================================== */
+@media screen {
+	.print_only, 
+	.print-only {
+		display: none;
+	}
+	.mail_link {
+		background: url("../rsc/mail.gif") no-repeat;
+		padding-left: 14px;
+	}
+	.external_link {
+		background: url("../rsc/popup.png") no-repeat;
+		padding-left: 12px;
+	}
+}
+
+
+
+@media print {
+	body, main, section {
+		padding: 0;
+		margin: 0;
+		font-size: 11pt;
+	}
+	.page {
+		position: relative;
+		width: 21cm;
+		height: 29.7cm;
+		padding: 2cm;
+		margin:0;
+		border: none!important;
+		box-shadow: none!important;
+	}
+	.dont-print, 
+	#log,
+	.Warning,
+	.MsgBox {
+		display: none!important;
+	}
+	.print-page {
+		page-break-after: always;
+	}
+}

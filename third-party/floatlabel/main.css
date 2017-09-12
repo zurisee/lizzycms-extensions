@@ -1,0 +1,97 @@
+/* Form Field Styling */
+
+.js-float-label-wrapper {
+	width: 100%;
+}
+
+.js-float-label-wrapper textarea {
+	resize: vertical;
+}
+
+.js-float-label-wrapper input,
+.js-float-label-wrapper textarea {
+	display: block;
+	width: 100%;
+	border: 1px solid #eee;
+	margin: 1em 0;
+	padding: 1em 2vw;
+	color: #666;
+
+	-webkit-box-sizing: border-box;
+	   -moz-box-sizing: border-box;
+	        box-sizing: border-box;
+
+	-webkit-appearance: none;
+	   -moz-appearance: none;
+	        appearance: none;
+
+	-webkit-border-radius: 0;
+	   -moz-border-radius: 0;
+	        border-radius: 0;
+}
+
+.js-float-label-wrapper label {
+	font-size: 0.75em;
+	color: #666;
+	top: 1vw;
+	left: 2vw;
+}
+
+.js-float-label-wrapper input:focus,
+.js-float-label-wrapper textarea:focus {
+		border: 1px solid #ccc;
+		color: #333;
+
+		-webkit-outline: none;
+		-moz-outline: none;
+		outline: none;
+	}
+
+/* Demo FloatLabel.js Styling */
+/*
+.js-float-label-wrapper label {
+	font-weight: 500;
+}
+*/
+.js-float-label-wrapper.focused label,
+.js-float-label-wrapper.populated label {
+	color: #999;
+}
+
+.js-float-label-wrapper.focused.populated label {
+	color: #666;
+}
+
+/* Submit Button */
+
+.js-float-label-wrapper input[type="submit"]{
+	display: block;
+	width: 320px;
+	border: none;
+	margin: 1em 0;
+	padding: 1em;
+	position: relative;
+	background-color: #6d6;
+	color: #fff;
+
+	background-image: -webkit-radial-gradient( circle, transparent 0%, rgba(0,0,0,0.1) 100% );
+	background-image:    -moz-radial-gradient( circle, transparent 0%, rgba(0,0,0,0.1) 100% );
+	background-image:         radial-gradient( circle, transparent 0%, rgba(0,0,0,0.1) 100% );
+	
+	-webkit-box-sizing: border-box;
+	   -moz-box-sizing: border-box;
+	        box-sizing: border-box;
+
+	-webkit-border-radius: 0;
+	   -moz-border-radius: 0;
+	        border-radius: 0;
+}
+
+.js-float-label-wrapper input[type="submit"]:hover{
+	background-color: #7e7;
+}
+
+.js-float-label-wrapper input[type="submit"]:active{
+	background-color: #5c5;
+}
+

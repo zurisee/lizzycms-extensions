@@ -1,0 +1,16 @@
+/**** auto-created from 'css/scss/styles.scss' - do not modify! ****/
+
+/*content:'styles.scss:1';*/
+.page {
+  padding: 20px; }
+
+nav li {
+  /*content:'styles.scss:4';*/
+  list-style: none;
+  display: inline-block;
+  padding: 5px 10px;
+  background: #444; }
+  nav li a {
+    /*content:'styles.scss:9';*/
+    border-bottom: none;
+    color: white; }

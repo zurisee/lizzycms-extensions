@@ -1,0 +1,13 @@
+.page {
+	padding: 20px;
+}
+nav li {
+	list-style: none;
+	display: inline-block;
+	padding: 5px 10px;
+	background: #444;
+	a {
+		border-bottom: none;
+		color: white;
+	}
+}
