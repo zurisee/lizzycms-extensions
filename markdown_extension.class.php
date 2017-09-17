@@ -2,7 +2,7 @@
 
 class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 {
-    public function __construct($page)
+    public function __construct($page = false)
     {
         $this->page = $page;
     } // __construct
@@ -257,7 +257,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseSubscript($markdown)
     {
         // check whether the marker really represents a strikethrough (i.e. there is a closing ~)
-        if (preg_match('/^~(.+?)~/', $markdown, $matches)) {
+        if (preg_match('/^~(.{1,8}?)~/', $markdown, $matches)) {
             return [
                 // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
                 // other inline markdown elements inside this tag

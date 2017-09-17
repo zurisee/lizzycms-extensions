@@ -32,8 +32,12 @@ class MyMarkdown
 		'CLEAR' => '<div style="clear:both;"></div>',
 	);
 
+	public function __construct($trans = false)
+    {
+        $this->trans = $trans;
+    }  // __construct
 
-	//....................................................
+    //....................................................
 	public function parse($str, $page)
 	{
 		$this->page = $page;
@@ -69,7 +73,24 @@ class MyMarkdown
 		$this->page->addContent($str);
 		return $this->page;
 	} // parse
-	
+
+
+
+    //....................................................
+    public function parseStr($str, $page = false)
+    {
+        $str = $this->preprocess($str);
+
+        $this->md = new MyExtendedMarkdown($page);
+        $str = $this->md->parse($str);
+        $str = $this->postprocess($str);
+
+        $str = $this->doReplaces($str);
+        return $str;
+    } // parseStr
+
+
+
 	//....................................................
 	private function doMDincludes($str)
 	{
@@ -145,18 +166,48 @@ class MyMarkdown
 			$lines[$lastBlockquoteLine] = rtrim($lines[$lastBlockquoteLine], "<br>\n");
 			$str = implode("\n", $lines);
 		}
-		
+
+		$str = $this->handleInlineVariableDefitions($str);
+
 		$str = str_replace('\\[[', '@/@[@\\@', $str);       // shield \[[
 		$str = str_replace(['\\{', '\\}'], ['&#123;', '&#125;'], $str);    // shield \{{
 		$str = preg_replace('/(\n\{\{.*\}\}\n)/U', "\n$1\n", $str); // {{}} alone on line -> add LFs
 		$str = stripNewlinesWithinTransvars($str);
 		$str = $this->handleVariables($str);
-		if ($this->page->shieldHtml) {	// hide '<' from MD compiler
+		if ($this->page && $this->page->shieldHtml) {	// hide '<' from MD compiler
 			$str = preg_replace("/(?<!\n)\>/", '@/@gt@\\\\@', $str);
 			$str = str_replace('<', '@/@lt@\\\\@', $str);
 		}
+		$str = preg_replace('/^(\d{1,2})\!\./m', "%@start=$1@%\n\n1.", $str);
 		return $str;
 	} // preprocess
+
+
+
+	//....................................................
+	private function handleInlineVariableDefitions($str)
+	{
+	    list($p1, $p2) = strPosMatching($str, '{{{', '}}}');
+	    if ($p1) {
+            $md = new MarkdownExtra;
+        }
+	    while ($p1) {
+            $before = substr($str, 0, $p1);
+            $val = trim(substr($str, $p1+3, $p2-$p1-3));
+            if (preg_match('/^(.*)\b([\w\-]+)\s*$/ms', $before, $m)) {
+                $before = $m[1];
+                $var = $m[2];
+                $val = $md->parse($val);
+                $val = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $val);
+                $this->trans->addVariable($var, $val);
+            }
+            $str = $before.substr($str, $p2+3);
+            list($p1, $p2) = strPosMatching($str, '{{{', '}}}', $p1+1);
+        }
+	    return $str;
+    } // handleInlineVariableDefitions
+
+
 
 	//....................................................
 	private function handleEOF($lines)
@@ -238,6 +289,9 @@ class MyMarkdown
 	//....................................................
 	private function replaceVariables($l)
 	{
+	    if (!$this->variable) {
+	        return $l;
+        }
 		foreach ($this->variable as $sym => $str) { // replace variables, supporting ++ and -- operators
 			if (strpos($str, '$' . $sym) !== false) {
 				die("Warning: cyclic reference in variable '\$$sym'");
@@ -321,6 +375,7 @@ class MyMarkdown
 
 		$lines = explode(PHP_EOL, $str);
 		$preCode = false;
+		$olStart = false;
 		foreach ($lines as $l) {
 			$l = $this->handleInlineStylings($l);
 			if ($preCode && preg_match('|\</code\>\</pre\>|', $l)) {
@@ -329,7 +384,13 @@ class MyMarkdown
 				$preCode = true;
 			}
 			$l = $this->handleShieldedTags($l, $preCode);
-			$l = preg_replace('|^\<p>(\{\{.*\}\})\</p>$|', "$1", $l);
+			if (preg_match('|<p>\%\@start\=(\d+)\@\%</p>|', $l, $m)) {
+                $olStart = $m[1];
+			    continue;
+            } elseif (($olStart !== false) && ($l == '<ol>')) {
+			    $l = "<ol start='$olStart'>";
+                $olStart = false;
+            }
 			$out .= $l."\n";
 		}
 		return $out;
@@ -418,7 +479,7 @@ class MyMarkdown
 				$l = "<div $class>";
 			}
 		}
-		if ($this->page->shieldHtml) {
+		if ($this->page && $this->page->shieldHtml) {
 			if ($preCode) {
 				$l = preg_replace(['|^\<p\>@/@lt@\\\\@|', '|@/@lt@\\\\@|'], '&lt;', $l);
 				$l = preg_replace(['|@/@gt@\\\\@\<\/p\>\s*$|', '|@/@gt@\\\\@|'], '&gt;', $l);

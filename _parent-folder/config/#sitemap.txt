@@ -1,22 +1,23 @@
 # Sitemap
 
 Home: { folder: '~/', showThis: 'home/'}
-
+Page 1
+	Subpage
+Contact
 
 __END__
 
-Configuration Attributes:
+Optional Configuration Attributes:
 	showThis:	show other page in this context
 	goto:		show other page in other context, as if that was requested
 	alias:		make page reachable under additional path
 
- goto: directly open target, as if that was requested
- folder:
- file:
- template:
- hide:
- link:
- alias:
+	goto: directly open target, as if that was requested
+	folder:
+	file:
+	template:
+	hide:
+	link:
+	alias:
  
- md: standard
- backTickVariables: no
+	md: standard

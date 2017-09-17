@@ -25,7 +25,7 @@ class Defaults
             'userCodePath'              => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
             'usersFile'                 => ['users.yaml', 'Name of file (in $configPath) that defines user privileges and hashed passwords etc.' ],
             'autoAttrFile'              => [false, 'Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.' ],
-            'permitUserVarDefs'         => [false, '[true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
+            'permitUserVarDefs'         => ['sandboxed', '[\'sandboxed\'|true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
             'permitUserCode'            => [false, '[true|false] Only if true, user-provided code can be executed. And only if located in $userCodePath' ],
             'pageSwitcher'              => [false, '[true|false] whether code should be added to support page switching (by arrow-keys or swipe gestures)' ],
             'autoLoadJQuery'            => [false, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
@@ -70,7 +70,10 @@ class Defaults
 
         $this->loadModules['HAMMERJS']          = array('module' => 'third-party/hammerjs/hammer2.0.8.min.js', 'weight' => 4);
         $this->loadModules['HAMMERJQ']          = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 4);
-        $this->loadModules['JQUERYUI_TOUCH']   = array('module' => 'third-party/jquery.ui.touch-punch.min.js', 'weight' => 3);
+        $this->loadModules['JQUERYUI_TOUCH']    = array('module' => 'third-party/jquery.ui.touch-punch.min.js', 'weight' => 3);
+
+        $this->loadModules['DATATABLES_CSS']    = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 2);
+        $this->loadModules['DATATABLES']        = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 2);
 
         return $this;
     }

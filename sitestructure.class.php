@@ -19,6 +19,9 @@ class SiteStructure
 	//....................................................
 	public function __construct($config, $currPage = false)
 	{
+        $this->nextPage = '';
+        $this->prevPage = '';
+
         $this->config = $config;
 		$this->sitemapFile = $config->sitemapFile;
 		$this->currPage = $currPage;
@@ -42,16 +45,29 @@ class SiteStructure
 			$this->list[$currNr]['isCurrPage'] = true;
 			$this->currPageRec = &$this->list[$currNr];
 			$this->markParents();
-		}
+
+		} else {    // requested page not found:
+            $this->currPage = '_unknown/';
+            $this->currPageRec = [
+                'name' => 'Default',
+                'level' => 0,
+                'folder' => '_unknown/',
+                'isCurrPage' => true,
+                'inx' => '0',
+                'urlExt' => '',
+                'active' => false,
+                'hide' => false,
+                'hasChildren' => false,
+                'parent' => null
+            ];
+            return;
+        }
+
 		if ($currNr < (sizeof($this->list) - 1)) {
 			$this->nextPage = $this->list[$currNr + 1]['folder'];
-		} else {
-			$this->nextPage = '';
 		}
 		if ($currNr > 0) {
 			$this->prevPage = $this->list[$currNr - 1]['folder'];
-		} else {
-			$this->prevPage = '';
 		}
 	} // __construct
 
@@ -90,7 +106,7 @@ class SiteStructure
 			if (preg_match('/^(\s*)([^:\{]+)(.*)/', $line, $m)) {
 				$indent = $m[1];
 				$name = trim($m[2]);
-				$rec = &$list[$i];
+                $rec = [];
 				$rec['name'] = $name;
 				if (strlen($indent) == 0) {
 					$level = 0;
@@ -111,7 +127,9 @@ class SiteStructure
 					if ($args) {
 						foreach($args as $key => $value) {
 							if ($key == 'folder') {
-								$rec[strtolower($key)] = fixPath($value);
+								$folder = fixPath($value);
+								$folder = ($folder == '~/') ? '~/./' : $folder;
+								$rec[strtolower($key)] = $folder;
 							} else {
 								$rec[strtolower($key)] = $value;
 							}
@@ -123,8 +141,32 @@ class SiteStructure
 				$rec['urlExt'] = '';
 				$rec['active'] = false;
 				$rec['hide'] = (isset($rec['hide'])) ? $rec['hide'] : false;
-			}
-		}
+
+                // check time dependency:
+				if (isset($rec['showfrom'])) {
+				    $t = strtotime($rec['showfrom']);
+				    if (time() < $t) {
+				        continue;
+                    }
+                }
+				if (isset($rec['showtill'])) {
+				    $t = strtotime($rec['showtill']);
+				    if (time() > $t) {
+				        continue;
+                    }
+                }
+                if (isset($rec['hidefrom'])) {
+                    $t = strtotime($rec['hidefrom']);
+                    $rec['hide'] |= (time() > $t);
+                }
+                if (isset($rec['hidetill'])) {
+                    $t = strtotime($rec['hidetill']);
+                    $rec['hide'] |= (time() < $t);
+                }
+
+                $list[] = $rec;
+            }
+        }
 		return $list;
 	} // getList
 
@@ -146,7 +188,6 @@ class SiteStructure
 	{
 		$j = 0;
 		$tree = array();
-		$path1 = '';
 		$hasVisibleChildren = false;
 		while ($i < sizeof($list)) {
 			$level = $list[$i]['level'];
@@ -336,6 +377,7 @@ EOT;
 	public function findSiteElem($str)
 //	private function findSiteElem($str)
 	{
+	    $str = ($str == '/') ? './' : $str;
 		$list = $this->list;
 		$found = false;
 		foreach($list as $key => $elem) {

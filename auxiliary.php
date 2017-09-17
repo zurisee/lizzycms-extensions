@@ -4,6 +4,7 @@ define('LOG_PATH', '.#logs/');
 define('MAX_URL_ARG_SIZE', 255);
 
 use Symfony\Component\Yaml\Yaml;
+use cebe\markdown\MarkdownExtra;
 
 
 //--------------------------------------------------------------
@@ -1171,11 +1172,12 @@ function make_comparer() {
 
 
 //-----------------------------------------------------------------------------
-function compileMarkdownStr($mdStr)
+function compileMarkdownStr($mdStr, $removeWrappingPTags = false)
 {
     $md = new MyMarkdown();
-    $md->html5 = true;
-    $page = new Page();
-    $page = $md->parse($mdStr, $page);
-    return $page->get('content');
+    $str = $md->parseStr($mdStr);
+    if ($removeWrappingPTags) {
+        $str = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $str);
+    }
+    return $str;
 } // compileMarkdownStr

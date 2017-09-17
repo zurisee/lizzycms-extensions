@@ -1,5 +1,7 @@
 <?php
 
+define('IMAGE_TYPES' , '(jpg|jpeg|png|gif|tif|tiff)');
+
 class ImageResizer
 {    
     //----------------------------------------------------------------
@@ -131,7 +133,7 @@ class ImageResizer
             if (($p1 !== false) && preg_match("/$quote([^$quote]*)$quote/", $s, $m)) {
                 $srcset = explode(',', $m[1]);
                 foreach ($srcset as $src) {
-                    $src = trim(preg_replace('/\s\d+x$/', '', $src));
+                    $src = trim(preg_replace('/(\.'.IMAGE_TYPES.').*$/i', "$1", $src));
                     $src = resolvePath($src);
                     if (!file_exists($src)) {
                         list($orig, $width, $height, $crop) = $this->deriveImageSize($src);

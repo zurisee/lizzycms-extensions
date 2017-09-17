@@ -8,6 +8,8 @@
 define('CONFIG_PATH',           'config/');
 define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
+define('SUBSTITUTE_UNDEFINED',  1);
+define('SUBSTITUTE_ALL',        2);
 
 use Symfony\Component\Yaml\Yaml;
 use voku\helper\HtmlDomParser;
@@ -30,7 +32,6 @@ $globalParams = array(
 	'pagePath' => null,				// pages/xy/
     'logPath' => null,
 );
-
 
 
 class Lizzy
@@ -60,7 +61,10 @@ class Lizzy
 
 		if ($this->config->sitemapFile) {
 			$this->currPage = $this->reqPagePath;
-			$this->siteStructure = new SiteStructure($this->config, $this->currPage);
+			$this->siteStructure = new SiteStructure($this->config, $this->reqPagePath);
+            $this->currPage = $this->reqPagePath = $this->siteStructure->currPage;
+            $this->pagePath = $this->config->pagesPath.$this->currPage;
+
 			if (isset($this->siteStructure->currPageRec['showthis'])) {
 				$this->pagePath = $this->config->pagesPath.$this->siteStructure->currPageRec['showthis'];
 			} else {
@@ -70,8 +74,8 @@ class Lizzy
 			$this->pageRelativePath = $this->pathToRoot.$this->pagePath;
 
 			$this->trans = new Transvar($this->config, array(SYSTEM_PATH.'config/sys_vars.yaml', CONFIG_PATH.'user_variables.yaml'), $this->siteStructure); // loads static variables
-			$this->trans->addVariable('next_page', "<a href='~/{$this->siteStructure->nextPage}'>`nextPageLabel`</a>");
-			$this->trans->addVariable('prev_page', "<a href='~/{$this->siteStructure->prevPage}'>`prevPageLabel`</a>");
+			$this->trans->addVariable('next_page', "<a href='~/{$this->siteStructure->nextPage}'>{{ nextPageLabel }}</a>");
+			$this->trans->addVariable('prev_page', "<a href='~/{$this->siteStructure->prevPage}'>{{ prevPageLabel }}</a>");
 		} else {
 			$this->siteStructure = new SiteStructure($this->config, ''); //->list = false;
 			$this->currPage = '';
@@ -94,6 +98,11 @@ class Lizzy
 		$this->handleInsecureConnection();
 
 		$this->setTransvars1();
+
+//		if ($html = getCache()) {
+//            $html = $this->trans->render($html, $this->config->lang, SUBSTITUTE_ALL);
+//            return $html;
+//        }
 
         $this->loadFile();		// get content file
 
@@ -124,7 +133,10 @@ class Lizzy
 
         $html = $this->executeAutoAttr($html);
 
-		if ($this->timer) {
+        // writeCache()
+        $html = $this->trans->render($html, $this->config->lang, SUBSTITUTE_ALL);
+
+        if ($this->timer) {
 			$this->debugMsg = readTimer();
 		}
 
@@ -233,17 +245,44 @@ mylog(var_export($_SESSION, true));
         $requestUri = (isset($_SERVER["REQUEST_URI"])) ? $_SERVER["REQUEST_URI"] : '';
         $httpReq = parse_url($requestUri);
         $path0 = (isset($httpReq['path'])) ? substr($httpReq['path'], strlen($this->appPath)) : '';
-        $pathComponents = path_info($path0);
-        $reqExt = $pathComponents['extension'];
-        if ($reqExt && !preg_match('/^x?html?$/', $reqExt)) {
-            die("Error: unknown file type requested: '$path0'");
+
+        // assert that no direct request to a file (other than .html) was received:
+        if (strpos($path0,'.') !== false) {
+            $pathComponents = path_info($path0);
+            $reqExt = $pathComponents['extension'];
+            if ($reqExt && !preg_match('/^x?html?$/', $reqExt)) {
+                $msg = "Unknown file type requested: '$path0'";
+                $this->page->addOverride($msg, true);
+                $pathComponents['dirname'] = '';
+                $path0 = '';
+            } else {
+                $filePath = $this->config->pagesPath.$path0;
+                if (!file_exists($filePath)) {
+                    $msg = "Unable to find requested page: '$path0'";
+                    $this->page->addOverride($msg, true);
+                    $pathComponents['dirname'] = '';
+                    $path0 = '';
+                }
+            }
         }
-        $path = correctPath($pathComponents['dirname']);
-        $path = str_replace('//', '/', $path);
+
+        $path = $path0;
+        if ($path[strlen($path)-1] != '/') {
+            $p = dirname($path);
+            if ($p == '.') {
+                $this->pathToRoot = $pathToRoot = '';
+            } else {
+                $this->pathToRoot = $pathToRoot = preg_replace('|\w+/|', '../', $p);
+                $path = str_replace('//', '/', $path);
+            }
+            $path .= '/';
+        } else {
+            $this->pathToRoot = $pathToRoot = preg_replace('|\w+/|', '../', $path);
+            $path = str_replace('//', '/', $path);
+        }
         $this->reqPagePath = $path;
         $this->query = (isset($httpReq['query'])) ? $httpReq['query'] : '';
 
-        $this->pathToRoot = $pathToRoot = preg_replace('|\w+/|', '../', $path0);
         $globalParams['pathToRoot'] = $pathToRoot;
 
         $ip = $_SERVER["HTTP_HOST"];
@@ -418,10 +457,10 @@ mylog(var_export($_SESSION, true));
 	{
 		if ($this->loggedInUser) {
 			$this->trans->addVariable('user', $this->loggedInUser, false);			
-			$this->trans->addVariable('Log-in', "<a href='?logout'>`Logged in as` <strong>{$this->loggedInUser}</strong></a>");
+			$this->trans->addVariable('Log-in', "<a href='?logout'>{{ Logged in as }} <strong>{$this->loggedInUser}</strong></a>");
 		} else {
 			$linkToThisPage = '~/'.$this->siteStructure->currPage;
-			$this->trans->addVariable('Log-in', "<a href='$linkToThisPage?login' class='login-link'>`LoginLink`</a>");
+			$this->trans->addVariable('Log-in', "<a href='$linkToThisPage?login' class='login-link'>{{ LoginLink }}</a>");
 		}
 
         $this->trans->addVariable('appRoot', $this->pathToRoot);			// e.g. '../'
@@ -496,6 +535,10 @@ mylog(var_export($_SESSION, true));
 	//....................................................
 	private function runUserInitCode()
 	{
+	    if (!$this->config->permitUserCode) {   // user-code enabled?
+	        return;
+        }
+
 		if (file_exists($this->config->userInitCodeFile)) {
 			require_once($this->config->userInitCodeFile);
 		}
@@ -589,7 +632,7 @@ mylog(var_export($_SESSION, true));
 			return $pg;
 		}
 
-		$md = new MyMarkdown();
+		$md = new MyMarkdown($this->trans);
 		$md->html5 = true;
 		$langPatt = '.'.$this->config->lang.'.';
 		foreach($mdFiles as $f) {
@@ -650,11 +693,15 @@ mylog(var_export($_SESSION, true));
 		}
 		$i = 1;
 		$l = $lines[$i];
-		while (($i < sizeof($lines)) && (!preg_match('/---/', $l))) {
+		while (($i < sizeof($lines)-1) && (!preg_match('/---/', $l))) {
 			$yaml .= $l."\n";
 			$i++;
 			$l = $lines[$i];
 		}
+		if ($i == sizeof($lines)-1) {   // case '---' in first line, but no second instance
+		    return $str;
+        }
+
 		if ($yaml) {
 			$yaml = str_replace("\t", '    ', $yaml);
 			try {
@@ -895,7 +942,6 @@ Available URL-commands:
 <a href='?lang=xy'>?lang=xy</a>	switch to given language (e.g. '?lang=en')
 <a href='?timer'>?timer</a>		switch timer on or off
 <a href='?printall'>?printall</a>	show all pages in one
-<a href='?lang'>?lang</a>		set language
 <a href='?touch'>?touch</a>		emulate touch mode
 
 post('md')=> MD-source		returns compiled markdown
@@ -906,9 +952,9 @@ EOT;
 
 		if ($_SESSION['user'] || $this->localCall) {
 			if ($_SESSION['editingMode']) {
-				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>`turn edit mode off`</a> | ");
+				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
 			} else {
-				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>`turn edit mode on`</a> | ");
+				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>{{ turn edit mode on }}</a> | ");
 			}
 		}
 

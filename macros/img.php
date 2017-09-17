@@ -70,7 +70,8 @@ $this->addMacro($macroName, function () {
         $fileSize = 0;
     }
 
-    if (($srcset === null) && ($fileSize > 100000)) {
+    // prepare srcset:
+    if (($srcset === '') && ($fileSize > 100000)) {
         $i = 2;
         $w1 = $w * 2;
         $h1 = $h * 2;
@@ -82,6 +83,10 @@ $this->addMacro($macroName, function () {
             $h1 = $h * $i;
         }
         $srcset = ' srcset="'.substr($srcset, 0, -2).'"';
+
+    } elseif ($srcset && ($srcset != 'false')) {
+        $srcset = " srcset='$srcset'";
+
     } else {
         $srcset = '';
     }

@@ -290,6 +290,7 @@ var {
 	border: 1px solid red;
 	box-shadow: 0 0 15px 5px #444;
 	box-sizing: border-box;
+	overflow: auto;
 	z-index: 999;
 }
 

@@ -7,6 +7,7 @@
 
 use Symfony\Component\Yaml\Yaml;
 
+$WHITELIST_FUNCS = ['basename'];
 
 class Transvar
 {
@@ -55,17 +56,23 @@ class Transvar
 
 
 	//....................................................
-	public function render($page, $lang = false)
+	public function render($page, $lang = false, $substitutionMode = false)
 	{
-		$this->page = $page;
+	    if (is_string($page)) {
+            $html = $page;
+        } else {
+            $this->page = $page;
 
-		// handle pageReplacement?, override, overlay, message, debugMsg:
-        $this->handlePageModifications();
+            // handle pageReplacement?, override, overlay, message, debugMsg:
+            $this->handlePageModifications();
 
-        $html = $page->get('body');
-		$html = $this->shieldSpecialVars($html);
+            $html = $page->get('body');
+            $html = $this->shieldSpecialVars($html);
 
-        $this->addVariable('content', $page->get('content'));
+            $this->addVariable('content', $page->get('content'));
+        }
+
+        $html = $this->adaptBraces($html, $substitutionMode);
 
 		while (strpos($html, '{{') !== false) {
 			$html = $this->translateMacros($html);
@@ -73,9 +80,25 @@ class Transvar
 		}
 
 		$html = $this->translateSpecialVars($html);
-        $html = $this->translateVars($html);
+        $html = $this->adaptBraces($html, SUBSTITUTE_UNDEFINED);
+        $html = $this->translateVars($html, 'app', SUBSTITUTE_UNDEFINED);
 		return $html;
 	} // render
+
+
+
+    //....................................................
+    private function adaptBraces($str, $substitutionMode = false)
+    {
+        if ($substitutionMode & SUBSTITUTE_UNDEFINED) {
+            $str = str_replace(['{|{','}|}'], ['{{', '}}'], $str);
+        }
+        if ($substitutionMode & SUBSTITUTE_ALL) {
+            $str = str_replace(['{||{','}||}'], ['{{', '}}'], $str);
+        }
+
+        return $str;
+    } // adaptBraces
 
 
 
@@ -138,11 +161,12 @@ class Transvar
                     $page->$key = $elem;
                 }
             }
-        } else {					// search files containing multiple macros
+        } else {					// check if macro.php is in code/ folder?
             if ($this->config->permitUserCode) {
                 $file = $this->config->userCodePath.$macroName.'.php';
                 if (file_exists($file)) {
-                    require_once($file);
+//                    require_once($file);
+                    $this->doUserCode($file);
                     foreach($page as $key => $elem) {
                         if ($elem && ($key != 'config')) {
                             $page->$key = $elem;
@@ -283,7 +307,7 @@ class Transvar
 	//....................................................
 	private function translateMacros($str, $namespace = 'app')
 	{
-		list($p1, $p2) = strPosMatching($str);
+        list($p1, $p2) = strPosMatching($str);
 		while (($p1 !== false)) {
 			$commmented = false;
 			$optional = false;
@@ -314,14 +338,18 @@ class Transvar
                     $this->macroArgs[$macro] = parseArgumentStr( $argStr );
                     $this->macroInx = 0;
 
-					if (isset($this->macros[$macro])) {
-						$val = $this->macros[$macro]();
+					if (isset($this->macros[$macro])) {     // macro already loaded
+//						$val = $this->macros[$macro]();     // do the actual macro call
+						$val = $this->macros[$macro]( $this );     // do the actual macro call
+
 					} else {
 						$this->loadMacro($macro);
 						if (isset($this->macros[$macro])) {
-							$val = $this->macros[$macro]();
+//							$val = $this->macros[$macro]();
+							$val = $this->macros[$macro]( $this );
+
 						} else {
-						$this->loadMacro($macro);
+//						    $this->loadMacro($macro);
 							die("Error: undefined macro: '$macro()'");
 						}
 					}
@@ -347,7 +375,8 @@ class Transvar
 
 
 	//....................................................
-	private function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
+//	private function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
+	public function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
 	{
         $inx = $this->macroInx++;
         $this->macroFieldnames[$macroName][$inx] = $name;
@@ -399,12 +428,24 @@ class Transvar
 
 
 
+    public function getInvocationCounter($macroName)
+    {
+        if (!isset($this->invocationCounter[$macroName])) {
+            $this->invocationCounter[$macroName] = 0;
+        }
+        $this->invocationCounter[$macroName]++;
+        return $this->invocationCounter[$macroName];
+    } // getInvocationCounter
+
+
+
 	//....................................................
-	public function translateVars($str, $namespace = 'app')
+	public function translateVars($str, $namespace = 'app', $substitutionMode = false)
 	{
 		list($p1, $p2) = strPosMatching($str);
 		while (($p1 !== false)) {
 			$commmented = false;
+            $dontCache = false;
 			$optional = false;
 			$var = trim(substr($str, $p1+2, $p2-$p1-2));
             if (!$var) {
@@ -413,10 +454,12 @@ class Transvar
                 continue;
             }
             $c1 = $var{0};
-			if (($c1 == '#') || ($c1 == '^')) {
+			if (($c1 == '#') || ($c1 == '^') || ($c1 == '!')) {
 				$var = trim(substr($var, 1));
 				if ($c1 == '#') {
 					$commmented = true;
+				} elseif ($c1 == '!') {
+					$dontCache = true;
 				} else {
 					$optional = true;
 				}
@@ -429,6 +472,7 @@ class Transvar
 				if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {	// macro
                     list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
                     continue;
+
 				} else {										// variable
 					$val = $this->getVariable($var, '', $namespace);
 					if ($val === false) {
@@ -438,11 +482,21 @@ class Transvar
 			}
 			if ($commmented) {
 				$str = substr($str, 0, $p1).substr($str, $p2+2);
+
+			} elseif ($dontCache) {
+                $str = substr($str, 0, $p1) ."{||{ $var }||}". substr($str, $p2 + 2);
+
 			} elseif (!$optional && ($val === false)) {
-				$str = substr($str, 0, $p1).$var.substr($str, $p2+2);
-			} else {
-				$str = substr($str, 0, $p1).$val.substr($str, $p2+2);
-			}
+                if ($substitutionMode == SUBSTITUTE_UNDEFINED) {     // undefined are substituted only in the last round
+                    $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2); // replace with itself (minus {{}})
+                } else {
+                    $str = substr($str, 0, $p1) ."{|{ $var }|}". substr($str, $p2 + 2);
+                    $p1 += 4;
+                }
+
+            } else {
+				$str = substr($str, 0, $p1).$val.substr($str, $p2+2);   // replace with value
+            }
 			list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
 		}
 		return $str;
@@ -461,23 +515,29 @@ class Transvar
 
 
     //....................................................
-    public function doUserCode($name, $execType)
+    public function doUserCode($name, $execType = null)
     {
         $out = false;
+        if ($execType === null) {
+            $execType = $this->config->permitUserCode;
+        }
         if ($execType) {
-            $phpFile = $this->config->userCodePath.$name.'.php';
+            $phpFile = $this->config->userCodePath.basename($name,'.php').'.php';
             if (file_exists($phpFile)) {
                 $page = &$this->page;
-                if ($execType === 'sandboxed') {
-                    $out =  $this->runInSandbox($name, $phpFile);
-
-                } elseif ($this->config->permitUserCode) {
+                if ($execType == 'true') {
                     $res =  require($phpFile);
                     if (is_array($res)) {
                         foreach ($res as $key => $value) {
                             $this->addVariable($key, $value);
                         }
+                    } elseif (is_string($res)) {
+                        $out = $res;
                     }
+                } else {
+                    $out =  $this->runInSandbox($name, $phpFile);
+//                } else {
+////                } elseif ($this->config->permitUserCode) {
                 }
             }
         }
@@ -489,17 +549,26 @@ class Transvar
 	private function runInSandbox($name, $phpFile)
 	{
 		// See: https://docs.phpsandbox.org/2.0/classes/PHPSandbox.PHPSandbox.html#source-view
-		$phpCode = file_get_contents($phpFile);
+//		$phpCode = file_get_contents($phpFile);
+		$phpCode = getFile($phpFile, true);
 		$phpCode = str_replace(['<?php','?>'], '', $phpCode);
 
 		$sandbox_allowed_functions = getYamlFile($this->config->configPath.'sandbox_allowed_functions.yaml');
-		$sandbox = new PHPSandbox\PHPSandbox;
+		if (is_array($sandbox_allowed_functions)) {
+            $sandbox_allowed_functions = array_merge($sandbox_allowed_functions, $GLOBALS['WHITELIST_FUNCS']);
+        } else {
+            $sandbox_allowed_functions = $GLOBALS['WHITELIST_FUNCS'];
+        }
+
+        $sandbox = new PHPSandbox\PHPSandbox;
+		$sandbox->allow_closures = true;
+
 		if ($sandbox_allowed_functions) {
 			$sandbox->whitelistFunc($sandbox_allowed_functions);
 		}
 		
 		$sandbox_available_variables = getYamlFile($this->config->configPath.'sandbox_available_variables.yaml');
-		$sandbox = new PHPSandbox\PHPSandbox;
+//        $sandbox_available_variables['this'] = $this;
 		if ($sandbox_available_variables) {
 			$vars = array();
 			foreach ($sandbox_available_variables as $varName) {
@@ -507,10 +576,12 @@ class Transvar
 					$vars[$varName] = $$varName;
 				}
 			}
-			$sandbox->defineVars($vars);
         }
+        $vars['this'] = $this; // feed $trans into sandbox
+        $sandbox->defineVars($vars);
 
 		try {
+		    $sandbox->defineMagicConsts(['__FILE__' => __FILE__]);
 			$res = $sandbox->execute($phpCode);
 			if (is_array($res)) {
 			    foreach ($res as $key => $value) {
@@ -518,7 +589,7 @@ class Transvar
                 }
             }
 		} catch(Exception $e) {
-			die("Error while executing user code in sanbox: <br>".$e->getMessage());
+			die("Error while executing user code in sandbox: <br>".$e->getMessage());
 		}
 		return true;
 	} // runInSandbox

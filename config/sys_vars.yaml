@@ -85,13 +85,13 @@ Warning insecure connection:
     de: "Achtung: die Verbindung zum Webhost ist nicht gesichert (https). Sie können sich deshalb nicht anmelden."
     en: "Warning: your connection to this webhost is insecure (https). For this reason you cannot login."
 
-turn edit mode off:
-    de: Bearbeiten Aus
-    en: Editing Off
-
 turn edit mode on:
-    de: Bearbeiten Ein
-    en: Editing On
+    de: Bearbeitungs-Modus einschalten
+    en: Editing mode on
+
+turn edit mode off:
+    de: Bearbeitungs-Modus ausschalten
+    en: Editing mode off
 
 Page:
     de: Seite
@@ -104,4 +104,6 @@ page:
 of:
     de: von
     en: of
+    
+    
     
