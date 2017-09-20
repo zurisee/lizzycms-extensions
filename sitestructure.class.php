@@ -189,6 +189,9 @@ class SiteStructure
 		$j = 0;
 		$tree = array();
 		$hasVisibleChildren = false;
+		if ($path == './') {
+		    $path = '';
+        }
 		while ($i < sizeof($list)) {
 			$level = $list[$i]['level'];
 			if ($level > $lastLevel) {
