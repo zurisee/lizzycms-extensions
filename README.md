@@ -20,5 +20,5 @@ Stay tuned - more to come soon.
 To add content, edit the file `pages/content.md`.
 
 To add pages, rename `config/#sitemap.txt` to `config/sitemap.txt` and add lines. 
-Each line corresponds to a page. Indent to add a hierarchy. Most often there is no need for arguments (which would be added in curly braces).
+Each line corresponds to a page. Indent to add a hierarchy. Most often there is no need for arguments to pages (which would be added in curly braces, like the example 'Home' shows).
 
