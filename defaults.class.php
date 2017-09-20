@@ -21,6 +21,7 @@ class Defaults
             'pagesPath'                 => ['pages/', 'Name of folder in which all pages reside.' ],
             'stylesPath'                => ['css/', 'Name of folder in which style sheets reside' ],
             'logPath'                   => [false, 'Name of folder to which logging output should be sent. Or "false" for disabling logging.' ],
+            'errorLogging'              => [false, 'Name of the file to which error logging output should be sent. Or "false" for disabling logging.' ],
             'dataPath'                  => ['data/', '(obsolete) Name of folder in which data is located by default.' ],
             'userCodePath'              => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
             'usersFile'                 => ['users.yaml', 'Name of file (in $configPath) that defines user privileges and hashed passwords etc.' ],

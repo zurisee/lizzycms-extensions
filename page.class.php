@@ -57,9 +57,13 @@ class Page
 
 
 
-    public function get($var) {
+    public function get($var, $reset = false) {
         if (isset($this->$var)) {
-            return $this->$var;
+            $val = $this->$var;
+            if ($reset) {
+                $this->$var = '';
+            }
+            return $val;
         } else {
             return '';
         }
@@ -256,10 +260,12 @@ class Page
     //....................................................
     public function applyOverride()
     {
-        if ($o = $this->get('override')) {
+        if ($o = $this->get('override', true)) {
             $o = compileMarkdownStr($o);
             $this->addContent($o, true);
+            return true;
         }
+        return false;
     } // applyOverride
 
 
@@ -267,13 +273,15 @@ class Page
     //....................................................
     public function applyOverlay()
     {
-        $overlay = $this->get('overlay');
+        $overlay = $this->get('overlay', true);
 
         if ($overlay) {
             $overlay = compileMarkdownStr($overlay);
             $this->addJq("\$('.overlay').click(function() { $(this).hide(); });");
             $this->addBody("<div class='overlay'>$overlay</div>\n");
+            return true;
         }
+        return false;
     } // applyOverlay
 
 
@@ -282,11 +290,13 @@ class Page
     //....................................................
     public function applyDebugMsg()
     {
-        if ($debugMsg = $this->get('debugMsg')) {
+        if ($debugMsg = $this->get('debugMsg', true)) {
             $debugMsg = compileMarkdownStr($debugMsg);
             $debugMsg = createDebugOutput($debugMsg);
             $this->addBody($debugMsg);
+            return true;
         }
+        return false;
     } // applyDebugMsg
 
 
@@ -294,11 +304,13 @@ class Page
     //....................................................
     public function applyMessage()
     {
-        if ($msg = $this->get('message')) {
+        if ($msg = $this->get('message', true)) {
             $msg = compileMarkdownStr($msg);
             $msg = createWarning($msg);
             $this->addBody($msg);
+            return true;
         }
+        return false;
     } // applyMessage
 
 
@@ -307,7 +319,7 @@ class Page
     //....................................................
     public function applyPageSubstitution()
     {
-        $pageSubstitution = $this->get('pageSubstitution');
+        $pageSubstitution = $this->get('pageSubstitution', true);
         if ($pageSubstitution) {
             $this->addBody($pageSubstitution, true);
             return true;

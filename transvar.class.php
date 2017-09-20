@@ -82,6 +82,8 @@ class Transvar
 		$html = $this->translateSpecialVars($html);
         $html = $this->adaptBraces($html, SUBSTITUTE_UNDEFINED);
         $html = $this->translateVars($html, 'app', SUBSTITUTE_UNDEFINED);
+        $this->handleLatePageSubstitution();
+
 		return $html;
 	} // render
 
@@ -113,6 +115,17 @@ class Transvar
         $this->page->applyMessage();
         $this->page->applyDebugMsg();
     } // handlePageModifications
+
+
+
+
+    //....................................................
+    private function handleLatePageSubstitution()
+    {
+        if ($str = $this->page->get('pageSubstitution')) {
+            exit($str);
+        }
+    } // handleLatePageSubstitution
 
 
 
@@ -157,7 +170,6 @@ class Transvar
             require_once($file);
             foreach($page as $key => $elem) {
                 if ($elem && ($key != 'config')) {
-//                    $page->$key = $elem."\n"; // ??? why was this???
                     $page->$key = $elem;
                 }
             }
@@ -165,7 +177,6 @@ class Transvar
             if ($this->config->permitUserCode) {
                 $file = $this->config->userCodePath.$macroName.'.php';
                 if (file_exists($file)) {
-//                    require_once($file);
                     $this->doUserCode($file);
                     foreach($page as $key => $elem) {
                         if ($elem && ($key != 'config')) {
@@ -339,17 +350,14 @@ class Transvar
                     $this->macroInx = 0;
 
 					if (isset($this->macros[$macro])) {     // macro already loaded
-//						$val = $this->macros[$macro]();     // do the actual macro call
 						$val = $this->macros[$macro]( $this );     // do the actual macro call
 
 					} else {
 						$this->loadMacro($macro);
 						if (isset($this->macros[$macro])) {
-//							$val = $this->macros[$macro]();
 							$val = $this->macros[$macro]( $this );
 
 						} else {
-//						    $this->loadMacro($macro);
 							die("Error: undefined macro: '$macro()'");
 						}
 					}
@@ -375,7 +383,6 @@ class Transvar
 
 
 	//....................................................
-//	private function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
 	public function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
 	{
         $inx = $this->macroInx++;
@@ -535,64 +542,15 @@ class Transvar
                         $out = $res;
                     }
                 } else {
-                    $out =  $this->runInSandbox($name, $phpFile);
-//                } else {
-////                } elseif ($this->config->permitUserCode) {
+                    $sandbox = new MySandbox();
+                    $vars['this'] = $this; // feed $trans into sandbox
+                    return $sandbox->execute($phpFile, $this->config->configPath, $vars);
                 }
             }
         }
         return $out;
     } // doUserCode
 
-
-
-	private function runInSandbox($name, $phpFile)
-	{
-		// See: https://docs.phpsandbox.org/2.0/classes/PHPSandbox.PHPSandbox.html#source-view
-//		$phpCode = file_get_contents($phpFile);
-		$phpCode = getFile($phpFile, true);
-		$phpCode = str_replace(['<?php','?>'], '', $phpCode);
-
-		$sandbox_allowed_functions = getYamlFile($this->config->configPath.'sandbox_allowed_functions.yaml');
-		if (is_array($sandbox_allowed_functions)) {
-            $sandbox_allowed_functions = array_merge($sandbox_allowed_functions, $GLOBALS['WHITELIST_FUNCS']);
-        } else {
-            $sandbox_allowed_functions = $GLOBALS['WHITELIST_FUNCS'];
-        }
-
-        $sandbox = new PHPSandbox\PHPSandbox;
-		$sandbox->allow_closures = true;
-
-		if ($sandbox_allowed_functions) {
-			$sandbox->whitelistFunc($sandbox_allowed_functions);
-		}
-		
-		$sandbox_available_variables = getYamlFile($this->config->configPath.'sandbox_available_variables.yaml');
-//        $sandbox_available_variables['this'] = $this;
-		if ($sandbox_available_variables) {
-			$vars = array();
-			foreach ($sandbox_available_variables as $varName) {
-				if (isset($$varName)) {
-					$vars[$varName] = $$varName;
-				}
-			}
-        }
-        $vars['this'] = $this; // feed $trans into sandbox
-        $sandbox->defineVars($vars);
-
-		try {
-		    $sandbox->defineMagicConsts(['__FILE__' => __FILE__]);
-			$res = $sandbox->execute($phpCode);
-			if (is_array($res)) {
-			    foreach ($res as $key => $value) {
-                    $this->addVariable($key, $value);
-                }
-            }
-		} catch(Exception $e) {
-			die("Error while executing user code in sandbox: <br>".$e->getMessage());
-		}
-		return true;
-	} // runInSandbox
 
 
 
@@ -608,7 +566,6 @@ class Transvar
 			$this->addVariable('numberofpages', '');
 			$this->addVariable('pagenumber', '');
 		}
-
 	} // loadStandardVariables
 
 

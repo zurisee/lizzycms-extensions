@@ -29,8 +29,8 @@
  *      readRec($key = '*') -> read('*')
 */
 
-if (!defined('LOCK')) { define('LOCK', 0); }
-if (!defined('SID')) { define('SID', 1); }
+define('LIZZY_LOCK', 0);
+define('LIZZY_SID', 1);
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -42,10 +42,8 @@ class DataStorage
  	//---------------------------------------------------------------------------
    public function __construct($dbFile, $sid = '', $lockDB = false, $format = '')
     {
-//        if (file_exists($dbFile)) {
-        $dbFile1 = $this->resolvePath( $dbFile );
-        if (file_exists( $dbFile1 )) {
-	        $this->dataFile = $dbFile1;
+        if (file_exists($dbFile)) {
+	        $this->dataFile = $dbFile;
 
 		} else {
 			if (file_exists(pathinfo($dbFile, PATHINFO_DIRNAME))) {
@@ -74,9 +72,9 @@ class DataStorage
             } else {
                 $array = $key;
                 foreach ($array as $key => $value) {
-                    if (!isset($data['_meta_'][$key][LOCK])) {
+                    if (!isset($data['_meta_'][$key][LIZZY_LOCK])) {
                         $data[$key] = $value;
-                    } elseif (isset($data['_meta_'][$key][SID]) && ($data['_meta_'][$key][SID] == $this->sid)) {
+                    } elseif (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] == $this->sid)) {
                         $data[$key] = $value;
                     } else {
                         return false;
@@ -100,7 +98,7 @@ class DataStorage
             if ($reportLockState) {
                 foreach ($data as $key => $value) {
                     if (($key != '_meta_') &&  isset($data['_meta_'][$key]) &&  // if locked
-                        ($data['_meta_'][$key][SID] != $this->sid)) {           //but not by client that initiated the lock:
+                        ($data['_meta_'][$key][LIZZY_SID] != $this->sid)) {           //but not by client that initiated the lock:
                             $data[$key] = str_replace('**LOCKED**', '', $value) . '**LOCKED**';
                     }
                 }
@@ -125,12 +123,12 @@ class DataStorage
     public function lock($key)
     {
         $data = $this->lowLevelRead();
-        if (isset($data['_meta_'][$key][SID]) && ($data['_meta_'][$key][SID] != $this->sid)) {
+        if (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] != $this->sid)) {
             return false;
         }
         if (isset($data[$key])) {
-            $data['_meta_'][$key][LOCK] = time();
-            $data['_meta_'][$key][SID] = $this->sid;
+            $data['_meta_'][$key][LIZZY_LOCK] = time();
+            $data['_meta_'][$key][LIZZY_SID] = $this->sid;
         }
         return $this->lowLevelWrite($data);
     } // lock
@@ -147,7 +145,7 @@ class DataStorage
             }
         } elseif ($key === true) {    // unlock all owner's records
             foreach ($data as $key => $value) {
-                if (isset($data['_meta_'][$key][SID]) && ($data['_meta_'][$key][SID] == $this->sid)) {
+                if (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] == $this->sid)) {
                     unset($data['_meta_'][$key]);
                 }
             }
@@ -171,7 +169,7 @@ class DataStorage
             if ($key == '_meta_') {
                 continue;
             }
-            if (isset($data['_meta_'][$key][LOCK]) && ($data['_meta_'][$key][LOCK] < $timeLimit)) {
+            if (isset($data['_meta_'][$key][LIZZY_LOCK]) && ($data['_meta_'][$key][LIZZY_LOCK] < $timeLimit)) {
                 unset($data['_meta_'][$key]);
                 $modified = true;
             }
@@ -304,25 +302,6 @@ class DataStorage
         }
         return $encodedData;
     } // encode
-
-
-    //------------------------------------------------------------
-    private function resolvePath($path)
-    {
-        global $globalParams;
-
-        if (!$path) {
-            return '';
-        }
-
-        if ((($ch1=$path[0]) != '/') && ($ch1 != '~') && ($ch1 != '.')/* && ($ch1 != '_')*/) {	//default to path local to page ???always ok?
-            $path = '~/'.$path;
-        }
-
-        $path = preg_replace('|~/|', '', $path);
-        $path = preg_replace('|~sys/|', SYSTEM_PATH, $path);
-        return $path;
-    } // resolvePath
 
 
 

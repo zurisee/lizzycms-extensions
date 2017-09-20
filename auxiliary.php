@@ -419,6 +419,22 @@ function base_name($file, $incl_ext = true, $incl_args = false) {
 
 
 //------------------------------------------------------------
+function dir_name($path)
+{
+    if (!$path) {
+        return '';
+    }
+    $path = preg_replace('/[\#\?].*/', '', $path);
+    if (strpos($path, '.') !== false) {
+        return dirname($path).'/';
+    } else {
+        return rtrim($path, '/').'/';
+    }
+} // dir_name
+
+
+
+//------------------------------------------------------------
 function correctPath($path)
 {
 	if ($path) {
@@ -437,6 +453,31 @@ function fixPath($path)
 	}
     return $path;
 } // fixPath
+
+
+
+//------------------------------------------------------------
+function commonSubstr($str1, $str2, $delim = '')
+{
+    $res = '';
+    if ($delim) {
+        $a1 = explode($delim, $str1);
+        $a2 = explode($delim, $str2);
+
+    } else {
+        $a1 = str_split($str1);
+        $a2 = str_split($str2);
+    }
+
+    foreach($a1 as $i => $p) {
+        if (!isset($a2[$i]) || ($p != $a2[$i])) {
+            break;
+        }
+        $res .= $p.$delim;
+    }
+    return $res;
+} // commonSubstr
+
 
 
 

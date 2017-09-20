@@ -375,7 +375,6 @@ EOT;
 
 	//....................................................
 	public function findSiteElem($str)
-//	private function findSiteElem($str)
 	{
 	    $str = ($str == '/') ? './' : $str;
 		$list = $this->list;

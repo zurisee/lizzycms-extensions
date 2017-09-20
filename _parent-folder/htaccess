@@ -22,6 +22,7 @@ RewriteRule .* index.php [F]
 ## End - Exploits
 
 
+RewriteCond %{REQUEST_FILENAME} !\.map
 RewriteCond %{REQUEST_FILENAME} !_upload_server.php
 RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
 RewriteCond %{REQUEST_FILENAME} !(/_test)

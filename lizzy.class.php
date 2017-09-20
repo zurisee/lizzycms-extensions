@@ -25,6 +25,7 @@ require_once SYSTEM_PATH.'sitestructure.class.php';
 require_once SYSTEM_PATH.'authentication.class.php';
 require_once SYSTEM_PATH.'image-resizer.class.php';
 require_once SYSTEM_PATH.'datastorage.class.php';
+require_once SYSTEM_PATH.'sandbox.class.php';
 
 
 $globalParams = array(
@@ -56,8 +57,11 @@ class Lizzy
     public function __construct()
     {
 		global $globalParams;
+        ini_set('display_errors', '0');
+        
 		$this->checkInstallation();
 		$this->init();
+		$this->setupErrorHandling();
 
 		if ($this->config->sitemapFile) {
 			$this->currPage = $this->reqPagePath;
@@ -159,8 +163,6 @@ class Lizzy
 
         session_start();
         $this->sessionId = session_id();
-mylog("SessionId: {$this->sessionId}");
-mylog(var_export($_SESSION, true));
         $this->getConfigValues(); // from $this->configFile
         $this->config->appBaseName = base_name(rtrim(trunkPath(__FILE__, 1), '/'));
         if ($this->config->sitemapFile) {
@@ -205,6 +207,31 @@ mylog(var_export($_SESSION, true));
 
 
     //....................................................
+    private function setupErrorHandling()
+    {
+        if ($_SESSION['user'] == 'admin') {     // set displaying errors on screen:
+            $old = ini_set('display_errors', '1');  // on
+            error_reporting(E_ALL);
+
+        } else {
+            $old = ini_set('display_errors', '0');  // off
+            error_reporting(0);
+        }
+        if ($old === false) {
+        	die("Error setting up error handling... (no kidding)");
+        }
+        $errorLog = $this->config->errorLogging;
+        if ($this->config->logPath && $errorLog) {
+            $errorLogFile = $this->config->logPath . $errorLog;
+            ini_set("log_errors", 1);
+            ini_set("error_log", $errorLogFile);
+            //error_log( "Error-logging started" );
+        }
+    } // setupErrorHandling
+
+
+
+    //....................................................
     private function handleInsecureConnection()
     {
         if ($this->isRestrictedPage()) {
@@ -240,53 +267,35 @@ mylog(var_export($_SESSION, true));
     //....................................................
     private function analyzeHttpRequest()
     {
+    // appRoot:         path from docRoot to base folder of app, mostly = ''; appRoot == '~/'
+    // pagePath:        forward-path from appRoot to requested folder, e.g. 'contact/ (-> excludes pages/)
+    // pathToRoot:      upward-path from requested folder to appRoot, e.g. ../
+    // redirectedPath:  if requests get redirected by .htaccess, this is the skipped folder(s), e.g. 'now_active/'
+
+    // $globalParams:   -> pagePath, pathToRoot, redirectedPath
+    // $_SESSION:       -> userAgent, pageName, currPagePath, lang
+
         global $globalParams, $pathToRoot;
-        $this->appPath = isset($_SERVER["SCRIPT_NAME"]) ? dirname($_SERVER["SCRIPT_NAME"]).'/' : '';
-        $requestUri = (isset($_SERVER["REQUEST_URI"])) ? $_SERVER["REQUEST_URI"] : '';
-        $httpReq = parse_url($requestUri);
-        $path0 = (isset($httpReq['path'])) ? substr($httpReq['path'], strlen($this->appPath)) : '';
 
-        // assert that no direct request to a file (other than .html) was received:
-        if (strpos($path0,'.') !== false) {
-            $pathComponents = path_info($path0);
-            $reqExt = $pathComponents['extension'];
-            if ($reqExt && !preg_match('/^x?html?$/', $reqExt)) {
-                $msg = "Unknown file type requested: '$path0'";
-                $this->page->addOverride($msg, true);
-                $pathComponents['dirname'] = '';
-                $path0 = '';
-            } else {
-                $filePath = $this->config->pagesPath.$path0;
-                if (!file_exists($filePath)) {
-                    $msg = "Unable to find requested page: '$path0'";
-                    $this->page->addOverride($msg, true);
-                    $pathComponents['dirname'] = '';
-                    $path0 = '';
-                }
-            }
+        $requestUri     = (isset($_SERVER["REQUEST_URI"])) ? rawurldecode($_SERVER["REQUEST_URI"]) : '';
+        $scriptPath     = dir_name($_SERVER['SCRIPT_NAME']);
+        $appRoot        = fixPath(commonSubstr( $scriptPath, dir_name($requestUri), '/'));
+        $redirectedPath = ($h = substr($scriptPath, strlen($appRoot))) ? $h : '';
+        $requestedPath  = dir_name($requestUri);
+        $requestedPagePath = dir_name(substr($requestUri, strlen($appRoot)));
+        if ($requestedPagePath == '.') {
+            $requestedPagePath = '';
+        }
+        $pagePath       = substr($requestedPath, strlen($appRoot));
+        $pathToRoot = preg_replace('|\w+/|', '../', $requestedPagePath);
+        if (!$pagePath) {
+            $pagePath = './';
         }
 
-        $path = $path0;
-        if ($path[strlen($path)-1] != '/') {
-            $p = dirname($path);
-            if ($p == '.') {
-                $this->pathToRoot = $pathToRoot = '';
-            } else {
-                $this->pathToRoot = $pathToRoot = preg_replace('|\w+/|', '../', $p);
-                $path = str_replace('//', '/', $path);
-            }
-            $path .= '/';
-        } else {
-            $this->pathToRoot = $pathToRoot = preg_replace('|\w+/|', '../', $path);
-            $path = str_replace('//', '/', $path);
-        }
-        $this->reqPagePath = $path;
-        $this->query = (isset($httpReq['query'])) ? $httpReq['query'] : '';
 
-        $globalParams['pathToRoot'] = $pathToRoot;
-
+        // get IP-address
         $ip = $_SERVER["HTTP_HOST"];
-        if (stripos($ip, 'localhost') !== false) {
+        if (stripos($ip, 'localhost') !== false) {  // case of localhost, not executed on host
             $ifconfig = shell_exec('ifconfig');
             $p = strpos($ifconfig, 'inet 192.168');
             $ip = substr($ifconfig, $p+5);
@@ -296,6 +305,8 @@ mylog(var_export($_SESSION, true));
         }
         $this->serverIP = $ip;
 
+
+        // get info about browser
 		if (function_exists('getallheaders')) {
 	        $browser = new WhichBrowser\Parser(getallheaders());
 			$_SESSION['userAgent'] = $this->userAgent = $browser->toString();
@@ -308,7 +319,13 @@ mylog(var_export($_SESSION, true));
 			$_SESSION['userAgent'] = $this->userAgent = 'unknown';
 		}
 
+
+        $this->reqPagePath = $pagePath;
+        //$globalParams['pagePath']   // forward-path from app-root to requested folder -> excludes pages/
+        $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
+        $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['legacyBrowser'] = $this->legacyBrowser;
+
         writeLog("UserAgent: [{$this->userAgent}]".(($this->legacyBrowser)?" (Legacy browser!)":''));
     } // analyzeHttpRequest
 
@@ -491,7 +508,6 @@ mylog(var_export($_SESSION, true));
             $this->trans->addVariable('page_name_class', 'page_'.$pageName);
 		}
         $_SESSION['pageName'] = $pageName;
-		mylog("setTransvars2 pageName: $pageName");
     }// setTransvars2
 
 
