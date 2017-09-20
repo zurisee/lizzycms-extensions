@@ -10,4 +10,28 @@ nav li {
 		border-bottom: none;
 		color: white;
 	}
+    .pure-menu-link {
+        color: #eee;
+    }
 }
+
+.pure-menu-item.has-children > ul {
+    display: none;
+}
+
+.page .header {
+    text-align: right;
+}
+
+.main {
+    min-height: 10em;
+}
+
+footer {
+    border-top: 1px solid #ccc;
+    padding-top: 1em;
+    .login-link {
+        float: right;
+    }
+}
+

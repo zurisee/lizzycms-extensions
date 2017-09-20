@@ -5,15 +5,15 @@
 #sitemapFile: my_sitemap.txt
 
 # Misc settings:
-caching: false
-pageSwitcher: true
+defaultLanguage: en
 permitUserVarDefs: true
 permitUserCode: true //sandboxed
 loadJQuery: true
-quickview: true
-enableEditing: true
+cssFramework: purecss
 
-#logPath: .#logs/
+logPath: .#logs/
+errorLogging: errlog.txt
+enableEditing: false
 
 __END__
 
