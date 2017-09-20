@@ -282,7 +282,8 @@ class Lizzy
         $appRoot        = fixPath(commonSubstr( $scriptPath, dir_name($requestUri), '/'));
         $redirectedPath = ($h = substr($scriptPath, strlen($appRoot))) ? $h : '';
         $requestedPath  = dir_name($requestUri);
-        $requestedPagePath = dir_name(substr($requestUri, strlen($appRoot)));
+        $ru = preg_replace('/\?.*/', '', $requestUri); // remove opt. '?arg'
+        $requestedPagePath = dir_name(substr($ru, strlen($appRoot)));
         if ($requestedPagePath == '.') {
             $requestedPagePath = '';
         }
@@ -966,7 +967,7 @@ EOT;
 			$this->page->addOverlay($overlay);
 		}
 
-		if ($_SESSION['user'] || $this->localCall) {
+		if (($_SESSION['user'] || $this->localCall) && $this->config->enableEditing){
 			if ($_SESSION['editingMode']) {
 				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
 			} else {
