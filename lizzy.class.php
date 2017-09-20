@@ -474,7 +474,7 @@ class Lizzy
 	private function setTransvars1()
 	{
 		if ($this->loggedInUser) {
-			$this->trans->addVariable('user', $this->loggedInUser, false);			
+			$this->trans->addVariable('user', $this->loggedInUser, false);
 			$this->trans->addVariable('Log-in', "<a href='?logout'>{{ Logged in as }} <strong>{$this->loggedInUser}</strong></a>");
 		} else {
 			$linkToThisPage = '~/'.$this->siteStructure->currPage;
@@ -967,7 +967,7 @@ EOT;
 			$this->page->addOverlay($overlay);
 		}
 
-		if (($_SESSION['user'] || $this->localCall) && $this->config->enableEditing){
+		if ($this->config->enableEditing && ($_SESSION['user'] || $this->localCall)) {
 			if ($_SESSION['editingMode']) {
 				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
 			} else {
