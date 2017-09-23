@@ -8,8 +8,8 @@
 define('CONFIG_PATH',           'config/');
 define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
-define('SUBSTITUTE_UNDEFINED',  1);
-define('SUBSTITUTE_ALL',        2);
+define('SUBSTITUTE_UNDEFINED',  1); // -> '{|{'     => delayed substitution within trans->render()
+define('SUBSTITUTE_ALL',        2); // -> '{||{'    => variables translated after cache-retrieval
 
 use Symfony\Component\Yaml\Yaml;
 use voku\helper\HtmlDomParser;
@@ -27,7 +27,6 @@ require_once SYSTEM_PATH.'image-resizer.class.php';
 require_once SYSTEM_PATH.'datastorage.class.php';
 require_once SYSTEM_PATH.'sandbox.class.php';
 
-
 $globalParams = array(
 	'pathToRoot' => null,			// ../../
 	'pagePath' => null,				// pages/xy/
@@ -43,9 +42,7 @@ class Lizzy
 	private $autoAttrDef = [];
 	private $httpSystemPath;
 	private $pathToRoot;
-	private $query;
 	private $reqPagePath;
-	private $appPath;
     private $trans;
 	private $siteStructure;
 	private $editingMode = false;
@@ -84,6 +81,7 @@ class Lizzy
 			$this->siteStructure = new SiteStructure($this->config, ''); //->list = false;
 			$this->currPage = '';
 			$this->trans = new Transvar($this->config, array(SYSTEM_PATH.'config/sys_vars.yaml', CONFIG_PATH.'user_variables.yaml'), $this->siteStructure); // loads static variables
+            $globalParams['pagePath'] = $this->config->pagesPath;
 		}
     } // __construct
 
@@ -110,9 +108,9 @@ class Lizzy
 
         $this->loadFile();		// get content file
 
-		$this->injectEditor();
-
 		$this->injectPageSwitcher();
+
+		$this->warnOnErrors();
 
 		$this->setTransvars2();
 
@@ -121,6 +119,8 @@ class Lizzy
 		$this->runUserInitCode();
 
 		$this->loadTemplate();
+
+        $this->injectEditor();
 
         $this->trans->doUserComputedVariables();
 
@@ -178,12 +178,22 @@ class Lizzy
         $serverName = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : 'localhost';
         $remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : '';
         $this->page = new Page($this->config);
-        $this->localCall = (($serverName == 'localhost') || (strpos($remoteAddress, '192.') === 0) || ($remoteAddress == '::1'));
+
+        if (($serverName == 'localhost') || ($remoteAddress == '::1')) {
+            if (($lc = getUrlArgStatic('localcall')) !== null) {
+                $this->localCall = $lc;
+            } else {
+                $this->localCall = true;
+            }
+        } else {
+            $this->localCall = false;
+            setStaticVariable('localcall', false);
+        }
 
         $this->config->isLocalhost = $this->localCall;
         $this->analyzeHttpRequest();
         $this->httpSystemPath = $this->pathToRoot.SYSTEM_PATH;
-        $this->auth = new Authentication($this->config->configPath.$this->config->usersFile);
+        $this->auth = new Authentication($this->config->configPath.$this->config->usersFile, $this->localCall);
         $this->loggedInUser = $this->auth->authenticate();
 
         $this->handleUrlArgs();
@@ -194,8 +204,12 @@ class Lizzy
         }
 
         $cliarg = getCliArg('compile');
-        if (isset($_GET['compile']) || ($cliarg !== null)) {
+        if ($cliarg) {
             $this->renderMD();
+        }
+        $cliarg = getCliArg('save');
+        if ($cliarg) {
+            $this->saveSitemapFile($sitemapFile);
         }
 
         $this->scss = new SCssCompiler($this->config->stylesPath.'scss/*.scss', $this->config->stylesPath, $this->localCall);
@@ -209,7 +223,8 @@ class Lizzy
     //....................................................
     private function setupErrorHandling()
     {
-        if ($_SESSION['user'] == 'admin') {     // set displaying errors on screen:
+        global $globalParams;
+        if ($this->auth->checkRole('editor')) {     // set displaying errors on screen:
             $old = ini_set('display_errors', '1');  // on
             error_reporting(E_ALL);
 
@@ -223,6 +238,7 @@ class Lizzy
         $errorLog = $this->config->errorLogging;
         if ($this->config->logPath && $errorLog) {
             $errorLogFile = $this->config->logPath . $errorLog;
+            $globalParams['errorLogFile'] = $errorLogFile;
             ini_set("log_errors", 1);
             ini_set("error_log", $errorLogFile);
             //error_log( "Error-logging started" );
@@ -310,14 +326,16 @@ class Lizzy
         // get info about browser
 		if (function_exists('getallheaders')) {
 	        $browser = new WhichBrowser\Parser(getallheaders());
-			$_SESSION['userAgent'] = $this->userAgent = $browser->toString();
+			$this->userAgent = $browser->toString();
+            setStaticVariable('userAgent', $this->userAgent);
 			$this->legacyBrowser = $browser->isBrowser('Internet Explorer', '<', '10') ||
 									$browser->isBrowser('Android Browser') ||
 									$browser->isOs('Windows', '<', '7') ||
 									$browser->isBrowser('Safari', '<', '5.1');
 		} else {
 			$this->legacyBrowser = false;
-			$_SESSION['userAgent'] = $this->userAgent = 'unknown';
+			$this->userAgent = 'unknown';
+            setStaticVariable('userAgent', 'unknown');
 		}
 
 
@@ -450,6 +468,10 @@ class Lizzy
 	//....................................................
 	private function injectEditor()
 	{
+        $admission = $this->auth->checkRole('editor');
+        if (!($admission || $this->localCall)) {
+            return;
+        }
 		if (!$this->config->enableEditing || !$this->editingMode) {
 			return;
 		}
@@ -484,8 +506,10 @@ class Lizzy
         $this->trans->addVariable('appRoot', $this->pathToRoot);			// e.g. '../'
         $this->trans->addVariable('systemPath', $this->systemPath);		// -> file access path
         $this->trans->addVariable('lang', $this->config->lang);
-		if  ($this->localCall || get_url_arg('debug', true)) {
-			writeLog('starting debug mode');
+		if  ($this->localCall || getUrlArgStatic('debug')) {
+            if  (!$this->localCall) {   // log only on non-local host
+                writeLog('starting debug mode');
+            }
         	$this->trans->addVariable('debug_class', ' debug');
 		}
 	} // setTransvars1
@@ -495,8 +519,9 @@ class Lizzy
 	//....................................................
 	private function setTransvars2()
 	{
-		$page = &$this->page;
-		if (isset($page->title)) {
+        global $globalParams;
+        $page = &$this->page;
+		if (isset($page->title)) {                                  // page_title
 			$this->trans->addVariable('page_title', $page->title, false);
 		} else {
 			$title = $this->trans->getVariable('page_title');
@@ -504,12 +529,36 @@ class Lizzy
 			$title = preg_replace('/\$page_name/', $pageName, $title);
 			$this->trans->addVariable('page_title', $title, false);
 		}
-		if ($this->siteStructure) {
+
+		if ($this->siteStructure) {                                 // page_name_class
             $page->pageName = $pageName = translateToIdentifier($this->siteStructure->currPageRec['name']);
             $this->trans->addVariable('page_name_class', 'page_'.$pageName);
 		}
-        $_SESSION['pageName'] = $pageName;
+        setStaticVariable('pageName', $pageName);
+
+
+        if ($this->auth->checkRole('editor')) {                     // debugInfo
+            $debugInfo = var_r($_SESSION, '$_SESSION');
+            $debugInfo .= var_r($globalParams, '$globalParams');
+
+            $debugInfo = "\n<div id='debugInfo'>$debugInfo</div>\n";
+            $this->trans->addVariable('debugInfo', $debugInfo);
+
+        }
     }// setTransvars2
+
+
+
+	//....................................................
+	private function warnOnErrors()
+    {
+        global $globalParams;
+        if ($this->config->enableEditing && ($this->auth->checkRole('editor'))) {
+            if (file_exists($globalParams['errorLogFile'])) {
+                $this->page->addMessage("Attention: Errors occured, see error-log file!");
+            }
+        }
+    } // warnOnErrors
 
 
 
@@ -540,11 +589,9 @@ class Lizzy
                 break;
 
             default:
-//                $out = '<!-- No Framework loaded -->';
                 $this->config->cssFramework = false;
                 break;
         }
-
     } // injectCssFramework
 
 
@@ -625,15 +672,10 @@ class Lizzy
 		if (isset($currRec['file'])) {
 			return $this->loadHtmlFile($folder, $currRec['file']);
 		}
-		if ($folder && !file_exists($this->config->pagesPath.$folder)) {
-			$folder = $this->config->pagesPath.$folder;
-			$mdFile = $folder.basename(substr($folder, 0, -1)).'.md';
-			mkdir($folder, 0777, true);
-			file_put_contents($mdFile, "#{$currRec['name']}\n");
-		} else {
-			$folder = $this->config->pagesPath.$folder;
-		}
-		$_SESSION['currPagePath'] = $folder;
+
+        $folder = $this->config->pagesPath.$folder;
+		$this->handleMissingFolder($folder);
+        setStaticVariable('currPagePath', $folder);
 
 		$mdFiles = getDir($folder.'*.md');
 		
@@ -688,6 +730,63 @@ class Lizzy
 		$this->writeCache();
         return $page;
 	} // loadFile
+
+
+
+	//....................................................
+    private function handleMissingFolder($folder)
+	{
+	    if ($this->loggedInUser || $this->localCall) {
+
+            if (!file_exists($folder)) {
+                $f = basename($folder);
+                $folders = getDirDeep('pages/', true, true);
+                $pagesPath = $this->config->pagesPath;
+                if (isset($folders[$f])) { // folder exists somewhere else, moved?
+                    if ($_GET['mvfolder'] == 'true') {
+                        $oldPath = $folders[$f];
+                        rename($oldPath, $folder);
+
+                    } elseif ($_GET['mvfolder'] == 'false') { // create new folder
+                        $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
+                        mkdir($folder, 0777, true);
+                        $name = $this->siteStructure->currPageRec['name'];
+                        file_put_contents($mdFile, "# $name\n");
+
+                    } else {        // ask admin whether to move folder
+                        $out = <<<EOT
+
+::: style:'border: 1px solid red; background: #800;  padding: 2em;'
+
+# Page moved?
+The requested page folder "$folder/" does not exist.
+
+However it appears to exist in a different location within the sitemap. Has it been moved?
+
+Previously: {tab7em} ``$pagesPath$f/``  
+New: {tab} ``$folder``
+
+{{ vgap }}
+
+Would you like to move the folder?
+
+[yes](?mvfolder=true) {{ space }} [no, prepare a new one](?mvfolder=false)
+
+:::
+
+EOT;
+                        $this->page->addOverride($out);
+                    }
+                } else {
+                    $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
+                    mkdir($folder, 0777, true);
+                    $name = $this->siteStructure->currPageRec['name'];
+                    file_put_contents($mdFile, "# $name\n");
+                }
+            }
+
+        }
+    } // handleMissingFolder
 
 
 
@@ -834,75 +933,59 @@ class Lizzy
 	//....................................................
 	private function handleUrlArgs()
 	{
-		if (isset($_GET['lang'])) {				// lang
-			$lang = get_url_arg('lang');
-			$this->config->lang = $lang;
-			$_SESSION['lang'] = $lang;
-		} elseif (isset($_SESSION['lang'])) {
-		    if (!$_SESSION['lang']) {
-                $_SESSION['lang'] = $this->config->defaultLanguage;
+        if (isset($_GET['reset'])) {			        // reset (cache)
+            $this->clearCache();
+            unset($_SESSION['lizzy']);
+            $this->userRec = false;
+        }
+
+
+        $lang = getUrlArgStatic('lang', true);			// lang
+	    if ($lang === null) {   // not yet initialized
+	        $lang = $this->config->defaultLanguage;
+	        setStaticVariable('lang', $lang);
+        }
+        $this->config->lang = $lang;
+
+
+		if (getUrlArg('logout')) {	// logout
+            $this->userRec = false;
+            setStaticVariable('user',false);
+            header("Location: ./"); // reload to get rid of url-arg ?logout
+            exit;
+		}
+
+
+        if ($nc = getStaticVariable('nc')) {		// nc
+            $this->config->caching = !$nc;
+        }
+
+        $this->timer = getUrlArgStatic('timer', true);				// timer
+
+
+        //====================== the following is restricted to editors and admins:
+        if ($editingPermitted = $this->auth->checkRole('editor')) {
+            if (isset($_GET['convert'])) {                                  // convert (pw to hash)
+                $password = getUrlArg('convert', true);
+                die(password_hash($password, PASSWORD_DEFAULT));
             }
-			$this->config->lang = $_SESSION['lang'];
+
+            $editingMode = getUrlArgStatic('edit', false, 'editingMode');// edit
+            if ($editingMode) {
+                $this->editingMode = true;
+                $this->config->pageSwitcher = false;
+                $this->config->caching = false;
+                setStaticVariable('nc', true);
+            }
+
+        } else {                    // no privileged permission: reset modes:
+            if (getUrlArg('edit')) {
+                $this->page->addMessage('{{ need to login to edit }}');
+            }
+            setStaticVariable('editingMode', false);
+            $this->editingMode = false;
 		}
 
-
-
-		if (isset($_GET['reset'])) {			// reset (cache)
-			$this->clearCache();
-			$_SESSION['user'] = false;
-			$_SESSION['timer'] = false;
-			$_SESSION['editingMode'] = false;
-			$_SESSION['nc'] = false;
-		}
-
-
-
-		if (isset($_GET['logout'])) {			// logout
-			$this->userRec = false;
-			$_SESSION['user'] = false;
-		}
-
-
-
-		if (isset($_GET['nc'])) {				// nc
-			$nc = get_url_arg('nc', true);
-			$this->config->caching = !$nc;
-			$_SESSION['nc'] = $nc;
-		} elseif (isset($_SESSION['nc']) && $_SESSION['nc']) {
-			$this->config->caching = false;
-		} else {
-			$this->config->caching = !$this->localCall;	// disable caching on localhost, unless nc arg provided
-		}
-
-
-
-		if (isset($_GET['convert']) && ($this->localCall)) {	// convert (pw to hash)
-			$password = get_url_arg('convert', true);
-			die(password_hash($password, PASSWORD_DEFAULT));
-		}
-
-
-
-		$editingMode = getUrlArgStatic('edit', 'editingMode');		// edit
-		if ($editingMode) {
-		
-			$permitted = $this->auth->checkRole('editor');
-			if ($permitted || $this->localCall){
-				$this->editingMode = true;
-				$this->config->pageSwitcher = false;
-				$_SESSION['editingMode'] = $editingMode;
-				$this->config->caching = false;
-				$_SESSION['nc'] = true;
-			} else {
-				$this->page->addMessage('{{ need to login to edit }}');
-				$_SESSION['editingMode'] = false;
-                $this->editingMode = false;
-			}
-		}
-
-
-
-		$this->timer = getUrlArgStatic('timer');				// timer
 	} // handleUrlArgs
 
 
@@ -915,19 +998,29 @@ class Lizzy
 		}
 
 
-		
-		if (isset($_GET['login']) && !$_SESSION['user']) {
-			if ($this->localCall || (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on')) {
-				$overridePage = $this->auth->authForm($this->auth->message);
-				$this->page->merge($overridePage);
-			} else {
-				$this->page->addOverride("{{ Warning insecure connection }}");
-			}
+        // user wants to login in and is not already logged in:
+		if (getUrlArg('login')) {                     // login
+		    if (getStaticVariable('user')) {    // already logged in -> logout first
+                $this->userRec = false;
+                setStaticVariable('user',false);
+            }
+
+            if (stripos($_SERVER["HTTP_HOST"], 'localhost') === false) {
+                if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on') {  // check secure line
+                    $overridePage = $this->auth->authForm($this->auth->message);
+                    $this->page->merge($overridePage);
+                } else {
+                    $this->page->addOverride("{{ Warning insecure connection }}");
+                }
+            } else {
+                $overridePage = $this->auth->authForm($this->auth->message);
+                $this->page->merge($overridePage);
+            }
 		}
 
 
 
-		if ($this->localCall && (isset($_GET['info']) || isset($_GET['list']))) {	// info
+		if ($this->localCall && (isset($_GET['info']) || isset($_GET['list']))) {	// list
 			$this->trans->printAll();
 			exit;
 		}
@@ -947,28 +1040,30 @@ class Lizzy
 <pre>
 Available URL-commands:
 
-<a href='?help'>?help</a>		this message
-<a href='?list'>?list</a>		list of transvars and macros()
-<a href='?config'>?config</a>		list configuration-items in the config-file
-<a href='?edit'>?edit</a>		start editing mode
-<a href='?convert=pw'>?convert=pw</a>	convert password to hash
-<a href='?login'>?login</a>		login
-<a href='?logout'>?logout</a>		logout
-<a href='?reset'>?reset</a>		clear cache
-<a href='?nc'>?nc</a>		supress caching (?nc=false to enable caching again)
-<a href='?lang=xy'>?lang=xy</a>	switch to given language (e.g. '?lang=en')
-<a href='?timer'>?timer</a>		switch timer on or off
-<a href='?printall'>?printall</a>	show all pages in one
-<a href='?touch'>?touch</a>		emulate touch mode
+<a href='?help'>?help</a>		    this message
+<a href='?list'>?list</a>		    list of transvars and macros()
+<a href='?config'>?config</a>		    list configuration-items in the config-file
+<a href='?localcall'>?localcall=false</a>   to test behavior as if on non-local host
+<a href='?edit'>?edit</a>		    start editing mode
+<a href='?convert=pw'>?convert=</a>	convert password to hash
+<a href='?login'>?login</a>		    login
+<a href='?logout'>?logout</a>		    logout
+<a href='?reset'>?reset</a>		    clear cache
+<a href='?nc'>?nc</a>		    supress caching (?nc=false to enable caching again)
+<a href='?lang=xy'>?lang=</a>	    switch to given language (e.g. '?lang=en')
+<a href='?timer'>?timer</a>		    switch timer on or off
+<a href='?printall'>?printall</a>	    show all pages in one
+<a href='?touch'>?touch</a>		    emulate touch mode
+<a href='?debug'>?debug</a>		    adds 'debug' class to page on non-local host
 
-post('md')=> MD-source		returns compiled markdown
+post('md')=> MD-source	returns compiled markdown
 </pre>
 EOT;
 			$this->page->addOverlay($overlay);
 		}
 
-		if ($this->config->enableEditing && ($_SESSION['user'] || $this->localCall)) {
-			if ($_SESSION['editingMode']) {
+		if ($this->config->enableEditing && $this->auth->checkRole('editor')) {
+			if (getStaticVariable('editingMode')) {
 				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
 			} else {
 				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>{{ turn edit mode on }}</a> | ");
@@ -977,18 +1072,10 @@ EOT;
 
 
 		
-		if (isset($_GET['touch'])) {			// touch
+		if (getUrlArgStatic('touch')) {			// touch
 			$this->trans->addVariable('debug_class', ' touch small-screen');
 		}
 
-
-
-//		if (isset($_GET['auto'])) {			// auto
-//			$cwd = getcwd();
-//			$cmd = $cwd.'/_lizzy/third-party/watch-folder.sh';
-//			shell_exec("/Users/sto/bin/cmd_k $cmd");
-//		}
-		
 	} // handleUrlArgs2
 
 
@@ -996,13 +1083,8 @@ EOT;
 	//....................................................
 	private function renderMD()
 	{
-		if (isset($_POST['md'])) {
-            $mdStr = $_POST['md'];
-//		} elseif (!$mdStr) { //??? what was that for...?
-        } else {
-			$mdStr = '';
-		}
-		$doSave = (isset($_GET['save']));
+        $mdStr = get_post_data('md', true);
+        $doSave = getUrlArg('save');
 		if ($doSave && ($filename = get_post_data('filename'))) {
 			$permitted = $this->auth->checkRole('editor');
 			if ($permitted || $this->localCall) {
@@ -1012,17 +1094,15 @@ EOT;
 					die("illegal file name: '$filename'");
 				}
 			} else {
-				die("Sorry, you have not permission to modify files on the server.");
+				die("Sorry, you have no permission to modify files on the server.");
 			}
 		}
 		$md = new MyMarkdown();
-//		$md->html5 = true;
-//		$options = '';
 		$pg = new Page;
 		$mdStr = $this->extractFrontmatter($mdStr, $pg);
 		$md->parse($mdStr, $pg);
 		$out = $pg->get('body');
-		if (isset($_GET['html'])) {
+		if (getUrlArg('html')) {
 			$out = "<pre>\n".htmlentities($out)."\n</pre>\n";
 		}
 		if ($mdStr) {
@@ -1046,6 +1126,27 @@ EOT;
 
 
 	//....................................................
+	private function saveSitemapFile($filename)
+	{
+        $str = get_post_data('sitemap', true);
+        $permitted = $this->auth->checkRole('editor');
+        if ($permitted || $this->localCall) {
+            // -> not really working, needs some more testing&improving!
+            //            try {
+            //                $tmp = new SiteStructure($this->config);
+            //            }
+            //            catch(Exception $e) {
+            //                echo 'Error in sitemap.txt: ' .$e->getMessage();
+            //            }
+            $this->storeFile($filename, $str);
+        } else {
+            die("Sorry, you have no permission to modify files on the server.");
+        }
+    } // saveSitemapFile
+
+
+
+	//....................................................
 	private function renderConfigHelp()
 	{
         $configItems = $this->config->configFileSettings;
@@ -1065,7 +1166,7 @@ EOT;
 		if (file_exists($filename)) {
 			preparePath($this->config->recycleBin);
 			$recycleFile = $this->config->recycleBin.str_replace('/', '_', $filename). ' ['.date('Y-m-d,H.i.s').']';
-			rename($filename, $recycleFile);
+			copy($filename, $recycleFile);
 		}
 		file_put_contents($filename, $content);
 	} // storeFile

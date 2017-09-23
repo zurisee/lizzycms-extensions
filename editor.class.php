@@ -5,7 +5,6 @@ class ContentEditor
     public function __construct($page)
     {
         $this->page = $page;
-//        $this->injectEditor();
     }
 
     public function injectEditor()

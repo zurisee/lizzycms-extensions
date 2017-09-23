@@ -17,8 +17,8 @@ require('UploadHandler.php');
 
 session_start();
 
-if (isset($_SESSION['currPagePath'])) {
-    $dataPath = $_SESSION['currPagePath'];
+if (isset($_SESSION['lizzy']['currPagePath'])) {
+    $dataPath = $_SESSION['lizzy']['currPagePath'];
 } else {
     $dataPath = 'assets/';
 }

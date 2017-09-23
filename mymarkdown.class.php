@@ -77,6 +77,7 @@ class MyMarkdown
 
 
     //....................................................
+    // public function
     public function parseStr($str, $page = false)
     {
         $str = $this->preprocess($str);
@@ -167,7 +168,7 @@ class MyMarkdown
 			$str = implode("\n", $lines);
 		}
 
-		$str = $this->handleInlineVariableDefitions($str);
+		$str = $this->handleInTextVariableDefitions($str);
 
 		$str = str_replace('\\[[', '@/@[@\\@', $str);       // shield \[[
 		$str = str_replace(['\\{', '\\}'], ['&#123;', '&#125;'], $str);    // shield \{{
@@ -175,8 +176,9 @@ class MyMarkdown
 		$str = stripNewlinesWithinTransvars($str);
 		$str = $this->handleVariables($str);
 		if ($this->page && $this->page->shieldHtml) {	// hide '<' from MD compiler
-			$str = preg_replace("/(?<!\n)\>/", '@/@gt@\\\\@', $str);
-			$str = str_replace('<', '@/@lt@\\\\@', $str);
+//			$str = preg_replace("/(?<!\n)\>/", '@/@gt@\\\\@', $str);
+//			$str = str_replace('<', '@/@lt@\\@', $str);
+			$str = str_replace(['<', '>'], ['@/@lt@\\@', '@/@gt@\\@'], $str);
 		}
 		$str = preg_replace('/^(\d{1,2})\!\./m', "%@start=$1@%\n\n1.", $str);
 		return $str;
@@ -185,7 +187,7 @@ class MyMarkdown
 
 
 	//....................................................
-	private function handleInlineVariableDefitions($str)
+	private function handleInTextVariableDefitions($str)
 	{
 	    list($p1, $p2) = strPosMatching($str, '{{{', '}}}');
 	    if ($p1) {
@@ -193,19 +195,23 @@ class MyMarkdown
         }
 	    while ($p1) {
             $before = substr($str, 0, $p1);
-            $val = trim(substr($str, $p1+3, $p2-$p1-3));
+            $val = substr($str, $p1+3, $p2-$p1-3);
             if (preg_match('/^(.*)\b([\w\-]+)\s*$/ms', $before, $m)) {
                 $before = $m[1];
                 $var = $m[2];
-                $val = $md->parse($val);
-                $val = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $val);
+                if ($val[0] == '&') {   // option to send variable content through the md-parser
+                    $val = $md->parse($val);
+                    $val = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $val);
+                } else {
+                    $val = substr($val, 1);
+                }
                 $this->trans->addVariable($var, $val);
             }
             $str = $before.substr($str, $p2+3);
             list($p1, $p2) = strPosMatching($str, '{{{', '}}}', $p1+1);
         }
 	    return $str;
-    } // handleInlineVariableDefitions
+    } // handleInTextVariableDefitions
 
 
 
@@ -391,6 +397,9 @@ class MyMarkdown
 			    $l = "<ol start='$olStart'>";
                 $olStart = false;
             }
+            if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
+                $l = $m[1];
+            }
 			$out .= $l."\n";
 		}
 		return $out;
@@ -401,6 +410,10 @@ class MyMarkdown
 	//....................................................
 	private function handleInlineStylings($line)    // [[ xy ]]
 	{
+	    if (strpos($line, '[[') === false) {
+	        return $line;
+        }
+
 		while (preg_match('/([^\[]*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
 			$s1 = $m[1];
 			$s2 = trim($m[2]);
@@ -424,7 +437,7 @@ class MyMarkdown
 			if (preg_match('/([^\#]*)\#([\w_\-]+)(.*)/', $s2, $mm)) {		// id
 				$id = $mm[2];
 				$id = " id='$id'";
-				$s2 = $mm[1].$mm[3];				
+				$s2 = $mm[1].$mm[3];
 			}
 
 			if (preg_match_all('/([\w\-]+):\s*([^;]*);?/', $s2, $mm)) {		// styles
@@ -434,7 +447,7 @@ class MyMarkdown
 				}
 				$style = " style='$style'";
 			}
-			
+
 			if ($span) {
 				$span = "<span$id$class$style>$span</span>";
 				$id = '';
@@ -442,7 +455,6 @@ class MyMarkdown
 				$style = '';
 			}
 
-			
 			if (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $s1, $mm)) {	// now insert into preceding tag
 				$s1 = $mm[1] . "$id$class$style>" . $mm[2] . $span;
 			} else {
@@ -452,43 +464,27 @@ class MyMarkdown
 		}
 		
 		$line = str_replace('@/@[@\\@', '[[', $line);
+
 		return $line;
 	} // handleInlineStylings
-
 
 
 
 	//....................................................
 	private function handleShieldedTags($l, $preCode)
 	{
-		if (preg_match("|@@/@([^@]+)@\\\\@@|", $l, $m)) {
-			$cl = $m[1];
-			$c1 = substr($cl, 0, 1);
-			$class = substr($cl, 1);
-			if ($cl == '/') {
-				$l = "</div>";
-				
-			} else {
-				if ($c1 == '#') {
-					$class = "id='$class'";
-				} elseif ($c1 == '.') {
-					$class = "class='$class'";
-				} else {
-					$class = "class='$cl'";
-				}
-				$l = "<div $class>";
-			}
-		}
-		if ($this->page && $this->page->shieldHtml) {
+		if ($this->page && $this->page->shieldHtml) {   // reverse HTML-Tag shields:
 			if ($preCode) {
-				$l = preg_replace(['|^\<p\>@/@lt@\\\\@|', '|@/@lt@\\\\@|'], '&lt;', $l);
-				$l = preg_replace(['|@/@gt@\\\\@\<\/p\>\s*$|', '|@/@gt@\\\\@|'], '&gt;', $l);
+//				$l = preg_replace(['|^\<p\>@/@lt@\\\\@|', '|@/@lt@\\\\@|'], '&lt;', $l);
+//				$l = preg_replace(['|@/@gt@\\@\<\/p\>\s*$|', '|@/@gt@\\@|'], '&gt;', $l);
+				$l = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['&lt;', '&gt;'], $l);
 			} else {
-				$l = preg_replace(['|^\<p\>@/@lt@\\\\@|', '|@/@lt@\\\\@|'], '<', $l);
-				$l = preg_replace('/@\/@gt@\\\\@/', '>', $l);
+//                $l = str_replace('@/@lt@\\@', '<', $l);
+                $l = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $l);
 			}
 		}
 		return $l;
 	} // handleShieldedTags
 
 } // class MyMarkdown
+

@@ -52,6 +52,7 @@ class SiteStructure
                 'name' => 'Default',
                 'level' => 0,
                 'folder' => '_unknown/',
+                'requestedFolder' => $currPage,
                 'isCurrPage' => true,
                 'inx' => '0',
                 'urlExt' => '',
@@ -109,21 +110,24 @@ class SiteStructure
                 $rec = [];
 				$rec['name'] = $name;
 				if (strlen($indent) == 0) {
-					$level = 0;
-				} elseif ($indent{0} == "\t") {
-					$level = strlen($indent);
-				} else {
-					$level = floor(strlen($indent) / $this->config->siteIdententation);
-				}
-				$rec['level'] = $level;
+                    $level = 0;
+                } else {
+				    // siteIdententation -> 4 blanks count as one tab
+                    // convert every 4 blanks to a tab, then remove all remaining blanks => level
+				    $indent = str_replace(str_repeat(' ', $this->config->siteIdententation), "\t", $indent);
+				    $indent = str_replace(' ', '', $indent);
+                    $level = strlen($indent);
+                }
 				if (($level - $lastLevel) > 1) {
-					die("Error in site.txt: indentation too large on line <br>\n<pre>$line</pre>");
+                    writeLog("Error in sitemap.txt: indentation on line $line (level: $level / lastLevel: $lastLevel)", 'errlog');
+                    $level = $lastLevel + 1;
 				}
+                $rec['level'] = $level;
 				$lastLevel = $level;
 				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
 				if ($m[3] && !preg_match('/^\s*:\s*$/', $m[3])) {
 					$json = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);
-					$args = convertYaml($json);
+					$args = convertYaml($json, false);
 					if ($args) {
 						foreach($args as $key => $value) {
 							if ($key == 'folder') {
@@ -385,11 +389,8 @@ EOT;
 		foreach($list as $key => $elem) {
 			if ($found || ($str == $elem['name']) || ($str == $elem['folder']) || ($str.'/' == $elem['folder'])) {
 				$folder = $this->config->pagesPath.$elem['folder'];
-				if (!$found && !file_exists($folder)) {
-					preparePath($folder);
-					$md = "# {$elem['name']}\n\n";
-					$file = $folder.translateToFilename($elem['name'], 'md');
-					file_put_contents($file, $md);
+				if (!$found && !file_exists($folder)) { // if folder doesen't exist, let it be created later in handleMissingFolder()
+                    return $key;
 				}
 				if (isset($elem['showthis']) && $elem['showthis']) {	// no 'skip empty folder trick' in case of showthis
 					return $key;

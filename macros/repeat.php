@@ -26,9 +26,23 @@ $this->addMacro($macroName, function ($args) {
     $variable = $this->getArg($macroName, 'variable', 'Variable to be repeated');
     $wrapperClass = $this->getArg($macroName, 'wrapperClass', 'Variable to be repeated', '.repeated');
     $indexPlaceholder = $this->getArg($macroName, 'indexPlaceholder', 'Pattern that will be replaced by the index number, e.g. "##"', '##');
+    $bare = $this->getArg($macroName, 'bare', 'Output will be rendered without any wrapper code');
+    $prefixVar = $this->getArg($macroName, 'prefixVar', 'Variable-value that will be prepended to output');
+    $prefixText = $this->getArg($macroName, 'prefixText', 'Text that will be prepended to output');
+    $postfixVar = $this->getArg($macroName, 'postfixVar', 'Variable-value that will be appended to output');
+    $postfixText = $this->getArg($macroName, 'postfixText', 'Text that will be appended to output');
+    $execMacros = $this->getArg($macroName, 'execMacros', 'Runs the output through Variable/Macro translation');
 
     if ($variable) {
         $text0 .= $this->getVariable($variable);
+    }
+
+    if ($prefixVar) {
+        $prefixText .= $this->getVariable($prefixVar);
+    }
+    $postfixText = str_replace('\n', "\n", $postfixText);
+    if ($postfixVar) {
+        $postfixText .= $this->getVariable($postfixVar);
     }
 
     $str = '';
@@ -38,11 +52,20 @@ $this->addMacro($macroName, function ($args) {
         } else {
             $text = $text0;
         }
-        $str .= ":::::::.$wrapperClass\n$text\n:::::::\n\n";
+        if (!$bare) {
+            $str .= ":::::::.$wrapperClass\n$text\n:::::::\n\n";
+        } else {
+            $str .= $text."\n";
+        }
     }
-    $str = compileMarkdownStr($str, true);
+    if (!$bare) {
+        $str .= "\n";
+    }
+    if ($execMacros) {
+        $str = $this->translateMacros($str);
+    }
 
-    return $str;
+    return $prefixText.$str.$postfixText;
 });
 
 

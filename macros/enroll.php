@@ -19,9 +19,6 @@ $this->addMacro($macroName, function () {
     $n_reserve = $this->getArg($macroName, 'n_reserve', '', 0);
     $data_path = $this->getArg($macroName, 'data_path', '', '~page/');
 
-//    $data_path = ($data_path) ? $data_path : '~page/';
-//	$data_path = resolvePath($data_path);
-
 	$enroll = new enroll($data_path, $this);
 	$out = $enroll->enroll($enroll_list_name, $n_needed, $n_reserve);
 	return $out;
@@ -67,7 +64,7 @@ class enroll
 	//----------------------------------------------------------------------
 	function handle_post_data() {
 		
-		if ($this->admin_mode && get_url_arg('enroll_result', true)) {
+		if ($this->admin_mode && getUrlArg('enroll_result')) {
 			$this->show_result = true;
 			return;
 		}
@@ -260,8 +257,7 @@ class enroll
 		}
 	
 		$out .= "\t</div> <!-- /enrollment_list -->\n  ";
-//		$out .= $dialogs;
-	
+
 		return $out;
 	} // m_enroll
 

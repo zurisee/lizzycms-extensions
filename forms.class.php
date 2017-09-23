@@ -14,7 +14,7 @@ require_once(SYSTEM_PATH.'form-def.class.php');
 class Forms
 {
 	private $page = false;
-	private $formDescr = [];		// FormDescriptor -> all info about all forms, stored in $_SESSION['formDescr']
+	private $formDescr = [];		// FormDescriptor -> all info about all forms, stored in $_SESSION['lizzy']['formDescr']
 	private $currFormIndex = null;	// index of current form within array of forms
 	private $currForm = null;		// shortcut to $formDescr[ $currFormIndex ]
 	private $currRecIndex = null;	// index of current element within array of form-elements
@@ -587,28 +587,28 @@ EOT;
 	private function saveFormDescr()
 	{
 		$formId = $this->currForm->formId;
-		$_SESSION[$formId] = serialize($this->formDescr);
+		$_SESSION['lizzy'][$formId] = serialize($this->formDescr);
 	} // saveFormDescr
 
 
 //-------------------------------------------------------------
 	private function restoreFormDescr($formId)
 	{
-		return (isset($_SESSION[$formId])) ? unserialize($_SESSION[$formId]) : null;
+		return (isset($_SESSION['lizzy'][$formId])) ? unserialize($_SESSION[$formId]) : null;
 	} // restoreFormDescr
 
 
 //-------------------------------------------------------------
 	private function saveUserSuppliedData($formId, $userSuppliedData)
 	{
-		$_SESSION[$formId.'_userData'] = serialize($userSuppliedData);
+		$_SESSION['lizzy'][$formId.'_userData'] = serialize($userSuppliedData);
 	} // saveUserSuppliedData
 
 
 //-------------------------------------------------------------
 	private function getUserSuppliedData($formId)
 	{
-		return (isset($_SESSION[$formId.'_userData'])) ? unserialize($_SESSION[$formId.'_userData']) : null;
+		return (isset($_SESSION['lizzy'][$formId.'_userData'])) ? unserialize($_SESSION[$formId.'_userData']) : null;
 	} // getUserSuppliedData
 
 
@@ -778,7 +778,7 @@ EOT;
 	public function clearCache()
 	{
 		if (isset($this->formId)) {
-			unset($_SESSION[$this->formId.'_userData']);
+			unset($_SESSION['lizzy'][$this->formId.'_userData']);
 		}
 	}
 	

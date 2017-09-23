@@ -11,8 +11,13 @@ section {
 	right: -10px;
 	width: 20px;
 	height: 20px;
-	background: url(../rsc/edit.png);
+	background: url(../rsc/edit.png) no-repeat;
+	color: rgba(0,0,0,0);
 	border: none;
+}
+.edit-sitemap .btn_editor {
+	top: 2px;
+	right: 2px;
 }
 main > section, .file-uploader {
 	border: 1px dotted #c9e139;

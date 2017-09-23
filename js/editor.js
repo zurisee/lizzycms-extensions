@@ -47,7 +47,16 @@ $( document ).ready(function() {
         }
     });
 
-	document.onkeydown = function(e) {
+    $('.edit-sitemap').prepend('<button class="btn_editor">Edit</button>');
+    $('.edit-sitemap .btn_editor').click(function() {
+        // alert('starting editor for sitemap');
+        startSitemapEditor();
+    });
+    $('body').addClass('editor-mode');
+
+
+
+    document.onkeydown = function(e) {
 		var href = window.location.pathname;
 		var keycode = (window.event) ? event.keyCode : e.keyCode;
 		//console.log(keycode);
@@ -84,58 +93,109 @@ $( document ).ready(function() {
 		}
 		cmdKeyPressed = false;
     };
-
-    function startEditor( $editBtn ) {
-        $editBtn.hide();
-        var $section = $editBtn.parent();
-        $edWrapper = $('div', $section);
-        origText = $edWrapper.html();
-        $edWrapper.html('');
-        $section.addClass('editing');
-        filename = $section.attr('data-filename');
-        
-        $.ajax({
-            type: "POST",
-            url: systemPath + '_ajax_server.php?getfile',
-            data: { filename: filename },
-            success: function( data ) {
-                var editingHtml = $('#editing-html').html();
-                editingHtml = editingHtml.replace(/@data/, data);
-                $edWrapper.html(editingHtml);
-                simplemde = new SimpleMDE({
-                    element: $('textarea', $edWrapper)[0],
-                    spellChecker: false,
-                    placeholder: 'Hier schreiben...',
-                    autofocus: true,
-                    allowAtxHeaderWithoutSpace: true,
-                    previewRender: function(plainText, preview) { // Async method
-                        setTimeout(function(){
-                            preview.innerHTML = customMarkdownParser(plainText);
-                        }, 250);
-                        return "Loading...";
-                    },
-                    hideIcons: ["guide"],
-                    showIcons: ["code", "table", "horizontal-rule"],
-                    tabSize: 4,
-
-
-                });
-                $('#btn_cancel').click(function() {
-					var href = window.location.pathname;
-					window.location.href = href;
-                });
-  
-                $('#btn_save').click(function() {
-					saveData( false );
-                });
-
-                $('#btn_done').click(function() {
-					saveData( true );
-                });
-            },
-        });
-    }
 });
+
+
+
+
+function startSitemapEditor() {
+    $('body').addClass('editing');
+    $('header').addClass('dispno');
+    $edWrapper = $('main section');
+    origText = $edWrapper.html();
+
+    filename = 'sitemap';
+    $.ajax({
+        type: "POST",
+        url: systemPath + '_ajax_server.php?getfile',
+        data: { filename: filename },
+        success: function( data ) {
+            var editingHtml = $('#editing-html').html();
+            editingHtml = editingHtml.replace(/@data/, data);
+            $edWrapper.html(editingHtml);
+            simplemde = new SimpleMDE({
+                element: $('textarea', $edWrapper)[0],
+                spellChecker: false,
+                placeholder: 'Hier schreiben...',
+                autofocus: true,
+                allowAtxHeaderWithoutSpace: true,
+                toolbar: false,
+                tabSize: 8,
+            });
+            $('#btn_cancel').click(function() {
+                var href = window.location.pathname;
+                window.location.href = href;
+            });
+
+            $('#btn_save').click(function() {
+                saveSitemapData( false );
+            });
+
+            $('#btn_done').click(function() {
+                saveSitemapData( true );
+            });
+        },
+    });
+} // startSitemapEditor
+
+
+
+
+
+
+function startEditor( $editBtn ) {
+    $editBtn.hide();
+    $('body').addClass('editing');
+    var $section = $editBtn.parent();
+    $edWrapper = $('div', $section);
+    origText = $edWrapper.html();
+    $edWrapper.html('');
+    $section.addClass('editing');
+    filename = $section.attr('data-filename');
+
+    $.ajax({
+        type: "POST",
+        url: systemPath + '_ajax_server.php?getfile',
+        data: { filename: filename },
+        success: function( data ) {
+            var editingHtml = $('#editing-html').html();
+            editingHtml = editingHtml.replace(/@data/, data);
+            $edWrapper.html(editingHtml);
+            simplemde = new SimpleMDE({
+                element: $('textarea', $edWrapper)[0],
+                spellChecker: false,
+                placeholder: 'Hier schreiben...',
+                autofocus: true,
+                allowAtxHeaderWithoutSpace: true,
+                previewRender: function(plainText, preview) { // Async method
+                    setTimeout(function(){
+                        preview.innerHTML = customMarkdownParser(plainText);
+                    }, 250);
+                    return "Loading...";
+                },
+                hideIcons: ["guide"],
+                showIcons: ["code", "table", "horizontal-rule"],
+                tabSize: 4,
+
+
+            });
+            $('#btn_cancel').click(function() {
+                var href = window.location.pathname;
+                window.location.href = href;
+            });
+
+            $('#btn_save').click(function() {
+                saveData( false );
+            });
+
+            $('#btn_done').click(function() {
+                saveData( true );
+            });
+        },
+    });
+}
+
+
 
 function abortEditor()
 {
@@ -145,6 +205,32 @@ function abortEditor()
 	simplemde = null;
 	$edWrapper.html(origText);
 } // abortEditor
+
+
+
+
+function saveSitemapData( leaveEditor )
+{
+	if (leaveEditor) {
+		hideElements(false);
+	}
+	var sitemap = simplemde.value();
+console.log(sitemap);
+	$.ajax({
+		type: "POST",
+		url: systemPath + '?save',
+		data: { filename: 'sitemap', sitemap: sitemap },
+		success: function( data ) {
+			if (leaveEditor) {
+				// var href = window.location.pathname;
+				window.location.href = window.location.pathname;
+			} else {
+                $('textarea.editor').html(data);
+			}
+		},
+	});
+} // saveSitemapData
+
 
 
 function saveData( leaveEditor )
@@ -160,14 +246,15 @@ function saveData( leaveEditor )
 		data: { filename: filename, md: mdStr },
 		success: function( data ) {
 			if (leaveEditor) {
-				var href = window.location.pathname;
-				window.location.href = href;
+				// var href = window.location.pathname;
+				window.location.href = window.location.pathname;
 			} else {
                 $('textarea.editor').html(data);
 			}
 		},
 	});
 } // saveData
+
 
 
 

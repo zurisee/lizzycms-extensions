@@ -82,16 +82,18 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $line = rtrim($lines[$current]);
     
         // detect class or id and fence length (can be more than 3 backticks)
-        $fence = substr($line, 0, $pos = strrpos($line, ':') + 1);
-        $class = trim(substr($line, $pos));
-        if ($class && ($class{0} == '#')) {
-            $block['id'] = substr($class, 1);
-            $class = '';
+        if (preg_match('/(:{3,10})(.*)/',$line, $m)) {
+            $fence = $m[1];
+            $rest = $m[2];
+        } else {
+            die("Error in Markdown source line $current: $line");
         }
-        if (!empty($class)) {
-            $block['class'] = trim(str_replace('.', ' ', $class));
-        }
-    
+
+        list($id, $class, $style) = $this->parseInlineStyling($rest);
+        $block['id'] = $id;
+        $block['class'] = $class;
+        $block['style'] = $style;
+
         // consume all lines until :::
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
             $line = $lines[$i];
@@ -117,9 +119,14 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         $class = ($block['class']) ? ' class="'.$block['class'].'"' : '';
         $id = ($block['id']) ? " id='{$block['id']}'" : '';
+        $style = ($block['style']) ? " style='{$block['style']}'" : '';
         $out = implode("\n", $block['content']);
         $out = \cebe\markdown\Markdown::parse($out);
-        return "<div$id$class>\n$out</div><!-- /{$block['class']}{$block['id']} -->\n\n";
+        $comment = ($block['id']) ? ' #'.$block['id'] : '';
+        $comment .= ($block['class']) ? ' .'.$block['class'] : '';
+        $comment .= ($block['style']) ? ' '.$block['style'] : '';
+
+        return "<div$id$class$style>\n$out</div><!-- /$comment -->\n\n";
     }
 
     // ---------------------------------------------------------------
@@ -136,7 +143,6 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $block = [
             'tabulator',
             'content' => [],
- //           'width' => [],
         ];
     
         // consume following lines containing {tab}
@@ -442,4 +448,38 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return "<$tag>" . $this->renderAbsy($element[1]) .  "</$tag>";
     }
+
+
+
+    //....................................................
+    private function parseInlineStyling($line)
+    {
+        // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
+        $id = '';
+        $class = '';
+        $style = '';
+        while ($line) {
+            if (preg_match('/([^\.]*)\.([\w_\-\.]+)(.*)/', $line, $mm)) {        // class
+                $class = str_replace('.', ' ', $mm[2]);
+                $line = $mm[1] . $mm[3];
+            }
+
+            if (preg_match('/([^\#]*)\#([\w_\-]+)(.*)/', $line, $mm)) {        // id
+                $id = $mm[2];
+                $line = $mm[1] . $mm[3];
+            }
+
+            $styles = parseArgumentStr($line,';');          // styles
+            if ($styles) {
+                foreach ($styles as $key => $val) {
+                    $style .= "$key:$val;";
+                }
+            }
+            $line = '';
+            $line = trim($line);
+        }
+        return [$id, $class, $style];
+    } // parseInlineStyling
+
+
 } // class MyMarkdown

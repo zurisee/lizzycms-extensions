@@ -5,15 +5,19 @@ class Authentication
 	public $message = '';
 	private $userRec = false;
 	
-    public function __construct($usersFile)
+    public function __construct($usersFile, $localCall)
     {
+        $this->localCall = $localCall;
     	$this->users = getYamlFile($usersFile);
-        $this->loginTimes = (isset($_SESSION['loginTimes'])) ? unserialize($_SESSION['loginTimes']) : array();
-		if (!isset($_SESSION['user'])) {
-			$_SESSION['user'] = false;
+        $this->loginTimes = (isset($_SESSION['lizzy']['loginTimes'])) ? unserialize($_SESSION['lizzy']['loginTimes']) : array();
+		if (!isset($_SESSION['lizzy']['user'])) {
+			$_SESSION['lizzy']['user'] = false;
 		}
     } // __construct
-    
+
+
+
+
     public function authenticate($credentials = false)
     {
         if (!$credentials && (isset($_POST['login_user']) && isset($_POST['login_password']))) {
@@ -21,15 +25,26 @@ class Authentication
         }
         if ($credentials) {
 			$this->checkCredentials($credentials);
+            if ($this->userRec['name']) {
+                header("Location: ./"); // reload to get rid of url-arg ?logout
+                exit;
+            }
 
 		} else {    // check credentials
 			$this->getLoggedInUser();
 		}
 		return $this->userRec['name'];
 	} // authenticate
-	
+
+
+
+
 	public function checkRole($requiredRole)
 	{
+	    if ($this->localCall) {
+	        return true;
+        }
+
 		if (isset($this->userRec['roles'])) {
 			$usersRoles = str_replace(' ', '', ','.$this->userRec['roles'].',');
 			if ((strpos($usersRoles, ",$requiredRole,") !== false) || (strpos($usersRoles, ",admin,") !== false)){
@@ -38,7 +53,10 @@ class Authentication
 		}
 		return false;
 	} // checkRole
-	
+
+
+
+
 	private function checkCredentials($credentials)
 	{
 		$requestingUser = $credentials['username'];
@@ -52,18 +70,21 @@ class Authentication
 		if (password_verify($credentials['password'], $rec['password'])) {
 			$this->loginTimes[$requestingUser] = time();
 			session_regenerate_id();
-			$_SESSION['loginTimes'] = serialize($this->loginTimes);
-			$_SESSION['user'] = $requestingUser;
+			$_SESSION['lizzy']['loginTimes'] = serialize($this->loginTimes);
+			$_SESSION['lizzy']['user'] = $requestingUser;
 			$this->userRec = $rec;
 		} else {
 			$this->message = '{{ Login failed }}';
 		}
 	} // checkCredentials
-			
+
+
+
+
 	private function getLoggedInUser()
 	{
 		$rec = false;
-		$user = isset($_SESSION['user']) ? $_SESSION['user'] : false;
+		$user = isset($_SESSION['lizzy']['user']) ? $_SESSION['lizzy']['user'] : false;
 		if ($user) {
 			$rec = (isset($this->users[$user])) ? $this->users[$user] : false;
 			$rec['name'] = $user;
@@ -76,14 +97,20 @@ class Authentication
 		}
 		$this->userRec = $rec;
     } // getLoggedInUser
-    
+
+
+
+
 	public function checkAdmission($lockProfile)
 	{
-		if ($lockProfile == false) {	// no restriction
+		if (($lockProfile == false) || $this->localCall) {	// no restriction
 			return true;
 		}
 		
 		$rec = $this->userRec;
+		if (!$rec) {
+		    return false;
+        }
 		$lockProfiles = explode(',', $lockProfile);
 		foreach ($lockProfiles as $lp) {
 			$lp = trim($lp);
@@ -98,7 +125,10 @@ class Authentication
 		}
 		return false;
 	} // checkAdmission
-	
+
+
+
+
     public function authForm($message)
     {	
 		$message = $this->message;

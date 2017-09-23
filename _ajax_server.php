@@ -31,32 +31,32 @@ class AjaxServer
 			exit('Hello, this is '.basename(__FILE__));
 		}
 		session_start();
-		if (!isset($_SESSION['userAgent'])) {
+		if (!isset($_SESSION['lizzy']['userAgent'])) {
             $this->clientID = '????';
             $this->mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
             exit('failed');
         }
 		$this->sessionId = session_id();
         $this->clientID = substr($this->sessionId, 0, 4);
-		if (!isset($_SESSION['hash'])) {
-			$_SESSION['hash'] = '#';
+		if (!isset($_SESSION['lizzy']['hash'])) {
+			$_SESSION['lizzy']['hash'] = '#';
 		}
-		if (!isset($_SESSION['lastSentData'])) {
-			$_SESSION['lastSentData'] = '';
+		if (!isset($_SESSION['lizzy']['lastSentData'])) {
+			$_SESSION['lizzy']['lastSentData'] = '';
 		}
-		if (!isset($_SESSION['db']) || !$_SESSION['db']) {
-			$db = $_SESSION['db'] = '';
+		if (!isset($_SESSION['lizzy']['db']) || !$_SESSION['lizzy']['db']) {
+			$db = $_SESSION['lizzy']['db'] = '';
 			$this->db = null;
 		} else {
-			$db = $_SESSION['db'];
+			$db = $_SESSION['lizzy']['db'];
 			$this->db = new DataStorage($db, $this->sessionId, true);
 		}
-		$this->hash = $_SESSION['hash'];
+		$this->hash = $_SESSION['lizzy']['hash'];
 		session_write_close();
         preparePath(DATA_PATH);
 
 		$this->remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : 'REMOTE_ADDR';
-		$this->userAgent = isset($_SESSION['userAgent']) ? $_SESSION['userAgent'] : $_SERVER["HTTP_USER_AGENT"];
+		$this->userAgent = isset($_SESSION['lizzy']['userAgent']) ? $_SESSION['lizzy']['userAgent'] : $_SERVER["HTTP_USER_AGENT"];
 		$this->isLocalhost = (($this->remoteAddress == 'localhost') || (strpos($this->remoteAddress, '192.') === 0) || ($this->remoteAddress == '::1'));
 		$this->handleUrlArguments();
 	} // __construct
@@ -108,15 +108,21 @@ class AjaxServer
 		if ($this->get_request_data('info') !== null) {	// respond with info-msg
 			$this->info();
 		}
+
 		if ($this->get_request_data('getfile') !== null) {	// send md-file
 			$md = '';
 			if (isset($_POST['filename'])) {
-				$approot = trunkPath($_SERVER['SCRIPT_FILENAME']);
-				$filename = $approot . $_POST['filename'];
-				if (file_exists($filename)) {
-					$md = file_get_contents($filename);
-				}
-			}
+			    $filename = $_POST['filename'];
+                $approot = trunkPath($_SERVER['SCRIPT_FILENAME']);
+                if ($filename == 'sitemap') {
+			        $filename = $approot . 'config/sitemap.txt';
+                } else {
+                    $filename = $approot . $filename;
+                }
+                if (file_exists($filename)) {
+                    $md = file_get_contents($filename);
+                }
+            }
 			exit($md);
 		}
 
@@ -130,7 +136,7 @@ class AjaxServer
 		$localhost = ($this->isLocalhost) ? 'yes':'no';
 		$msg = <<<EOT
 	<pre>
-	DB:		{$_SESSION['db']}
+	DB:		{$_SESSION['lizzy']['db']}
 	Hash:		{$this->hash}
 	Remote Addr:	{$this->remoteAddress}
 	UA:		{$this->userAgent}
@@ -148,12 +154,12 @@ EOT;
 		$this->mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent}");
 
 		session_start();
-		if (!isset($_SESSION['pageName'])) {
+		if (!isset($_SESSION['lizzy']['pageName'])) {
             exit('failed#conn');
         }
-        $dbFile = DATA_PATH.$_SESSION['pageName'].'.yaml';
-		$_SESSION['db'] = $dbFile;
-		$_SESSION['lastSentData'] = '';
+        $dbFile = DATA_PATH.$_SESSION['lizzy']['pageName'].'.yaml';
+		$_SESSION['lizzy']['db'] = $dbFile;
+		$_SESSION['lizzy']['lastSentData'] = '';
 		session_write_close();
 
         $this->mylog("Database File: $dbFile");
@@ -259,9 +265,9 @@ EOT;
 			$this->db->unlock('*');
 		}
 		session_start();
-		unset($_SESSION['hash']);
-		unset($_SESSION['lastSentData']);
-		unset($_SESSION['db']);
+		unset($_SESSION['lizzy']['hash']);
+		unset($_SESSION['lizzy']['lastSentData']);
+		unset($_SESSION['lizzy']['db']);
 		session_write_close();
 		exit('ok');
 	} // reset
@@ -277,11 +283,11 @@ EOT;
 		}
 		$dataToSend = json_encode($data);
 		session_start();
-		$lastSentData =	$_SESSION['lastSentData'];
+		$lastSentData =	$_SESSION['lizzy']['lastSentData'];
 		if (($dataToSend == $lastSentData) && !$force) {
 			$dataToSend = false;
 		} else {
-			$_SESSION['lastSentData'] = $dataToSend;
+			$_SESSION['lizzy']['lastSentData'] = $dataToSend;
         }
 		session_write_close();
 		if ($dataToSend) {

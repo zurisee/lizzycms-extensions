@@ -1,14 +1,14 @@
 <?php
 
 define('LOG_PATH', '.#logs/');
-define('MAX_URL_ARG_SIZE', 255);
+define('MAX_URL_ARG_SIZE', 16000);
 
 use Symfony\Component\Yaml\Yaml;
 use cebe\markdown\MarkdownExtra;
 
 
 //--------------------------------------------------------------
-function parseArgumentStr($str)
+function parseArgumentStr($str, $delim = ',')
 {
     $options = [];
     $str0 = $str;
@@ -47,7 +47,7 @@ function parseArgumentStr($str)
             }
 
         } else {    // -> bare value
-            $rest = strpbrk($str, ':,');
+            $rest = strpbrk($str, ':'.$delim);
             if ($rest) {
                 $val = substr($str, 0, strpos($str, $rest));
             } else {
@@ -62,7 +62,7 @@ function parseArgumentStr($str)
             $assoc = true;
             $key = $val;
 
-        } elseif (!$str || ($str[0] == ',')) {  // -> single value
+        } elseif (!$str || ($str[0] == $delim)) {  // -> single value
             if ($assoc) {
                 $options[$key] = $val;
             } else {
@@ -127,7 +127,7 @@ function csv_to_array($str, $delim = ',') {
 
 
 //--------------------------------------------------------------
-function convertYaml($str)
+function convertYaml($str, $stopOnError = true)
 {
 	$data = null;
 	if ($str) {
@@ -140,7 +140,12 @@ function convertYaml($str)
             try {
                 $data = Yaml::parse($str);
             } catch(Exception $e) {
-                die("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
+                if ($stopOnError) {
+                    die("Error in Yaml-Code: <pre>\n$str\n</pre>\n" . $e->getMessage());
+                } else {
+                    writeLog("Error in Yaml-Code: [$str] -> " . $e->getMessage(), 'errlog');
+                    return null;
+                }
             }
         }
 	}
@@ -328,17 +333,27 @@ function getDir($pat)
 
 
 //--------------------------------------------------------------
-function getDirDeep($path)
+function getDirDeep($path, $onlyDir = false, $assoc = false)
 {
+    $flag = ($onlyDir) ? GLOB_ONLYDIR : 0;
     $path = rtrim($path, '/').'/';
-    $dir = glob($path.'*');
+    $dir = glob($path.'*', $flag);
     foreach($dir as $inx => $entry) {
         if (is_dir($entry)) {
             $dir[$inx] = rtrim($entry, '/').'/';
-            $dir = array_merge($dir, getDirDeep($entry));
+            $dir = array_merge($dir, getDirDeep($entry, $flag));
         }
     }
-    return array_filter($dir, 'isNotShielded');
+    $dir = array_filter($dir, 'isNotShielded');
+    if ($assoc) {
+        $dd = [];
+        foreach ($dir as $e) {
+            $b = basename($e);
+            $dd[$b] = $e;
+        }
+        $dir = $dd;
+    }
+    return $dir;
 } // getDirDeep
 
 
@@ -634,7 +649,7 @@ function alphaIndexToInt($str, $headers = false, $ignoreCase = true)
 
 
 //-----------------------------------------------------------------------
-function getCliArg($argname)
+function getCliArg($argname, $stringMode = false)
 {
 	$cliarg = null;
 	if (isset($GLOBALS['argv'])) {
@@ -644,67 +659,70 @@ function getCliArg($argname)
 				break;
 			}
 		}
-	}
+	} else {
+	    $cliarg = getUrlArg($argname, $stringMode);
+    }
 	return $cliarg;
 } // getCliArg
 
 
 
 //-----------------------------------------------------------------------
-function get_url_arg($tag, $simple_mode = false, $unset = false) {
+function getUrlArg($tag, $stringMode = false, $unset = false) {
 // in case of arg that is present but empty:
-// simple_mode: returns false
-// otherwise, returns true
-	$out = false;
+// stringMode: returns value (i.e. '')
+// otherwise, returns true or false, note: empty string == true!
+// returns null if no url-arg was found
+	$out = null;
 	if (isset($_GET[$tag])) {
-		$arg = safeStr($_GET[$tag], false, true);
-		if ((!$arg && $simple_mode) || ($arg == 'true')) {
-			$out = true;
-		} elseif ((!$arg) || ($arg == 'false')) {
-			$out = false;
-		} else {
-			$out = $arg;
-		}
+	    if ($stringMode) {
+            $out = safeStr($_GET[$tag], false, true);
+        } else {
+            $arg = $_GET[$tag];
+            $out = (($arg != 'false') && ($arg != '0'));
+        }
 		if ($unset) {
 			unset($_GET[$tag]);
 		}
 	}
 	return $out;
-} // get_url_arg
+} // getUrlArg
 
 
 
 //-------------------------------------------------------------------------
-function getUrlArgStatic($tag, $varName = false)
+function getUrlArgStatic($tag, $stringMode = false, $varName = false)
+    // like get_url_arg()
+    // but returns previously received value if corresp. url-arg was not recived
+    // returns null if no value has ever been received
 {
 	if (!$varName) {
 		$varName = $tag;
 	}
-	$stat = false;
-	if (isset($_GET[$tag])) {
-		$arg = safeStr($_GET[$tag], false, true);
-		if (($arg == '') || ($arg == 'true') || ($arg == '1') || ($arg == 'on')) {
-			$stat = true;
-		} else {
-			$stat = false;
-		}
-		$_SESSION[$varName] = $stat;
-	} else {
-		if (!isset($_SESSION[$varName])) {
-			$_SESSION[$varName] = false;
-		}
-		$stat = $_SESSION[$varName];
-	}
-	return $stat;
+    $out = getUrlArg($tag, $stringMode);
+	if ($out !== null) {    // -> received new value:
+        $_SESSION['lizzy'][$varName] = $out;
+    } elseif (isset($_SESSION['lizzy'][$varName])) { // no val received, but found in static var:
+	    $out = $_SESSION['lizzy'][$varName];
+    }
+	return $out;
 } // getUrlArgStatic
 
 
 
 //-------------------------------------------------------------------------
-function getStaticArg($varName)
+function setStaticVariable($varName, $value)
 {
-	if (isset($_SESSION[$varName])) {
-		return $_SESSION[$varName];
+	$_SESSION['lizzy'][$varName] = $value;
+} // getStaticArg
+
+
+
+//-------------------------------------------------------------------------
+function getStaticVariable($varName)
+{
+	if (isset($_SESSION['lizzy'][$varName])) {
+		return $_SESSION['lizzy'][$varName];
 	} else {
 		return null;
 	}
@@ -721,11 +739,11 @@ function goto_page($target) {
 
 
 //------------------------------------------------------------
-function get_post_data($varName) {
+function get_post_data($varName, $permitNL = false) {
 	$out = false;
 	if (isset($_POST) && isset($_POST[$varName])) {
 		$out = $_POST[$varName];
-		$out = safeStr($out);
+		$out = safeStr($out, $permitNL);
 	}
 	return $out;
 } // get_post_data
@@ -793,12 +811,17 @@ function is_safe($str, $multiline = false) {
 
 
 //---------------------------------------------------------------------------
-function safeStr($str) {
+function safeStr($str, $permitNL = false) {
 	if (preg_match('/^\s*$/', $str)) {
 		return '';
 	}
 	$str = substr($str, 0, MAX_URL_ARG_SIZE);	// restrict size to safe value
-	$str = preg_replace('/[^[:print:]À-ž]/m', '#', $str);
+    if ($permitNL) {
+        $str = preg_replace("/[^[:print:]À-ž\n\t]/m", '#', $str);
+
+    } else {
+        $str = preg_replace('/[^[:print:]À-ž]/m', '#', $str);
+    }
 	return $str;
 } // safeStr
 
@@ -890,7 +913,7 @@ function writeLog($str, $destination = false)
 {
     global $globalParams;
 
-    if ($path = $globalParams['logPath']) {
+    if (($path = $globalParams['logPath']) && ($destination != 'errlog')) {
         if ($destination) {
             if (($destination[0] == '~') || ($destination[0] == '/')) {
                 $destination = resolvePath($destination);
@@ -900,6 +923,11 @@ function writeLog($str, $destination = false)
         } else {
             $destination = $path.'log.txt';
         }
+        preparePath($destination);
+        file_put_contents($destination, timestamp()."  $str\n", FILE_APPEND);
+
+    } elseif ($destination == 'errlog') {
+        $destination = $globalParams['errorLogFile'];
         preparePath($destination);
         file_put_contents($destination, timestamp()."  $str\n", FILE_APPEND);
     }
@@ -930,7 +958,7 @@ function shield_str($s) {
 //------------------------------------------------------------------------------
 function var_r($var, $varName = '', $flat = false)
 {
-	$out = "<p>$varName:</p>\n<pre>".var_export($var, true)."\n</pre>\n";
+	$out = "<div><pre>$varName: ".var_export($var, true)."\n</pre></div>\n";
 	if ($flat) {
 		$out = pre_replace("/\n/", '', $out);
 	}
@@ -943,7 +971,7 @@ function var_r($var, $varName = '', $flat = false)
 function darken($hexColor, $decr) {
 	if (!preg_match('/^\#([\da-f])([\da-f])([\da-f])$/i', trim($hexColor), $m) &&
 		!preg_match('/^\#([\da-f][\da-f])([\da-f][\da-f])([\da-f][\da-f])$/i', trim($hexColor), $m)) {
-			die("$macroName: bad color value: $hexColor");
+			return "#000 /*bad color value submitted to darken(): $hexColor*/";
 	}
 	if (!$decr) {
 		$decr = 1;
@@ -1140,8 +1168,6 @@ function findNextPattern($str, $pat, $p1 = 0)
 //-----------------------------------------------------------------------------
 function trunkPath($path, $n = 1)
 {
-//	$path = ($path[strlen($path)-1] == '/') ? rtrim($path, '/') : dirname($path);
-//	return implode('/', explode('/', $path, -$n)).'/';
 	if ($n>0) {
 		$path = ($path[strlen($path)-1] == '/') ? rtrim($path, '/') : dirname($path);
 		return implode('/', explode('/', $path, -$n)).'/';

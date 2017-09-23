@@ -6,6 +6,7 @@
         "corveda/php-sandbox": "^2.0",
         "leafo/scssphp": "^0.6.7",
         "voku/simple_html_dom": "^3.1",
-        "whichbrowser/parser": "^2.0"
+        "whichbrowser/parser": "^2.0",
+        "ralouphie/getallheaders": "^2.0"
     }
 }

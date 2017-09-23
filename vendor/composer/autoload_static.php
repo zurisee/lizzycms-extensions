@@ -23,6 +23,7 @@ class ComposerStaticInitf773fc72f2df5c5db6b45dc256600503
         'e59f725579f9974327c76777296d6dcc' => __DIR__ . '/..' . '/symfony/polyfill/src/Mbstring/bootstrap.php',
         'b46ad4fe52f4d1899a2951c7e6ea56b0' => __DIR__ . '/..' . '/voku/portable-utf8/bootstrap.php',
         '350ec649700e6d4fcc83967bb680fcdd' => __DIR__ . '/..' . '/corveda/php-sandbox/src/functions.php',
+        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
     );
 
     public static $prefixLengthsPsr4 = array (

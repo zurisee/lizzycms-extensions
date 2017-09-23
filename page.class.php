@@ -134,7 +134,7 @@ class Page
     {
         $this->addToListProperty($this->jsFiles, $str, $replace);
 		if ($persisent) {
-			$_SESSION["lizzyPersistentJsFiles"] .= $str;
+			$_SESSION['lizzy']["lizzyPersistentJsFiles"] .= $str;
 		}
     } // addJsFiles
 
@@ -224,9 +224,9 @@ class Page
     protected function addToProperty(&$property, $var, $replace = false)
     {
         if ($replace) {
-            $property = $var;
+            $property = $var."\n";
         } else {
-            $property .= $var;
+            $property .= $var."\n";
         }
     } // addToProperty
 

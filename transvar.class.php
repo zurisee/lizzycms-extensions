@@ -2,12 +2,18 @@
 /*
  *	Lizzy - small and fast web-page rendering engine
  *
- *	Replacement-Variables and Macros()
+ *	Substitution-Variables and Macros()
+ *
+ * Usage: {{ }}
+ *      or {{x }} where x:
+ *          ^   = omit if var is not defined
+ *          #   = comment out, skip altogether
+ *          !   = force late processing
+ *          &   = force md compilation after evaluation
 */
 
 use Symfony\Component\Yaml\Yaml;
 
-$WHITELIST_FUNCS = ['basename'];
 
 class Transvar
 {
@@ -76,7 +82,7 @@ class Transvar
 
 		while (strpos($html, '{{') !== false) {
 			$html = $this->translateMacros($html);
-			$html = $this->translateVars($html);
+			$html = $this->translateVars($html, 'app', $substitutionMode);
 		}
 
 		$html = $this->translateSpecialVars($html);
@@ -86,6 +92,239 @@ class Transvar
 
 		return $html;
 	} // render
+
+
+
+	//....................................................
+	private function translateMacros($str, $namespace = 'app')
+	{
+        list($p1, $p2) = strPosMatching($str);
+		while (($p1 !== false)) {
+			$commmented = false;
+			$optional = false;
+            $dontCache = false;
+            $compileMd = false;
+			$var = trim(substr($str, $p1+2, $p2-$p1-2));
+			if (!$var) {
+			    $str = substr($str,0,$p1).substr($str, $p2+2);
+                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+                continue;
+            }
+            // handle macro-modifiers, e.g. {{# }}
+			$c1 = $var{0};
+            if (strpos('#^!&', $c1) !== false) {
+				$var = trim(substr($var, 1));
+				if ($c1 == '#') {
+					$commmented = true;
+				} elseif ($c1 == '!') {
+					$dontCache = true;
+				} elseif ($c1 == '&') {
+                    $compileMd = true;
+				} else {
+					$optional = true;
+				}
+			}
+
+            if ($dontCache) {
+                $str = substr($str, 0, $p1) . "{||{ $var }||}" . substr($str, $p2 + 2);
+
+            } else {
+                if (!$commmented) {
+                    if (strpos($var, '{{') !== false) {
+                        $var = $this->translateMacros($var, $namespace);
+                    }
+                    $var = str_replace("\n", '', $var);    // remove newlines
+                    if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {    // macro
+                        $macro = $m[1];
+
+                        $argStr = $m[2];
+                        $this->macroArgs[$macro] = parseArgumentStr($argStr);
+                        $this->macroInx = 0;
+
+                        if (!isset($this->macros[$macro])) {     // macro already loaded
+                            $this->loadMacro($macro);
+                        }
+                        if (isset($this->macros[$macro])) { // and try to execute it
+                            $val = $this->macros[$macro]($this);
+                            if ($compileMd) {
+                                $val = compileMarkdownStr($val);
+                            }
+
+                        } elseif ($optional) {              // was marked as optional '{{^', so just skip it
+                            $val = '';
+
+                        } else {                            // macro not defined, raise error
+                            die("Error: undefined macro: '$macro()'");
+                        }
+
+                    } else {                                        // variable
+                        list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1 + 1);
+                        continue;
+                    }
+                }
+                if ($commmented) {
+                    $str = substr($str, 0, $p1) . substr($str, $p2 + 2);
+                } elseif (!$optional && ($val === false)) {
+                    $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2);
+                } else {
+                    $str = substr($str, 0, $p1) . $val . substr($str, $p2 + 2);
+                }
+            }
+            list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+		}
+		return $str;
+	} // translateMacros
+
+
+
+	//....................................................
+	public function translateVars($str, $namespace = 'app', $substitutionMode = false)
+	{
+		list($p1, $p2) = strPosMatching($str);
+		while (($p1 !== false)) {
+			$commmented = false;
+			$optional = false;
+            $dontCache = false;
+            $compileMd = false;
+			$var = trim(substr($str, $p1+2, $p2-$p1-2));
+            if (!$var) {
+                $str = substr($str,0,$p1).substr($str, $p2+2);
+                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+                continue;
+            }
+
+            if (preg_match('/^ [\#^\!\&]? \s* [\w_]+ \( /x', $var)) { // skip macros()
+                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+                continue;
+            }
+
+            // handle var-modifiers, e.g. {{^ }}
+            $c1 = $var{0};
+			if (strpos('#^!&',$c1) !== false) {
+				$var = trim(substr($var, 1));
+				if ($c1 == '#') {
+					$commmented = true;
+				} elseif ($c1 == '!') {
+					$dontCache = true;
+                } elseif ($c1 == '&') {
+                    $compileMd = true;
+                } else {
+					$optional = true;
+				}
+			}
+            if ($dontCache) {
+                $str = substr($str, 0, $p1) . "{||{ $var }||}" . substr($str, $p2 + 2);
+
+            } else {
+                if (!$commmented) {
+                    if (strpos($var, '{{') !== false) {
+                        $var = $this->translateVars($var, $namespace);
+                    }
+                    $var = str_replace("\n", '', $var);    // remove newlines
+                    if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {    // macro
+                        list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1 + 1);
+                        continue;
+
+                    } else {                                        // variable
+                        $val = $this->getVariable($var, '', $namespace, $substitutionMode);
+                        if ($val === false) {
+                            $val = $this->doUserCode($var, $this->config->permitUserCode);
+                        }
+                        if ($compileMd) {
+                            $val = compileMarkdownStr($val);
+                        }
+                    }
+                }
+                
+                if ($commmented) {
+                    $str = substr($str, 0, $p1) . substr($str, $p2 + 2);
+
+                } elseif ($dontCache) {
+                    $str = substr($str, 0, $p1) . "{||{ $var }||}" . substr($str, $p2 + 2);
+
+                } elseif (!$optional && ($val === false)) {
+                    if ($substitutionMode == SUBSTITUTE_UNDEFINED) {     // undefined are substituted only in the last round
+                        $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2); // replace with itself (minus {{}})
+                    } else {
+                        $str = substr($str, 0, $p1) . "{|{ $var }|}" . substr($str, $p2 + 2);
+                        $p1 += 4;
+                    }
+
+                } else {
+                    $str = substr($str, 0, $p1) . $val . substr($str, $p2 + 2);   // replace with value
+                }
+            }
+			list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+		}
+		return $str;
+	} // translateVars
+
+
+
+
+
+    //....................................................
+    public function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
+    {
+        $inx = $this->macroInx++;
+        $this->macroFieldnames[$macroName][$inx] = $name;
+        if (preg_match('/^\d/', $name)) {
+            $index = intval($name);
+            if ($index < sizeof($this->macroArgs[$macroName])) {
+                $out = array_values($this->macroArgs[$macroName])[$index];
+                $this->macroHelp[$macroName][ array_keys($this->macroArgs[$macroName])[$index] ] = $help;
+            }
+
+        } else {
+            if (isset($this->macroArgs[$macroName][$name])) {
+                $out = $this->macroArgs[$macroName][$name];
+                $this->macroHelp[$macroName][$name] = $help;
+
+            } else {
+                if (isset($this->macroArgs[$macroName][$inx])) {
+                    $out = $this->macroArgs[$macroName][$inx];
+                    $this->macroHelp[$macroName][$name] = $help;
+                } elseif ($default !== null) {
+                    $out = $default;
+                } else {
+                    $out = null;
+                }
+            }
+        }
+        if ($removeNl) {
+            $out = str_replace('↵', '', $out);
+        }
+        return $out;
+    } // getArg
+
+
+
+    //....................................................
+    private function getArgsArray($macroName, $removeNl = true)
+    {
+        if ($removeNl) {
+            $a = [];
+            foreach ($this->macroArgs[$macroName] as $key => $value) {
+                $key = trim(str_replace(['↵',"'"], '', $key));
+                $a[$key] = $value;
+            }
+            return $a;
+        } else {
+            return $this->macroArgs[$macroName];
+        }
+    } // getArgsArray
+
+
+
+    //....................................................
+    public function getInvocationCounter($macroName)
+    {
+        if (!isset($this->invocationCounter[$macroName])) {
+            $this->invocationCounter[$macroName] = 0;
+        }
+        $this->invocationCounter[$macroName]++;
+        return $this->invocationCounter[$macroName];
+    } // getInvocationCounter
 
 
 
@@ -250,7 +489,7 @@ class Transvar
 
 
     //....................................................
-    public function getVariable($key, $lang = '', $namespace = '')
+    public function getVariable($key, $lang = '', $namespace = '', $substitutionMode = false)
     {
         $lang = ($lang) ? $lang : $this->config->lang;
         $out = false;
@@ -262,12 +501,23 @@ class Transvar
             }
             if (!is_array($entry)) {
                 $out = $entry;
+
+            } elseif (isset($entry['dontCache']) && $entry['dontCache'] && ($substitutionMode != SUBSTITUTE_ALL)) {
+                $out = "{||{ $key }||}";
+
             } elseif (isset($entry[$lang])) {
                 $out = $entry[$lang];
+
             } elseif (isset($entry['_'])) {
                 $out = $entry['_'];
+
+            } elseif (isset($entry['*'])) {
+                $out = $entry['*'];
+
+            } elseif (isset($entry[$this->config->defaultLanguage])) {  // lang-rcs nor explicit default found -> use default-lang
+                $out = $entry[$this->config->defaultLanguage];
+
             } else {    // this should only happen if a wrong value gets into $_SESSION
-                //$out = $entry[$this->config->defaultLanguage];
                 die("Error: transvar without propre value: '$key' \n(".basename(__FILE__).':'.__LINE__.")");
             }
         } else {
@@ -290,7 +540,7 @@ class Transvar
 
 
     //....................................................
-	private function shieldSpecialVars($str)
+    private function shieldSpecialVars($str)
     {
         $str = preg_replace('/\{\{\^?\s*head_injections\s*\}\}/', '@@head_injections@@', $str);
         $str = preg_replace('/\{\{\^?\s*body_end_injections\s*\}\}/', '@@body_end_injections@@', $str);
@@ -299,8 +549,8 @@ class Transvar
 
 
 
-	//....................................................
-	private function translateSpecialVars($str)
+    //....................................................
+    private function translateSpecialVars($str)
     {
         $this->addVariable('head_injections', $this->page->headInjections());
         $str = str_replace('@@head_injections@@', $this->getVariable('head_injections'), $str);
@@ -312,203 +562,6 @@ class Transvar
 
         return $str;
     } // translateSpecialVars
-
-
-
-	//....................................................
-	private function translateMacros($str, $namespace = 'app')
-	{
-        list($p1, $p2) = strPosMatching($str);
-		while (($p1 !== false)) {
-			$commmented = false;
-			$optional = false;
-			$var = trim(substr($str, $p1+2, $p2-$p1-2));
-			if (!$var) {
-			    $str = substr($str,0,$p1).substr($str, $p2+2);
-                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-                continue;
-            }
-			$c1 = $var{0};
-			if (($c1 == '#') || ($c1 == '^')) {
-				$var = trim(substr($var, 1));
-				if ($c1 == '#') {
-					$commmented = true;
-				} else {
-					$optional = true;
-				}
-			}
-			if (!$commmented) {
-				if (strpos($var, '{{') !== false) {
-					$var = $this->translateMacros($var, $namespace);
-				}
-				$var = str_replace("\n", '', $var);	// remove newlines
-				if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {	// macro
-					$macro = $m[1];
-
-                    $argStr = $m[2];
-                    $this->macroArgs[$macro] = parseArgumentStr( $argStr );
-                    $this->macroInx = 0;
-
-					if (isset($this->macros[$macro])) {     // macro already loaded
-						$val = $this->macros[$macro]( $this );     // do the actual macro call
-
-					} else {
-						$this->loadMacro($macro);
-						if (isset($this->macros[$macro])) {
-							$val = $this->macros[$macro]( $this );
-
-						} else {
-							die("Error: undefined macro: '$macro()'");
-						}
-					}
-					$val = $this->translateMacros($val, $macro);
-
-				} else {										// variable
-                    list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-                    continue;
-				}
-			}
-			if ($commmented) {
-				$str = substr($str, 0, $p1).substr($str, $p2+2);
-			} elseif (!$optional && ($val === false)) {
-				$str = substr($str, 0, $p1).$var.substr($str, $p2+2);
-			} else {
-				$str = substr($str, 0, $p1).$val.substr($str, $p2+2);
-			}
-            list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-		}
-		return $str;
-	} // translateMacros
-
-
-
-	//....................................................
-	public function getArg($macroName, $name, $help = '', $default = null, $removeNl = true /*, $dynamic = false*/)
-	{
-        $inx = $this->macroInx++;
-        $this->macroFieldnames[$macroName][$inx] = $name;
-	    if (preg_match('/^\d/', $name)) {
-	        $index = intval($name);
-	        if ($index < sizeof($this->macroArgs[$macroName])) {
-	            $out = array_values($this->macroArgs[$macroName])[$index];
-                $this->macroHelp[$macroName][ array_keys($this->macroArgs[$macroName])[$index] ] = $help;
-            }
-
-        } else {
-            if (isset($this->macroArgs[$macroName][$name])) {
-                $out = $this->macroArgs[$macroName][$name];
-                $this->macroHelp[$macroName][$name] = $help;
-
-            } else {
-                if (isset($this->macroArgs[$macroName][$inx])) {
-                    $out = $this->macroArgs[$macroName][$inx];
-                    $this->macroHelp[$macroName][$name] = $help;
-                } elseif ($default !== null) {
-                    $out = $default;
-                } else {
-                    $out = null;
-                }
-            }
-        }
-        if ($removeNl) {
-            $out = str_replace('↵', '', $out);
-        }
-        return $out;
-    } // getArg
-
-
-
-	//....................................................
-	private function getArgsArray($macroName, $removeNl = true)
-	{
-        if ($removeNl) {
-            $a = [];
-            foreach ($this->macroArgs[$macroName] as $key => $value) {
-                $key = trim(str_replace(['↵',"'"], '', $key));
-                $a[$key] = $value;
-            }
-            return $a;
-        } else {
-            return $this->macroArgs[$macroName];
-        }
-    } // getArgsArray
-
-
-
-    public function getInvocationCounter($macroName)
-    {
-        if (!isset($this->invocationCounter[$macroName])) {
-            $this->invocationCounter[$macroName] = 0;
-        }
-        $this->invocationCounter[$macroName]++;
-        return $this->invocationCounter[$macroName];
-    } // getInvocationCounter
-
-
-
-	//....................................................
-	public function translateVars($str, $namespace = 'app', $substitutionMode = false)
-	{
-		list($p1, $p2) = strPosMatching($str);
-		while (($p1 !== false)) {
-			$commmented = false;
-            $dontCache = false;
-			$optional = false;
-			$var = trim(substr($str, $p1+2, $p2-$p1-2));
-            if (!$var) {
-                $str = substr($str,0,$p1).substr($str, $p2+2);
-                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-                continue;
-            }
-            $c1 = $var{0};
-			if (($c1 == '#') || ($c1 == '^') || ($c1 == '!')) {
-				$var = trim(substr($var, 1));
-				if ($c1 == '#') {
-					$commmented = true;
-				} elseif ($c1 == '!') {
-					$dontCache = true;
-				} else {
-					$optional = true;
-				}
-			}
-			if (!$commmented) {
-				if (strpos($var, '{{') !== false) {
-					$var = $this->translateVars($var, $namespace);
-				}
-				$var = str_replace("\n", '', $var);	// remove newlines
-				if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {	// macro
-                    list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-                    continue;
-
-				} else {										// variable
-					$val = $this->getVariable($var, '', $namespace);
-					if ($val === false) {
-						$val = $this->doUserCode($var, $this->config->permitUserCode);
-					}
-				}
-			}
-			if ($commmented) {
-				$str = substr($str, 0, $p1).substr($str, $p2+2);
-
-			} elseif ($dontCache) {
-                $str = substr($str, 0, $p1) ."{||{ $var }||}". substr($str, $p2 + 2);
-
-			} elseif (!$optional && ($val === false)) {
-                if ($substitutionMode == SUBSTITUTE_UNDEFINED) {     // undefined are substituted only in the last round
-                    $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2); // replace with itself (minus {{}})
-                } else {
-                    $str = substr($str, 0, $p1) ."{|{ $var }|}". substr($str, $p2 + 2);
-                    $p1 += 4;
-                }
-
-            } else {
-				$str = substr($str, 0, $p1).$val.substr($str, $p2+2);   // replace with value
-            }
-			list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-		}
-		return $str;
-	} // translateVars
-
 
 
     //....................................................

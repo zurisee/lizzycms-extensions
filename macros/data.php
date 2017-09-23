@@ -25,20 +25,17 @@ $this->addMacro($macroName, function ()
     global $dataSrc, $currRecNo, $data;
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-	$inx = $this->invocationCounter[$macroName] + 1;
-	$sys = $this->config->systemPath;
 
     $src = $this->getArg($macroName, 'dataSrc', 'Name of source-file, e.g. "data.csv"; -> returns number records found');
-    $nRecs = $this->getArg($macroName, 'numberOfRecords', '"true" returns the number of records');
+    $nRecs = $this->getArg($macroName, 'nRecs', '"true" returns the number of records');
     $recNo = $this->getArg($macroName, 'recNo', '"next" or explicit record-number; -> no return value');
     $field = $this->getArg($macroName, 'field', 'Name of data-field to be returned; -> returns field-value');
     $altField = $this->getArg($macroName, 'altField', 'Name of alternative field, if primary field is empty');
+    $quiet = $this->getArg($macroName, 'quiet', 'Name of alternative field, if primary field is empty');
 
     $str = '';
     if ($src) {
-        $dataSrc = $src;
-
-        $dataSrc = resolvePath($dataSrc, true);
+        $dataSrc = resolvePath($src, true);
         if (!fileExists($dataSrc)) {
             die("Error: file not found: '$dataSrc'");
         }
@@ -46,11 +43,10 @@ $this->addMacro($macroName, function ()
         $ds = new DataStorage($dataSrc);
 
         $data = $ds->read();
-        return '';
     }
     if ($nRecs) {
         if (isset($data)) {
-            return sizeof($data) - 1;
+            $str = sizeof($data) - 1;
         } else {
             die("Error: no data source has been specified");
         }
@@ -67,7 +63,9 @@ $this->addMacro($macroName, function ()
         } else {
             $currRecNo = $recNo;
         }
-        return "\n<!-- Rec: $currRecNo -->";
+        if (!$quiet) {
+            $str .= "\n<!-- Rec: $currRecNo -->";
+        }
     }
 
 
@@ -105,7 +103,7 @@ $this->addMacro($macroName, function ()
 function findField($data, $fieldName)
 {
     foreach ($data[0] as $n => $name) {
-        if (stripos($name, $fieldName) !== false) {
+        if (strcasecmp($name, $fieldName) == 0) {
             return $n;
         }
     }
