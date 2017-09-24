@@ -10,8 +10,11 @@ use cebe\markdown\MarkdownExtra;
 //--------------------------------------------------------------
 function parseArgumentStr($str, $delim = ',')
 {
-    $options = [];
     $str0 = $str;
+    if (!($str = trim($str))) {
+        return false;
+    }
+    $options = [];
 
     // for compatibility with Yaml, the argument list may come enclosed in { }
     if (preg_match('/^\s* (\{? \s*)  (.*)  \} \s* $/x', $str, $m)) {

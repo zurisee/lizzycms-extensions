@@ -60,6 +60,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         return $out;
     }
 
+
+
+
     // ---------------------------------------------------------------
     protected function identifyDivBlock($line, $lines, $current)
     {
@@ -129,10 +132,13 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         return "<div$id$class$style>\n$out</div><!-- /$comment -->\n\n";
     }
 
+
+
+
     // ---------------------------------------------------------------
     protected function identifyTabulator($line, $lines, $current)
     {
-        if (preg_match('/\{tab.{0,5}\}/', $line)) {
+        if (preg_match('/\{\{\s*tab[^\}]*\s*\}\}/', $line)) {
             return 'tabulator';
         }
         return false;
@@ -144,28 +150,29 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             'tabulator',
             'content' => [],
         ];
-    
+
+        $last = $current;
         // consume following lines containing {tab}
-        for($i = $current, $count = count($lines); $i < $count; $i++) {
+        for($i = $current, $count = count($lines); $i < $count-1; $i++) {
             $line = $lines[$i];
-            if (preg_match('/\{tab.{0,5}\}/', $line)) {
+            if (preg_match('/\{\{\s* tab[^\}]* \s*\}\}/x', $line, $m)) {
                 $block['content'][] = $line;
+                $last = $i;
+            } elseif (empty($line)) {
+                continue;
             } else {
+                $i--;
                 break;
             }
         }
-        return [$block, $i];
+        return [$block, $last];
     }
 
     protected function renderTabulator($block)
     {
-        $width = &$block['width'];
-        $style = '';
         $out = '';
         foreach ($block['content'] as $l) {
-            $l = preg_replace('/\{tab\s*(\w*)\s*\}/', "@@$1@@tab@@", $l);
-            $l = \cebe\markdown\Markdown::parse($l);
-            $l = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $l);
+            $l = preg_replace('/\{\{\s* tab \(? \s* ([^\)\s\}]*) \s* \)? \s*\}\}/x', "@@$1@@tab@@", $l);
             $parts = explode('@@tab@@', $l);
             $line = '';
             foreach ($parts as $n => $elem) {
@@ -176,12 +183,19 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                     }
                 }
                 $style = (isset($width[$n])) ? " style='width:{$width[$n]};'" : '';
-                $line .= "<span class='c".($n+1)."'$style>$elem</span>";
+                $line .= "@/@lt@\\@span class='c".($n+1)."'$style@/@gt@\\@$elem@/@lt@\\@/span@/@gt@\\@";
             }
-            $out .= "\t\t<div>$line</div>\n";
+            $out .= "@/@lt@\\@div@/@gt@\\@$line@/@lt@\\@/div@/@gt@\\@\n";
         }
-        return "\t<div class='tabulator_wrapper'>\n$out\t</div>\n";
+        $out = \cebe\markdown\Markdown::parse($out);
+        $out = str_replace(['<p>', '</p>'], '', $out);
+        $out = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $out);
+        $out = str_replace('<div>', "\t<div>", $out);
+        return "<div class='tabulator_wrapper'>\n$out</div>\n";
     }
+
+
+
 
     // ---------------------------------------------------------------
     protected function identifyDefinitionList($line, $lines, $current)
@@ -228,6 +242,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     }
 
 
+
+
      // ---------------------------------------------------------------
     /**
      * @marker ~~
@@ -255,6 +271,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         return '<del>' . $this->renderAbsy($element[1]) . '</del>';
     }
 
+
+
+
      // ---------------------------------------------------------------
    /**
      * @marker ~
@@ -263,7 +282,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseSubscript($markdown)
     {
         // check whether the marker really represents a strikethrough (i.e. there is a closing ~)
-        if (preg_match('/^~(.{1,8}?)~/', $markdown, $matches)) {
+        if (preg_match('/^~(.{1,9}?)~/', $markdown, $matches)) {
             return [
                 // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
                 // other inline markdown elements inside this tag
@@ -282,6 +301,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         return '<sub>' . $this->renderAbsy($element[1]) . '</sub>';
     }
 
+
+
+
     // ---------------------------------------------------------------
     /**
      * @marker ^
@@ -289,7 +311,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseSuperscript($markdown)
     {
         // check whether the marker really represents a strikethrough (i.e. there is a closing ~)
-        if (preg_match('/^\^(.+?)\^/', $markdown, $matches)) {
+        if (preg_match('/^\^(.{1,11}?)\^/', $markdown, $matches)) {
             return [
                 // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
                 // other inline markdown elements inside this tag
@@ -307,6 +329,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         return '<sup>' . $this->renderAbsy($element[1]) . '</sup>';
     }
+
+
+
 
     // ---------------------------------------------------------------
     /**
@@ -335,6 +360,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     }
 
 
+
+
     // ---------------------------------------------------------------
     /**
      * @marker ++
@@ -361,6 +388,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         return '<ins>' . $this->renderAbsy($element[1]) . '</ins>';
     }
 
+
+
+
     // ---------------------------------------------------------------
     /**
      * @marker __
@@ -386,6 +416,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         return '<span class="underline">' . $this->renderAbsy($element[1]) . '</span>';
     }
+
+
+
 
     // ---------------------------------------------------------------
     /**
@@ -417,6 +450,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return "<$tag>" . $this->renderAbsy($element[1]) .  "</$tag>";
     }
+
+
+
 
     // ---------------------------------------------------------------
     /**
@@ -451,33 +487,51 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
 
+
     //....................................................
     private function parseInlineStyling($line)
     {
         // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
+        if (!$line) {
+            return ['', '', ''];
+        }
         $id = '';
         $class = '';
         $style = '';
-        while ($line) {
-            if (preg_match('/([^\.]*)\.([\w_\-\.]+)(.*)/', $line, $mm)) {        // class
-                $class = str_replace('.', ' ', $mm[2]);
-                $line = $mm[1] . $mm[3];
+        if (preg_match('/\s* ([\.\#]?) ([\w_\-]+) (.*)/x', $line, $mm)) {        // class or id
+            if (empty($mm[3]) || ($mm[3]{0} != ':')) {
+                if ($mm[1] == '#') {
+                    $id = $mm[2];
+                } else {
+                    $class = $mm[2];
+                }
+                $line = $mm[3];
             }
+        }
 
-            if (preg_match('/([^\#]*)\#([\w_\-]+)(.*)/', $line, $mm)) {        // id
+        while ($line) {
+
+            if (preg_match('/([^\#]*) \# ([\w_\-]+)(.*)/x', $line, $mm)) {        // id
                 $id = $mm[2];
                 $line = $mm[1] . $mm[3];
+            } elseif (preg_match('/([^\.]*) \. ([\w_\-\.]+) (.*)/x', $line, $mm)) {        // class
+                $class .= ' '.str_replace('.', ' ', $mm[2]);
+                $line = $mm[1] . $mm[3];
+            } else {
+                break;
             }
+            $line = trim($line);
+        }
 
-            $styles = parseArgumentStr($line,';');          // styles
-            if ($styles) {
-                foreach ($styles as $key => $val) {
+        $styles = parseArgumentStr($line,';');          // styles
+        if ($styles) {
+            foreach ($styles as $key => $val) {
+                if (!is_int($key)) {
                     $style .= "$key:$val;";
                 }
             }
-            $line = '';
-            $line = trim($line);
         }
+            $line = '';
         return [$id, $class, $style];
     } // parseInlineStyling
 

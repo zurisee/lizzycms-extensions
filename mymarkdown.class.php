@@ -411,7 +411,8 @@ class MyMarkdown
 	private function handleInlineStylings($line)    // [[ xy ]]
 	{
 	    if (strpos($line, '[[') === false) {
-	        return $line;
+            $line = str_replace('@/@[@\\@', '[[', $line);
+            return $line;
         }
 
 		while (preg_match('/([^\[]*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
@@ -475,11 +476,8 @@ class MyMarkdown
 	{
 		if ($this->page && $this->page->shieldHtml) {   // reverse HTML-Tag shields:
 			if ($preCode) {
-//				$l = preg_replace(['|^\<p\>@/@lt@\\\\@|', '|@/@lt@\\\\@|'], '&lt;', $l);
-//				$l = preg_replace(['|@/@gt@\\@\<\/p\>\s*$|', '|@/@gt@\\@|'], '&gt;', $l);
 				$l = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['&lt;', '&gt;'], $l);
 			} else {
-//                $l = str_replace('@/@lt@\\@', '<', $l);
                 $l = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $l);
 			}
 		}

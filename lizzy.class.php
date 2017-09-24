@@ -541,7 +541,7 @@ class Lizzy
             $debugInfo = var_r($_SESSION, '$_SESSION');
             $debugInfo .= var_r($globalParams, '$globalParams');
 
-            $debugInfo = "\n<div id='debugInfo'>$debugInfo</div>\n";
+            $debugInfo = "\n<div id='debugInfo'><p><strong>DebugInfo:</strong></p>$debugInfo</div>\n";
             $this->trans->addVariable('debugInfo', $debugInfo);
 
         }
@@ -743,11 +743,12 @@ class Lizzy
                 $folders = getDirDeep('pages/', true, true);
                 $pagesPath = $this->config->pagesPath;
                 if (isset($folders[$f])) { // folder exists somewhere else, moved?
-                    if ($_GET['mvfolder'] == 'true') {
+                    if (($mf=getUrlArg('mvfolder')) == 'true') {
                         $oldPath = $folders[$f];
                         rename($oldPath, $folder);
 
-                    } elseif ($_GET['mvfolder'] == 'false') { // create new folder
+//                    } elseif ($_GET['mvfolder'] == 'false') { // create new folder
+                    } elseif ($mf == 'false') { // create new folder
                         $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
                         mkdir($folder, 0777, true);
                         $name = $this->siteStructure->currPageRec['name'];
@@ -763,8 +764,8 @@ The requested page folder "$folder/" does not exist.
 
 However it appears to exist in a different location within the sitemap. Has it been moved?
 
-Previously: {tab7em} ``$pagesPath$f/``  
-New: {tab} ``$folder``
+Previously: {{tab(7em)}} ``$pagesPath$f/``  
+New: {{tab}} ``$folder``
 
 {{ vgap }}
 
