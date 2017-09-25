@@ -51,7 +51,7 @@ class DataStorage
 	            touch($this->dataFile);
 
 			} else {
-			    die("DataStorage: unable to create file '$dbFile'");
+                fatalError("DataStorage: unable to create file '$dbFile'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
         }
         $this->sid = $sid;
@@ -186,7 +186,7 @@ class DataStorage
     public function convert($source, $destinationFormat)
     {
         if (!file_exists($source)) {
-            die("DataStorage::convert: file not found '$source'");
+            fatalError("DataStorage::convert: file not found '$source'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
         $this->dataFile = $source;
         $pi = pathinfo($source);

@@ -10,6 +10,9 @@ define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 define('SUBSTITUTE_UNDEFINED',  1); // -> '{|{'     => delayed substitution within trans->render()
 define('SUBSTITUTE_ALL',        2); // -> '{||{'    => variables translated after cache-retrieval
+define('ERROR_LOG',             '.#logs/errlog.txt'); // -> '{||{'    => variables translated after cache-retrieval
+define('ERROR_LOG_ARCHIVE',     '.#logs/errlog_archive.txt'); // -> '{||{'    => variables translated after cache-retrieval
+define('RECYCLE_BIN_PATH',      '.#recycleBin/');
 
 use Symfony\Component\Yaml\Yaml;
 use voku\helper\HtmlDomParser;
@@ -158,7 +161,8 @@ class Lizzy
         if (file_exists($configFile)) {
             $this->configFile = $configFile;
         } else {
-            die("Error: file not found: ".$configFile);
+            fatalError("Error: file not found: ".$configFile, 'File: '.__FILE__.' Line: '.__LINE__);
+
         }
 
         session_start();
@@ -175,11 +179,9 @@ class Lizzy
             }
         }
 
-        $serverName = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : 'localhost';
-        $remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : '';
         $this->page = new Page($this->config);
 
-        if (($serverName == 'localhost') || ($remoteAddress == '::1')) {
+        if (isLocalCall()) {
             if (($lc = getUrlArgStatic('localcall')) !== null) {
                 $this->localCall = $lc;
             } else {
@@ -233,7 +235,7 @@ class Lizzy
             error_reporting(0);
         }
         if ($old === false) {
-        	die("Error setting up error handling... (no kidding)");
+            fatalError("Error setting up error handling... (no kidding)", 'File: '.__FILE__.' Line: '.__LINE__);
         }
         $errorLog = $this->config->errorLogging;
         if ($this->config->logPath && $errorLog) {
@@ -294,6 +296,7 @@ class Lizzy
         global $globalParams, $pathToRoot;
 
         $requestUri     = (isset($_SERVER["REQUEST_URI"])) ? rawurldecode($_SERVER["REQUEST_URI"]) : '';
+        $absAppRoot     = dir_name($_SERVER['SCRIPT_FILENAME']);
         $scriptPath     = dir_name($_SERVER['SCRIPT_NAME']);
         $appRoot        = fixPath(commonSubstr( $scriptPath, dir_name($requestUri), '/'));
         $redirectedPath = ($h = substr($scriptPath, strlen($appRoot))) ? $h : '';
@@ -341,6 +344,8 @@ class Lizzy
 
         $this->reqPagePath = $pagePath;
         //$globalParams['pagePath']   // forward-path from app-root to requested folder -> excludes pages/
+        $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
+        $globalParams['appRoot'] = $appRoot;  // path from docRoot to base folder of app, e.g. 'on/'
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['legacyBrowser'] = $this->legacyBrowser;
@@ -443,7 +448,7 @@ class Lizzy
         $tidy = '/usr/local/Cellar/tidy-html5/5.4.0/bin/tidy';
         $tidyOptions = ' -q -config /usr/local/Cellar/tidy-html5/5.4.0/options.txt';
         if (!file_exists($tidy)) {
-            die("Error: file not found: '$tidy'");
+            fatalError("Error: file not found: '$tidy'", 'File: '.__FILE__.' Line: '.__LINE__);
             return $html;
         }
         file_put_contents('tmp.html', $html);
@@ -555,7 +560,13 @@ class Lizzy
         global $globalParams;
         if ($this->config->enableEditing && ($this->auth->checkRole('editor'))) {
             if (file_exists($globalParams['errorLogFile'])) {
-                $this->page->addMessage("Attention: Errors occured, see error-log file!");
+                $logFileName = $globalParams['errorLogFile'];
+                $logMsg = file_get_contents($logFileName);
+                $logArchiveFileName = str_replace('.txt', '', $logFileName)."_archive.txt";
+                file_put_contents($logArchiveFileName, $logMsg, FILE_APPEND);
+                unlink($logFileName);
+                $logMsg = shieldMD($logMsg);
+                $this->page->addMessage("Attention: Errors occured, see error-log file!\n$logMsg");
             }
         }
     } // warnOnErrors
@@ -655,6 +666,7 @@ class Lizzy
 	//....................................................
     private function loadFile($loadRaw = false)
 	{
+        global $globalParams;
 		$page = &$this->page;
 
 		if (!$this->siteStructure->currPageRec) {
@@ -701,6 +713,7 @@ class Lizzy
 					continue;
 				}
 			}
+            $globalParams['lastLoadedFile'] = $f;
 			$mdStr = getFile($f, true);
 			$mdStr = $this->extractFrontmatter($mdStr, $newPage);
 			$md->parse($mdStr, $newPage);
@@ -824,7 +837,7 @@ EOT;
 			try {
 				$hdr = convertYaml($yaml);
 			} catch(Exception $e) {
-				die("Error in Yaml-Code: <pre>\n$yaml\n</pre>\n".$e->getMessage());
+                fatalError("Error in Yaml-Code: <pre>\n$yaml\n</pre>\n".$e->getMessage(), 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 			if ($hdr) {
 				$page->merge( $hdr );
@@ -934,10 +947,14 @@ EOT;
 	//....................................................
 	private function handleUrlArgs()
 	{
-        if (isset($_GET['reset'])) {			        // reset (cache)
+        if (getUrlArg('reset')) {			            // reset (cache)
             $this->clearCache();
-            unset($_SESSION['lizzy']);
+            unset($_SESSION['lizzy']);                      // reset SESSION data
             $this->userRec = false;
+
+            if (file_exists(ERROR_LOG_ARCHIVE)) {   // clear error log
+                unlink(ERROR_LOG_ARCHIVE);
+            }
         }
 
 
@@ -952,8 +969,7 @@ EOT;
 		if (getUrlArg('logout')) {	// logout
             $this->userRec = false;
             setStaticVariable('user',false);
-            header("Location: ./"); // reload to get rid of url-arg ?logout
-            exit;
+            reloadAgent(); // reload to get rid of url-arg ?logout
 		}
 
 
@@ -968,7 +984,7 @@ EOT;
         if ($editingPermitted = $this->auth->checkRole('editor')) {
             if (isset($_GET['convert'])) {                                  // convert (pw to hash)
                 $password = getUrlArg('convert', true);
-                die(password_hash($password, PASSWORD_DEFAULT));
+                fatalError(password_hash($password, PASSWORD_DEFAULT), 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
             $editingMode = getUrlArgStatic('edit', false, 'editingMode');// edit
@@ -994,13 +1010,18 @@ EOT;
 	//....................................................
 	private function handleUrlArgs2()
 	{
-		if (isset($_GET['printall'])) {							// printall
-			die( $this->printall() );
+        if (!$this->auth->checkRole('editor')) {  // only localhost or logged in as editor/admin role
+            return;
+        }
+
+
+		if ($n = getUrlArg('printall', true)) {							// printall
+			exit( $this->printall($n) );
 		}
 
 
         // user wants to login in and is not already logged in:
-		if (getUrlArg('login')) {                     // login
+		if (getUrlArg('login')) {                                               // login
 		    if (getStaticVariable('user')) {    // already logged in -> logout first
                 $this->userRec = false;
                 setStaticVariable('user',false);
@@ -1021,21 +1042,33 @@ EOT;
 
 
 
-		if ($this->localCall && (isset($_GET['info']) || isset($_GET['list']))) {	// list
+		if (getUrlArg('log')) {    // log
+            if (file_exists(ERROR_LOG_ARCHIVE)) {
+                $str = file_get_contents(ERROR_LOG_ARCHIVE);
+            } else {
+                $str = "Currently no error log available.";
+            }
+            $str = "<pre>$str</pre>";
+            $this->page->addOverlay($str);
+        }
+
+
+
+        if (getUrlArg('info') || getUrlArg('list')) {    // info or list
 			$this->trans->printAll();
 			exit;
 		}
 
 
-		
-		if ($this->localCall && (isset($_GET['config']))) {	// config
+
+        if (getUrlArg('config')) {                              // config
 			$str = $this->renderConfigHelp();
             $this->page->addOverlay($str);
 		}
 
 
 
-		if ($this->localCall && isset($_GET['help'])) {		// help
+        if (getUrlArg('help')) {                              // help
 			$overlay = <<<EOT
 <h1>Lizzy Help</h1>
 <pre>
@@ -1044,36 +1077,41 @@ Available URL-commands:
 <a href='?help'>?help</a>		    this message
 <a href='?list'>?list</a>		    list of transvars and macros()
 <a href='?config'>?config</a>		    list configuration-items in the config-file
-<a href='?localcall'>?localcall=false</a>   to test behavior as if on non-local host
-<a href='?edit'>?edit</a>		    start editing mode
-<a href='?convert=pw'>?convert=</a>	convert password to hash
+<a href='?localcall'>?localcall=false</a>    to test behavior as if on non-local host
+<a href='?edit'>?edit</a>		    start editing mode *)
+<a href='?convert=pw'>?convert=</a>	    convert password to hash
 <a href='?login'>?login</a>		    login
 <a href='?logout'>?logout</a>		    logout
-<a href='?reset'>?reset</a>		    clear cache
-<a href='?nc'>?nc</a>		    supress caching (?nc=false to enable caching again)
-<a href='?lang=xy'>?lang=</a>	    switch to given language (e.g. '?lang=en')
-<a href='?timer'>?timer</a>		    switch timer on or off
+<a href='?reset'>?reset</a>		    clear cache, session-variables and error-log
+<a href='?nc'>?nc</a>		    supress caching (?nc=false to enable caching again)  *)
+<a href='?lang=xy'>?lang=</a>	            switch to given language (e.g. '?lang=en')  *)
+<a href='?timer'>?timer</a>		    switch timer on or off  *)
 <a href='?printall'>?printall</a>	    show all pages in one
-<a href='?touch'>?touch</a>		    emulate touch mode
-<a href='?debug'>?debug</a>		    adds 'debug' class to page on non-local host
+<a href='?touch'>?touch</a>		    emulate touch mode  *)
+<a href='?debug'>?debug</a>		    adds 'debug' class to page on non-local host *)
+<a href='?log'>?log</a>		    displays log files in overlay
 
-post('md')=> MD-source	returns compiled markdown
+*) these options are persistent, they keep their value for further page requests. 
+Unset individually as ?xy=false or globally as ?reset
+
 </pre>
 EOT;
 			$this->page->addOverlay($overlay);
 		}
 
-		if ($this->config->enableEditing && $this->auth->checkRole('editor')) {
+
+
+//		if ($this->config->enableEditing && $this->auth->checkRole('editor')) {
 			if (getStaticVariable('editingMode')) {
 				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
 			} else {
 				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>{{ turn edit mode on }}</a> | ");
 			}
-		}
+//		}
 
 
 		
-		if (getUrlArgStatic('touch')) {			// touch
+		if (getUrlArgStatic('touch')) {			                                // touch
 			$this->trans->addVariable('debug_class', ' touch small-screen');
 		}
 
@@ -1092,7 +1130,7 @@ EOT;
 				if (preg_match("|^{$this->config->pagesPath}(.*)\.md$|", $filename)) {
 					$this->storeFile($filename, $mdStr);
 				} else {
-					die("illegal file name: '$filename'");
+                    fatalError("illegal file name: '$filename'", 'File: '.__FILE__.' Line: '.__LINE__);
 				}
 			} else {
 				die("Sorry, you have no permission to modify files on the server.");
@@ -1141,7 +1179,7 @@ EOT;
             //            }
             $this->storeFile($filename, $str);
         } else {
-            die("Sorry, you have no permission to modify files on the server.");
+            fatalError("Sorry, you have no permission to modify files on the server.", 'File: '.__FILE__.' Line: '.__LINE__);
         }
     } // saveSitemapFile
 
@@ -1164,32 +1202,36 @@ EOT;
 	//....................................................
 	private function storeFile($filename, $content)
 	{
-		if (file_exists($filename)) {
-			preparePath($this->config->recycleBin);
-			$recycleFile = $this->config->recycleBin.str_replace('/', '_', $filename). ' ['.date('Y-m-d,H.i.s').']';
-			copy($filename, $recycleFile);
-		}
-		file_put_contents($filename, $content);
+        storeFile($filename, $content);
 	} // storeFile
 
 
 
 	//....................................................
-	private function printall()
+	private function printall($maxN = true)
 	{
 		if (!($title = $this->trans->getVariable('print_all_title'))) {
 			if (!($title = $this->trans->getVariable('page_title'))) {
 				$title = '';
 			}
 		}
+		if (intval($maxN)) {
+            $maxN = intval($maxN);
+        } else {
+		    $maxN = 4; //999;
+        }
 		$pages = '';
 		foreach($this->siteStructure->getSiteList() as $i => $rec) {
-			$url = $rec['folder'];
-			if (!$url) {
+			$url = resolvePath('~/'.$rec['folder'], false, true);
+			if (!$url || ($url == 'home/')) {
 				$url = './';
 			}
-			$pages .= "\t<iframe src='$url'></iframe>\n";
+//			$pages .= "\t<iframe src='$url'></iframe>\n";
+			$pages .= "\t<iframe src='$url?debug=false&localcall=false'></iframe>\n";
 			$pages .= "\t<div style='page-break-after: always;'></div>\n\n";
+            if ($i >= ($maxN-1)) {
+                break;
+            }
 		}
 
 		$html = <<<EOT

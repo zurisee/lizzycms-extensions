@@ -154,7 +154,9 @@ class Transvar
                             $val = '';
 
                         } else {                            // macro not defined, raise error
-                            die("Error: undefined macro: '$macro()'");
+                            $msg ="Error: undefined macro: '$macro()'";
+                            logError($msg);
+                            $val = '';
                         }
 
                     } else {                                        // variable
@@ -424,7 +426,9 @@ class Transvar
                     }
                 }
             } else {
-                die("Error: Macro '$macroName' not found");
+                logError("Error: Macro '$macroName' not found");
+
+//                fatalError("Error: Macro '$macroName' not found", 'File: '.__FILE__.' Line: '.__LINE__);
             }
         }
         $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
@@ -439,7 +443,7 @@ class Transvar
     public function readFile($file)
     {
         if (!file_exists($file)) {
-            die("File not found: '$file'");
+            fatalError("File not found: '$file'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
         $this->transvars = array_merge($this->transvars, getYamlFile($file));
     } // readFile
@@ -518,7 +522,7 @@ class Transvar
                 $out = $entry[$this->config->defaultLanguage];
 
             } else {    // this should only happen if a wrong value gets into $_SESSION
-                die("Error: transvar without propre value: '$key' \n(".basename(__FILE__).':'.__LINE__.")");
+                fatalError("Error: transvar without propre value: '$key'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
         } else {
             if ((strlen($key) > 0) && ($key{0} != '_') && (!in_array($key, $this->sysVariables))) {
@@ -636,7 +640,8 @@ class Transvar
 			} elseif (isset($entry['_'])) {
 				$vars[$key] = $entry['_'];
 			} else {
-				die("Error: transvar without propre value: '$key' \n(".basename(__FILE__).':'.__LINE__.")");
+                logError("Error: transvar without propre value: '$key'");
+//                fatalError("Error: transvar without propre value: '$key'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 		}
 		return $vars;

@@ -35,7 +35,7 @@ function parseArgumentStr($str, $delim = ',')
                 $str = trim(substr($str, $p + 1));
                 $str = preg_replace('/^\s*↵\s*$/', '', $str);
             } else {
-                die("Error in key-value string: '$str0'");
+                fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
         } elseif ($c == "'") {    // -> '
@@ -46,7 +46,7 @@ function parseArgumentStr($str, $delim = ',')
                 $str = trim(substr($str, $p + 1));
                 $str = preg_replace('/^\s*↵\s*$/', '', $str);
             } else {
-                die("Error in key-value string: '$str0'");
+                fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
         } else {    // -> bare value
@@ -75,7 +75,7 @@ function parseArgumentStr($str, $delim = ',')
             $str = substr($str, 1);
 
         } else {    // anything else is an error
-            die("Error in argument string: '$str0'");
+            fatalError("Error in argument string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
     }
 
@@ -130,7 +130,7 @@ function csv_to_array($str, $delim = ',') {
 
 
 //--------------------------------------------------------------
-function convertYaml($str, $stopOnError = true)
+function convertYaml($str, $stopOnError = true, $origin = '')
 {
 	$data = null;
 	if ($str) {
@@ -144,7 +144,7 @@ function convertYaml($str, $stopOnError = true)
                 $data = Yaml::parse($str);
             } catch(Exception $e) {
                 if ($stopOnError) {
-                    die("Error in Yaml-Code: <pre>\n$str\n</pre>\n" . $e->getMessage());
+                    fatalError("Error in Yaml-Code: <pre>\n$str\n</pre>\n" . $e->getMessage(), 'File: '.__FILE__.' Line: '.__LINE__, $origin);
                 } else {
                     writeLog("Error in Yaml-Code: [$str] -> " . $e->getMessage(), 'errlog');
                     return null;
@@ -206,7 +206,7 @@ function getFile($pat, $removeComments = false)
 		if (is_file($fname) && is_readable($fname)) {
 			$file = file_get_contents($fname);
 		} else {
-			die("Error trying to read file '$fname'");
+            fatalError("Error trying to read file '$fname'", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 		if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
 			$file = substr($file, 0, $p+1);
@@ -606,7 +606,7 @@ function parseNumbersetDescriptor($descr, $minValue = 1, $maxValue = 9, $headers
             }
 			$inx = alphaIndexToInt($elem, $headers);
 			if ($inx == 0) {
-			    die("Error in table()-macro: unknown element '$elem'");
+                fatalError("Error in table()-macro: unknown element '$elem'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 			$out[] = $inx; //alphaIndexToInt($elem, $headers);
 		}
@@ -734,10 +734,10 @@ function getStaticVariable($varName)
 
 
 //-------------------------------------------------------------------------
-function goto_page($target) {
-	header("Location: $target");
-	exit;
-} // goto_page
+function reloadAgent($target = './') {
+    header("Location: $target");
+    exit;
+} // reloadAgent
 
 
 
@@ -776,7 +776,7 @@ function preparePath($path)
 	$path = dirname($path.'x');
     if (!file_exists($path)) {
         if (!mkdir($path, 0777, true)) {
-            die("Error: failed to create folder '$path'");
+            fatalError("Error: failed to create folder '$path'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
     }
 } // preparePath
@@ -936,6 +936,13 @@ function writeLog($str, $destination = false)
     }
 } // writeLog
 
+
+
+//------------------------------------------------------------
+function logError($str)
+{
+    writeLog($str, 'errlog');
+} // logError
 
 
 //------------------------------------------------------------------------------
@@ -1147,7 +1154,7 @@ function checkNesting($str, $pat1, $pat2)
     $n1 = substr_count($str, $pat1);
     $n2 = substr_count($str, $pat2);
     if ($n1 > $n2) {
-        die("Nesting Error in string '$str'");
+        fatalError("Nesting Error in string '$str'", 'File: '.__FILE__.' Line: '.__LINE__);
     }
     return $n1;
 } // checkNesting
@@ -1166,19 +1173,41 @@ function findNextPattern($str, $pat, $p1 = 0)
 	return $p1;
 } // findNextPattern
 
-
-
 //-----------------------------------------------------------------------------
-function trunkPath($path, $n = 1)
+function trunkPath($path, $n = 1, $leaveNotRemove = true)
+// case $leaveNotRemove == false:
+//      n==2   trunk from right   '/a/b/c/d/e/x.y' ->  /a/b/c/
+//      n==-2  trunk from left    '/a/b/c/d/e/x.y' ->  c/d/e/x.y
+// case $leaveNotRemove == true:
+//      n==2   leave from right   '/a/b/c/d/e/x.y' ->  d/e/x.y
+//      n==-2  leave from left    '/a/b/c/d/e/x.y' ->  /a/b/
 {
-	if ($n>0) {
-		$path = ($path[strlen($path)-1] == '/') ? rtrim($path, '/') : dirname($path);
-		return implode('/', explode('/', $path, -$n)).'/';
-	} else {
-		$path = ($path[0] == '/') ? substr($path,1) : $path;
-		$parray = explode('/', $path);
-		return implode('/', array_splice($parray, -$n));
-	}
+    if ($leaveNotRemove) {
+        if ($n > 0) {   // leave from right
+            $file = basename($path);
+            $path = dirname($path);
+            $parray = explode('/', $path);
+            $n = sizeof($parray) - $n;
+            $parray = array_splice($parray, $n);
+            $path = implode('/', $parray);
+            return "$path/$file";
+            return implode('/', explode('/', $path, -$n)) . '/';
+        } else {        // leave from left
+            $path = ($path[0] == '/') ? substr($path, 1) : $path;
+            $parray = explode('/', $path);
+            return '/'.implode('/', array_splice($parray, 0, -$n)).'/';
+        }
+
+    } else {
+        if ($n > 0) {   // trunk from right
+            $path = ($path[strlen($path) - 1] == '/') ? rtrim($path, '/') : dirname($path);
+            return implode('/', explode('/', $path, -$n)) . '/';
+        } else {        // trunk from left
+            $path = ($path[0] == '/') ? substr($path, 1) : $path;
+            $parray = explode('/', $path);
+            return implode('/', array_splice($parray, -$n));
+        }
+    }
 } // trunkPath
 
 
@@ -1251,3 +1280,103 @@ function compileMarkdownStr($mdStr, $removeWrappingPTags = false)
     }
     return $str;
 } // compileMarkdownStr
+
+
+
+//------------------------------------------------------------
+function shieldMD($md)
+{
+    $md = str_replace('#', '&#35;', $md);
+    return $md;
+} //
+
+
+
+
+//------------------------------------------------------------
+function isLocalCall()
+{
+    $serverName = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : 'localhost';
+    $remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : '';
+    if (($serverName == 'localhost') || ($remoteAddress == '::1')) {
+        return true;
+    } else {
+        return false;
+    }
+} // isLocalCall
+
+
+
+//....................................................
+function copyFileToRecycleBin($filename)
+{
+    if (file_exists($filename)) {
+        preparePath(RECYCLE_BIN_PATH);
+        $recycleFile = RECYCLE_BIN_PATH.str_replace('/', '_', $filename). ' ['.date('Y-m-d,H.i.s').']';
+        copy($filename, $recycleFile);
+    }
+} // copyFileToRecycleBin
+
+
+
+
+//....................................................
+function storeFile($filename, $content)
+{
+    copyFileToRecycleBin($filename);
+    file_put_contents($filename, $content);
+} // storeFile
+
+
+
+
+//------------------------------------------------------------
+function rollBack($fileName)
+{
+    // first save offending file locally to rollback name:
+    $rolledBackName = '#RolledBack '.str_replace('/', '_', $fileName). ' ['.date('Y-m-d,H.i.s').']';
+    $tmpFileName = dir_name($fileName).$rolledBackName;
+    copy($fileName, dir_name($fileName).$rolledBackName);
+
+    // second copy latest backup from recycle bin:
+    $recycleName = str_replace('/', '_', $fileName);
+    $candidates = getDir(RECYCLE_BIN_PATH."$recycleName*");
+    $rollBackSrc = array_pop($candidates);
+    copy($rollBackSrc, $fileName);
+
+    // third move temp. rolledBackFile to recycle bin:
+    rename($tmpFileName, RECYCLE_BIN_PATH.$rolledBackName);
+} // rollBackVersion
+
+
+
+//------------------------------------------------------------
+function fatalError($msg, $origin = '', $offendingFile = '')
+// $origin =, 'File: '.__FILE__.' Line: '.__LINE__;
+{
+    global $globalParams;
+    $problemSrc = '';
+    if ($offendingFile) {
+        $problemSrc = "problemSrc: $offendingFile, ";
+    } elseif (isset($globalParams['lastLoadedFile'])) {
+        $offendingFile = $globalParams['lastLoadedFile'];
+        $problemSrc = "problemSrc: $offendingFile, ";
+    }
+    if ($origin) {
+        if (preg_match('/File:\s*(.*)\s*Line:(.*)/', $origin, $m)) {
+            $file = trim($m[1]);
+            $file = substr($file, strlen($globalParams['absAppRoot']));
+            $line = trim($m[2]);
+            $origin = "$file::$line";
+        }
+        $msg = date('Y-m-d H:i:s')."  $origin  $problemSrc\n$msg";
+    }
+    file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
+
+    if ($offendingFile) {
+        rollBack($offendingFile);
+        reloadAgent();
+    }
+    exit;
+} // fatalError
+

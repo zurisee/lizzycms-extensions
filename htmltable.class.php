@@ -66,7 +66,7 @@ class HtmlTable
         }
 
         if (!$this->data && !$this->nRows && !$this->nCols) {
-            die("Error in Table() macro: must specify at least one of [dataSource | nRows | nCols]");
+            fatalError("Error in Table() macro: must specify at least one of [dataSource | nRows | nCols]", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
         if ($this->data) {

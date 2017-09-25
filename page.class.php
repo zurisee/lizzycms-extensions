@@ -92,7 +92,12 @@ class Page
     //-----------------------------------------------------------------------
     public function addBody($str, $replace = false)
     {
-        $this->addToProperty($this->body, $str, $replace);
+        $p = strpos($this->body, '</body>');
+        if ($p) {   // body already populated -> insert just before </body> end tag.
+            $this->body = substr($this->body, 0, $p).$str.substr($this->body, $p);
+        } else {
+            $this->addToProperty($this->body, $str, $replace);
+        }
     } // addBody
 
 
@@ -161,6 +166,17 @@ class Page
     {
         $this->addToListProperty($this->jqFiles, $str, $replace);
     } // addJQFiles
+
+
+
+    //-----------------------------------------------------------------------
+    public function removeModule($module, $str)
+    {
+        $mod = $this->$module;
+        $mod = str_replace($str, '', $mod);
+        $mod = str_replace(',,', ',', $mod);
+        $this->$module = $mod;
+    } // removeModule
 
 
 
@@ -276,9 +292,22 @@ class Page
         $overlay = $this->get('overlay', true);
 
         if ($overlay) {
-            $overlay = compileMarkdownStr($overlay);
-            $this->addJq("\$('.overlay').click(function() { $(this).hide(); });");
+            $jq = <<<EOT
+    document.onkeydown = function(e) {
+		var keycode = (window.event) ? event.keyCode : e.keyCode;
+		console.log('key: '+keycode);
+		if (keycode == 27) {	// ESC
+		    \$('.overlay').hide();
+		}
+	}
+		\$('.page').click(function() { \$('.overlay').hide(); });
+EOT;
+
+            $this->addJq($jq);
+
             $this->addBody("<div class='overlay'>$overlay</div>\n");
+            $this->set('overlay', '');
+            $this->removeModule('jqFiles', 'PAGE_SWITCHER');
             return true;
         }
         return false;
@@ -353,7 +382,7 @@ class Page
         global $globalParams;
         $bodyEndInjections = '';
 
-        $this->addJqFiles("~sys/js/touch_detector.js");
+        $this->addJqFiles("TOUCH_DETECTOR");
         if (($this->config->loadJQuery) || ($this->config->autoLoadJQuery)) {
             $this->addJqFiles($this->config->jQueryModule);
         }

@@ -89,7 +89,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $fence = $m[1];
             $rest = $m[2];
         } else {
-            die("Error in Markdown source line $current: $line");
+            fatalError("Error in Markdown source line $current: $line", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
         list($id, $class, $style) = $this->parseInlineStyling($rest);

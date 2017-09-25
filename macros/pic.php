@@ -83,7 +83,7 @@ $this->addMacro($macroName, function () {
                 $basename = $m[1];
                 $ext = $m[2];
             } else {
-                die('bad');
+                fatalError('bad', 'File: '.__FILE__.' Line: '.__LINE__);
                 $basename = base_name($src, false);
                 $ext = fileExt($src);
             }
@@ -99,7 +99,6 @@ $this->addMacro($macroName, function () {
                     }
                 }
                 $altSrc = "\t\t<source media='(min-width: {$limit}px)' srcset='{$basename}[{$maxSize}x]$ext' />\n$altSrc";
-                $limit = $w;
             }
             $src = "{$basename}[{$smallestLimit}x]$ext";
         }

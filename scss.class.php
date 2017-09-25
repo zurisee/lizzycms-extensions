@@ -35,13 +35,13 @@ class SCssCompiler
                 try {
                     $cssStr .= $scss->compile($scssStr);
                 } catch (Exception $e) {
-                    die("Error in Less-File '$file': ".$e->getMessage());
+                    fatalError("Error in Less-File '$file': ".$e->getMessage(), 'File: '.__FILE__.' Line: '.__LINE__);
                 }
                 file_put_contents($targetFile, $cssStr);
                 touchFile($targetFile, $t0);
                 $compiled .= basename($file).", ";
             } elseif ($t0 < $t1) {
-                die ("Warning: compiled stylesheet newer than source: '$targetFile'");
+                fatalError("Warning: compiled stylesheet newer than source: '$targetFile'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
         }
         if ($compiled) {

@@ -49,32 +49,34 @@ class Defaults
         $this->userCodePath             = 'code/';
         $this->userInitCodeFile         = $this->userCodePath.'user-init-code.php';
         $this->cachePath                = '.#cache/';
-        $this->recycleBin               = '.#recycleBin/';
         $this->siteIdententation        = 4;
 
 
         // shortcuts for modules to be loaded (upon request):
         // weight value controls the order of invokation. The higher the earlier.
-        $this->loadModules['JQUERY']           = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => 9);
-        $this->loadModules['JQUERY3']          = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => 9);
-        $this->loadModules['JQUERY2']          = array('module' => 'third-party/jquery-2.2.4.min.js', 'weight' => 9);
-        $this->loadModules['JQUERY1']          = array('module' => 'third-party/jquery-1.12.4.min.js', 'weight' => 9);
+        $this->loadModules['JQUERY']           = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => 19);
+        $this->loadModules['JQUERY3']          = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => 19);
+        $this->loadModules['JQUERY2']          = array('module' => 'third-party/jquery-2.2.4.min.js', 'weight' => 19);
+        $this->loadModules['JQUERY1']          = array('module' => 'third-party/jquery-1.12.4.min.js', 'weight' => 19);
 
-        $this->loadModules['JQUERYUI']         = array('module' => 'third-party/jquery-ui.min.js', 'weight' => 8);
-        $this->loadModules['JQUERYUI_CSS']     = array('module' => 'third-party/jquery-ui.min.css', 'weight' => 8);
+        $this->loadModules['JQUERYUI']         = array('module' => 'third-party/jquery-ui.min.js', 'weight' => 18);
+        $this->loadModules['JQUERYUI_CSS']     = array('module' => 'third-party/jquery-ui.min.css', 'weight' => 18);
 
-        $this->loadModules['EDITABLE']         = array('module' => 'js/editable.js', 'weight' => 6);
-        $this->loadModules['EDITABLE_CSS']     = array('module' => 'css/editable.css', 'weight' => 6);
+        $this->loadModules['EDITABLE']         = array('module' => 'js/editable.js', 'weight' => 14);
+        $this->loadModules['EDITABLE_CSS']     = array('module' => 'css/editable.css', 'weight' => 14);
 
-        $this->loadModules['QUICKVIEW']     	= array('module' => 'js/quickview.js', 'weight' => 5);
-        $this->loadModules['QUICKVIEW_CSS']     = array('module' => 'css/quickview.css', 'weight' => 5);
+        $this->loadModules['QUICKVIEW']     	= array('module' => 'js/quickview.js', 'weight' => 12);
+        $this->loadModules['QUICKVIEW_CSS']     = array('module' => 'css/quickview.css', 'weight' => 12);
 
-        $this->loadModules['HAMMERJS']          = array('module' => 'third-party/hammerjs/hammer2.0.8.min.js', 'weight' => 4);
-        $this->loadModules['HAMMERJQ']          = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 4);
-        $this->loadModules['JQUERYUI_TOUCH']    = array('module' => 'third-party/jquery.ui.touch-punch.min.js', 'weight' => 3);
+        $this->loadModules['HAMMERJS']          = array('module' => 'third-party/hammerjs/hammer2.0.8.min.js', 'weight' => 10);
+        $this->loadModules['HAMMERJQ']          = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 10);
+        $this->loadModules['JQUERYUI_TOUCH']    = array('module' => 'third-party/jquery.ui.touch-punch.min.js', 'weight' => 8);
 
-        $this->loadModules['DATATABLES_CSS']    = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 2);
-        $this->loadModules['DATATABLES']        = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 2);
+        $this->loadModules['DATATABLES_CSS']    = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 6);
+        $this->loadModules['DATATABLES']        = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 6);
+
+        $this->loadModules['TOUCH_DETECTOR']    = array('module' => 'js/touch_detector.js', 'weight' => 5);
+        $this->loadModules['PAGE_SWITCHER']     = array('module' => 'js/page_switcher.js', 'weight' => 4);
 
         return $this;
     }

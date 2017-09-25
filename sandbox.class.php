@@ -25,7 +25,7 @@ class MySandbox
 //            }
         } catch(Exception $e) {
             $phpCode = htmlspecialchars($phpCode);
-            die("Error while executing user code '$phpFile' in sandbox: <br>".$e->getMessage()."<pre>$phpCode</pre>");
+            fatalError("Error while executing user code '$phpFile' in sandbox: <br>".$e->getMessage()."<pre>$phpCode</pre>", 'File: '.__FILE__.' Line: '.__LINE__);
         }
         return true;
     } // execute
@@ -35,8 +35,8 @@ class MySandbox
 
     private function setup($configPath, $vars)
     {
-// To be on the safe side, we use a minimum set of blacklisted functions
-// if that's too restricted still, users can skip using the sandbox altogether
+    // To be on the safe side, we use a minimum set of blacklisted functions
+    // if that's too restricted still, users can skip using the sandbox altogether
         global $blackList;
 
         $sandbox_disallowed_functions = getYamlFile($configPath.'sandbox_disallowed_functions.yaml');

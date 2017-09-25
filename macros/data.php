@@ -37,7 +37,7 @@ $this->addMacro($macroName, function ()
     if ($src) {
         $dataSrc = resolvePath($src, true);
         if (!fileExists($dataSrc)) {
-            die("Error: file not found: '$dataSrc'");
+            fatalError("Error: file not found: '$dataSrc'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
         $ds = new DataStorage($dataSrc);
@@ -48,7 +48,7 @@ $this->addMacro($macroName, function ()
         if (isset($data)) {
             $str = sizeof($data) - 1;
         } else {
-            die("Error: no data source has been specified");
+            fatalError("Error: no data source has been specified", 'File: '.__FILE__.' Line: '.__LINE__);
         }
     }
 
@@ -75,7 +75,7 @@ $this->addMacro($macroName, function ()
 
     if ($field) {
         if (!isset($data)) {
-            die("Error: no data source specified");
+            fatalError("Error: no data source specified", 'File: '.__FILE__.' Line: '.__LINE__);
         }
         $_data = $data[$currRecNo];
         $fIndex = findField($data, $field);

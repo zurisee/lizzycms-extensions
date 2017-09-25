@@ -99,8 +99,10 @@ class SiteStructure
 			if (strpos($line, '__END__') !== false) {
 				break;
 			}
+			$line = str_replace(['http://', 'https://'], ['http:||', 'https:||'], $line);
 			$line = preg_replace('|//.*|', '', $line);
 			$line = preg_replace('|#.*|', '', $line);
+            $line = str_replace(['http:||', 'https:||'], ['http://', 'https://'], $line);
 			$line = rtrim($line);
 			if (preg_match('/^\s*$/', $line) || preg_match('/^\s*#/', $line)) {continue;}
 			$i++;
@@ -127,7 +129,8 @@ class SiteStructure
 				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
 				if ($m[3] && !preg_match('/^\s*:\s*$/', $m[3])) {
 					$json = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);
-					$args = convertYaml($json, false);
+					$args = convertYaml($json, true, $this->sitemapFile);
+//					$args = convertYaml($json, false);
 					if ($args) {
 						foreach($args as $key => $value) {
 							if ($key == 'folder') {
@@ -383,7 +386,13 @@ EOT;
 	//....................................................
 	public function findSiteElem($str)
 	{
-	    $str = ($str == '/') ? './' : $str;
+	    if ($str == '/') {
+            $str = './';
+        } elseif ((strlen($str) > 0) && ($str{0} == '/')) {
+	        $str = substr($str, 1);
+        } elseif ((strlen($str) > 0) && (substr($str,0,2) == '~/')) {
+            $str = substr($str, 2);
+        }
 		$list = $this->list;
 		$found = false;
 		foreach($list as $key => $elem) {

@@ -9,6 +9,7 @@
 date_default_timezone_set('CET');		// modify as appropriate
 define('DATA_PATH', 		'../data/');		// modify if necessary
 define('SERVICE_LOG', 		'../.#logs/log.txt');	// modify if necessary
+define('ERROR_LOG', 		'../.#logs/errlog.txt');	// modify if necessary
 define('SHORTER_POLL_TIME', 10);	// max polling duration if no changes occure -> touch devices
 define('LONG_POLL_TIME', 	60);	// max polling duration if no changes occure
 define('LONG_POLL_FREQ', 	2);		// local polling cycle time, i.e. how often data is read
@@ -380,7 +381,7 @@ function convertYaml($str)
 		try {
 			$data = Yaml::parse($str);
 		} catch(Exception $e) {
-			die("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
+            fatalError("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
 		}
 	}
 	return $data;
@@ -414,7 +415,18 @@ function preparePath($path)
     $path = dirname($path.'x');
     if (!file_exists($path)) {
         if (!mkdir($path, 0777, true)) {
-            die("Error: failed to create folder '$path'");
+            fatalError("Error: failed to create folder '$path'");
         }
     }
 } // preparePath
+
+
+
+//------------------------------------------------------------
+function fatalError($msg)
+{
+    $msg = date('Y-m-d H:i:s')." [_ajax_server.php]\n$msg";
+    file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
+    exit;
+} // fatalError
+

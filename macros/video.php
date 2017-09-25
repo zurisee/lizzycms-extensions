@@ -38,7 +38,7 @@ $this->addMacro($macroName, function () {
 		} elseif (preg_match('|youtu.be/(.+)|',$src, $m)) {
 			$ytID0 = $m[1];
 		} else {
-			die("Error in Youtube Address: $src");
+            fatalError("Error in Youtube Address: $src", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 		$ytID = preg_replace('/\#.*/', '', $ytID0);
 		if (preg_match('/\#(t=)?(\d*)/', $ytID0, $m)) {
@@ -80,7 +80,7 @@ EOT;
 			$src = linkedFilepath($src);
 			if (!file_exists($src)) {
 				echo "<p>".getcwd()."</p>\n";
-				die("Error in video(): file <strong>'".basename($src)."'</strong> <br />\nnot found in <strong>".dirname($src)."</strong>");
+                fatalError("Error in video(): file <strong>'".basename($src)."'</strong> <br />\nnot found in <strong>".dirname($src)."</strong>", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 		}
 		$source = '';
@@ -140,7 +140,7 @@ EOT;
 		$preview = $preview;
 		if (!file_exists($_preview)) {
 			$preview = '';
-			die("Error in video(): no preview image available in <strong>".dirname($src)."</strong> <br />\nfor video '<strong>".basename($src)."</strong>'");
+            fatalError("Error in video(): no preview image available in <strong>".dirname($src)."</strong> <br />\nfor video '<strong>".basename($src)."</strong>'", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 		
 		list($width1, $height1, $type, $attr) = getimagesize($_preview);

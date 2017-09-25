@@ -26,8 +26,7 @@ class Authentication
         if ($credentials) {
 			$this->checkCredentials($credentials);
             if ($this->userRec['name']) {
-                header("Location: ./"); // reload to get rid of url-arg ?logout
-                exit;
+                reloadAgent();  // to get rid of '?login'
             }
 
 		} else {    // check credentials

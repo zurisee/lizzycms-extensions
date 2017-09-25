@@ -111,8 +111,6 @@ class Forms
 //-------------------------------------------------------------
     private function formHead($args)
     {
-//		$args = $this->extractArgs($args);
-
 		$this->currForm->class = $class = (isset($args['class'])) ? $args['class'] : translateToIdentifier($this->currForm->formName);
 		$_class = ($class) ? " class='$class'" : '';
 		
@@ -454,7 +452,7 @@ EOT;
     {
 		if (!$this->currForm) {	// first pass -> must be type 'form-head' -> defines formId
 			if ($args['type'] != 'form-head') {
-				die("Error: syntax error \nor form field definition encountered without previous element of type 'form-head'");
+                fatalError("Error: syntax error \nor form field definition encountered without previous element of type 'form-head'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 	        $formId = (isset($args['class'])) ? $args['class'] : translateToIdentifier($args['label']);
 			$this->formDescr[ $formId ] = new FormDescriptor;
@@ -478,7 +476,7 @@ EOT;
 			$args['label'] = 'form-tail';
 		}
 		if (!isset($args['label'])) {
-			die("Error: label missing for form element");
+            fatalError("Error: label missing for form element", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 		if ($type == 'form-head') {
 			$this->currRec = new FormElement;
@@ -630,7 +628,7 @@ EOT;
 		} else {
 			$this->clearCache();
 			return false;
-			die("ERROR: unexpected value received from browser");
+            fatalError("ERROR: unexpected value received from browser", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 		$dataTime = (isset($userSuppliedData['lizzy_time'])) ? $userSuppliedData['lizzy_time'] : 0;
 		
@@ -652,7 +650,7 @@ EOT;
 			if ($result) {
 				$str = evalForm($userSuppliedData, $currFormDescr);
 			} else {
-				die("Warning: executing code '$userEval' has been blocked; modify 'config/config.yaml' to fix this.");
+                fatalError("Warning: executing code '$userEval' has been blocked; modify 'config/config.yaml' to fix this.", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 		} else {
 			$str = $this->defaultFormEvaluation($currFormDescr);
@@ -770,7 +768,7 @@ EOT;
 			'X-Mailer: PHP/' . phpversion();
 		
 		if (!mail($to, $subject, $message, $headers)) {
-			die("Error: unable to send e-mail");
+            fatalError("Error: unable to send e-mail", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 	} // sendMail
 	

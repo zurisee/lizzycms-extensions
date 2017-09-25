@@ -7,7 +7,7 @@
 
 if (!$GLOBALS['globalParams']['legacyBrowser']) {
     $this->page->addJsFiles("HAMMERJS");
-    $this->page->addJqFiles(["HAMMERJQ", "~sys/js/touch_detector.js", "~sys/js/page_switcher.js", "JQUERY"]);
+    $this->page->addJqFiles(["HAMMERJQ", "TOUCH_DETECTOR", "PAGE_SWITCHER", "JQUERY"]);
 }
 
 $nextLabel = $this->trans->getVariable('nextPageLabel');

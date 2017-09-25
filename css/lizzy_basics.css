@@ -251,7 +251,8 @@ var {
 .MsgBox, .WarningBox {
 	position: absolute!important;
 	top: 5px;
-	left: calc(50% - 5em);
+	left: 10%;
+	width: 80%;
 	line-height: 2em;
 	padding:0 10px;
 	background: #fbfb77;

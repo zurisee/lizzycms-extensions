@@ -15,7 +15,7 @@ function renderMenu($site, $page, $options)
 
     $tree = $site->getSiteTree();
 
-    $out = renderPureCss($tree, $navClass, $showHidden, $title);
+    $out = renderPureCss($site, $tree, $navClass, $showHidden, $title);
 
     return $out;
 }
@@ -23,11 +23,11 @@ function renderMenu($site, $page, $options)
 
 
 //....................................................
-function renderPureCss($tree, $navClass, $showHidden = false, $title = '')
+function renderPureCss($site, $tree, $navClass, $showHidden = false, $title = '')
 {
     $navClass = ($navClass) ? " class='$navClass'" : '';
     $title = ($title) ? "<h1>$title</h1>" : '';
-    $nav = _renderPureCss($navClass, $tree, '', $showHidden);
+    $nav = _renderPureCss($site, $tree, '', $showHidden);
     $out = <<<EOT
 	<nav$navClass>
 		$title
@@ -40,9 +40,8 @@ EOT;
 
 
 //....................................................
-function _renderPureCss($navClass, $tree, $indent, $showHidden = false)
+function _renderPureCss($site, $tree, $indent, $showHidden = false)
 {
-    $navClass = ($navClass) ? " class='$navClass'": '';
     $indent = str_replace('\t', "\t", $indent);
     if ($indent == '') {
         $indent = "\t";
@@ -57,10 +56,22 @@ function _renderPureCss($navClass, $tree, $indent, $showHidden = false)
         if (!is_int($n)) { continue; }
 
         $name = $elem['name'];
-        $path = (isset($elem['folder'])) ? $elem['folder'] : '';
+        if (isset($elem['goto'])) {
+            $goto = $elem['goto'];
+            if (preg_match('|https?\://|i', $goto)) {
+                $path = $goto;
+            } else {
+                $targInx = $site->findSiteElem($goto);
+                $list = $site->getSiteList();
+                $targ = $list[$targInx];
+                $path = $targ['folder'];
+            }
+        } else {
+            $path = (isset($elem['folder'])) ? $elem['folder'] : '';
+        }
         if ($path == '') {
             $path = '~/';
-        } elseif (substr($path, 0, 2) != '~/') {
+        } elseif ((substr($path, 0, 2) != '~/') && (substr($path, 0, 4) != 'http')) {
             $path = '~/'.$path;
         }
         $liClass = 'pure-menu-item';
@@ -86,7 +97,7 @@ function _renderPureCss($navClass, $tree, $indent, $showHidden = false)
                 $liClass = trim($liClass);
                 $liClass = ($liClass) ? " class='$liClass'" : '';
                 $out .= "$indent\t<li$liClass><a href='$path'$aClass$target><span style='width: calc(100% - 1em);'>$name</span></a>\n";
-                $out .= _renderPureCss('', $elem, "$indent\t\t", $showHidden);
+                $out .= _renderPureCss($site, $elem, "$indent\t\t", $showHidden);
                 $out .= "$indent\t</li>\n";
             } else {
                 $liClass = trim($liClass);

@@ -176,8 +176,6 @@ class MyMarkdown
 		$str = stripNewlinesWithinTransvars($str);
 		$str = $this->handleVariables($str);
 		if ($this->page && $this->page->shieldHtml) {	// hide '<' from MD compiler
-//			$str = preg_replace("/(?<!\n)\>/", '@/@gt@\\\\@', $str);
-//			$str = str_replace('<', '@/@lt@\\@', $str);
 			$str = str_replace(['<', '>'], ['@/@lt@\\@', '@/@gt@\\@'], $str);
 		}
 		$str = preg_replace('/^(\d{1,2})\!\./m', "%@start=$1@%\n\n1.", $str);
@@ -300,7 +298,7 @@ class MyMarkdown
         }
 		foreach ($this->variable as $sym => $str) { // replace variables, supporting ++ and -- operators
 			if (strpos($str, '$' . $sym) !== false) {
-				die("Warning: cyclic reference in variable '\$$sym'");
+                fatalError("Warning: cyclic reference in variable '\$$sym'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 			$p = 0;
 			while (($p = strpos($l, '$' . $sym, $p)) !== false) {
