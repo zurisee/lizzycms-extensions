@@ -304,6 +304,9 @@ class Transvar
     //....................................................
     private function getArgsArray($macroName, $removeNl = true)
     {
+        if (!$this->macroArgs[$macroName]) {
+            return [];
+        }
         if ($removeNl) {
             $a = [];
             foreach ($this->macroArgs[$macroName] as $key => $value) {
