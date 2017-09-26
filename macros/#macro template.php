@@ -3,6 +3,8 @@
 /*
 ** For manipulating the embedding page, use $page:
 **		$page->addHead('');
+**		$page->addKeywords('');
+**		$page->addDescription('');
 **		$page->addCssFiles('');
 **		$page->addCss('');
 **		$page->addJsFiles('');

@@ -11,7 +11,6 @@ $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = &$this->invocationCounter[$macroName];
-//	$sys = $this->config->systemPath;
 
     $part = $this->getArg($macroName, 'part', '', '');
     $variable = $this->getArg($macroName, 'variable', '', '');
@@ -28,4 +27,3 @@ $this->addMacro($macroName, function () {
 	return $str;
 });
 
-//  data-targetsize="0.45" data-duration="600"

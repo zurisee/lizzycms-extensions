@@ -15,10 +15,10 @@ $prevLabel = $this->trans->getVariable('prevPageLabel');
 
 $str = <<<EOT
 
-  <div class='nextPrevPageLinks'>
-	<div class='prevPageLink'><a href='~/{$this->siteStructure->prevPage}'>$prevLabel</a></div>
-	<div class='nextPageLink'><a href='~/{$this->siteStructure->nextPage}'>$nextLabel</a></div>
-  </div>
+    <div class='nextPrevPageLinks'>
+        <div class='prevPageLink'><a href='~/{$this->siteStructure->prevPage}'>$prevLabel</a></div>
+        <div class='nextPageLink'><a href='~/{$this->siteStructure->nextPage}'>$nextLabel</a></div>
+    </div>
 
 EOT;
 $this->page->addBody_end_injections($str);

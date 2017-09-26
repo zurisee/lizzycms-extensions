@@ -717,7 +717,7 @@ function getUrlArgStatic($tag, $stringMode = false, $varName = false)
 function setStaticVariable($varName, $value)
 {
 	$_SESSION['lizzy'][$varName] = $value;
-} // getStaticArg
+} // setStaticVariable
 
 
 
@@ -729,7 +729,7 @@ function getStaticVariable($varName)
 	} else {
 		return null;
 	}
-} // getStaticArg
+} // getStaticVariable
 
 
 
@@ -1298,6 +1298,9 @@ function isLocalCall()
 {
     $serverName = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : 'localhost';
     $remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : '';
+    if (($state = getStaticVariable('localcall')) !== null) {
+        return $state;
+    }
     if (($serverName == 'localhost') || ($remoteAddress == '::1')) {
         return true;
     } else {
@@ -1372,6 +1375,10 @@ function fatalError($msg, $origin = '', $offendingFile = '')
         $msg = date('Y-m-d H:i:s')."  $origin  $problemSrc\n$msg";
     }
     file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
+
+    if (isLocalCall()) {    // on localhost notify immediately:
+        die($msg);
+    }
 
     if ($offendingFile) {
         rollBack($offendingFile);

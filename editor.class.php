@@ -17,7 +17,7 @@ class ContentEditor
 			$p = strpos($html, '>', $p)+1;
 		}
 		while ($p !== false) {
-			$html = substr($html, 0, $p)."\n\t\t\t<button class='btn_editor'></button>\n<div id='editor_wrapper$inx' class='editor_wrapper'>\n".substr($html, $p);
+			$html = substr($html, 0, $p)."\n\t\t\t<button class='btn_editor' title='{{ Edit Section }}'></button>\n<div id='editor_wrapper$inx' class='editor_wrapper'>\n".substr($html, $p);
 
 			$p = strpos($html, '</section>', $p) - 1;
 			$html = substr($html, 0, $p)."\n</div>\n\t\t\t".substr($html, $p);

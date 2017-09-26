@@ -1,64 +1,58 @@
 <?php
 
 /*
-**	$this => class Lizzy
-**
-** For manipulating the embedding page, use $this->page:
-**		$this->page->addHead('');
-**		$this->page->addCssFiles('');
-**		$this->page->addCss('');
-**		$this->page->addJsFiles('');
-**		$this->page->addJs('');
-**		$this->page->addJqFiles('');
-**		$this->page->addJq('');
-**		$this->page->addBody_end_injections('');
-**		$this->page->addMessage('');
-**		$this->page->addPageReplacement('');
-**		$this->page->addOverride('');
-**		$this->page->addOverlay('');
+**	Lizzy Installation: security check
+**      Ask user to change password until it's been changed.
 */
+
+$thisFile = __FILE__;
+$userFileName = CONFIG_PATH.$this->config->usersFile;
 
 $out = <<<EOT
 
-<div style="border:1px solid red; padding: 20px;margin-top: 2em;background:#fee;">
-    <h1>Please Change Admin Password ASAP</h1>
+<div class="chg-standard-pw" style="border:1px solid red;padding:20px;margin:3em;background:#fee;">
+    @msg
+    <h2>Change Admin Password:</h2>
     
    
     <form action="?" method="post">
         <label for='new-password'>New Password for User 'admin':</label>
-        <input type="password" name="init-password" id="new-password">
+        <input type="input" name="init-password" id="new-password">
         <input type="submit" value="Save">
     </form>
+    <p>&nbsp;</p>
+    <p><strong>Note:</strong><br>You may change the password later again, see file '$userFileName'.</p>
 </div>
 EOT;
 
-$stdPWentry = '	password:	$2y$10$koBJgyhl0QgBwmiE/.MdXOXR0mrTG29bjq37VHxBdZJJTDY2GE/n2';
+$msg = "<p><strong>Warning:</strong><br> Standard admin password as predefined at installation time is still active!</p>
+<p>Please change it ASAP!</p><p>For now admin credentials are: <code>admin / insecure-pw</code></p>";
 
-if (!$this->config->isLocalhost && !$this->loggedInUser) {
-    $userFile = getFile(DEFAULT_CONFIG_FILE);
-    if (($p=strpos($userFile, $stdPWentry)) === false) {
-        return;
-    } else {
-        if (isset($_POST['init-password'])) {
+
+$stdPWhash = '$2y$10$koBJgyhl0QgBwmiE/.MdXOXR0mrTG29bjq37VHxBdZJJTDY2GE';
+
+$userFile = getFile($userFileName);
+if (strpos($userFile, $stdPWhash) === false) {
+    return;
+} else {    // std pw still there
+    if (isset($_POST['init-password'])) {
+        if (strlen($_POST['init-password']) < 6) {
+            $msg = "<p>Note: the new password needs to be at least 6 charachters long.</p>";
+
+        } else {
             $newPWhash = password_hash($_POST['init-password'], PASSWORD_DEFAULT);
-            $userFile = substr($userFile,0,$p)."\tpassword:	$newPWhash\n#".substr($userFile,$p);
-            file_put_contents(DEFAULT_CONFIG_FILE, $userFile);
+            $userFile = str_replace($stdPWhash, $newPWhash, $userFile);
+            $userFile = str_replace("\n# The standard password is 'insecure-pw' - please change immediately!\n", '', $userFile);
+            file_put_contents($userFileName, $userFile);
+            $newUserCodeFileName = dir_name($thisFile).'##'.base_name($thisFile);
+            rename($thisFile, $newUserCodeFileName);
+            return;
         }
     }
-
-
-    $this->page->addContent($out);
-
-    $notice = <<<EOT
-
-<p style='margin-top:1em;'>As you are not working on a localhost you need to  {{ link('?login', 'log in') }} first.</p>
-
-<p>Standard login after installation is: </p>
-<p><span style='width:5em;display:inline-block;margin-left: 2em;'>Username:</span>admin<br/>
-<span style='width:5em;display:inline-block;margin-left: 2em;'>Password:</span>insecure-pw</p>
-
-EOT;
-
-    $this->trans->addVariable('login-notice', $notice);
 }
 
+$out = str_replace('@msg', $msg, $out);
+$this->page->addContent($out);  // append to content area
+
+
+return;

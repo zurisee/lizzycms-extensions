@@ -1,6 +1,6 @@
 # Transvar Definition File
 
-page_title: $page_name / Lizzy Sample Page
+page_title: $page_name / Lizzy Skeleton
 
 nextPageLabel: "<span class='nextLinkArrow' title='{{ to next page }}'></span>"
 prevPageLabel: "<span class='prevLinkArrow' title='{{ to prev page }}'></span>"

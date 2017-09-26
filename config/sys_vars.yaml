@@ -86,12 +86,16 @@ Warning insecure connection:
     en: "Warning: your connection to this webhost is insecure (https). For this reason you cannot login."
 
 turn edit mode on:
-    de: Bearbeitungs-Modus einschalten
+    de: Bearbeiten ein
     en: Edit
 
 turn edit mode off:
-    de: Bearbeitungs-Modus ausschalten
+    de: Bearbeiten aus
     en: Stop Editing
+
+Edit Section:
+    de: Bereich bearbeiten
+    en: Edit section
 
 Page:
     de: Seite

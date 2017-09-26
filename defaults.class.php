@@ -21,7 +21,7 @@ class Defaults
             'pagesPath'                 => ['pages/', 'Name of folder in which all pages reside.' ],
             'stylesPath'                => ['css/', 'Name of folder in which style sheets reside' ],
             'logPath'                   => [false, 'Name of folder to which logging output should be sent. Or "false" for disabling logging.' ],
-            'errorLogging'              => [false, 'Name of the file to which error logging output should be sent. Or "false" for disabling logging.' ],
+            'errorLogging'              => [false, 'Enable or disabling logging.' ],
             'dataPath'                  => ['data/', '(obsolete) Name of folder in which data is located by default.' ],
             'userCodePath'              => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
             'usersFile'                 => ['users.yaml', 'Name of file (in $configPath) that defines user privileges and hashed passwords etc.' ],
@@ -35,6 +35,7 @@ class Defaults
             'quickview'                 => [false, '[true|false] enables automatic Quickview of images' ],
             'enableEditing'             => [false, '[true|false] enables online editing' ],
             'cssFramework'              => [false, 'Name of CSS-Framework to be invoked {Bootstrap/PureCSS/w3.css}' ],
+            'supportLegacyBrowsers'     => [true, 'Determines whether jQuery 3 can be loaded, if false jQuery 1 is invoked' ],
             ];
 
         // These settings are considered internal, so they shouldn't be altered by apps:
@@ -54,29 +55,42 @@ class Defaults
 
         // shortcuts for modules to be loaded (upon request):
         // weight value controls the order of invokation. The higher the earlier.
-        $this->loadModules['JQUERY']           = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => 19);
-        $this->loadModules['JQUERY3']          = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => 19);
-        $this->loadModules['JQUERY2']          = array('module' => 'third-party/jquery-2.2.4.min.js', 'weight' => 19);
-        $this->loadModules['JQUERY1']          = array('module' => 'third-party/jquery-1.12.4.min.js', 'weight' => 19);
+        $this->jQueryWeight = 19;
+        $this->loadModules['JQUERY']           = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY3']          = array('module' => 'third-party/jquery-3.2.1.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY2']          = array('module' => 'third-party/jquery-2.2.4.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY1']          = array('module' => 'third-party/jquery-1.12.4.min.js', 'weight' => $this->jQueryWeight);
 
         $this->loadModules['JQUERYUI']         = array('module' => 'third-party/jquery-ui.min.js', 'weight' => 18);
         $this->loadModules['JQUERYUI_CSS']     = array('module' => 'third-party/jquery-ui.min.css', 'weight' => 18);
 
-        $this->loadModules['EDITABLE']         = array('module' => 'js/editable.js', 'weight' => 14);
-        $this->loadModules['EDITABLE_CSS']     = array('module' => 'css/editable.css', 'weight' => 14);
+        $this->loadModules['EDITABLE']         = array('module' => 'js/editable.js', 'weight' => 16);
+        $this->loadModules['EDITABLE_CSS']     = array('module' => 'css/editable.css', 'weight' => 16);
 
-        $this->loadModules['QUICKVIEW']     	= array('module' => 'js/quickview.js', 'weight' => 12);
-        $this->loadModules['QUICKVIEW_CSS']     = array('module' => 'css/quickview.css', 'weight' => 12);
+        $this->loadModules['QUICKVIEW']     	= array('module' => 'js/quickview.js', 'weight' => 14);
+        $this->loadModules['QUICKVIEW_CSS']     = array('module' => 'css/quickview.css', 'weight' => 14);
 
-        $this->loadModules['HAMMERJS']          = array('module' => 'third-party/hammerjs/hammer2.0.8.min.js', 'weight' => 10);
-        $this->loadModules['HAMMERJQ']          = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 10);
-        $this->loadModules['JQUERYUI_TOUCH']    = array('module' => 'third-party/jquery.ui.touch-punch.min.js', 'weight' => 8);
+        $this->loadModules['HAMMERJS']          = array('module' => 'third-party/hammerjs/hammer2.0.8.min.js', 'weight' => 12);
+        $this->loadModules['HAMMERJQ']          = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 12);
+        $this->loadModules['JQUERYUI_TOUCH']    = array('module' => 'third-party/jquery.ui.touch-punch.min.js', 'weight' => 10);
 
-        $this->loadModules['DATATABLES_CSS']    = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 6);
-        $this->loadModules['DATATABLES']        = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 6);
+        $this->loadModules['DATATABLES_CSS']    = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 7);
+        $this->loadModules['DATATABLES']        = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 7);
 
-        $this->loadModules['TOUCH_DETECTOR']    = array('module' => 'js/touch_detector.js', 'weight' => 5);
-        $this->loadModules['PAGE_SWITCHER']     = array('module' => 'js/page_switcher.js', 'weight' => 4);
+        $this->loadModules['TOUCH_DETECTOR']    = array('module' => 'js/touch_detector.js', 'weight' => 6);
+        $this->loadModules['PAGE_SWITCHER']     = array('module' => 'js/page_switcher.js', 'weight' => 5);
+        $this->loadModules['TETHER']            = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 4);
+
+
+        $this->loadModules['W3CSS_CSS']         = array('module' => 'third-party/w3.css/w3.css', 'weight' => 3);
+        $this->loadModules['W3CSS_ATTR']        = array('module' => '~/'.$this->configPath.'w3css-auto-attrs.yaml', 'weight' => 3);
+
+        $this->loadModules['PURECSS_CSS']       = array('module' => 'third-party/pure-css/pure-min.css', 'weight' => 3);
+        $this->loadModules['PURECSS_ATTR']      = array('module' => '~/'.$this->configPath.'purecss-auto-attrs.yaml', 'weight' => 3);
+
+        $this->loadModules['BOOTSTRAP_CSS']     = array('module' => 'third-party/bootstrap4/css/bootstrap.min.css', 'weight' => 3);
+        $this->loadModules['BOOTSTRAP']         = array('module' => 'third-party/bootstrap4/js/bootstrap.min.js', 'weight' => 3);
+        $this->loadModules['BOOTSTRAP_ATTR']    = array('module' => '~/'.$this->configPath.'bootstrap-auto-attrs.yaml', 'weight' => 3);
 
         return $this;
     }

@@ -10,8 +10,8 @@ define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 define('SUBSTITUTE_UNDEFINED',  1); // -> '{|{'     => delayed substitution within trans->render()
 define('SUBSTITUTE_ALL',        2); // -> '{||{'    => variables translated after cache-retrieval
-define('ERROR_LOG',             '.#logs/errlog.txt'); // -> '{||{'    => variables translated after cache-retrieval
-define('ERROR_LOG_ARCHIVE',     '.#logs/errlog_archive.txt'); // -> '{||{'    => variables translated after cache-retrieval
+define('ERROR_LOG',             '.#logs/errlog.txt');
+define('ERROR_LOG_ARCHIVE',     '.#logs/errlog_archive.txt');
 define('RECYCLE_BIN_PATH',      '.#recycleBin/');
 
 use Symfony\Component\Yaml\Yaml;
@@ -226,6 +226,7 @@ class Lizzy
     private function setupErrorHandling()
     {
         global $globalParams;
+        $globalParams['errorLogFile'] = '';
         if ($this->auth->checkRole('editor')) {     // set displaying errors on screen:
             $old = ini_set('display_errors', '1');  // on
             error_reporting(E_ALL);
@@ -237,13 +238,34 @@ class Lizzy
         if ($old === false) {
             fatalError("Error setting up error handling... (no kidding)", 'File: '.__FILE__.' Line: '.__LINE__);
         }
-        $errorLog = $this->config->errorLogging;
-        if ($this->config->logPath && $errorLog) {
-            $errorLogFile = $this->config->logPath . $errorLog;
-            $globalParams['errorLogFile'] = $errorLogFile;
+        if ($this->config->errorLogging && !file_exists(ERROR_LOG_ARCHIVE)) {
+            $errorLogPath = dirname(ERROR_LOG_ARCHIVE).'/';
+            $errorLogFile = ERROR_LOG_ARCHIVE;
+
+            // make error log folder:
+            preparePath($errorLogPath);
+            if (!is_writable($errorLogPath)) {
+                die("Error: no write permission to create error log folder '$errorLogPath'");
+            }
+
+            // make error archtive file and check
+            touch($errorLogFile);
+            if (!file_exists($errorLogFile) || !is_writable($errorLogPath)) {
+                die("Error: unable to create error log file '$errorLogPath' - probably access rights are not ");
+            }
+
+            // make error log file, check and delete immediately
+            touch(ERROR_LOG);
+            if (!file_exists(ERROR_LOG) || !is_writable(ERROR_LOG)) {
+                die("Error: unable to create error log file '".ERROR_LOG."' - probably access rights are not ");
+            }
+            unlink(ERROR_LOG);
+
             ini_set("log_errors", 1);
             ini_set("error_log", $errorLogFile);
             //error_log( "Error-logging started" );
+
+            $globalParams['errorLogFile'] = ERROR_LOG;
         }
     } // setupErrorHandling
 
@@ -327,19 +349,29 @@ class Lizzy
 
 
         // get info about browser
-		if (function_exists('getallheaders')) {
-	        $browser = new WhichBrowser\Parser(getallheaders());
-			$this->userAgent = $browser->toString();
-            setStaticVariable('userAgent', $this->userAgent);
-			$this->legacyBrowser = $browser->isBrowser('Internet Explorer', '<', '10') ||
-									$browser->isBrowser('Android Browser') ||
-									$browser->isOs('Windows', '<', '7') ||
-									$browser->isBrowser('Safari', '<', '5.1');
-		} else {
-			$this->legacyBrowser = false;
-			$this->userAgent = 'unknown';
-            setStaticVariable('userAgent', 'unknown');
-		}
+        $supportLegacyBrowsers = $this->config->supportLegacyBrowsers;
+        $legacyBrowser = getUrlArgStatic('legacy');
+        if ($legacyBrowser === null) {
+//            Note: WhichBrowser was very likely the cause of crashes (corrupting files in vendor/)
+//            -> disabled entirely for the time being
+//            -> alternative solution unknown at present
+//
+//            if (function_exists('getallheaders')) {
+//                $browser = new WhichBrowser\Parser(getallheaders());
+//                $this->userAgent = $browser->toString();
+//                setStaticVariable('userAgent', $this->userAgent);
+//                $this->legacyBrowser = $browser->isBrowser('Internet Explorer', '<', '10') ||
+//                    $browser->isBrowser('Android Browser') ||
+//                    $browser->isOs('Windows', '<', '7') ||
+//                    $browser->isBrowser('Safari', '<', '5.1');
+//            } else {
+                $this->legacyBrowser = $supportLegacyBrowsers;
+                $this->userAgent = 'unknown';
+                setStaticVariable('userAgent', 'unknown');
+//            }
+        } else {
+            $this->legacyBrowser = $legacyBrowser;
+        }
 
 
         $this->reqPagePath = $pagePath;
@@ -349,6 +381,7 @@ class Lizzy
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['legacyBrowser'] = $this->legacyBrowser;
+        $globalParams['localCall'] = $this->localCall;
 
         writeLog("UserAgent: [{$this->userAgent}]".(($this->legacyBrowser)?" (Legacy browser!)":''));
     } // analyzeHttpRequest
@@ -559,7 +592,7 @@ class Lizzy
     {
         global $globalParams;
         if ($this->config->enableEditing && ($this->auth->checkRole('editor'))) {
-            if (file_exists($globalParams['errorLogFile'])) {
+            if ($globalParams['errorLogFile'] && file_exists($globalParams['errorLogFile'])) {
                 $logFileName = $globalParams['errorLogFile'];
                 $logMsg = file_get_contents($logFileName);
                 $logArchiveFileName = str_replace('.txt', '', $logFileName)."_archive.txt";
@@ -583,26 +616,48 @@ class Lizzy
 
         switch ($type) {
             case 'bootstrap':
-                $page->addCssFiles('~sys/third-party/bootstrap4/css/bootstrap.min.css');
-                $page->addJqFiles(['~sys/third-party/tether.js/tether.min.js', '~sys/third-party/bootstrap4/js/bootstrap.min.js']);
-                $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/bootstrap-auto-attrs.yaml');
+                $page->addCssFiles('BOOTSTRAP_CSS');
+                $page->addJqFiles(['TETHER', 'BOOTSTRAP']);
+                $page->addAutoAttrFiles('BOOTSTRAP_ATTR');
                 break;
 
             case 'purecss':
-                $page->addCssFiles('~sys/third-party/pure-css/pure-min.css');
-                $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/purecss-auto-attrs.yaml');
+                $page->addCssFiles('PURECSS_CSS');
+                $page->addAutoAttrFiles('PURECSS_ATTR');
                 break;
 
             case 'w3css':
             case 'w3.css':
-                $page->addCssFiles('~sys/third-party/w3.css/w3.css');
-                $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/w3css-auto-attrs.yaml');
+                $page->addCssFiles('W3CSS_CSS');
+                $page->addAutoAttrFiles('W3CSS_ATTR');
                 break;
 
             default:
                 $this->config->cssFramework = false;
                 break;
         }
+//        switch ($type) {
+//            case 'bootstrap':
+//                $page->addCssFiles('~sys/third-party/bootstrap4/css/bootstrap.min.css');
+//                $page->addJqFiles(['~sys/third-party/tether.js/tether.min.js', '~sys/third-party/bootstrap4/js/bootstrap.min.js']);
+//                $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/bootstrap-auto-attrs.yaml');
+//                break;
+//
+//            case 'purecss':
+//                $page->addCssFiles('~sys/third-party/pure-css/pure-min.css');
+//                $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/purecss-auto-attrs.yaml');
+//                break;
+//
+//            case 'w3css':
+//            case 'w3.css':
+//                $page->addCssFiles('~sys/third-party/w3.css/w3.css');
+//                $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/w3css-auto-attrs.yaml');
+//                break;
+//
+//            default:
+//                $this->config->cssFramework = false;
+//                break;
+//        }
     } // injectCssFramework
 
 
@@ -1101,13 +1156,11 @@ EOT;
 
 
 
-//		if ($this->config->enableEditing && $this->auth->checkRole('editor')) {
-			if (getStaticVariable('editingMode')) {
-				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
-			} else {
-				$this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>{{ turn edit mode on }}</a> | ");
-			}
-//		}
+        if (getStaticVariable('editingMode')) {
+            $this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
+        } else {
+            $this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>{{ turn edit mode on }}</a> | ");
+        }
 
 
 		

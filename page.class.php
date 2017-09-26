@@ -11,6 +11,8 @@ class Page
     private $body = '';
     private $content = '';
     private $head = '';
+    private $description = '';
+    private $keywords = '';
     private $cssFiles = '';
     private $css = '';
     private $jsFiles = '';
@@ -115,6 +117,22 @@ class Page
     {
         $this->addToProperty($this->head, $str, $replace);
     } // addHead
+
+
+
+    //-----------------------------------------------------------------------
+    public function addKeywords($str, $replace = false)
+    {
+        $this->addToListProperty($this->keywords, $str, $replace);
+    } // addKeywords
+
+
+
+    //-----------------------------------------------------------------------
+    public function addDescription($str, $replace = false)
+    {
+        $this->addToListProperty($this->description, $str, $replace);
+    } // addDescription
 
 
 
@@ -363,14 +381,25 @@ EOT;
     public function headInjections()
     {
         $headInjections = $this->get('head');
-        $headInjections .= "\n".$this->getModules('css', $this->get('cssFiles'));
+
+        $keywords = $this->get('keywords');
+        if ($keywords) {
+            $keywords = "\t<meta name='keywords' content='$keywords'>\n";
+        }
+
+        $description = $this->get('description');
+        if ($description) {
+            $description = "\t<meta name='description' content='$description'>\n";
+        }
+
+        $headInjections .= $keywords.$description."\n".$this->getModules('css', $this->get('cssFiles'));
         if ($this->get('css')) {
-            $headInjections .= "\t<style type='text/css'>\n".$this->get('css')."\n\t</style>\n";
+            $headInjections .= "\t<style>\n".$this->get('css')."\n\t</style>\n";
         }
         $this->css = '';
         $this->cssFiles = '';
         $this->head = '';
-        $headInjections = "\t<!-- head injections -->\n$headInjections\t<!-- /head injections -->\n";
+        $headInjections = "\t<!-- head injections -->\n$headInjections\t<!-- /head injections -->";
         return $headInjections;
     } // headInjections
 
@@ -396,17 +425,17 @@ EOT;
             $bodyEndInjections .= $this->getModules('js', $this->get('jqFiles'));
         }
         if ($this->get('js')) {
-            $bodyEndInjections .= "\t<script type='text/javascript'>\n".$this->get('js')."\n\t</script>\n";
+            $bodyEndInjections .= "\t<script>\n".$this->get('js')."\n\t</script>\n";
         }
         if ($this->get('jq')) {
-            $bodyEndInjections .= "\t<script type='text/javascript'>\n\t\t\$( document ).ready(function() {\n\t\t".$this->get('jq')."\n\t\t});\n\t</script>\n";
+            $bodyEndInjections .= "\t<script>\n\t\t\$( document ).ready(function() {\n\t\t".$this->get('jq')."\n\t\t});\n\t</script>\n";
         }
 
         $pathToRoot = $globalParams['pathToRoot'];
         $appRootJs = "var appRoot = '$pathToRoot';";
         $sysPathJs = "var systemPath = '$pathToRoot{$this->config->systemPath}';";
 
-        $bodyEndInjections = "\t<script type='text/javascript'>\n\t\t$appRootJs $sysPathJs\n\t</script>\n".$bodyEndInjections;
+        $bodyEndInjections = "\t<script>\n\t\t$appRootJs $sysPathJs\n\t</script>\n".$bodyEndInjections;
         if ($this->get('body_end_injections')) {
             $bodyEndInjections .= $this->get('body_end_injections');
         }
@@ -433,6 +462,7 @@ EOT;
         $modules = array(0 => '');
         $sys = '~/'.SYSTEM_PATH; //$this->config->systemHttpPath;
         $out = '';
+        $jQweight = $this->config->jQueryWeight;
         foreach($lines as $mod) {
             $mod = trim($mod);
             if (in_array($mod, array_keys($this->config->loadModules))) {
@@ -456,26 +486,30 @@ EOT;
                     if (strpos($mod, "<script") !== false) {
                         $modules[0] .= $mod;
                     } else {
-                        $modules[0] .= "\t<script src='$mod' type='text/javascript'></script>\n";
+                        $modules[0] .= "<script src='$mod'></script>\n";
                     }
                 } else  {
                     if (strpos($mod, "<link") !== false) {
                         $modules[0] .= $mod;
                     } else {
-                        $modules[0] .= "\t<link   href='$mod' type='text/css' rel='stylesheet'>\n";
+                        $modules[0] .= "<link   href='$mod' rel='stylesheet'>\n";
                     }
                 }
             }
         }
-        if (isset($modules[9]) && (strpos($modules[9], 'JQUERY') === 0)) {
+
+
+        if (isset($modules[$jQweight]) && (strpos($modules[$jQweight], 'JQUERY') === 0)) {
             if ($globalParams['legacyBrowser']) {
-                $modules[9] = $sys . $this->config->loadModules['JQUERY1']['module'];
+                $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
             } else {
-                $modules[9] = $sys . $this->config->loadModules[$modules[9]]['module'];
+                $modules[$jQweight] = $sys . $this->config->loadModules[$modules[$jQweight]]['module'];
             }
         }
-        if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[9])) {	// automatically prepend jQuery if missing
-            $modules[9] = $sys.$this->config->loadModules['JQUERY']['module'];
+
+
+        if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[$jQweight])) {	// automatically prepend jQuery if missing
+            $modules[$jQweight] = $sys.$this->config->loadModules['JQUERY']['module'];
         }
         ksort($modules);
         while (isset($modules[0]) && !$modules[0]) {
@@ -486,13 +520,13 @@ EOT;
                 if (strpos($mod, "<script") !== false) {
                     $out .= "\t$mod\n";
                 } else {
-                    $out .= "\t<script src='$mod' type='text/javascript'></script>\n";
+                    $out .= "\t<script src='$mod'></script>\n";
                 }
             } else  {
                 if (strpos($mod, "<link") !== false) {
                     $out .= "\t$mod\n";
                 } else {
-                    $out .= "\t<link   href='$mod' type='text/css' rel='stylesheet'>\n";
+                    $out .= "\t<link   href='$mod' rel='stylesheet'>\n";
                 }
             }
         }
