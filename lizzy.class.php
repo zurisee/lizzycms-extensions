@@ -275,14 +275,24 @@ class Lizzy
     private function handleInsecureConnection()
     {
         if ($this->isRestrictedPage()) {
-            if ($this->localCall || (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on')) {
-                $overridePage = $this->auth->authForm($this->auth->message);
-                $this->page->merge($overridePage);
-            } else {
-                $this->page->set('override', "{{ Warning insecure connection }}");
-            }
+            $this->checkInsecureConnection();
         }
     } // handleInsecureConnection
+
+
+
+    //....................................................
+    private function checkInsecureConnection()
+    {
+        if (!$this->localCall && !(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on')) {
+            $this->page->set('override', "{{ Warning insecure connection }}");
+
+            if (isset($_SERVER['HTTP_HOST']) && isset($_SERVER['REQUEST_URI'])) {
+                $https = "https://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+                reloadAgent($https);
+            }
+        }
+    } // checkInsecureConnection
 
 
 
@@ -1065,16 +1075,6 @@ EOT;
 	//....................................................
 	private function handleUrlArgs2()
 	{
-        if (!$this->auth->checkRole('editor')) {  // only localhost or logged in as editor/admin role
-            return;
-        }
-
-
-		if ($n = getUrlArg('printall', true)) {							// printall
-			exit( $this->printall($n) );
-		}
-
-
         // user wants to login in and is not already logged in:
 		if (getUrlArg('login')) {                                               // login
 		    if (getStaticVariable('user')) {    // already logged in -> logout first
@@ -1082,22 +1082,26 @@ EOT;
                 setStaticVariable('user',false);
             }
 
-            if (stripos($_SERVER["HTTP_HOST"], 'localhost') === false) {
-                if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on') {  // check secure line
-                    $overridePage = $this->auth->authForm($this->auth->message);
-                    $this->page->merge($overridePage);
-                } else {
-                    $this->page->addOverride("{{ Warning insecure connection }}");
-                }
-            } else {
-                $overridePage = $this->auth->authForm($this->auth->message);
-                $this->page->merge($overridePage);
-            }
+            $this->checkInsecureConnection();
+            $overridePage = $this->auth->authForm($this->auth->message);
+            $this->page->merge($overridePage);
+            $this->page->addOverride($overridePage->get('override'), true);
 		}
 
 
+        if (!$this->auth->checkRole('editor')) {  // only localhost or logged in as editor/admin role
+            return;
+        }
 
-		if (getUrlArg('log')) {    // log
+
+        if ($n = getUrlArg('printall', true)) {							// printall
+            exit( $this->printall($n) );
+        }
+
+
+
+
+        if (getUrlArg('log')) {    // log
             if (file_exists(ERROR_LOG_ARCHIVE)) {
                 $str = file_get_contents(ERROR_LOG_ARCHIVE);
             } else {
