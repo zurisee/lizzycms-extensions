@@ -29,7 +29,7 @@ $msg = "<p><strong>Warning:</strong><br> Standard admin password as predefined a
 <p>Please change it ASAP!</p><p>For now admin credentials are: <code>admin / insecure-pw</code></p>";
 
 
-$stdPWhash = '$2y$10$koBJgyhl0QgBwmiE/.MdXOXR0mrTG29bjq37VHxBdZJJTDY2GE';
+$stdPWhash = '$2y$10$koBJgyhl0QgBwmiE/.MdXOXR0mrTG29bjq37VHxBdZJJTDY2GE/n2';
 
 $userFile = getFile($userFileName);
 if (strpos($userFile, $stdPWhash) === false) {
@@ -44,6 +44,7 @@ if (strpos($userFile, $stdPWhash) === false) {
             $userFile = str_replace($stdPWhash, $newPWhash, $userFile);
             $userFile = str_replace("\n# The standard password is 'insecure-pw' - please change immediately!\n", '', $userFile);
             file_put_contents($userFileName, $userFile);
+
             $newUserCodeFileName = dir_name($thisFile).'##'.base_name($thisFile);
             rename($thisFile, $newUserCodeFileName);
             return;
