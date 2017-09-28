@@ -411,7 +411,7 @@ EOT;
 		if (($this->action == 'add') && $this->err_msg) {
 			$err_msg = "\n\t<div class='err_msg'>$this->err_msg</div>";
 		}
-		$url = 'http://'.$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+		$url = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
 		$form = <<<EOT
 
 <div id="addDialog" data-role="popup" data-theme="a" class="enrollment_dialog hide_dialog">
@@ -449,7 +449,7 @@ EOT;
 		if (($this->action == 'delete') && $this->err_msg) {
 			$err_msg = "\n\t<div class='err_msg'>$this->err_msg</div>";
 		}
-		$url = 'http://'.$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+		$url = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
 		$form = <<<EOT
 
 <div id="delDialog" data-role="popup" data-theme="a" class="enrollment_dialog hide_dialog">
