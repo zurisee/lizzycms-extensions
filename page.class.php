@@ -26,29 +26,14 @@ class Page
     private $override = false;   // if set, will replace the page content
     private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
     private $debugMsg = false;
-    
+    private $wrapperTag = 'section';
+    private $jQloaded = false;
+
 
 
     public function __construct($config = false)
     {
         $this->config = $config;
-    }
-
-
-
-    private function appendValue($key, $value)
-    {
-        if (isset($this->$key)) {
-            if ($this->$key) {
-                $this->$key .= $value;
-            } else {
-                $this->$key = $value;
-            }
-            return true;
-        } else {
-            $this->$key = $value;
-            return false;
-        }
     }
 
 
@@ -73,11 +58,39 @@ class Page
 
 
 
+    private function appendValue($key, $value, $replace = false)
+    {
+        if ($replace) {
+            $this->$key = $value;
+            return true;
+        }
+        if (isset($this->$key)) {
+            if ($this->$key) {
+                $this->$key .= $value;
+            } else {
+                $this->$key = $value;
+            }
+            return true;
+        } else {
+            $this->$key = $value;
+            return false;
+        }
+    }
+
+
+
     public function merge($page)
     {
+        if (!(is_object($page) || is_array($page))) {
+            return;
+        }
         foreach ($page as $key => $value) {
             if ($key == 'config') { continue; }
-           $this->appendValue($key, $value);
+            if ($key == 'wrapperTag') {
+                $this->appendValue($key, $value, true);
+            } else {
+                $this->appendValue($key, $value);
+            }
         }
     }
 
@@ -201,6 +214,10 @@ class Page
     //-----------------------------------------------------------------------
     public function addJQ($str, $replace = false)
     {
+        if ((strpos($str, '.editable') !== false) && (strpos($this->jq, '.editable') !== false)) {
+            return;
+        }
+
         $this->addToProperty($this->jq, $str, $replace);
     } // addJQ
 
@@ -310,19 +327,6 @@ class Page
         $overlay = $this->get('overlay', true);
 
         if ($overlay) {
-            $jq = <<<EOT
-    document.onkeydown = function(e) {
-		var keycode = (window.event) ? event.keyCode : e.keyCode;
-		console.log('key: '+keycode);
-		if (keycode == 27) {	// ESC
-		    \$('.overlay').hide();
-		}
-	}
-		\$('.page').click(function() { \$('.overlay').hide(); });
-EOT;
-
-            $this->addJq($jq);
-
             $this->addBody("<div class='overlay'>$overlay</div>\n");
             $this->set('overlay', '');
             $this->removeModule('jqFiles', 'PAGE_SWITCHER');
@@ -378,6 +382,35 @@ EOT;
 
 
     //....................................................
+    public function autoInvokeClassBasedModules($content)
+    {
+        foreach ($this->config->classBasedModules as $class => $modules) {
+            if (preg_match("/class\=.*['\"\s] $class ['\"\s]/x", $content, $m)) {
+                foreach ($modules as $module => $rsc) {
+                    if ($module == 'cssFiles') {
+                        $this->addCssFiles($rsc);
+                    } elseif ($module == 'css') {
+                        $this->addCss($rsc);
+
+                    } elseif ($module == 'jqFiles') {
+                        $this->addJQFiles($rsc);
+                    } elseif ($module == 'jq') {
+                        $this->addJq($rsc);
+
+                    } elseif ($module == 'jsFiles') {
+                        $this->addJsFiles($rsc);
+                    } elseif ($module == 'jq') {
+                        $this->addJq($rsc);
+                    }
+                }
+            }
+        }
+    } // autoInvokeClassBasedModules
+
+
+
+
+    //....................................................
     public function headInjections()
     {
         $headInjections = $this->get('head');
@@ -411,7 +444,7 @@ EOT;
         global $globalParams;
         $bodyEndInjections = '';
 
-        $this->addJqFiles("TOUCH_DETECTOR");
+        $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
         if (($this->config->loadJQuery) || ($this->config->autoLoadJQuery)) {
             $this->addJqFiles($this->config->jQueryModule);
         }
@@ -436,8 +469,18 @@ EOT;
         $sysPathJs = "var systemPath = '$pathToRoot{$this->config->systemPath}';";
 
         $bodyEndInjections = "\t<script>\n\t\t$appRootJs $sysPathJs\n\t</script>\n".$bodyEndInjections;
-        if ($this->get('body_end_injections')) {
-            $bodyEndInjections .= $this->get('body_end_injections');
+        if ($tmp = $this->get('body_end_injections')) {
+            $bodyEndInjections .= $tmp;
+            $this->set('body_end_injections', '');
+        }
+
+
+        if (($this->config->allowDebugInfo) &&
+            (($this->config->showDebugInfo)) || getUrlArgStatic('debug')) {
+            if ($this->config->isPrivileged) {
+//            if ($this->config->isPrivileged || $this->config->isLocalhost) {
+                $bodyEndInjections .= $this->renderDebugInfo();
+            }
         }
 
         $bodyEndInjections = "<!-- body_end_injections -->\n$bodyEndInjections\n<!-- /body_end_injections -->";
@@ -456,6 +499,10 @@ EOT;
     private function getModules($type, $key)
     {
         global $globalParams;
+        $forceUpdate = '';
+        if (file_exists('.#logs/version-code.txt')) {
+            $forceUpdate = '?fup='.file_get_contents('.#logs/version-code.txt');
+        }
         // makes sure that explicit version of JQUERY gets precedence over unspecific one
         $key = str_replace(',', "\n", $key);
         $lines = explode("\n", $key);
@@ -468,7 +515,10 @@ EOT;
             if (in_array($mod, array_keys($this->config->loadModules))) {
                 if (empty($modules[$this->config->loadModules[$mod]['weight']])) {
                     if (($mod == 'JQUERY') || preg_match('/^JQUERY\d/', $mod)) {	// call for jQuery (but not jQueryUI etc)
-                        $modules[$this->config->loadModules[$mod]['weight']] = $mod;
+                        if ($this->jQloaded == false) {
+                            $modules[$this->config->loadModules[$mod]['weight']] = $mod;
+                            $this->jQloaded = true;
+                        }
                     } else {
                         $modules[$this->config->loadModules[$mod]['weight']] = $sys.$this->config->loadModules[$mod]['module'];
                     }
@@ -509,7 +559,10 @@ EOT;
 
 
         if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[$jQweight])) {	// automatically prepend jQuery if missing
-            $modules[$jQweight] = $sys.$this->config->loadModules['JQUERY']['module'];
+            if ($this->jQloaded == false) {
+                $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY']['module'];
+                $this->jQloaded = true;
+            }
         }
         ksort($modules);
         while (isset($modules[0]) && !$modules[0]) {
@@ -532,5 +585,44 @@ EOT;
         }
         return $out;
     } // getModules
+
+
+
+
+    //....................................................
+    private function renderDebugInfo()
+    {
+        global $globalParams;
+        $debugInfo = var_r($_SESSION, '$_SESSION');
+        $globalParams['whoami'] = trim(shell_exec('whoami')).':'.trim(shell_exec('groups'));
+        $debugInfo .= var_r($globalParams, '$globalParams');
+
+
+        if (file_exists(ERROR_LOG)) {
+            $errLog = file_get_contents(ERROR_LOG);
+            $errLog = substr($errLog, -1000);
+            $debugInfo .= "\n<p><strong>Error Log:</strong></p><div class='log scrollToBottom'>$errLog</div>\n";
+        }
+
+        if (file_exists(LOGS_PATH . LOGIN_LOG_FILENAME)) {
+            $failedLogins = file_get_contents(LOGS_PATH . LOGIN_LOG_FILENAME);
+            $failedLogins = substr($failedLogins, -1000);
+            $debugInfo .= "\n<p><strong>Log-ins:</strong></p><div class='log scrollToBottom'>$failedLogins</div>\n";
+        }
+
+        if (file_exists(LOGS_PATH . 'log.txt')) {
+            $accessLog = file_get_contents(LOGS_PATH . 'log.txt');
+            $accessLog = substr($accessLog, -1000);
+            $debugInfo .= "\n<p><strong>Access Log:</strong></p><div class='log scrollToBottom'>$accessLog</div>\n";
+        }
+
+        if (strpos($debugInfo, 'scrollToBottom') !== false) {
+            $this->addJQ('$(".scrollToBottom").scrollTop($(".scrollToBottom")[0].scrollHeight);');
+        }
+
+        $debugInfo .= "<div id='log'></div>";
+        $debugInfo = "\n<div id='debugInfo'><p><strong>DebugInfo:</strong></p>$debugInfo</div>\n";
+        return $debugInfo;
+    } // renderDebugInfo
 
 } // Page

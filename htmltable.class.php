@@ -11,7 +11,8 @@ class HtmlTable
 
         $this->id 			= (isset($options['id'])) ? $options['id'] : false;
         $this->tableclass 	= (isset($options['tableclass'])) ? " class='{$options['tableclass']}'" : '';
-        $this->cellclass 	= (isset($options['cellclass'])) ? " class='{$options['cellclass']}'" : '';
+//        $this->cellclass 	= (isset($options['cellclass'])) ? " class='{$options['cellclass']}'" : '';
+        $this->cellclass 	= (isset($options['cellclass'])) ? $options['cellclass'] : '';
         $this->nRows 		= (isset($options['nRows'])) ? $options['nRows'] : false;
         $this->nCols 		= (isset($options['nCols'])) ? $options['nCols'] : false;
         $this->columns 		= (isset($options['columns'])) ? $options['columns'] : false;
@@ -135,7 +136,7 @@ class HtmlTable
     {
         $header = '';
         $row = 1;
-        $tdClass = $this->cellclass;
+        $tdClass = ($this->cellclass) ? " class='{$this->cellclass}'" : '';
 
         $hdrLabels = false;
         if ($this->headersTop) {

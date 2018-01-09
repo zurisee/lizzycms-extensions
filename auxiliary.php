@@ -4,7 +4,6 @@ define('LOG_PATH', '.#logs/');
 define('MAX_URL_ARG_SIZE', 16000);
 
 use Symfony\Component\Yaml\Yaml;
-use cebe\markdown\MarkdownExtra;
 
 
 //--------------------------------------------------------------
@@ -72,7 +71,7 @@ function parseArgumentStr($str, $delim = ',')
                 $options[] = $val;
             }
             $assoc = false;
-            $str = substr($str, 1);
+            $str = ltrim(substr($str, 1));
 
         } else {    // anything else is an error
             fatalError("Error in argument string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
@@ -127,6 +126,22 @@ function csv_to_array($str, $delim = ',') {
 } // csv_to_array
 
 
+
+
+//--------------------------------------------------------------
+function arrayToCsv($array, $quote = '"', $delim = ',')
+{
+    $out = '';
+    foreach ($array as $row) {
+        foreach ($row as $i => $elem) {
+            if (strpbrk($elem, $quote.$delim)) {
+                $row[$i] = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
+            }
+        }
+        $out .= implode($delim, $row)."\n";
+    }
+    return $out;
+} // arrayToCsv
 
 
 //--------------------------------------------------------------
@@ -202,27 +217,31 @@ function getFile($pat, $removeComments = false)
 	if (strpos($pat, '~page/') === 0) {
 	    $pat = str_replace('~page/', $globalParams['pagePath'], $pat);
     }
-	if ($fname = findFile($pat)) {
+    if (file_exists($pat)) {
+        $file = file_get_contents($pat);
+
+    } elseif ($fname = findFile($pat)) {
 		if (is_file($fname) && is_readable($fname)) {
 			$file = file_get_contents($fname);
 		} else {
             fatalError("Error trying to read file '$fname'", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
-		if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
-			$file = substr($file, 0, $p+1);
-		}
-		if ($removeComments === true) {
-			$file = removeCStyleComments($file);
-		} elseif ($removeComments) {
-			$file = removeHashTypeComments($file);
-		}
-		if (strpos($removeComments, 'emptyLines')) {
-			$file = removeEmptyLines($file);
-		}
-		return $file;
-	} else {
-		return false;
-	}
+    } else {
+        return false;
+    }
+
+    if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
+        $file = substr($file, 0, $p+1);
+    }
+    if ($removeComments === true) {
+        $file = removeCStyleComments($file);
+    } elseif ($removeComments) {
+        $file = removeHashTypeComments($file);
+    }
+    if (strpos($removeComments, 'emptyLines')) {
+        $file = removeEmptyLines($file);
+    }
+    return $file;
 } // getFile
 
 
@@ -311,10 +330,12 @@ function removeCStyleComments($str)
 //--------------------------------------------------------------
 function getDir($pat)
 {
-	if (!file_exists(dirname($pat))) {
-		$pat = linkedFilepath($pat);
-	}
-	$files = array_filter(glob($pat), 'isNotShielded');
+	if (strpos($pat, '{') === false) {
+        $files = glob($pat);
+    } else {
+        $files = glob($pat, GLOB_BRACE);
+    }
+	$files = array_filter($files, 'isNotShielded');
 	$path = dirname($pat).'/';
 	$fPat = basename($pat);
 	$linkFiles = array_filter(glob($path.'*.link'), 'isNotShielded');
@@ -336,18 +357,27 @@ function getDir($pat)
 
 
 //--------------------------------------------------------------
-function getDirDeep($path, $onlyDir = false, $assoc = false)
+function getDirDeep($path, $onlyDir = false, $assoc = false, $returnAll = false)
 {
+    if (($path === false) || ($path === null)) {
+        return null;
+    }
     $flag = ($onlyDir) ? GLOB_ONLYDIR : 0;
     $path = rtrim($path, '/').'/';
-    $dir = glob($path.'*', $flag);
+    if ($returnAll) {
+        $dir = glob($path . '{,.}[!.,!..]*',GLOB_MARK|GLOB_BRACE|$flag);
+    } else {
+        $dir = glob($path . '*', $flag);
+    }
     foreach($dir as $inx => $entry) {
         if (is_dir($entry)) {
             $dir[$inx] = rtrim($entry, '/').'/';
-            $dir = array_merge($dir, getDirDeep($entry, $flag));
+            $dir = array_merge($dir, getDirDeep($entry, $flag, $assoc, $returnAll));
         }
     }
-    $dir = array_filter($dir, 'isNotShielded');
+    if (!$returnAll) {
+        $dir = array_filter($dir, 'isNotShielded');
+    }
     if ($assoc) {
         $dd = [];
         foreach ($dir as $e) {
@@ -361,38 +391,15 @@ function getDirDeep($path, $onlyDir = false, $assoc = false)
 
 
 
+
 //--------------------------------------------------------------
-function linkedFilepath($path, $relativeToCurrPage = false)
-// checks a path whether it contains folder-link somewhere on the way, e.g. /a/b/c, where b/ doesn't exists but /a/b.link
+function is_inCommaSeparatedList($keyword, $list)
 {
-    global $globalParams;
-    if (!$path) {
-        return '';
-    }
-    if ($path[strlen($path)-1] == '/') {
-        $path .= 'DUMMYFILE';
-    }
-	$file = basename($path);
-    if ($file == 'DUMMYFILE') { $file = ''; }
-	$folder = dirname($path);
-	$elems = explode('/', $folder);
-	$path = '';
-	foreach ($elems as $elem) {
-		if (file_exists($path.$elem.'.link')) {
-			$link = chop(file_get_contents($path.$elem.'.link'), "\n");
-            $path = preg_replace('|~/|', '', $link);
-            $path = preg_replace('|~sys/|', SYSTEM_PATH, $path);
-            $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pathToRoot'].$globalParams['pagePath'], $path);
-		} else {
-			$path .= $elem.'/';
-		}
-	}
-	$path = str_replace('//', '/', $path);
-	if (substr($path, 0, 2) == './') {
-	    $path = substr($path, 2);
-    }
-	return $path.$file;
-} // linkedFilepath
+    $list = ','.str_replace(' ', '', $list).',';
+    $res = (strpos($list, ",$keyword,") !== false);
+    return (strpos($list, ",$keyword,") !== false);
+} // is_inCommaSeparatedList
+
 
 
 
@@ -438,12 +445,16 @@ function base_name($file, $incl_ext = true, $incl_args = false) {
 
 //------------------------------------------------------------
 function dir_name($path)
+// last element considered a filename, if doesn't end in '/' and contains a dot
 {
     if (!$path) {
         return '';
     }
+    if ($path{strlen($path)-1} == '/') {  // ends in '/'
+        return $path;
+    }
     $path = preg_replace('/[\#\?].*/', '', $path);
-    if (strpos($path, '.') !== false) {
+    if (strpos($path, '.') !== false) {  // contains a '.'
         return dirname($path).'/';
     } else {
         return rtrim($path, '/').'/';
@@ -519,12 +530,13 @@ function makePathDefaultToPage($path)
 //------------------------------------------------------------
 function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 {
-	global $globalParams;
-	
-	if (!$path) {
-		return '';
-	}
-	
+    global $globalParams;
+
+    if (!$path) {
+        return '';
+    } elseif (preg_match('|^https?\://|i', $path)) {
+        return $path;
+    }
 	if ($relativeToCurrPage) {		// for HTTP Requests
         $path = makePathRelativeToPage($path);
 
@@ -534,18 +546,20 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         }
     }
 
-    if ($httpAccess) {  // http access:
+    if (is_string($httpAccess)) {  // http page access:
         $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
         $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
-        $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pathToRoot'].$globalParams['pagePath'], $path);
-        $filepath = str_replace($globalParams['pathToRoot'], '', $path);
-        $path = $globalParams['pathToRoot'].linkedFilepath($filepath, true);
+        $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pagePath'], $path);
+
+    } elseif ($httpAccess) {  // http resource access:
+        $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
+        $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
+        $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pathToPage'], $path);
 
     } else {            // file access:
         $path = preg_replace('|~/|', '', $path);
         $path = preg_replace('|~sys/|', SYSTEM_PATH, $path);
-        $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pagePath'], $path);
-        $path = linkedFilepath($path, false);
+        $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pathToPage'], $path);
     }
     return $path;
 } // resolvePath
@@ -571,11 +585,51 @@ function resolveAllPaths($html)
 {
 	global $globalParams;
 	$pathToRoot = $globalParams['pathToRoot'];
+
 	$html = preg_replace('|~/|', $pathToRoot, $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
-	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pagePath'], $html);
+	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
 	return $html;
 } // resolveAllPaths
+
+
+
+//-----------------------------------------------------------------------
+function generateNewVersionCode()
+{
+    $prevRandCode = false;
+    if (file_exists(VERSION_CODE_FILE)) {
+        $prevRandCode = file_get_contents(VERSION_CODE_FILE);
+    }
+    do {
+        $randCode = rand(0, 9) . rand(0, 9);
+    } while ($prevRandCode && ($prevRandCode == $randCode));
+    file_put_contents(VERSION_CODE_FILE, $randCode);
+    return $randCode;
+} // generateNewVersionCode
+
+
+
+
+//-----------------------------------------------------------------------
+function getVersionCode($forceNew = false, $str = '')
+{
+    if (!$forceNew && file_exists(VERSION_CODE_FILE)) {
+        $randCode = file_get_contents(VERSION_CODE_FILE);
+    } else {
+        if (!$forceNew) {
+            $randCode = generateNewVersionCode();
+        } else {
+            $randCode = rand(0, 9) . rand(0, 9);
+        }
+    }
+    if ($str && strpos($str, '?') !== false) {
+        $str .= '&fup='.$randCode;
+    } else {
+        $str .= '?fup='.$randCode;
+    }
+    return $str;
+} // getVersionCode
 
 
 
@@ -671,12 +725,13 @@ function getCliArg($argname, $stringMode = false)
 
 
 //-----------------------------------------------------------------------
-function getUrlArg($tag, $stringMode = false, $unset = false) {
+function getUrlArg($tag, $stringMode = false, $unset = false)
 // in case of arg that is present but empty:
 // stringMode: returns value (i.e. '')
 // otherwise, returns true or false, note: empty string == true!
 // returns null if no url-arg was found
-	$out = null;
+{
+    $out = null;
 	if (isset($_GET[$tag])) {
 	    if ($stringMode) {
             $out = safeStr($_GET[$tag], false, true);
@@ -695,9 +750,9 @@ function getUrlArg($tag, $stringMode = false, $unset = false) {
 
 //-------------------------------------------------------------------------
 function getUrlArgStatic($tag, $stringMode = false, $varName = false)
-    // like get_url_arg()
-    // but returns previously received value if corresp. url-arg was not recived
-    // returns null if no value has ever been received
+// like get_url_arg()
+// but returns previously received value if corresp. url-arg was not recived
+// returns null if no value has ever been received
 {
 	if (!$varName) {
 		$varName = $tag;
@@ -714,9 +769,17 @@ function getUrlArgStatic($tag, $stringMode = false, $varName = false)
 
 
 //-------------------------------------------------------------------------
-function setStaticVariable($varName, $value)
+function setStaticVariable($varName, $value, $append = false)
 {
-	$_SESSION['lizzy'][$varName] = $value;
+    if ($value === null) {
+        unset($_SESSION['lizzy'][$varName]);
+    } else {
+        if ($append) {
+            $_SESSION['lizzy'][$varName] = isset($_SESSION['lizzy'][$varName]) ? $_SESSION['lizzy'][$varName].$value : $value;
+        } else {
+            $_SESSION['lizzy'][$varName] = $value;
+        }
+    }
 } // setStaticVariable
 
 
@@ -734,7 +797,36 @@ function getStaticVariable($varName)
 
 
 //-------------------------------------------------------------------------
-function reloadAgent($target = './') {
+function getClientIP($normalize = false)
+{
+    $ip = getenv('HTTP_CLIENT_IP')?:
+        getenv('HTTP_X_FORWARDED_FOR')?:
+            getenv('HTTP_X_FORWARDED')?:
+                getenv('HTTP_FORWARDED_FOR')?:
+                    getenv('HTTP_FORWARDED')?:
+                        getenv('REMOTE_ADDR');
+
+    if ($normalize) {
+        $elems = explode('.', $ip);
+        foreach ($elems as $i => $e) {
+            $elems[$i] = str_pad($e, 3, "0", STR_PAD_LEFT);
+        }
+        $ip = implode('.', $elems);
+    }
+    return $ip;
+} // getClientIP
+
+
+
+//-------------------------------------------------------------------------
+function reloadAgent($target = false)
+{
+    global $globalParams;
+    if ($target) {
+        $target = resolvePath($target, false,'https');
+    } else {
+        $target = $globalParams['pageUrl'];
+    }
     header("Location: $target");
     exit;
 } // reloadAgent
@@ -742,7 +834,8 @@ function reloadAgent($target = './') {
 
 
 //------------------------------------------------------------
-function get_post_data($varName, $permitNL = false) {
+function get_post_data($varName, $permitNL = false)
+{
 	$out = false;
 	if (isset($_POST) && isset($_POST[$varName])) {
 		$out = $_POST[$varName];
@@ -754,7 +847,8 @@ function get_post_data($varName, $permitNL = false) {
 
 
 //------------------------------------------------------------
-function path_info($file) {
+function path_info($file)
+{
 	if (substr($file, -1) == '/') {
 		$pi['dirname'] = $file;
 		$pi['filename'] = '';
@@ -784,23 +878,25 @@ function preparePath($path)
 
 
 //------------------------------------------------------------
-function is_legal_email_address($str) {
+function is_legal_email_address($str)
 // multiple address allowed, if separated by comma.
-		if (!is_safe($str)) {
-			return false;
-		}
-		foreach (explode(',', $str) as $s) {
-				if (!preg_match('/^\w(([_\.\-\']?\w+)*)@(\w+)(([\.\-]?\w+)*)\.([a-z]{2,})$/i', trim($s))) {
-						return false;
-				}
-		}
-		return true;
+{
+    if (!is_safe($str)) {
+        return false;
+    }
+    foreach (explode(',', $str) as $s) {
+        if (!preg_match('/^\w(([_\.\-\']?\w+)*)@(\w+)(([\.\-]?\w+)*)\.([a-z]{2,})$/i', trim($s))) {
+            return false;
+        }
+    }
+    return true;
 } // is_legal_email_address
 
 
 
 //------------------------------------------------------------
-function is_safe($str, $multiline = false) {
+function is_safe($str, $multiline = false)
+{
 //??? not implemented correctly yet!
 	if ($multiline) {
 		$str = str_replace(PHP_EOL, '', $str);
@@ -814,7 +910,8 @@ function is_safe($str, $multiline = false) {
 
 
 //---------------------------------------------------------------------------
-function safeStr($str, $permitNL = false) {
+function safeStr($str, $permitNL = false)
+{
 	if (preg_match('/^\s*$/', $str)) {
 		return '';
 	}
@@ -831,7 +928,8 @@ function safeStr($str, $permitNL = false) {
 
 
 //-------------------------------------------------------------------------
-function strToASCII($str) {
+function strToASCII($str)
+{
 // translates special characters (such as ä, ö, ü) into pure ASCII
 	$specChars = array('ä','ö','ü','Ä','Ö','Ü','é','â','á','à',
 		'ç','ñ','Ñ','Ç','É','Â','Á','À','ß','ø','å');
@@ -845,7 +943,8 @@ function strToASCII($str) {
 
 
 //------------------------------------------------------------
-function timestamp($short = false) {
+function timestamp($short = false)
+{
 	if (!$short) {
 		return date('Y-m-d H:i:s');
 	} else {
@@ -868,7 +967,8 @@ function touchFile($file, $time = false)
 
 
 //-------------------------------------------------------------------------
-function translateToFilename($str, $appendExt = true) {
+function translateToFilename($str, $appendExt = true)
+{
 // translates special characters (such as , , ) into "filename-safe" non-special equivalents (a, o, U)
 	$str = strToASCII(trim(mb_strtolower($str)));	// replace special chars
 	$str = strip_tags($str);						// strip any html tags
@@ -890,7 +990,8 @@ function translateToFilename($str, $appendExt = true) {
 
 
 //-------------------------------------------------------------------------
-function translateToIdentifier($str, $removeDashes = false) {
+function translateToIdentifier($str, $removeDashes = false)
+{
 // translates special characters (such as , , ) into "filename-safe" non-special equivalents (a, o, U)
 	$str = strToASCII(mb_strtolower(trim($str)));		// replace special chars
 	$str = strip_tags($str);							// strip any html tags
@@ -905,7 +1006,8 @@ function translateToIdentifier($str, $removeDashes = false) {
 
 
 //------------------------------------------------------------
-function mylog($str, $destination = false) {
+function mylog($str, $destination = false)
+{
 	writeLog($str, $destination);
 } // mylog
 
@@ -931,8 +1033,10 @@ function writeLog($str, $destination = false)
 
     } elseif ($destination == 'errlog') {
         $destination = $globalParams['errorLogFile'];
-        preparePath($destination);
-        file_put_contents($destination, timestamp()."  $str\n", FILE_APPEND);
+        if ($destination) {
+            preparePath($destination);
+            file_put_contents($destination, timestamp() . "  $str\n", FILE_APPEND);
+        }
     }
 } // writeLog
 
@@ -946,7 +1050,8 @@ function logError($str)
 
 
 //------------------------------------------------------------------------------
-function show_msg($msg, $title = '') {
+function show_msg($msg, $title = '')
+{
 	if (!$title) {
 		$title = basename(__FILE__, '.php');
 	}
@@ -959,7 +1064,8 @@ function show_msg($msg, $title = '') {
 
 
 //------------------------------------------------------------------------------
-function shield_str($s) {
+function shield_str($s)
+{
 	return str_replace('"', '\\"', $s);
 } // shield_str
 
@@ -968,32 +1074,16 @@ function shield_str($s) {
 //------------------------------------------------------------------------------
 function var_r($var, $varName = '', $flat = false)
 {
-	$out = "<div><pre>$varName: ".var_export($var, true)."\n</pre></div>\n";
 	if ($flat) {
-		$out = pre_replace("/\n/", '', $out);
-	}
+		$out = preg_replace("/".PHP_EOL."/", '', var_export($var, true));
+		if (preg_match('/array \((.*),\)/', $out, $m)) {
+		    $out = "[{$m[1]} ]";
+        }
+	} else {
+        $out = "<div><pre>$varName: ".var_export($var, true)."\n</pre></div>\n";
+    }
 	return $out;
 }
-
-
-
-//------------------------------------------------------------------------------
-function darken($hexColor, $decr) {
-	if (!preg_match('/^\#([\da-f])([\da-f])([\da-f])$/i', trim($hexColor), $m) &&
-		!preg_match('/^\#([\da-f][\da-f])([\da-f][\da-f])([\da-f][\da-f])$/i', trim($hexColor), $m)) {
-			return "#000 /*bad color value submitted to darken(): $hexColor*/";
-	}
-	if (!$decr) {
-		$decr = 1;
-	}
-	if (strlen($m[1]) == 2) {
-		$decr *= 16;
-	}
-	$r = dechex(hexdec($m[1]) - $decr);
-	$g = dechex(hexdec($m[2]) - $decr);
-	$b = dechex(hexdec($m[3]) - $decr);
-	return "#$r$g$b";
-} // darken
 
 
 
@@ -1008,7 +1098,6 @@ function createWarning($msg) {
 function createDebugOutput($msg) {
 	if ($msg) {
 		return "\t\t<div id='log'>$msg</div>\n";
-//		return "\t\t<div class='DebugFrame'>$msg</div>\n";
 	} else {
 		return '';
 	}
@@ -1212,61 +1301,61 @@ function trunkPath($path, $n = 1, $leaveNotRemove = true)
 
 
 
-//-----------------------------------------------------------------------------
-function sort2dArray($array, $col, $hasHeaders = true)
-{
-    if ($hasHeaders) {
-        $headers = $array[0];
-        array_shift($array);
-    }
-    usort($array, make_comparer($col));
-    
-    if ($hasHeaders) {
-        $array = array_merge([$headers], $array);
-    }
-    return $array;
-} // sort2dArray
+////-----------------------------------------------------------------------------
+//function sort2dArray($array, $col, $hasHeaders = true)
+//{
+//    if ($hasHeaders) {
+//        $headers = $array[0];
+//        array_shift($array);
+//    }
+//    usort($array, make_comparer($col));
+//
+//    if ($hasHeaders) {
+//        $array = array_merge([$headers], $array);
+//    }
+//    return $array;
+//} // sort2dArray
 
 
 
-//-----------------------------------------------------------------------------
-function make_comparer() {
-    // Normalize criteria up front so that the comparer finds everything tidy
-    $criteria = func_get_args();
-    foreach ($criteria as $index => $criterion) {
-        $criteria[$index] = is_array($criterion)
-            ? array_pad($criterion, 3, null)
-            : array($criterion, SORT_ASC, null);
-    }
-
-    return function($first, $second) use (&$criteria) {
-        foreach ($criteria as $criterion) {
-            // How will we compare this round?
-            list($column, $sortOrder, $projection) = $criterion;
-            $sortOrder = $sortOrder === SORT_DESC ? -1 : 1;
-
-            // If a projection was defined project the values now
-            if ($projection) {
-                $lhs = call_user_func($projection, $first[$column]);
-                $rhs = call_user_func($projection, $second[$column]);
-            }
-            else {
-                $lhs = $first[$column];
-                $rhs = $second[$column];
-            }
-
-            // Do the actual comparison; do not return if equal
-            if ($lhs < $rhs) {
-                return -1 * $sortOrder;
-            }
-            else if ($lhs > $rhs) {
-                return 1 * $sortOrder;
-            }
-        }
-
-        return 0; // tiebreakers exhausted, so $first == $second
-    };
-} // make_comparer
+////-----------------------------------------------------------------------------
+//function make_comparer() {
+//    // Normalize criteria up front so that the comparer finds everything tidy
+//    $criteria = func_get_args();
+//    foreach ($criteria as $index => $criterion) {
+//        $criteria[$index] = is_array($criterion)
+//            ? array_pad($criterion, 3, null)
+//            : array($criterion, SORT_ASC, null);
+//    }
+//
+//    return function($first, $second) use (&$criteria) {
+//        foreach ($criteria as $criterion) {
+//            // How will we compare this round?
+//            list($column, $sortOrder, $projection) = $criterion;
+//            $sortOrder = $sortOrder === SORT_DESC ? -1 : 1;
+//
+//            // If a projection was defined project the values now
+//            if ($projection) {
+//                $lhs = call_user_func($projection, $first[$column]);
+//                $rhs = call_user_func($projection, $second[$column]);
+//            }
+//            else {
+//                $lhs = $first[$column];
+//                $rhs = $second[$column];
+//            }
+//
+//            // Do the actual comparison; do not return if equal
+//            if ($lhs < $rhs) {
+//                return -1 * $sortOrder;
+//            }
+//            else if ($lhs > $rhs) {
+//                return 1 * $sortOrder;
+//            }
+//        }
+//
+//        return 0; // tiebreakers exhausted, so $first == $second
+//    };
+//} // make_comparer
 
 
 
@@ -1310,49 +1399,6 @@ function isLocalCall()
 
 
 
-//....................................................
-function copyFileToRecycleBin($filename)
-{
-    if (file_exists($filename)) {
-        preparePath(RECYCLE_BIN_PATH);
-        $recycleFile = RECYCLE_BIN_PATH.str_replace('/', '_', $filename). ' ['.date('Y-m-d,H.i.s').']';
-        copy($filename, $recycleFile);
-    }
-} // copyFileToRecycleBin
-
-
-
-
-//....................................................
-function storeFile($filename, $content)
-{
-    copyFileToRecycleBin($filename);
-    file_put_contents($filename, $content);
-} // storeFile
-
-
-
-
-//------------------------------------------------------------
-function rollBack($fileName)
-{
-    // first save offending file locally to rollback name:
-    $rolledBackName = '#RolledBack '.str_replace('/', '_', $fileName). ' ['.date('Y-m-d,H.i.s').']';
-    $tmpFileName = dir_name($fileName).$rolledBackName;
-    copy($fileName, dir_name($fileName).$rolledBackName);
-
-    // second copy latest backup from recycle bin:
-    $recycleName = str_replace('/', '_', $fileName);
-    $candidates = getDir(RECYCLE_BIN_PATH."$recycleName*");
-    $rollBackSrc = array_pop($candidates);
-    copy($rollBackSrc, $fileName);
-
-    // third move temp. rolledBackFile to recycle bin:
-    rename($tmpFileName, RECYCLE_BIN_PATH.$rolledBackName);
-} // rollBackVersion
-
-
-
 //------------------------------------------------------------
 function fatalError($msg, $origin = '', $offendingFile = '')
 // $origin =, 'File: '.__FILE__.' Line: '.__LINE__;
@@ -1372,18 +1418,52 @@ function fatalError($msg, $origin = '', $offendingFile = '')
             $line = trim($m[2]);
             $origin = "$file::$line";
         }
-        $msg = date('Y-m-d H:i:s')."  $origin  $problemSrc\n$msg";
+        $out = date('Y-m-d H:i:s')."  $origin  $problemSrc\n$msg";
     }
-    file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
-
-    if (isLocalCall()) {    // on localhost notify immediately:
-        die($msg);
-    }
+    preparePath(ERROR_LOG);
+    file_put_contents(ERROR_LOG, $out, FILE_APPEND);
 
     if ($offendingFile) {
-        rollBack($offendingFile);
+        require_once SYSTEM_PATH.'page-source.class.php';
+        PageSource::rollBack($offendingFile); //???
         reloadAgent();
     }
     exit;
 } // fatalError
 
+
+
+//-------------------------------------------------------------
+function sendMail($to, $from, $subject, $message)
+{
+    $headers = "From: $from\r\n" .
+        'X-Mailer: PHP/' . phpversion();
+
+    if (!mail($to, $subject, $message, $headers)) {
+        fatalError("Error: unable to send e-mail", 'File: '.__FILE__.' Line: '.__LINE__);
+    }
+} // sendMail
+
+
+
+
+//....................................................
+function handleFatalPhpError() {
+    $last_error = error_get_last();
+    if($last_error['type'] === E_ERROR) {
+        print( $last_error['message'] );
+    }
+} // handleFatalPhpError
+
+
+
+
+//function getClientIP()
+//{
+//    $elems = explode('.', $_SERVER['REMOTE_ADDR']);
+//    foreach ($elems as $i => $e) {
+//        $elems[$i] = str_pad($e, 3, "0", STR_PAD_LEFT);
+//    }
+//    $ip = implode('.', $elems);
+//    return implode('.', $elems);
+//}

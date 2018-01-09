@@ -11,6 +11,8 @@ mb_internal_encoding("utf-8");
 
 require_once(SYSTEM_PATH.'form-def.class.php');
 
+
+
 class Forms
 {
 	private $page = false;
@@ -27,12 +29,18 @@ class Forms
 	{
 		$this->transvar = $transvar;
 		$this->page = $page;
+		$this->inx = -1;
 	} // __construct
 
     
 //-------------------------------------------------------------
     public function render($args)
     {
+        if (isset($args[0]) && ($args[0] == 'help')) {
+            return false;
+        }
+
+        $this->inx++;
         $this->parseArgs($args); 
         
         switch ($this->currRec->type) {
@@ -112,7 +120,7 @@ class Forms
     private function formHead($args)
     {
 		$this->currForm->class = $class = (isset($args['class'])) ? $args['class'] : translateToIdentifier($this->currForm->formName);
-		$_class = ($class) ? " class='$class'" : '';
+		$_class = " class='lizzy-form $class'";
 		
 		$this->currForm->method = (isset($args['method'])) ? $args['method'] : 'post';
 		$_method = " method='{$this->currForm->method}'";
@@ -126,7 +134,7 @@ class Forms
 		$this->currForm->action = (isset($args['action'])) ? $args['action'] : '';
 		$this->currForm->class = (isset($args['class'])) ? $args['class'] : '';
 		$this->currForm->next = (isset($args['next'])) ? $args['next'] : './';
-	
+
 		$time = time();
 
 		$out = "<form$_class$_method$_action>\n";
@@ -278,42 +286,59 @@ EOT;
 //-------------------------------------------------------------
     private function renderFileUpload()
     {
-		$id = isset($this->args['id']) ? $this->args['id'] : $this->currRec->name;
-		$server = isset($this->args['server']) ? $this->args['server'] : '~sys/third-party/jquery-file-upload/_upload_server.php'; //'server/php/';
+        $inx = $this->inx;
+		$id = isset($this->args['id']) ? $this->args['id'] : $this->currRec->name.$inx;
+		$server = isset($this->args['server']) ? $this->args['server'] : '~sys/file-upload/_upload_server.php';
 
-		if (isset($this->currRec->path) && $this->currRec->path) {
-			$targetPath = fixPath($this->currRec->path);
-		} else {
-			$targetPath = 'data/uploads/';
-		}
-		file_put_contents('data/upload-path.txt', $targetPath);
-		$list = '';
+        $targetPath = fixPath($this->currRec->uploadPath);
+        $targetPath1 = resolvePath($targetPath);
+        $pagePath = $GLOBALS['globalParams']['pagePath'];
+        if (!isset($_SESSION['lizzy'][$pagePath]['uploadPath'])) {
+            $_SESSION['lizzy'][$pagePath]['uploadPath'] = '';
+        }
+        if (strpos($_SESSION['lizzy'][$pagePath]['uploadPath'], $targetPath1) === false) {
+            $_SESSION['lizzy'][$pagePath]['uploadPath'] .= ",$targetPath1,";
+        }
+
+
+        $list = "\t<div>{{ Uploaded file list }}</div>\n";  // assemble list of existing files
+        $list .= "<ul>";
+        $dispNo = ' style="display:none;"';
 		if (isset($this->currRec->showexisting) && $this->currRec->showexisting) {
-			$files = getDir($targetPath.'*');
+			$files = getDir($targetPath1.'*');
 			foreach ($files as $file) {
 				if (is_file($file)) {
 					$file = basename($file);
-					if (preg_match("/\.(jpg|gif|png)$/", $file)) {
-						$list .= "<div><span>$file</span><img src='~/{$targetPath}thumbnail/$file'></div>";
+					if (preg_match("/\.(jpg|gif|png)$/i", $file)) {
+						$list .= "<li><span>$file</span><span><img src='{$targetPath}thumbnail/$file'></span></li>";
 					} else {
-						$list .= "<div><span>$file</span></div>";
+						$list .= "<li><span>$file</span></li>";
 					}
 				}
 			}
-		}
-		$out = $this->getLabel($id);
+            $dispNo = '';
+        }
+        $list .= "</ul>\n";
+		if ($this->currRec->label) {
+		    $label = $this->currRec->label;
+        } else {
+            $label = '{{ Upload File(s) }}';
+        }
+		$out = '';
         $out .= <<<EOT
-			<input id="$id" type="file" name="files[]" data-url="$server" multiple />
+        
+            <input type="hidden" name="form-upload-path" value="$targetPath1" />
+            <label class="$id lizzy-form-file-upload-label ios_button" for="$id">$label<input id="$id" class="lizzy-form-file-upload" type="file" name="files[]" data-url="$server" multiple /></label>
 
-			<div class='progress-indicator'>
-				<progress id="progressBar" max='100' value='0'>
+			<div class='progress-indicator progress-indicator$inx' style="display: none;">
+				<progress id="progressBar$inx" class="progressBar" max='100' value='0'>
 					<!-- Fallback -->
-					<div id="progressBarFallback1"><span id="progressBarFallback2">&#160;</span></div>
+					<div id="progressBarFallback1-$inx"><span id="progressBarFallback2-$inx">&#160;</span></div>
 				</progress>
-				<div><span aria-live="polite" id="progressPercent"></span></div>
+				<div><span aria-live="polite" id="progressPercent$inx"></span></div>
 			</div>
 
-			<div id='uploaded' class='uploaded'>$list</div>
+			<div id='uploaded$inx' class='uploaded'$dispNo >$list</div>
 
 EOT;
 
@@ -325,28 +350,32 @@ EOT;
 		dataType: 'json',
 		
 		progressall: function (e, data) {
+		    mylog('processing upload');
+		    $('.progress-indicator$inx').show();
 			var progress = parseInt(data.loaded / data.total * 100, 10);
-			$('#progressBar').val(progress);
+			$('#progressBar$inx').val(progress);
 			var d = new Date();
 			t1 = d.getTime();
 			if (((t1 - t) > 3000) && (progress < 100)) {
 				t = t1;
-				$('#progressPercent').text( progress + '%' );
+				$('#progressPercent$inx').text( progress + '%' );
 			}
 			if (progress == 100) {
-				$('#progressPercent').text( progress + '%' );
+				$('#progressPercent$inx').text( progress + '%' );
 			}
 		},
 
 		done: function (e, data) {
+		    mylog('upload accomplished');
 			$.each(data.result.files, function (index, file) {
-				if (file.name.match(/\.(jpg|gif|png)$/)) {
-					var img = '<img src="~/{$targetPath}thumbnail/' + file.name + '" />';
+				if (file.name.match(/\.(jpg|gif|png)$/i)) {
+					var img = '<img src="{$targetPath}thumbnail/' + file.name + '" />';
 				} else {
 					var img = '';
 				}
-				var line = '<div><span>' + file.name + '</span>' + img + '</div>';
-				$('#uploaded').append(line);
+				var line = '<li><span>' + file.name + '</span><span>' + img + '</span></li>';
+				$('#uploaded$inx').show();
+				$('#uploaded$inx ul').append(line);
 			});
 		}
 	});
@@ -357,9 +386,9 @@ EOT;
 		if (!isset($this->fileUploadInitialized)) {
 			$this->fileUploadInitialized = true;
 
-			$this->page->addJqFiles(['~sys/third-party/jquery-file-upload/jquery.ui.widget.js',
-								'~sys/third-party/jquery-file-upload/jquery.iframe-transport.js',
-								'~sys/third-party/jquery-file-upload/jquery.fileupload.js']);
+			$this->page->addJqFiles(['~sys/third-party/jquery-upload/js/vendor/jquery.ui.widget.js',
+								'~sys/third-party/jquery-upload/js/jquery.iframe-transport.js',
+								'~sys/third-party/jquery-upload/js/jquery.fileupload.js']);
 		}
 		
         return $out;
@@ -527,7 +556,14 @@ EOT;
 			$rec->value = '';
 		}
 
-		if ($type == 'form-head') {
+        if (isset($args['path'])) {
+		    $rec->uploadPath = $args['path'];
+        } else {
+            $rec->uploadPath = '~/upload/';
+        }
+
+
+            if ($type == 'form-head') {
 			$this->currForm->formData['labels'][0] = 'Date';
 			$this->currForm->formData['names'] = [];
 		} elseif (($type != 'button') && ($type != 'form-tail')) {

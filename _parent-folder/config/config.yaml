@@ -1,18 +1,49 @@
 # Settings:
-# see https://getlizzy.net/site/ for documentation
+# see https://getlizzy.net/ for documentation
 
-defaultLanguage: en     // use ISO 639-1 Language Code
-caching: false
-pageSwitcher: true
-permitUserVarDefs: true
-permitUserCode: true
-loadJQuery: true
-quickview: true
-enableEditing: true
-errorLogging: true
-loadJQuery: true
-cssFramework:  w3.css // purecss // bootstrap // purecss
-#supportLegacyBrowsers: false
+# activate options by removing the leading '#'
+
+#allowDebugInfo: true	# default=false
+#autoAdminOnLocalhost: false	# default=true
+#autoAttrFile: true	# default=false
+#autoForceBrowserCache: true	# default=false
+#autoLoadClassBasedModules: false	# default=true
+#autoLoadJQuery: true	# default=false
+#caching: true	# default=false
+#collectBrowserSignatures: true	# default=false
+#cssFramework: true	# default=false
+#dataPath: data/
+#defaultAccessLinkValidyTime: 900
+#defaultLanguage: en
+#enableDailyUserTask: false	# default=true
+#enableEditing: true	# default=false
+#errorLogging: true	# default=false
+#forceBrowserCacheUpdate: true	# default=false
+#jQueryModule: JQUERY
+#loadJQuery: true	# default=false
+#logClientAccesses: true	# default=false
+#logPath: true	# default=false
+#multiLanguageSupport: true	# default=false
+#pageSwitcher: true	# default=false
+#pageTemplateFile: page_template.html
+#pagesPath: pages/
+#permitOneTimeAccessLink: false	# default=true
+#permitUserCode: true	# default=false
+#permitUserVarDefs: sandboxed
+#quickview: true	# default=false
+#scssCompileWithLineNumbers: true	# default=false
+#selflinkAvoid: false	# default=true
+#showDebugInfo: true	# default=false
+#sitemapFile: sitemap.txt
+#sitemapFromFolders: true	# default=false
+#stylesPath: css/
+#supportLegacyBrowsers: true	# default=false
+#supportedLanguages: en
+#userCodePath: code/
+#userComputedVariablesFile: user-var-defs.php
+#userVariables: variables*.yaml
+#usersFile: users.yaml
+#webmasterEmail: false	# default=true
 
 __END__
 

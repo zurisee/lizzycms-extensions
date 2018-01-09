@@ -95,7 +95,9 @@ function _renderDropdownMenu($inx, $site, $ulClass, $liClass, $aClass, $tree, $i
 
         if ($elem['isCurrPage']) {
             $liClass .= ' curr active';
-            $path = '#main';
+            if ($site->config->selflinkAvoid) {
+                $path = '#main';
+            }
         } elseif ($elem['active']) {
             $liClass .= ' active';
         }

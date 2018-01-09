@@ -14,12 +14,16 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-    $enroll_list_name = $this->getArg($macroName, 'enroll_list_name', '', '');
-    $n_needed = $this->getArg($macroName, 'n_needed', '', '');
-    $n_reserve = $this->getArg($macroName, 'n_reserve', '', 0);
-    $data_path = $this->getArg($macroName, 'data_path', '', '~page/');
+    $enroll_list_name = $this->getArg($macroName, 'listname', 'Any word identifying the enrollment list', "Enrollment-List$inx");
+    $n_needed = $this->getArg($macroName, 'n_needed', 'Number of fields in category "needed"', '');
+    $n_reserve = $this->getArg($macroName, 'n_reserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
+    $data_path = $this->getArg($macroName, 'data_path', 'Where to store data files, default is folder local to current page', '~page/');
 
-	$enroll = new enroll($data_path, $this);
+    if ($enroll_list_name == 'help') {
+        return '';
+    }
+
+    $enroll = new enroll($inx, $data_path, $this);
 	$out = $enroll->enroll($enroll_list_name, $n_needed, $n_reserve);
 	return $out;
 });
@@ -27,8 +31,9 @@ $this->addMacro($macroName, function () {
 //=== class ====================================================================
 class enroll
 {
-	function __construct($data_path, $trans)
+	function __construct($inx, $data_path, $trans)
 	{
+	    $this->inx = $inx;
 		$this->admin_mode = false; //???($param['user'] == 'enroll');
 		$this->trans = $trans;
 		if ($this->admin_mode) {
@@ -422,13 +427,13 @@ EOT;
         <div>
             <h3>{{ Enroll add }}</h3>
             <label for="name" class="ui-hidden-accessible">Name:</label>
-            <input type="text" name="name" id="a_name" value="" placeholder="Vorname Name" data-theme="a" required aria-required="true" autofocus />
+            <input type="text" name="name" id="a_name" value="" placeholder="{{ placeholder name }}" data-theme="a" required aria-required="true" autofocus />
 	    
             <label for="email" class="ui-hidden-accessible">E-Mail:</label>
             <input type="text" name="email" id="a_email" value="" placeholder="name@domain.net" data-theme="a" required aria-required="true" />
 
             <label for="phone" class="ui-hidden-accessible">Handy:</label>
-            <input type="text" name="phone" id="a_phone" value="" placeholder="Handynummer (optional)" data-theme="a" />
+            <input type="text" name="phone" id="a_phone" value="" placeholder="{{ placeholder mobile number }}" data-theme="a" />
 
             <button type="submit" id="a_submit" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Enroll now }}</button>
             <button type="cancel" id="a_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Cancel }}</button>

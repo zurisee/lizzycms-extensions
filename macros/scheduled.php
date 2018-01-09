@@ -22,10 +22,10 @@ $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 
-    $text = $this->getArg($macroName, 'text', 'Text to be repeated', '');
-    $variable = $this->getArg($macroName, 'variable', 'Variable to be repeated', '');
-    $showFrom = $this->getArg($macroName, 'showFrom', '', false);
-    $showTill = $this->getArg($macroName, 'showTill', '', false);
+    $text = $this->getArg($macroName, 'text', 'Text to be displayed', '');
+    $variable = $this->getArg($macroName, 'variable', 'Text from variable to be displayed', '');
+    $showFrom = $this->getArg($macroName, 'showFrom', 'Content will be visible after this time (format: YYYY-MM-DD HH:MM)', false);
+    $showTill = $this->getArg($macroName, 'showTill', 'Content will be visible until this time (format: YYYY-MM-DD HH:MM)', false);
 
     if ($variable) {
         $text .= $this->getVariable($variable);

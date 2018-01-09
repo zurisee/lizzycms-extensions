@@ -26,11 +26,11 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 	$sys = '~/'.$this->config->systemPath;
 
-    $text = $this->getArg($macroName, 'text', '', '');
-    $right = $this->getArg($macroName, 'right', '', false);
-    $top = $this->getArg($macroName, 'top', '', false);
-    $angle = $this->getArg($macroName, 'angle', '', '');
-    $color = $this->getArg($macroName, 'color', '', '');
+    $text = $this->getArg($macroName, 'text', 'Text to be displayed on the Post-it', '');
+    $right = $this->getArg($macroName, 'right', 'Where to place measured from right (use negative value for offset from left)', false);
+    $top = $this->getArg($macroName, 'top', 'Where to place measured from top ', false);
+    $angle = $this->getArg($macroName, 'angle', 'Angle by which the Post-it is tilted', '');
+    $color = $this->getArg($macroName, 'color', 'Background-color for Post-it', '');
 
     $style = '';
 	$style_content = '';
@@ -84,3 +84,27 @@ $text
 EOT;
 	return $str;
 });
+
+
+
+//------------------------------------------------------------------------------
+function darken($hexColor, $decr)
+{
+    if (!preg_match('/^\#([\da-f])([\da-f])([\da-f])$/i', trim($hexColor), $m) &&
+        !preg_match('/^\#([\da-f][\da-f])([\da-f][\da-f])([\da-f][\da-f])$/i', trim($hexColor), $m)) {
+        return "#000 /*bad color value submitted to darken(): $hexColor*/";
+    }
+    if (!$decr) {
+        $decr = 1;
+    }
+    if (strlen($m[1]) == 2) {
+        $decr *= 16;
+    }
+    $r = dechex(hexdec($m[1]) - $decr);
+    $g = dechex(hexdec($m[2]) - $decr);
+    $b = dechex(hexdec($m[3]) - $decr);
+    return "#$r$g$b";
+} // darken
+
+
+

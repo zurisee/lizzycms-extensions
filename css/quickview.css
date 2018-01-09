@@ -20,6 +20,8 @@
 .quickview-overlay img {
 	position: absolute;
 	opacity: 0;
+	padding: 0;
+	margin: 0;
 }
 .quickview-overlay-active {
 	display: block;

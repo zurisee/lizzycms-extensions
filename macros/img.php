@@ -11,7 +11,7 @@ $this->addMacro($macroName, function () {
     $alt = $this->getArg($macroName, 'alt', 'Alt-text for image, i.e. a short text that describes the image');
     $class = $this->getArg($macroName, 'class', 'Class-name that will be applied to the image');
     $caption = $this->getArg($macroName, 'caption', 'Optional caption');
-    $srcset = $this->getArg($macroName, 'srcset', '');
+    $srcset = $this->getArg($macroName, 'srcset', "Let's you override the automatic srcset mechanism.");
 
 
     $src = makePathRelativeToPage($src);
@@ -21,14 +21,16 @@ $this->addMacro($macroName, function () {
     $attr = '';
     $id = "img$inx";
     $modifier = '';
-    $w = $h = $w0 = $h0 = 0;
+    $w = $h = $w0 = $h0 = 1;
+    $fileFound = false;
 
     $srcFile = resolvePath($src, true);
     if (file_exists($srcFile)) {
         list($w, $h, $type, $attr) = getimagesize($srcFile);
+        $fileFound = true;
     }
 
-    if (preg_match('/([^\[]*)\[(.*)\](\.\w+)/', $src, $m)) {
+    if (preg_match('/([^\[]*)\[(.*)\](\.\w+)/', $src, $m)) {    // [WxH] size specifier present?
         $basename = $m[1];
         $ext = $m[3];
         list($w, $h) = explode('x', $m[2]);
@@ -36,16 +38,22 @@ $this->addMacro($macroName, function () {
         if (file_exists($imgFullsizeFile)) {
             list($w0, $h0) = getimagesize($imgFullsizeFile);
             $aspRatio = $h0 / $w0;
+        } else {
+            return "<div class='missing-img $class'>Image missing: '$srcFile'</div>";
         }
+
         if (!$w) {
-            $w = $h / $aspRatio;
+            $w = round($h / $aspRatio);
         } elseif (!$h) {
             $h = round($w * $aspRatio);
         }
         $src = $basename."[{$w}x$h]".$ext;
+    } elseif (!$fileFound) {
+        return "<div class='missing-img $class'>Image missing: '$srcFile'</div>";
     }
     // prepare quickview:
-    if (($this->config->quickview && ($class === null)) || strpos($class, 'quickview') !== false) {
+    if (($this->config->quickview && !preg_match('/\bnoquickview\b/', $class)) ||   // config setting, but no 'noquickview' override
+            preg_match('/\bquickview\b/', $class)) {                                // or 'quickview' class
         if ($imgFullsizeFile) {
             if (file_exists($imgFullsizeFile)) {
                 if (!isset($this->page->quickviewLoaded)) {
@@ -73,14 +81,14 @@ $this->addMacro($macroName, function () {
     // prepare srcset:
     if (($srcset === '') && ($fileSize > 100000)) {
         $i = 2;
-        $w1 = $w * 2;
-        $h1 = $h * 2;
+        $w1 = round($w * 2);
+        $h1 = round($h * 2);
         while (($w1 < $w0) && ($i <= 4)) {
             $f =  $basename."[{$w1}x{$h1}]".$ext;
             $srcset .= "$f {$i}x, ";
             $i++;
-            $w1 = $w * $i;
-            $h1 = $h * $i;
+            $w1 = round($w * $i);
+            $h1 = round($h * $i);
         }
         $srcset = ' srcset="'.substr($srcset, 0, -2).'"';
 
@@ -108,7 +116,7 @@ $this->addMacro($macroName, function () {
         }
         $caption = str_replace('##', $this->figureCounter, $caption);
         $caption = "\t<figcaption class='caption'>$caption</figcaption>\n";
-        $str = "<figure id='figure_$id'$class$modifier>\n\t$str\n$caption</figure>\n";
+        $str = "<figure id='figure_$id' class='$class'$modifier>\n\t$str\n$caption</figure>\n";
     }
 	return $str;
 });

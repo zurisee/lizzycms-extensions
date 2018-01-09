@@ -1,5 +1,5 @@
 # lizzycms
-Flat-file CMS inspired by a Lizzard - elegant, nifty and agile
+Flat-file CMS inspired by lizzards - elegant, nifty and agile
 
 ---
 

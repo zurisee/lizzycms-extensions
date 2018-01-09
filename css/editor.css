@@ -89,3 +89,56 @@ main > section, .file-uploader {
 	max-height: 232px;
 }
 
+div.ed-selector {
+    float: right;
+    border: 1px solid olive;
+    display:  inline-block;
+    padding:  3px 11px;
+    margin: 0 0 10px;
+}
+.ed-selector > span.ed-selector,
+.ed-selector-save, 
+.ed-selector-cancel {
+    display: inline-block;
+    width: 2em;
+    padding: 0 3px;
+    border: 1px solid gray;
+    border-radius: 3px;
+    background: #eee;
+    text-align: center;
+    color: #606F15;
+}
+.ed-selector a {
+    border-bottom: none;
+    color: #55630e;
+    font-weight: bold;
+    width:  100%;
+    display:  inline-block;
+    padding: 0 3px;
+}
+.ed-selector  span.ed-selector.ed-selector-inactive,
+.ed-selector  span.ed-selector-inactive {
+    color: #aaa;
+    font-weight: normal;
+}
+span.ed-dropdown,
+span.ed-dropdown select {
+    width: 12em;
+}
+.ed-selector .ed-selector-prompt {
+    display:  inline-block;
+    margin: 0 1em 0 0;
+}
+
+#blueimp-gallery {
+    display: none;
+}
+
+.edit_btns2 {
+    position: absolute;
+    bottom: 0px;
+}
+
+section.editing {
+    margin-bottom: 50px;
+}

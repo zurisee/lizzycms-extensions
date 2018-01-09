@@ -1,8 +1,7 @@
 /*
-**	needs overhaul! -> implement as object!
+**	JS for in-browser editor
 */
 
-var hideWhileEditing = []; //  ['.header-redstripe', '.header-bar', '.header-redbox'];
 
 var lastMdUpdateTime = 0;
 var lastMdUpdate = '';
@@ -13,131 +12,121 @@ var cmdKeyPressed = false;
 var filename = '';
 var $editBtn = null;
 
+
 $( document ).ready(function() {
 
-	$('#btn_show_files').click(function() {	// button to open file list and upload functions
-		$(this).hide();
-		$('#fileupload').show();
+    prepareEditing();       // insert editing buttons
 
-        $.ajax({	// load uploader (from main.js)
-            // Uncomment the following to send cross-domain cookies:
-            //xhrFields: {withCredentials: true},
-            url: $('#fileupload').fileupload('option', 'url'),
-            dataType: 'json',
-            context: $('#fileupload')[0]
-        }).always(function () {
-            $(this).removeClass('fileupload-processing');
-        }).done(function (result) {
-            $(this).fileupload('option', 'done')
-                .call(this, $.Event('done'), {result: result});
-        });
+    setupEventHandlers();   // show-files-, edit-, cancel-buttons, page-history etc.
 
-	});
-	
+    setupKeyHandlers();     // F4, ESC, meta-s, meta-Return
+
+}); // ready
+
+
+
+
+function prepareEditing()
+{
+    $('.edit-sitemap').prepend('<button class="btn_editor">Edit</button>');
+    $('body').addClass('editor-mode');
+} // prepareEditing
+
+
+
+
+function setupEventHandlers()
+{
+    $('#btn_show_files').click(function() {	// button to open file list and upload functions
+        showFiles( this );
+    });
+
+
     $('.btn_editor').click(function() {
-		hideElements(true);
         $editBtn = $(this);
         startEditor( $editBtn );
     });
+
+
     $('.editor_wrapper').click(function() {
-		if (simplemde === null) {
-			var $wrapper = $(this).parent();
-			$editBtn = $('.btn_editor', $wrapper);
-			startEditor( $editBtn );
+        if (simplemde === null) {   // avoid starting editor if already started
+            var $wrapper = $(this).parent();
+            $editBtn = $('.btn_editor', $wrapper);
+            startEditor( $editBtn );
         }
     });
 
-    $('.edit-sitemap').prepend('<button class="btn_editor">Edit</button>');
+
+
     $('.edit-sitemap .btn_editor').click(function() {
-        // alert('starting editor for sitemap');
         startSitemapEditor();
     });
-    $('body').addClass('editor-mode');
 
-
-
-    document.onkeydown = function(e) {
-		var href = window.location.pathname;
-		var keycode = (window.event) ? event.keyCode : e.keyCode;
-		//console.log(keycode);
-        if (keycode == 115) {   // F4
-			var $editBtns = $('.btn_editor');
-			$editBtn = $editBtns.first();
-			if (simplemde === null) {
-				startEditor( $editBtn );
-			} else {
-				hideElements(false);
-				$editBtn.show();
-				simplemde.toTextArea();
-				simplemde = null;
-				$edWrapper.html(origText);
-			}
-        }
-		if (keycode == 27) {	// ESC -> end editing mode     
-			if ( simplemde === null) {
-				var call = window.location.pathname.replace(/\?.*/, '') + '?edit=false';
-				window.location.assign(call);
-			} else {
-				abortEditor();
-			}
-		}
-		if ((keycode == 224) ||			// CMD (Firefox)
-			(keycode == 91) ||			// CMD (Chrome, Safari, Opera)
-			(keycode == 17)) {			// Ctrl (Win10)
-			cmdKeyPressed = true;
-			return;
-		}
-		if (cmdKeyPressed && ( simplemde !== null ) &&
-			((keycode == 13) || (keycode == 83))) {	// Meta+Enter or Meta-S
-			saveData( true );
-		}
-		cmdKeyPressed = false;
-    };
-});
-
-
-
-
-function startSitemapEditor() {
-    $('body').addClass('editing');
-    $('header').addClass('dispno');
-    $edWrapper = $('main section');
-    origText = $edWrapper.html();
-
-    filename = 'sitemap';
-    $.ajax({
-        type: "POST",
-        url: systemPath + '_ajax_server.php?getfile',
-        data: { filename: filename },
-        success: function( data ) {
-            var editingHtml = $('#editing-html').html();
-            editingHtml = editingHtml.replace(/@data/, data);
-            $edWrapper.html(editingHtml);
-            simplemde = new SimpleMDE({
-                element: $('textarea', $edWrapper)[0],
-                spellChecker: false,
-                placeholder: 'Hier schreiben...',
-                autofocus: true,
-                allowAtxHeaderWithoutSpace: true,
-                toolbar: false,
-                tabSize: 8,
-            });
-            $('#btn_cancel').click(function() {
-                var href = window.location.pathname;
+    // page-history drop-down list:
+    $( "select" ).change(function() {       // handle edition-dropdown-list
+        filename = $( this ).parent().parent().attr('data-filename');
+        $( "select option:selected" ).each(function() {
+            var href = $(this).val();
+            if (href != '') {
+                href = './?ed=-' + (parseInt($(this).val()) + 1) + '&file=' + filename;
                 window.location.href = href;
-            });
-
-            $('#btn_save').click(function() {
-                saveSitemapData( false );
-            });
-
-            $('#btn_done').click(function() {
-                saveSitemapData( true );
-            });
-        },
+            }
+        });
     });
-} // startSitemapEditor
 
+} // setupEventHandler
+
+
+
+
+function setupKeyHandlers()
+{
+    document.onkeydown = function (e) {     // intercept cmd-s and ctrl-s to save
+        var keyCode = (window.event) ? event.keyCode : e.keyCode;
+        if ( simplemde !== null) {  // only when editor is active:
+            if ((keyCode == 13) && (event.ctrlKey || macKeys.cmdKey)) {
+                event.preventDefault();
+                console.log('meta-s intercepted');
+                saveData( true );
+                return false;
+            }
+
+            if ((keyCode == 83) && (event.ctrlKey || macKeys.cmdKey)) {
+                event.preventDefault();
+                console.log('meta-s intercepted');
+                saveData( false );
+                return false;
+            }
+
+            if (keyCode == 27) {	// ESC -> end editing mode
+                abortEditor();
+                return false;
+            }
+        }
+
+        if (keyCode == 27) {	// ESC -> end editing mode
+            console.log('ESC intercepted');
+            var call = window.location.pathname.replace(/\?.*/, '') + '?edit=false';
+            window.location.assign(call);
+        }
+
+        if (keyCode == 115) {   // F4
+            var $editBtns = $('main .btn_editor');
+            $editBtn = $editBtns.first();
+            if (simplemde === null) {
+                startEditor( $editBtn );
+            } else {
+                hideElements(false);
+                $editBtn.show();
+                simplemde.toTextArea();
+                simplemde = null;
+                $edWrapper.html(origText);
+            }
+        }
+
+    };
+
+} // setupKeyHandlers
 
 
 
@@ -145,6 +134,7 @@ function startSitemapEditor() {
 
 function startEditor( $editBtn ) {
     $editBtn.hide();
+    hideElements(true);
     $('body').addClass('editing');
     var $section = $editBtn.parent();
     $edWrapper = $('div', $section);
@@ -179,21 +169,69 @@ function startEditor( $editBtn ) {
 
 
             });
-            $('#btn_cancel').click(function() {
+            $('.ed-selector').hide();
+
+            $('.btn_cancel').click(function() {
                 var href = window.location.pathname;
                 window.location.href = href;
             });
 
-            $('#btn_save').click(function() {
+            $('.btn_save').click(function() {
                 saveData( false );
             });
 
-            $('#btn_done').click(function() {
+            $('.btn_done').click(function() {
                 saveData( true );
             });
         },
     });
-}
+} // startEditor
+
+
+
+
+
+function startSitemapEditor() {
+    $('body').addClass('editing');
+    $('header').addClass('dispno');
+    $edWrapper = $('main section');
+    origText = $edWrapper.html();
+
+    filename = 'sitemap';
+    $.ajax({
+        type: "POST",
+        url: systemPath + '_ajax_server.php?getfile',
+        data: { filename: filename },
+        success: function( data ) {
+            var editingHtml = $('#editing-html').html();
+            editingHtml = editingHtml.replace(/@data/, data);
+            $edWrapper.html(editingHtml);
+            simplemde = new SimpleMDE({
+                element: $('textarea', $edWrapper)[0],
+                spellChecker: false,
+                placeholder: 'Hier schreiben...',
+                autofocus: true,
+                allowAtxHeaderWithoutSpace: true,
+                toolbar: false,
+                tabSize: 8,
+            });
+            $('.btn_cancel').click(function() {
+                var href = window.location.pathname;
+                window.location.href = href;
+            });
+
+            $('.btn_save').click(function() {
+                saveSitemapData( false );
+            });
+
+            $('.btn_done').click(function() {
+                saveSitemapData( true );
+            });
+        }
+    });
+} // startSitemapEditor
+
+
 
 
 
@@ -209,21 +247,44 @@ function abortEditor()
 
 
 
+function showFiles( that )
+{
+    $(that).hide();
+    $('#fileupload').show();
+
+    $.ajax({	// load uploader (from main.js)
+        // Uncomment the following to send cross-domain cookies:
+        //xhrFields: {withCredentials: true},
+        url: $('#fileupload').fileupload('option', 'url'),
+        dataType: 'json',
+        context: $('#fileupload')[0]
+    }).always(function () {
+        $(this).removeClass('fileupload-processing');
+    }).done(function (result) {
+        $(this).fileupload('option', 'done')
+            .call(this, $.Event('done'), {result: result});
+    });
+} // showFiles
+
+
+
+
 function saveSitemapData( leaveEditor )
 {
 	if (leaveEditor) {
 		hideElements(false);
 	}
 	var sitemap = simplemde.value();
-console.log(sitemap);
 	$.ajax({
 		type: "POST",
-		url: systemPath + '?save',
+		url: '?save',
+		// url: systemPath + '?save',
 		data: { filename: 'sitemap', sitemap: sitemap },
 		success: function( data ) {
 			if (leaveEditor) {
 				// var href = window.location.pathname;
-				window.location.href = window.location.pathname;
+				location.href = location.pathname;
+				// window.location.href = window.location.pathname;
 			} else {
                 $('textarea.editor').html(data);
 			}
@@ -240,14 +301,18 @@ function saveData( leaveEditor )
 		$editBtn.show();
 	}
 	var mdStr = simplemde.value();
+    mdStr = encodeURI(mdStr);   // -> php urldecode() to decode
 	$.ajax({
 		type: "POST",
-		url: systemPath + '?compile&save',
+		url: '?compile&save',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+		// url: systemPath + '?compile&save',
 		data: { filename: filename, md: mdStr },
 		success: function( data ) {
 			if (leaveEditor) {
 				// var href = window.location.pathname;
-				window.location.href = window.location.pathname;
+				// window.location.href = window.location.pathname;
+                location.reload();
 			} else {
                 $('textarea.editor').html(data);
 			}
@@ -276,14 +341,15 @@ function customMarkdownParser(mdStr) {
 
 
 
+
 function hideElements( state ) {
-	hideWhileEditing.forEach(function(elem) {
-		if (state) {
-			$(elem).hide();
-		} else {
-			$(elem).show();
-		}
-	});
-}
-
-
+    if (typeof hideWhileEditing == 'object') {
+        hideWhileEditing.forEach(function (elem) {
+            if (state || (typeof state == 'unknown')) {
+                $(elem).hide();
+            } else {
+                $(elem).show();
+            }
+        });
+    }
+} // hideElements

@@ -1,7 +1,7 @@
 <?php
 /*
 **
-**  http://unitegallery.net/
+**  based on http://unitegallery.net/
 */
 
 define('GALLERY_META_FILENAME', 'gallery.yaml');
@@ -17,10 +17,14 @@ class ImageGallery
     public function __construct($galleryPath, $id, $options)
     {
         $this->galleryPath = resolvePath($galleryPath, true);
-        $this->galleryUrl = makePathDefaultToPage($galleryPath);
+        $this->galleryUrl = resolvePath($galleryPath, true, true);
         $this->id = $id;
         $this->options = $options;
-        
+        if (!file_exists($this->galleryPath)) {
+            $this->id = false;
+            return;
+        }
+
         if ($options['imageMaxSize']) {
             list($maxW, $maxH) = explode('x', $options['imageMaxSize']);
             $sourcePath = correctPath($options['sourcePath']);
@@ -52,6 +56,9 @@ class ImageGallery
     //-----------------------------------------------------------------------------
     public function render()
     {
+        if (!$this->id) {
+            return "<div class='lizzy-album-error'><code>album()</code> Macro:<br />No images found in {$this->galleryPath}</div>";
+        }
         $imagesPath = '~/'.$this->galleryPath.$this->imagePath;
         $thumbsPath = '~/'.$this->galleryPath.$this->thumbsPath;
         

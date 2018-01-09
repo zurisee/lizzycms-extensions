@@ -27,6 +27,10 @@ $this->addMacro($macroName, function ($args) {
     $file = $this->getArg($macroName, 'file', 'Name of file to be repeatedly included');
     $count = $this->getArg($macroName, 'count', 'Number of times to repeat the process');
 
+    if ($file == 'help') {
+        return '';
+    }
+
     $file = resolvePath($file, true);
     if (!fileExists($file)) {
         fatalError("Error: file not found: '$file'", 'File: '.__FILE__.' Line: '.__LINE__);

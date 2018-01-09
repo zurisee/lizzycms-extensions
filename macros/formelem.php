@@ -91,6 +91,10 @@ $this->addMacro($macroName, function () {
 
 	$args = $this->getArgsArray($macroName);
 
+	if (isset($args[0]) && ($args[0] == 'help')) {
+	    return '';
+    }
+
 	if ($inx == 1) {
 		$this->form = new Forms($this->page, $this);
 	}

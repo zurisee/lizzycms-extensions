@@ -7,8 +7,9 @@
     $.fn.editable = function( options ) {
         var settings = $.extend({    // default values:
             'backend': systemPath+'_ajax_server.php',
-            'touchMode': 'auto', // 'auto', true, false
+            'showButton': 'auto', // 'auto', true, false
         }, options );
+
         var invokingClass = $(this).attr('class');
         if (typeof invokingClass == 'undefined') {
             invokingClass = 'undefined';
@@ -22,26 +23,28 @@
         }
         editableField(invokingClass, settings);
     };
-
 }( jQuery ));
 
 var editableObj = new Object();
+var keyTimeout = 0;
 
 function editableField(invokingClass, settings)
 {
     var edObj = editableObj;
+    edObj.editModeTimeout = 60000;  // automatically terminate editing after 60s
+    edObj.longPollingTime = 60;
+    edObj.shortPollingTime = 10;
     edObj.currentRequest = null;
     edObj.invokingClass = invokingClass;
     edObj.isTouchDevice = 'ontouchstart' in document.documentElement;
     edObj.backend = settings.backend; // appRoot supplied by script snippet in header
-    if (settings.touchMode == 'auto') {
-        edObj.touchMode = edObj.isTouchDevice;
+    if (settings.showButton == 'auto') {
+        edObj.showButton = edObj.isTouchDevice;
     } else {
-        edObj.touchMode = (settings.touchMode == 'true');
+        edObj.showButton = (settings.showButton == 'true');
     }
     edObj.loadOnly = settings.loadOnly;
     edObj.lastText = '';
-    edObj.cycleTime =  1000; // [ms]    // -1 for debugging
     edObj.inpWidth = {};
     edObj.btnWidth = {};
     edObj.editing = false;
@@ -68,9 +71,9 @@ function editableField(invokingClass, settings)
         endEdit(edObj, false, true);
     });
 
-    myLog('Editable.js started for class ".'+edObj.invokingClass+'"'+ ((edObj.touchMode) ? ' in touch screen' : ' in desktop') + ' mode (backend: '+ edObj.backend+')');
-    if (edObj.touchMode) {
-        myLog('touchMode enabled!');
+    myLog('Editable.js started for class ".'+edObj.invokingClass+'"'+ ((edObj.showButton) ? ' in touch screen' : ' in desktop') + ' mode (backend: '+ edObj.backend+')');
+    if (edObj.showButton) {
+        myLog('showButton enabled!');
     }
 } // editableField
 
@@ -102,13 +105,16 @@ function initEditableFields()
             var _id = '_'+id;
             var label = $elem.attr('title');
             var buttons = '';
-            if (edObj.touchMode) {
-                buttons = "<div class='edit_buttons'><button class='ios_button submit'>&#10003;<span class='invisible'> Speichern</span></button><button class='ios_button cancel'>&#10007;<span class='invisible'> Abbrechen</span></button></div>";
+            if (edObj.showButton) {
+                buttons = "<div class='edit_buttons'><button class='ios_button submit'>&#10003;<span class='invisible'> Save</span></button>";
+                // buttons = "<div class='edit_buttons'><button class='ios_button submit'>&#10003;<span class='invisible'> Speichern</span></button><button class='ios_button cancel'>&#10007;<span class='invisible'> Abbrechen</span></button></div>";
             }
             if (typeof label == 'undefined') {
-                $elem.html('<input id="'+_id+'" aria-live="polite" aria-relevant="all">'+buttons);
+                // $elem.html('<input id="'+_id+'" value="x" />'+buttons);
+                $elem.html('<input id="'+_id+'" aria-live="polite" aria-relevant="all" value="x" />'+buttons);
             } else {
-                $elem.html('<label for="'+_id+'" class="invisible">'+label+'</label><input id="'+_id+'" aria-live="assertive" aria-relevant="all">'+buttons);
+                // $elem.html('<label for="'+_id+'" class="invisible">'+label+'</label><input id="'+_id+'" />'+buttons);
+                $elem.html('<label for="'+_id+'" class="invisible">'+label+'</label><input id="'+_id+'" aria-live="polite" aria-relevant="all" value="y" />'+buttons);
             }
             $('#'+_id).val(origText);
             setWidth(edObj, id);
@@ -117,6 +123,7 @@ function initEditableFields()
 
     $('.edit_buttons button').height(h - 4);
     var $edInput = $('input', $editable);
+    $edInput.val('⧖'); //⌛︎
 
     $edInput.focus(function(e) {
         var id = $(this).parent().attr('id');
@@ -135,10 +142,10 @@ function initEditableFields()
         var id = $(this).parent().parent().attr('id');
         $('#_'+id).blur();
     });
-    $('.edit_buttons button.cancel').click(function(e) {
-        var id = $(this).parent().parent().attr('id');
-        $('#_'+id).val(edObj.lastText);
-    });
+    // $('.edit_buttons button.cancel').click(function(e) {
+    //     var id = $(this).parent().parent().attr('id');
+    //     $('#_'+id).val(edObj.lastText);
+    // });
 } // initEditableFields()
 
 
@@ -172,7 +179,8 @@ function setWidth(edObj, id)
     $inpElem.width(width).height(height-2);
     $('button', $elem).width(btnWidth).height(height);
     edObj.inpWidth[_id] = $elem.width();
-    edObj.btnWidth[_id] = 2 * (btnWidth + 4);
+    edObj.btnWidth[_id] =  (btnWidth + 1);
+    // edObj.btnWidth[_id] = 2 * (btnWidth + 4);
 } // setWidths
 
 
@@ -184,6 +192,13 @@ function setupKeyHandler()
     $('.editable input').keypress(function (e) {
         if ($(e.target).hasClass('wait')) {
             e.preventDefault();
+
+        } else {                // reset editing mode timeout
+            if (keyTimeout) {
+                clearTimeout(keyTimeout);
+            }
+            var _id = $(e.target).attr('id');
+            keyTimeout = setTimeout(function(){ myLog('edit mode timed out for #'+_id); $('#'+_id).blur(); }, edObj.editModeTimeout);
         }
     });
     $('.editable input').keyup(function (e) {
@@ -210,10 +225,13 @@ function setupKeyHandler()
 function initEdit(edObj, id)
 {
     this.lock(id, edObj);
-    if (edObj.touchMode) {
+    keyTimeout = setTimeout(function(){ myLog('edit mode timed out for #_'+id); $('#_'+id).blur(); }, edObj.editModeTimeout);
+
+    if (edObj.showButton) {
         var _id = '_'+id;
         var shrunkWidth = edObj.inpWidth[_id] - edObj.btnWidth[_id] - 4;
         $('#'+_id).animate({'width': shrunkWidth}, 250);
+        // $('#'+_id).animate({'width': shrunkWidth}, 250);
     }
 } // initEdit
 
@@ -230,7 +248,7 @@ function endEdit(edObj, _id, sendToServer)
         return;
     }
     var $edInput = $('#'+_id);
-    if (edObj.touchMode) {
+    if (edObj.showButton) {
         $edInput.animate({'width': edObj.inpWidth[_id]}, 250);
     }
     $edInput.removeClass('editable_active');
@@ -254,12 +272,19 @@ function endEdit(edObj, _id, sendToServer)
 //--------------------------------------------------------------
 function lock(id, edObj)
 {
+    myLog('locking #'+id);
     this.ajaxSend(edObj, 'lock', id, '', function(json) {
-        var _id = '_'+id;
-        edObj.editing = id;
-        var $edInput = $('#'+_id);
-        edObj.lastText = $edInput.val();
-        $edInput.addClass('editable_active').select();
+        if (json == 'ok') {
+            var _id = '_' + id;
+            edObj.editing = id;
+            var $edInput = $('#' + _id);
+            edObj.lastText = $edInput.val();
+            $edInput.addClass('editable_active').select();
+        } else {
+            myLog('% lock failed');
+            endEdit(edObj, id, false);
+            // $('#' + id).blur();
+        }
     });
 } // lock
 
@@ -268,6 +293,7 @@ function lock(id, edObj)
 //--------------------------------------------------------------
 function unlock(id, edObj)
 {
+    myLog('unlocking #'+id);
     this.ajaxSend(edObj, 'unlock', id, '', false);
 } // unlock
 
@@ -279,26 +305,99 @@ function initializeConnection()
     var edObj = editableObj;
     var res = false;
     this.ajaxSend(edObj, 'conn', '', '', function(json) {
-        myLog('Connecting server: ' + json);
+        myLog('Server connection established: ' + json);
         if (json.match(/failed/)) {
             myLog('Session aborted');
             $('main').html("<h1>Error connecting to server.</h1><p>Please try again with another browser or another computer.</p>");
             res = false;
         }
         res = true;
-    }, true);   // synchronous request
+    });
     return res;
 } // initializeConnection
 
 
 
 //--------------------------------------------------------------
-function update()
+function update(pollingTime)
 {
     var edObj = editableObj;
-    this.ajaxSend(edObj, 'upd', edObj.isTouchDevice, '', false);
+    if (typeof pollingTime == 'undefined') {
+        pollingTime = (edObj.isTouchDevice) ? edObj.shortPollingTime : edObj.longPollingTime;
+    }
+    this.ajaxSend(edObj, 'upd', '', pollingTime, function(json) {
+        myLog('sendAjax upd response received: '+json);
+    });
 } // update
 
+
+
+
+//--------------------------------------------------------------
+function ajaxSend(edObj, cmd, id, data, onSuccess, synchronous)
+{
+    if (cmd == 'upd') {
+        edObj.currentRequest = $.ajax({
+            url: edObj.backend+"?upd="+data,
+            type: 'GET',
+            // data: postData,
+            async: true,
+            cache: false,
+            beforeSend : function()    {
+                if(edObj.currentRequest != null) {
+                    edObj.currentRequest.abort();
+                }
+            },
+            success: function (json) {
+                updateUi(edObj, json);
+                update();
+            }
+        });
+
+    } else {    // all interactions but upd:
+        if (cmd == 'conn') {
+            var method = 'GET';
+            var arg = 'conn';
+            var postData = '';
+
+        } else if (cmd == 'save') {
+            data = encodeURIComponent(data);
+            var method = 'POST';
+            var arg = 'save='+id;
+            var postData = 'text='+data;
+
+        } else {
+            var method = 'GET';
+            var arg = cmd+'='+id;
+            // var arg = cmd+'='+data;
+            var postData = '';
+        }
+
+        if (cmd == 'upd') {
+             $('#_'+id).addClass('wait');
+        }
+        $.ajax({
+            url: edObj.backend + "?" + arg,
+            type: method,
+            data: postData,
+            async: true,
+            cache: false,
+            beforeSend: function () {
+                if (edObj.currentRequest != null) {
+                    edObj.currentRequest.abort();
+                }
+            },
+            success: function (json) {
+                if ((json != 'failed') && onSuccess) {
+                    onSuccess(json);
+                }
+                $('.wait').removeClass('wait');
+                updateUi(edObj, json);
+                update(1);
+            }
+        });
+    }
+} // ajaxSend
 
 
 //--------------------------------------------------------------
@@ -306,28 +405,25 @@ function updateUi(edObj, json)
 {
     if (json && json.match(/^\{/)) {
         myLog('updateUi: ['+json+']');
-        json = json.replace(/\#.*/, '');
+        json = json.replace(/(\{.*\}).*/, "$1");    // remove trailing #comment
         var data = JSON.parse(json);
         if (data) {
+            var editingField = $('.editable_active').attr('id');
             for (var id in data) {
                 if ((id == 'undefined') || !id || (id.substr(0,1) == '_')) {
                     continue;
                 }
 
-                var $input = $('#'+id+' input');
-                if (this.editing == id) {                       // curr editing field
-                    if (typeof data[id] == 'undefined') {    // lost its lock -> end editing
-                        myLog('updateUi: editing mode timed out');
-                        $input.val(edObj.lastText).blur();
-                    }
-                    continue;   // inhibit updating editing field
+                if (editingField == '_'+id) {  // curr editing field is editing field
+                    continue;   // do not update editing field
                 }
 
+                var $input = $('#'+id+' input');
                 if (typeof data[id] != 'undefined') {
                     var value = data[id];
                     if (value.match(/\*\*LOCKED\*\*/)) {
                         value = data[id].replace('**LOCKED**', '');
-                        $input.addClass('locked').attr('title', 'Derzeit von anderem Benutzer bearbeitet').attr('disabled','');
+                        $input.addClass('locked').attr('title', 'Currently being editied by another user.').attr('disabled','');
 
                     } else if ($input.hasClass('locked')) {
                         $input.removeClass('locked').removeAttr('title').removeAttr('disabled');
@@ -338,6 +434,11 @@ function updateUi(edObj, json)
             }
         }
     }
+    $('.editable input').each(function() {
+        if ($(this).val() == '⧖') {
+            $(this).val('');
+        }
+    });
 } // updateUi
 
 
@@ -360,7 +461,6 @@ function remoteLog(text)
     if (!text) {
         return;
     }
-    // var edObj = edObj;
     var edObj = editableObj;
     $.ajax({
         url: edObj.backend+'?log='+text,
@@ -373,76 +473,3 @@ function remoteLog(text)
     });
 } // remoteLog()
 
-
-
-//--------------------------------------------------------------
-function ajaxSend(edObj, cmd, id, data, onSuccess, synchronous)
-{
-    if (cmd != 'save') {
-        var method = 'GET';
-        var arg = cmd+'='+id;
-        var postData = '';
-    } else {
-        var method = 'POST';
-        var arg = 'save='+id;
-        var postData = 'text='+data;
-    }
-    if (cmd == 'upd') {
-        edObj.currentRequest = $.ajax({
-            url: edObj.backend+"?"+arg,
-            type: method,
-            data: postData,
-            async: true,
-            cache: false,
-            beforeSend : function()    {
-                if(edObj.currentRequest != null) {
-                    edObj.currentRequest.abort();
-                }
-            },
-            success: function (json) {
-                updateUi(edObj, json);
-                update();
-            }
-        });
-
-    } else {
-        if (id) {
-            $('#_'+id).addClass('wait');
-        }
-        if ((typeof synchronous == 'undefined') || !synchronous) {     // normal synchronous request:
-            $.ajax({
-                url: edObj.backend + "?" + arg,
-                type: method,
-                data: postData,
-                async: true,
-                cache: false,
-                beforeSend: function () {
-                    if (edObj.currentRequest != null) {
-                        edObj.currentRequest.abort();
-                    }
-                },
-                success: function (json) {
-                    myLog(cmd + ': ' + id + ' -> ' + json);
-                    if ((json != 'failed') && onSuccess) {
-                        onSuccess(json);
-                    }
-                    if (id) {
-                        $('#_' + id).removeClass('wait');
-                    }
-                    updateUi(edObj, json);
-                    update();
-                }
-            });
-        } else {    // async request:
-            $.ajax({
-                url: edObj.backend + "?" + arg,
-                type: method,
-                data: postData,
-                async: false,
-                cache: false,
-                success: onSuccess,
-            });
-
-        }
-    }
-} // ajaxSend

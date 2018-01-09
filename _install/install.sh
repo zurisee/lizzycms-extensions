@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Lizzy installation script
+#	run it from the target folder where your web-app should reside
+#
+
 echo Lizzy has not been installed yet.
 
 echo ""

@@ -146,6 +146,9 @@ class Transvar
                         }
                         if (isset($this->macros[$macro])) { // and try to execute it
                             $val = $this->macros[$macro]($this);
+                            if (trim($argStr) == 'help') {
+                                $val = $this->getMacroHelp($macro);
+                            }
                             if ($compileMd) {
                                 $val = compileMarkdownStr($val);
                             }
@@ -274,18 +277,15 @@ class Transvar
             $index = intval($name);
             if ($index < sizeof($this->macroArgs[$macroName])) {
                 $out = array_values($this->macroArgs[$macroName])[$index];
-                $this->macroHelp[$macroName][ array_keys($this->macroArgs[$macroName])[$index] ] = $help;
             }
 
         } else {
             if (isset($this->macroArgs[$macroName][$name])) {
                 $out = $this->macroArgs[$macroName][$name];
-                $this->macroHelp[$macroName][$name] = $help;
 
             } else {
                 if (isset($this->macroArgs[$macroName][$inx])) {
                     $out = $this->macroArgs[$macroName][$inx];
-                    $this->macroHelp[$macroName][$name] = $help;
                 } elseif ($default !== null) {
                     $out = $default;
                 } else {
@@ -296,6 +296,8 @@ class Transvar
         if ($removeNl) {
             $out = str_replace('↵', '', $out);
         }
+
+        $this->macroHelp[$macroName][$name] = $help;
         return $out;
     } // getArg
 
@@ -304,6 +306,7 @@ class Transvar
     //....................................................
     private function getArgsArray($macroName, $removeNl = true)
     {
+        $this->macroHelp[$macroName] = [];
         if (!$this->macroArgs[$macroName]) {
             return [];
         }
@@ -318,6 +321,24 @@ class Transvar
             return $this->macroArgs[$macroName];
         }
     } // getArgsArray
+
+
+
+    //....................................................
+    private function getMacroHelp($macroName)
+    {
+        $argsHelp = $this->macroHelp[$macroName];
+        if (!$argsHelp) {       // don't show anything if there are no arguments listed
+            return '';
+        }
+        $out = '';
+        foreach ($argsHelp as $name => $text) {
+            $out .= "\t<dt>$name:</dt>\n\t\t<dd>$text</dd>\n";
+        }
+        $out = "<h2>Options for macro <em>$macroName()</em></h2>\n<dl>\n$out</dl>\n";
+        return $out;
+    } // getMacroHelp
+
 
 
 
@@ -430,8 +451,6 @@ class Transvar
                 }
             } else {
                 logError("Error: Macro '$macroName' not found");
-
-//                fatalError("Error: Macro '$macroName' not found", 'File: '.__FILE__.' Line: '.__LINE__);
             }
         }
         $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
@@ -515,6 +534,9 @@ class Transvar
             } elseif (isset($entry[$lang])) {
                 $out = $entry[$lang];
 
+            } elseif ($entry[$lang] === null) {
+                fatalError("Error: transvar with empty value: '$key'", 'File: '.__FILE__.' Line: '.__LINE__);
+
             } elseif (isset($entry['_'])) {
                 $out = $entry['_'];
 
@@ -559,13 +581,11 @@ class Transvar
     //....................................................
     private function translateSpecialVars($str)
     {
-        $this->addVariable('head_injections', $this->page->headInjections());
-        $str = str_replace('@@head_injections@@', $this->getVariable('head_injections'), $str);
-        $this->transvars['head_injections'] = '';
-
-        $this->addVariable('body_end_injections', $this->page->bodyEndInjections());
-        $str = str_replace('@@body_end_injections@@', $this->getVariable('body_end_injections'), $str);
-        $this->transvars['body_end_injections'] = '';
+        if ($this->config->autoLoadClassBasedModules) {
+            $this->page->autoInvokeClassBasedModules($str);
+        }
+        $str = str_replace('@@head_injections@@', $this->page->headInjections(), $str);
+        $str = str_replace('@@body_end_injections@@', $this->page->bodyEndInjections(), $str);
 
         return $str;
     } // translateSpecialVars

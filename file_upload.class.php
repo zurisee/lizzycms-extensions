@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * Module provides code for the 'File Upload' feature of the page editor
+ * -> Based on Bootstrap
+ */
+
 class FileUpload
 {
     public function __construct($page)
@@ -7,14 +12,14 @@ class FileUpload
         $this->page = $page;
     } // __construct
     
-    public function render()
+    public function render($filePath)
     {
         $this->page->addCssFiles([
             //	<!-- Bootstrap styles -->
             '//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css',
             //	<!-- Generic page styles -->
             '~sys/third-party/jquery-upload/css/style.css',
-            '~sys/third-party/jquery-upload/css/blueimp-gallery.min.css',
+            //'~sys/third-party/jquery-upload/css/blueimp-gallery.min.css',
             //	<!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
             '~sys/third-party/jquery-upload/css/jquery.fileupload.css',
             '~sys/third-party/jquery-upload/css/jquery.fileupload-ui.css']);
@@ -24,7 +29,7 @@ class FileUpload
 <div class="file-uploader container">
     <button id='btn_show_files'>Show Files</button>
     <!-- The file upload form used as target for the file upload widget -->
-    <form id="fileupload" action="" method="POST" enctype="multipart/form-data">
+    <form id="fileupload" action="" method="POST" enctype="multipart/form-data" data-upload-path="$filePath">
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
         <div class="row fileupload-buttonbar">
             <div class="col-lg-7">
@@ -173,7 +178,7 @@ EOT;
         "~sys/third-party/jquery-upload/js/jquery.fileupload-video.js",
         "~sys/third-party/jquery-upload/js/jquery.fileupload-validate.js",
         "~sys/third-party/jquery-upload/js/jquery.fileupload-ui.js",
-        "~sys/third-party/jquery-upload/js/main.js"]);
+        "~sys/file-upload/jquery-upload-main.js"]);
 
         return $html;
     } // render

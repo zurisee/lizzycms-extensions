@@ -13,20 +13,18 @@ RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
 # Block out any script trying to modify a _REQUEST variable via URL.
 RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2})
 # Return 403 Forbidden header and show the content of the root homepage
-RewriteCond %{REQUEST_FILENAME} !_upload_server.php
-#RewriteCond %{REQUEST_FILENAME} !(_lizzy/third-party/jquery-upload/server/php)
 RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
 RewriteCond %{REQUEST_FILENAME} !(/_test)
 RewriteRule .* index.php [F]
 #
 ## End - Exploits
 
-# Make sure request has trailing slash
-RewriteCond %{REQUEST_URI} !(/$|\.)
-RewriteRule ^(.*)$		%{REQUEST_URI}/ [R=301,L]
+## Requests to .css and .js files -> remove optional leading \d\d__ code, which forces browser updates:
+RewriteCond %{REQUEST_URI} \.(?:css|js)$
+RewriteRule  ^\d\d__(.*)$  $1   [L]
 
-RewriteCond %{REQUEST_FILENAME} !\.map
-RewriteCond %{REQUEST_FILENAME} !_upload_server.php
+
+## HTML file requests:
 RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
 RewriteCond %{REQUEST_FILENAME} !(/_test)
 RewriteCond %{REQUEST_URI} !\.(?:css|js|jpe?g|gif|png|pdf|mp3|vtt|webm|m4v|mp4|ogv|svg|eot|ttf|woff)$ [NC]
@@ -37,7 +35,6 @@ RewriteRule ^(.*)$		index.php [L,QSA]
 RewriteRule ^(%23|.%23|.git)/(.*) error [F]
 ###RewriteRule ^(.git|cache|bin|logs|backup|webserver-configs|tests)/(.*) error [F]
 # Block access to specific file types for these system folders
-RewriteCond %{REQUEST_FILENAME} !_upload_server.php
 RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
 RewriteRule ^_lizzy/(.*)\.(txt|xml|md|html|yaml|php|pl|py|cgi|twig|sh|bat)$ error [F]
 ###RewriteRule ^(system|vendor)/(.*)\.(txt|xml|md|html|yaml|php|pl|py|cgi|twig|sh|bat)$ error [F]

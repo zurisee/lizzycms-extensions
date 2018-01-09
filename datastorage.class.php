@@ -32,6 +32,7 @@
 define('LIZZY_LOCK', 0);
 define('LIZZY_SID', 1);
 
+
 use Symfony\Component\Yaml\Yaml;
 
 class DataStorage
@@ -50,14 +51,31 @@ class DataStorage
 		        $this->dataFile = $dbFile;
 	            touch($this->dataFile);
 
-			} else {
+            } else {
                 fatalError("DataStorage: unable to create file '$dbFile'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
         }
         $this->sid = $sid;
         $this->lockDB = $lockDB;
         $this->format = ($format) ? $format : pathinfo($dbFile, PATHINFO_EXTENSION) ;
+
+        $this->checkDB();   // make sure DB is initialized
+        return;
     } // __construct
+
+
+
+	//---------------------------------------------------------------------------
+    public function lastModified()
+    {
+        if (file_exists($this->dataFile)) {
+            clearstatcache();
+            return filemtime($this->dataFile);
+        } else {
+            return 0;
+        }
+    } // lastModified
+
 
 
 
@@ -65,6 +83,9 @@ class DataStorage
     public function write($key, $value = null)
     {
         $data = $this->lowLevelRead();
+        if (!is_array($data)) {
+            return false;
+        }
         if (is_array($key)) {
             if ($value) {
                 $data = $key;   // overwrite all
@@ -94,6 +115,9 @@ class DataStorage
     public function read($key = '*', $reportLockState = false)
     {
         $data = $this->lowLevelRead();
+        if (!is_array($data)) {
+            return null;
+        }
         if ($key === '*') {
             if ($reportLockState) {
                 foreach ($data as $key => $value) {
@@ -123,10 +147,13 @@ class DataStorage
     public function lock($key)
     {
         $data = $this->lowLevelRead();
+        if (!is_array($data)) {
+            return false;
+        }
         if (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] != $this->sid)) {
             return false;
         }
-        if (isset($data[$key])) {
+        if ($key) {
             $data['_meta_'][$key][LIZZY_LOCK] = time();
             $data['_meta_'][$key][LIZZY_SID] = $this->sid;
         }
@@ -139,6 +166,9 @@ class DataStorage
     public function unlock($key = true)
     {
         $data = $this->lowLevelRead();
+        if (!is_array($data)) {
+            return false;
+        }
         if ($key === '*') {    // unlock all records
             if (isset($data['_meta_'])) {
                 unset($data['_meta_']);
@@ -160,10 +190,13 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
-    public function unlockTimedOut($timeout = 600)
+    public function unlockTimedOut($timeout = 120)
     {
         $modified = false;
         $data = $this->lowLevelRead();
+        if (!is_array($data)) {
+            return false;
+        }
         $timeLimit = time() - $timeout;
         foreach ($data as $key => $value) {
             if ($key == '_meta_') {
@@ -171,7 +204,7 @@ class DataStorage
             }
             if (isset($data['_meta_'][$key][LIZZY_LOCK]) && ($data['_meta_'][$key][LIZZY_LOCK] < $timeLimit)) {
                 unset($data['_meta_'][$key]);
-                $modified = true;
+                $modified = $key;
             }
         }
         if ($modified) {
@@ -232,7 +265,7 @@ class DataStorage
     //---------------------------------------------------------------------------
     private function lowLevelRead()
     {
-        if (!$this->dataFile) {
+        if (!$this->dataFile || !file_exists($this->dataFile)) {
             return false;
         }
         if ($this->lockDB) {
@@ -262,6 +295,23 @@ class DataStorage
 
         return $data;
     } // lowLevelRead
+
+
+
+
+    //---------------------------------------------------------------------------
+    private function checkDB()
+    {
+        if (!$this->dataFile || !$this->lockDB) {
+            return false;
+        }
+        $rawData = file_get_contents($this->dataFile);
+        if (!$rawData || (strpos($rawData, '_meta_') === false)) {
+            $this->lowLevelWrite([ '_meta_' => [] ]);   // initialize DB
+        }
+        return true;
+    } // checkDB
+
 
 
 
@@ -303,6 +353,5 @@ class DataStorage
         return $encodedData;
     } // encode
 
-
-
 } // DataStorage
+

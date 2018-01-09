@@ -129,6 +129,13 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $comment .= ($block['class']) ? ' .'.$block['class'] : '';
         $comment .= ($block['style']) ? ' '.$block['style'] : '';
 
+
+        if (preg_match('/lang:\s*(\w\w)/', $style, $m)) {   // check language selector
+            $lang = $this->page->config->lang;
+            if ($m[1] != $this->page->config->lang) {
+                return '';
+            }
+        }
         return "<div$id$class$style>\n$out</div><!-- /$comment -->\n\n";
     }
 
@@ -138,7 +145,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // ---------------------------------------------------------------
     protected function identifyTabulator($line, $lines, $current)
     {
-        if (preg_match('/\{\{\s*tab[^\}]*\s*\}\}/', $line)) {
+        if (preg_match('/\{\{\s*tab\b[^\}]*\s*\}\}/', $line)) { // identify patterns like '{{ tab( 7em ) }}'
             return 'tabulator';
         }
         return false;
@@ -155,7 +162,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         // consume following lines containing {tab}
         for($i = $current, $count = count($lines); $i < $count-1; $i++) {
             $line = $lines[$i];
-            if (preg_match('/\{\{\s* tab[^\}]* \s*\}\}/x', $line, $m)) {
+            if (preg_match('/\{\{\s* tab\b[^\}]* \s*\}\}/x', $line, $m)) {
                 $block['content'][] = $line;
                 $last = $i;
             } elseif (empty($line)) {
@@ -171,8 +178,29 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function renderTabulator($block)
     {
         $out = '';
+        $s = isset($block['content'][0]) ? $block['content'][0] : '';
+        $wrapperAttr = '';
+        if (strpos($s, "@/@ul@\\@") !== false) {        // handle 'ul'
+            $tag = 'li';
+            $wrapperTag = 'ul';
+
+        } elseif (strpos($s, "@/@ol@\\@") !== false) {  // handle 'ol', optionally with start value
+            if (preg_match("|^!(\d+)@(.*)|", substr($s, 8), $m)) {
+                $wrapperTag = "ol";
+                $wrapperAttr = " start='{$m[1]}'";
+                $block['content'][0] = $m[2];
+            } else {
+                $wrapperTag = 'ol';
+            }
+            $tag = 'li';
+
+        } else {        // all other cases:
+            $tag = 'div';
+            $wrapperTag = 'div';
+        }
+
         foreach ($block['content'] as $l) {
-            $l = preg_replace('/\{\{\s* tab \(? \s* ([^\)\s\}]*) \s* \)? \s*\}\}/x', "@@$1@@tab@@", $l);
+            $l = preg_replace('/\{\{\s* tab\b \(? \s* ([^\)\s\}]*) \s* \)? \s*\}\}/x', "@@$1@@tab@@", $l);
             $parts = explode('@@tab@@', $l);
             $line = '';
             foreach ($parts as $n => $elem) {
@@ -185,13 +213,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $style = (isset($width[$n])) ? " style='width:{$width[$n]};'" : '';
                 $line .= "@/@lt@\\@span class='c".($n+1)."'$style@/@gt@\\@$elem@/@lt@\\@/span@/@gt@\\@";
             }
-            $out .= "@/@lt@\\@div@/@gt@\\@$line@/@lt@\\@/div@/@gt@\\@\n";
+            $out .= "@/@lt@\\@$tag@/@gt@\\@$line@/@lt@\\@/$tag@/@gt@\\@\n";
         }
         $out = \cebe\markdown\Markdown::parse($out);
         $out = str_replace(['<p>', '</p>'], '', $out);
-        $out = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $out);
-        $out = str_replace('<div>', "\t<div>", $out);
-        return "<div class='tabulator_wrapper'>\n$out</div>\n";
+        $out = str_replace(['@/@ul@\\@', '@/@ol@\\@'], '', $out);
+        return "<$wrapperTag$wrapperAttr class='tabulator_wrapper'>\n$out</$wrapperTag>\n";
     }
 
 
@@ -274,8 +301,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
 
-     // ---------------------------------------------------------------
-   /**
+    // ---------------------------------------------------------------
+    /**
      * @marker ~
      */
 
@@ -311,7 +338,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseSuperscript($markdown)
     {
         // check whether the marker really represents a strikethrough (i.e. there is a closing ~)
-        if (preg_match('/^\^(.{1,11}?)\^/', $markdown, $matches)) {
+        if (preg_match('/^\^(.{1,20}?)\^/', $markdown, $matches)) {
             return [
                 // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
                 // other inline markdown elements inside this tag
@@ -416,41 +443,6 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         return '<span class="underline">' . $this->renderAbsy($element[1]) . '</span>';
     }
-
-
-
-
-    // ---------------------------------------------------------------
-    /**
-     * @marker @@@
-     */
-    protected function parseBacktick($markdown)
-    {
-        // check whether the marker really represents a strikethrough (i.e. there is a closing `)
-        if (preg_match('/^@@@(.+?)@@@/', $markdown, $matches)) {
-            return [
-                // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
-                // other inline markdown elements inside this tag
-                ['backtick', $this->parseInline($matches[1])],
-                // return the offset of the parsed text
-                strlen($matches[0])
-            ];
-        }
-        // in case we did not find a closing ~~ we just return the marker and skip 2 characters
-        return [['text', '@@@'], 3];
-    }
-
-    // rendering is the same as for block elements, we turn the abstract syntax array into a string.
-    protected function renderBacktick($element)
-    {
-        if (isset($this->page->backtick)) {
-            $tag = $this->page->backtick;
-        } else {
-            $tag = 'code';
-        }
-        return "<$tag>" . $this->renderAbsy($element[1]) .  "</$tag>";
-    }
-
 
 
 

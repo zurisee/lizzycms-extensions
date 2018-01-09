@@ -7,6 +7,9 @@ vgap: "<div class='vgap' style='margin:1em 0;'>&nbsp;</div>\n"
 
 clear: '<div style="clear:both;"></div>'
 
+
+#--- Forms -----------------------------------------------
+
 cancel:
     de: abbrechen
     en: cancel
@@ -22,6 +25,23 @@ Save:
     de: Speichern
     en: Save
 
+Submit:
+    de: Absenden
+    en: Submit
+    
+submit:
+    de: Absenden
+    en: Send
+
+File to upload:
+    de: Datei(en) hochladen
+    en: Upload file(s)
+
+Uploaded file list:
+    de: "Hochgeladene Dateien:"
+    en: "Uploaded files:"
+
+#--- Links -------------------------------
 opens mail app: 
     de: 'Öffnet in Mail-Anwendung'
     en: opens in your mail-application
@@ -30,6 +50,18 @@ opens in new win:
     de: Öffnet in neuem Fester
     en: Opens in new window
 
+
+#--- Language Selection ------------------
+select langauge:
+    de: Sprache auswählen 
+    en: Select language
+
+select de: "<img src='~sys/rsc/de.png' class='lang-icon' alt='' /><span class='invisible'>Deutsch</span>"
+select en: "<img src='~sys/rsc/en.png' class='lang-icon' alt='' /><span class='invisible'>English</span>"
+
+
+    
+# --- Login ------------------------------
 Username:
     de: Benutzername
     en: Username
@@ -38,9 +70,6 @@ Password:
     de: Kennwort
     en: Password
 
-Submit:
-    de: Absenden
-    en: Submit
 Login:
     de: Anmelden
     en: Login
@@ -54,11 +83,11 @@ Logout:
     en: Logout
 
 Login failed:
-    de: Benutzername oder Kennwort sind falsch.<br>Bitte versuchen Sie es erneut.
-    en: User unknown or password incorrect.<br>Please try again.
+    de: Benutzername oder Kennwort passen nicht.<br />Bitte versuchen Sie es erneut.
+    en: User unknown or password incorrect.<br />Please try again.
 
 Insufficient privileges:
-    de: Ihre Zugangsberechtigung ist nicht hinreichend für diese Seite.
+    de: Ihre Zugangsberechtigung genügt nicht für diese Seite.
     en: Your user privileges are insufficient to view this page.
 
 Err empty username:
@@ -77,14 +106,145 @@ Logged in as:
     de: Angemeldet als
     en: Logged in as
    
+page requires login:
+    de: "Sie müssen angemeldet sein, um die gesuchte Seite sehen zu können."
+    en: "You need to be logged in to see the requested page."
+
+
 validity-period expired:
     de: Bitte melden Sie sich erneut an, da zu viel Zeit verstrichen ist seit Ihrer letzten Anmeldung.
     en: Please login again, session time has expired.
 
+Or request one-time-access-link:
+    de: Oder einen Link für einmaligen Zugang anfordern.
+    en: "Or request a one-time access link."
+
+email required for one-time-access-link:
+    de: Eine E-Mail-Adresse wird benötigt, um den einmaligen Zugangs-Link zu senden.
+    en: "We need your e-mail address to send you a one-time access link."
+
+login with password:
+    de: Anmeldung mit <br>Kennwort
+    en: Login with <br>password
+
+login without password:
+    de: Anmeldung ohne <br>Kennwort
+    en: Login without <br>password
+
+
+info-onetimelogin:
+    de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
+    <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
+    <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
+    en: "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
+    <p>This Link contains an <strong>access code</strong>. This code is only valid one time and within the next 15 minutes.</p>
+    <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
+
+info-onetimelogin2:
+    de: "Geben Sie Ihren Benutzernamen ein.<br>Kontaktieren Sie den {{ Webmaster }}, falls Sie noch keine Zugangsdaten besitzen."
+    en: "Enter your username.<br>Contact the {{ Webmaster }} if you don't have credentials for this website."
+password-info:
+    de: "Geben Sie Ihr Kennwort ein.Kontaktieren Sie den {{ Webmaster }}, falls Sie das Kennwort vergessen haben oder ein sonstiges Problem aufgetreten ist."
+    en: "Enter your password.<br>Contact the {{ Webmaster }} if you forgot your password or some other problem has come up."
+
+//maillink Webmaster: "{{ concat('forgot password1', webmaster-email,'?subject=',login-problems,'&body=%0a%0aURL:%20',pageUrl, '\'\>Webmaster</a>') }}"
+
+#forgot password:
+#    de: "<a href='mailto:webmaster-email'>Kennwort funktioniert nicht oder vergessen...</a>"
+#    en: "<a href='mailto:webmaster-email'>Password not working or forgotten...</a>"
+login-problems:
+    de: Probleme beim Anmelden
+    en: Login problems
+    
+forgot password1:
+    de: "<a href='mailto:"
+    en: "<a href='mailto:"
+
+forgot password2:
+    de: "'>Kennwort funktioniert nicht oder vergessen...</a>"
+    en: "'>Password not working or forgotten...</a>"
+
+info-onetimelogin-title:
+    de: "Einmal-Kennwort per E-Mail möglich"
+    en: "One-time password support"
+
+password-alternative:
+    de: "Falls Sie über Benutzername und Passwort verfügen, können Sie sich auch direkt anmelden. Die Checkbox rechts bewirkt, dass Ihr Passwort nicht lesbar ist auf dem Bildschirm, während Sie es eingeben."
+    en: "If you have a valid username and password you may log in directly. If you are in an unfriendly environment, activate the checkbox to hide the password you are entering."
+password-alternative-title:
+    de: "Leer lassen im Fall von Einmal-Kennwort"
+    en: "Leave empty in case of One-time password"
+    
+Login show password:
+    de: anzeigen
+    en: show
+
+Login-Email:
+    de: Ihre E-Mail Adresse
+    en: Your e-mail address
+
+onetime-link-send:
+    de: Absenden
+    en: Send
+
+Err empty username or email:
+    de: Geben Sie Ihren Benutzernamen oder Ihre E-Mail-Adresse ein.
+    en: Enter your username or e-mail address.
+
+Err empty email:
+    de: Sie müssen eine E-Mail Adresse eingeben
+    en: You need to enter an e-mail address
+
+onetime access link sent:
+    de: "<h1>Zugangs-Link versendet</h1>
+    <p>Wir haben eine E-Mail an Sie gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
+    &rarr; Klicken Sie auf diesen Link. So gelangen Sie zurück zu dieser Seite. </p>"
+    en: "<h1>Access Link sent</h1>
+    <p>We have sent an e-mail to you. It contains a <strong>link</strong>.<br />
+    &rarr; Click on this link to access the web-page you wanted to see. </p>"
+
+enter onetime code:
+    de: "Code aus zugesandter E-Mail:"
+    en: "One-time code from e-mail:"
+
+onetime access link sent2:
+    de: "Link und Code können nur verwendet werden bis:"
+    en: "This link and this code only work until:"
+    
+onetime access link sent3:
+    de: "<p><br />Alternativ können Sie sich auch mit Benutzername und Kennwort anmelden.</p>"
+    en: "<p><br />Alternatively, if you have a valid username and password you may log in directly.</p>"
+    
+Email Access-Link Subject:
+    de: "Zugangslink für"
+    en: "Access Link for"
+
+Email Access-Link1:
+    de: "Guten Tag\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
+    en: "Hello\n\nHere is the link with which you can access the webpage: \n\n\t"
+    
+Email Access-Link2:
+    de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
+    en: "\n\nOr you can enter the following code into the entry field in the webpage:"
+
+Email Access-Link3:
+    de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nBeste Grüsse, Ihre Lizzy\n"
+    en: "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
+    
+
+
+#--- Insecure Connection ----------------------------
 Warning insecure connection:
     de: "Achtung: die Verbindung zum Webhost ist nicht gesichert (https). Sie können sich deshalb nicht anmelden."
     en: "Warning: your connection to this webhost is insecure (https). For this reason you cannot login."
 
+Please switch to:
+    de: Bitte wechseln Sie auf
+    en: Please switch to
+
+
+
+#--- Editing ---------------------------------------
 turn edit mode on:
     de: Bearbeiten ein
     en: Edit
@@ -97,6 +257,9 @@ Edit Section:
     de: Bereich bearbeiten
     en: Edit section
 
+
+
+#--- Misc ------------------------------------------
 Page:
     de: Seite
     en: Page

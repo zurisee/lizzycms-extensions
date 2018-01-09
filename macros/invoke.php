@@ -23,7 +23,7 @@ $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 
-    $name = strtolower( $this->getArg($macroName, 'name', '', '') );
+    $name = strtolower( $this->getArg($macroName, 'name', 'Name of the css-framework to be loaded and activated', '') );
 
     $this->config->cssFramework = $name;
     return '';

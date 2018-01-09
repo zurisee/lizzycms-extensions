@@ -27,6 +27,10 @@ $this->addMacro($macroName, function () {
 
     $options = $this->getArgsArray($macroName, false);
 
+    if (isset($options[0]) && ($options[0] == 'help')) {
+        return '';
+    }
+
     $dataTable = new HtmlTable($this->page, $inx, $options);
 	$table = $dataTable->render();
 	

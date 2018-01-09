@@ -32,10 +32,16 @@ class MyMarkdown
 		'CLEAR' => '<div style="clear:both;"></div>',
 	);
 
+
+
+
 	public function __construct($trans = false)
     {
         $this->trans = $trans;
     }  // __construct
+
+
+
 
     //....................................................
 	public function parse($str, $page)
@@ -76,6 +82,8 @@ class MyMarkdown
 
 
 
+
+
     //....................................................
     // public function
     public function parseStr($str, $page = false)
@@ -89,6 +97,7 @@ class MyMarkdown
         $str = $this->doReplaces($str);
         return $str;
     } // parseStr
+
 
 
 
@@ -111,6 +120,10 @@ class MyMarkdown
 		return $str;
 	} // doMDincludes
 
+
+
+
+
 	//....................................................
 	private function setDefaults()
 	{
@@ -130,6 +143,10 @@ class MyMarkdown
 		
 	} // setDefaults
 
+
+
+
+
 	//....................................................
 	private function doReplaces($str)
 	{
@@ -138,6 +155,9 @@ class MyMarkdown
 		}
 		return $str;
 	} //doReplaces
+
+
+
 
 	//....................................................
 	private function handeCodeBlocks($str)
@@ -150,7 +170,10 @@ class MyMarkdown
 		}
 		return $out;
 	} // handeCodeBlocks
-	
+
+
+
+
 
 	//....................................................
 	private function preprocess($str)
@@ -178,9 +201,41 @@ class MyMarkdown
 		if ($this->page && $this->page->shieldHtml) {	// hide '<' from MD compiler
 			$str = str_replace(['<', '>'], ['@/@lt@\\@', '@/@gt@\\@'], $str);
 		}
-		$str = preg_replace('/^(\d{1,2})\!\./m', "%@start=$1@%\n\n1.", $str);
+        $str = $this->prepareTabulators($str);
+        $str = preg_replace('/^(\d{1,2})\!\./m', "%@start=$1@%\n\n1.", $str);
 		return $str;
 	} // preprocess
+
+
+
+
+
+	//....................................................
+	private function prepareTabulators($str)
+    {   // need to handle lists explicitly to avoid corruption in MD-parser
+        // -> shield '-' and '1.' (and '1!.')
+        $lines = explode(PHP_EOL, $str);
+        foreach ($lines as $i => $l) {
+            if (preg_match('/\{\{\s*tab\b[^\}]*\s*\}\}/', $l)) {
+                if (preg_match('/^[-\*]\s/', $l)) {
+                    $l = substr($l, 2);
+                    $lines[$i] = "@/@ul@\\@$l";
+
+                } elseif (preg_match('/^(\d+)(!)?\.\s+(.*)/', $l, $m)) {
+                    $l = $m[3];
+                    if ($m[2]) {
+                        $lines[$i] = "@/@ol@\\@!{$m[1]}@$l";
+                    } else {
+                        $lines[$i] = "@/@ol@\\@$l";
+                    }
+                }
+            }
+        }
+        $str = implode("\n", $lines);
+        return $str;
+    } // prepareTabulators
+
+
 
 
 
@@ -213,6 +268,7 @@ class MyMarkdown
 
 
 
+
 	//....................................................
 	private function handleEOF($lines)
 	{
@@ -226,6 +282,10 @@ class MyMarkdown
 		}
 		return $out;
 	} // handleEOF
+
+
+
+
 
 	//....................................................
 	private function handleFrontmatter($lines)

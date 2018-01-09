@@ -18,7 +18,7 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-    $src = $this->getArg($macroName, 'src', '', '');
+    $src = $this->getArg($macroName, 'src', 'Path to sound file', '');
 
     if ($src == '') {
 		return '';

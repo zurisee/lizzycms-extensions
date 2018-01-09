@@ -60,13 +60,13 @@ $.fn.quickview = function ()
 		$( _idQuickview ).click( function () {			// click on background
 			qvClose();
 		});
-		
-		document.onkeydown = function(e) {				// ESC key
-			var keycode = (window.event) ? event.keyCode : e.keyCode;
+
+        $( 'body' ).keydown( function (e) {
+			var keycode = e.which;
 			if (keycode == 27) {
 				qvClose();
- 			}
-		}
+			}
+        });
 	}); // each
 } // quickView
 

@@ -1,0 +1,72 @@
+
+
+.doodle-answer-form {
+	overflow: auto;
+}
+.doodle {
+	display: table;
+	border-collapse: collapse;
+}
+.doodle-row {
+	display: table-row;
+}
+.doodle-name-elem,
+.doodle-elem {
+	display: table-cell;
+	font-size: initial;
+	border: 1px solid #93ab15;
+}
+.doodle-elem {
+	min-width: 5em;
+	min-height: 2em;
+	padding: 5px 10px;
+	overflow: hidden;
+	text-align: center;
+}
+.doodle-name-elem {
+	width: 10em;
+	min-height: 2em;
+	text-align: left;
+}
+.doodle-elem input[type="checkbox"] {
+	outline: 100vw solid #fee;
+}
+.doodle-elem input[type="checkbox"]:checked {
+	outline: 100vw solid #dfd;
+}
+
+
+.doodle_entry_name {
+	width: 100%;
+}
+.doodle_answer_submit {
+	font-size: initial;
+}
+.doodle_answer,
+.doodle_answer_name {
+	background: #f8ff8a33;
+}
+.doodle_answer_name,
+.doodle_entry_name {
+	padding: 2px;
+	background: #f8ff8a33;
+}
+.doodle-new-entry-row {
+	margin: 3px 0;
+}
+.doodle-new-entry-row .doodle-elem,
+.doodle-new-entry-row .doodle-name-elem {
+	margin: 3px 0;
+	border-top: 2px solid #666;
+	border-bottom: 2px solid #666;
+}
+.doodle-hdr .doodle-name-elem:first-child {
+	border: none;
+}
+.doodle_answer_submit {
+	width: 10em;
+	height: 2em;
+}
+.doodle-submit {
+	margin-top: 5px;
+}

@@ -5,11 +5,13 @@ $macroName = basename(__FILE__, '.php');
 $this->addMacro($macroName, function ( ) {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-	$inx = $this->invocationCounter[$macroName] + 1;
-	$sys = $this->config->systemPath;
 
-    $offset = $this->getArg($macroName, 'offset', '', 0);
-    $addNumberOfPages = $this->getArg($macroName, 'addNumberOfPages', '', '');
+    $offset = $this->getArg($macroName, 'offset', '(optional) offset value to be added to the page-number', 0);
+    $addNumberOfPages = $this->getArg($macroName, 'addNumberOfPages', '(optional) number of all pages &rarr; overrides the automatically determined number of pages', '');
+
+    if ($offset == 'help') {
+        return '';
+    }
 
     $pageNumber = $this->siteStructure->currPageRec['inx'] + 1 + $offset;
     $out = "<span class='invisible'>{{ Seite }}</span> $pageNumber";

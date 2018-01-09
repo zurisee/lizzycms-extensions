@@ -17,14 +17,14 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 	$sys = $this->config->systemPath;
 
-    $src = $this->getArg($macroName, 'src', '', '');
-    $width = $this->getArg($macroName, 'width', '', '');
-    $height = $this->getArg($macroName, 'height', '', '');
-    $class = $this->getArg($macroName, 'class', '', '');
+    $src = $this->getArg($macroName, 'src', 'Source folder from which to get video sources', '');
+    $width = $this->getArg($macroName, 'width', '(optional) width of display (height will be automatically derived', '');
+    $class = $this->getArg($macroName, 'class', '(optional) class applied to DIV around the player', '');
 
-//    $src = resolvePath($src0, true, false);
+    if ($src == 'help') {
+        return '';
+    }
 
-    $ablePlayerPath = SYSTEM_PATH."third-party/ableplayer/";
 	if ($src == '') {
 		return '';
 	}
@@ -77,7 +77,6 @@ EOT;
 		$src = resolvePath($src, true);
 		$srcUrl = resolvePath($src0, true, true);
 		if (!file_exists($src)) {
-			$src = linkedFilepath($src);
 			if (!file_exists($src)) {
 				echo "<p>".getcwd()."</p>\n";
                 fatalError("Error in video(): file <strong>'".basename($src)."'</strong> <br />\nnot found in <strong>".dirname($src)."</strong>", 'File: '.__FILE__.' Line: '.__LINE__);

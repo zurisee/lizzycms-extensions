@@ -56,12 +56,39 @@ fieldset.label {
 
 
 /* file upload */
+.lizzy-form-file-upload {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: -1;
+    color: rgba(0,0,0,0);
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    overflow:  hidden;
+}
+.lizzy-form-file-upload::before {
+    content: " ";
+    position: absolute;
+    top:0;right:0;bottom: 0; left: 0;
+    background: white;
+}
+.lizzy-form-file-upload-label {
+    position: relative;
+    width:  initial;
+    padding: 5px 15px;
+    cursor:  pointer;
+}
 .progress-indicator {
 	width: 20em;
 }
 .progress-indicator progress {
 	width: calc(100% - 3em);
 	margin-top: 0.2em;
+}
+.progress-indicator progress:not([value]) {
+    background: yellow;
 }
 .progress-indicator > div {
 	float: right;
@@ -70,13 +97,8 @@ fieldset.label {
 .uploaded {
 	margin-top: 1em;
 }
-.uploaded span, #uploaded img {
-	display: inline-block;
-	vertical-align: middle;
-}
-.uploaded > div > span {
-	width: 12em;
-}
-.uploaded >div {
-	margin: 4px 0;
+.uploaded li span {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0 15px 0 0;
 }

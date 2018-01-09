@@ -1,21 +1,5 @@
 <?php
 
-/*
-** For manipulating the embedding page, use $page:
-**		$page->addHead('');
-**		$page->addCssFiles('');
-**		$page->addCss('');
-**		$page->addJsFiles('');
-**		$page->addJs('');
-**		$page->addJqFiles('');
-**		$page->addJq('');
-**		$page->addBody_end_injections('');
-**		$page->addMessage('');
-**		$page->addPageReplacement('');
-**		$page->addOverride('');
-**		$page->addOverlay('');
-*/
-
 require_once SYSTEM_PATH.'datastorage.class.php';
 
 $macroName = basename(__FILE__, '.php');
@@ -31,7 +15,11 @@ $this->addMacro($macroName, function ()
     $recNo = $this->getArg($macroName, 'recNo', '"next" or explicit record-number; -> no return value');
     $field = $this->getArg($macroName, 'field', 'Name of data-field to be returned; -> returns field-value');
     $altField = $this->getArg($macroName, 'altField', 'Name of alternative field, if primary field is empty');
-    $quiet = $this->getArg($macroName, 'quiet', 'Name of alternative field, if primary field is empty');
+    $quiet = $this->getArg($macroName, 'quiet', 'Omit HTML comment indicating currRecNo');
+
+    if ($src == 'help') {
+        return '';
+    }
 
     $str = '';
     if ($src) {
@@ -44,6 +32,7 @@ $this->addMacro($macroName, function ()
 
         $data = $ds->read();
     }
+
     if ($nRecs) {
         if (isset($data)) {
             $str = sizeof($data) - 1;

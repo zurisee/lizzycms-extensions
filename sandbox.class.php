@@ -9,7 +9,6 @@ class MySandbox
     public function execute($phpFile, $configPath, $vars = null)
     {
         $phpCode = getFile($phpFile, true);
-/*        $phpCode = str_replace(['<?php','?>'], '', $phpCode);*/
 
         $this->sandbox = new PHPSandbox\PHPSandbox;
 

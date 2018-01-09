@@ -7,7 +7,7 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-    $gap_size = $this->getArg($macroName, 'gap_size', '');
+    $gap_size = $this->getArg($macroName, 'gap_size', 'Height of inserted space. Use any form allowed in CSS, e.g. 3em, 20px or 1cm');
 
     if (trim($gap_size) == '') {
 		$gap_size = '1em';

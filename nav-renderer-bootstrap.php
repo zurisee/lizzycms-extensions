@@ -82,7 +82,9 @@ function _renderBootstrapMenu($inx, $site, $ulClass, $liClass, $aClass, $tree, $
 
         if ($elem['isCurrPage']) {
             $liClass .= ' curr active';
-            $path = '#main';
+            if ($site->config->selflinkAvoid) {
+                $path = '#main';
+            }
         } elseif ($elem['active']) {
             $liClass .= ' active';
         }
