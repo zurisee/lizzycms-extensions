@@ -600,6 +600,8 @@ function generateNewVersionCode()
     $prevRandCode = false;
     if (file_exists(VERSION_CODE_FILE)) {
         $prevRandCode = file_get_contents(VERSION_CODE_FILE);
+    } else {
+        preparePath(VERSION_CODE_FILE);
     }
     do {
         $randCode = rand(0, 9) . rand(0, 9);
