@@ -1,0 +1,126 @@
+/*
+**  SlideShow Support Styles
+*/
+
+
+body {
+	font-size: 2.5vw;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+}
+
+
+.page {
+	position: absolute;
+	top: 0;
+	padding: 0;
+	margin: 0;
+	width: 100%;
+}
+main {
+	position: absolute;
+	width: 100%;
+}
+section {
+	padding: 0;
+	margin: 0;
+	padding-top: 5vh;
+	padding-left: 8vw;
+}
+section:first-child {
+	height: 100vh;
+	width: 100vw;
+	border-bottom: 1px dotted #ccc;
+}
+
+
+
+.revealed {
+	color: black;
+	transition: all 0.3s;
+	opacity: 1;
+}
+.withheld {
+	color: #ddd;
+	opacity: 0;
+}
+
+.hl {
+  color: red; }
+
+.cols-50-50 > div {
+  display: inline-block;
+  width: 49.5%;
+  padding: 0 1em 0 0; }
+
+.cols-60-40 > div {
+  display: inline-block;
+  padding: 0 1em 0 0; }
+  .cols-60-40 > div:first-child, .cols-2-60_40 > div:first-child {
+    width: 59%; }
+  .cols-60-40 > div:nth-child(2), .cols-2-60_40 > div:nth-child(2) {
+    width: 39%; }
+
+.cols-67-33 > div {
+  display: inline-block;
+  padding: 0 1em 0 0; }
+  .cols-67-33 > div:first-child {
+    width: 66%; }
+  .cols-67-33 > div:nth-child(2) {
+    width: 33%; }
+
+.cols-75-25 > div {
+  display: inline-block;
+  padding: 0 1em 0 0; }
+  .cols-75-25 > div:first-child {
+    width: 75%; }
+  .cols-75-25 > div:nth-child(2) {
+    width: 25%; }
+
+.cols-33-33-33 > div {
+  display: inline-block;
+  width: 32.5%;
+  padding: 0 1em 0 0; }.hl {
+    
+}
+
+.pagenumber {
+	position: absolute;
+	top: calc(100vh - 3em);
+	left: -4vw;
+	font-size: 10pt;
+}
+
+body.screen-off {
+	filter: blur(15px);
+	transition: all 0.3s;
+}
+body.screen-black {
+  background: #333; }
+  body.screen-black .page {
+    display: none; }
+
+.speaker-notes {
+	font-size: 140%;
+	border: 1px solid blue;
+	background: #eef;
+	padding: 0 1em;
+}
+
+@media print {
+	.nextPrevPageLinks, 
+    .invisible, 
+    .skiplinks,
+    .speaker-notes {
+		display: none;
+	}
+	body .page .pagenumber {
+		font-size: 10pt;
+	}
+	.withhold {
+		color: black;
+		opacity: 1!important;
+        display: initial;
+	}
+}

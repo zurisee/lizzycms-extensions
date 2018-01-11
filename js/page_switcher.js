@@ -1,7 +1,11 @@
 // Page Switcher for Lizzy
 
-(function ( $ ) {
+$( document ).ready(function() {
 
+    var prevLink = $('.prevPageLink a').attr('href');
+    var nextLink = $('.nextPageLink a').attr('href');
+
+    // Touch gesture handling:
 	if ($('body').hasClass('touch')) {
 		console.log('swipe detection activated');
 
@@ -11,47 +15,49 @@
                 console.log('page switching suppressed: was over scrolling element');
 		        return;
             }
-			var prev = $('.prevPageLink a').attr('href');
-			if ((prev != 'undefined') && prev && (ev.type == 'swiperight')) {
-				window.location = prev;
+			if ((prevLink != 'undefined') && prevLink && (ev.type == 'swiperight')) {
+                window.location = prevLink;
 			}
-			var next = $('.nextPageLink a').attr('href');
-			if ((next != 'undefined') && next && (ev.type == 'swipeleft')) {
-				window.location = next;
+			if ((nextLink != 'undefined') && nextLink && (ev.type == 'swipeleft')) {
+                window.location = nextLink;
 			}
 		});
 	}
+
+	// Key handling:
     $( 'body' ).keydown( function (e) {
         var keycode = e.which;
+
+        // Exceptions, where arrow keys should NOT switch page:
         if ($( document.activeElement ).closest('form').length ||	// Focus within form field
             $( document.activeElement ).closest('input').length ||	// Focus within input field
-            $('.pageSwitchInhibited').length  ||				    // class .pageSwitchInhibited found
+            $('.inhibitPageSwitch').length  ||				        // class .inhibitPageSwitch found
             ($('.ug-lightbox').length && ($('.ug-lightbox').css('display') != 'none'))) {	        // special case: ug-album in full screen mode
-            return document.defaultAction;
+                return document.defaultAction;
         }
-        var prev = $('.prevPageLink a').attr('href');
 
+
+        // Standard arrow key handling:
         if ((keycode == 37) || (keycode == 33)) {	// left or pgup
-            console.log('prev: '+prev);
+            console.log('prevLink: '+prevLink);
             e.preventDefault();
-            window.location = prev;
+            window.location = prevLink;
+            return false;
         }
-        var next = $('.nextPageLink a').attr('href');
         if ((keycode == 39) || (keycode == 34)) {	// right or pgdown
-            console.log('next: '+next);
+            console.log('nextLink: '+nextLink);
             e.preventDefault();
-            window.location = next;
+            window.location = nextLink;
+            return false;
         }
         if (keycode == 115) {
             if (typeof simplemde == 'undefined') {	// F4 -> start editing mode
                 e.preventDefault();
                 window.location = '?edit';
+                return false;
             }
         }
         return document.defaultAction;
     });
-
-}( jQuery ));
-
-
+});
 

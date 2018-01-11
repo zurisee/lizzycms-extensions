@@ -17,6 +17,7 @@ class Defaults
         $this->userCodePath             = 'code/';
         $this->userInitCodeFile         = $this->userCodePath.'user-init-code.php';
         $this->cachePath                = '.#cache/';
+        $this->cacheFileName            = '.#page-cache.dat';
         $this->siteIdententation        = 4;
 
 
@@ -40,6 +41,7 @@ class Defaults
             'permitUserVarDefs'         => ['sandboxed', '[\'sandboxed\'|true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
             'permitUserCode'            => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '{$this->userCodePath}''" ],
             'pageSwitcher'              => [false, '[true|false] whether code should be added to support page switching (by arrow-keys or swipe gestures)' ],
+            'slideShowSupport'          => [false, '[true|false] If true, provides support for slide-shows' ],
             'autoLoadJQuery'            => [false, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
             'loadJQuery'                => [false, '[true|false] synonym for "autoLoadJQuery"' ],
             'jQueryModule'              => ['JQUERY', 'One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
@@ -108,6 +110,8 @@ class Defaults
 
         $this->loadModules['ZOOM_TARGET']       = array('module' => 'third-party/zoomooz/jquery.zoomooz.min.js', 'weight' => 45);
         $this->loadModules['TOUCH_DETECTOR']    = array('module' => 'js/touch_detector.js', 'weight' => 40);
+        $this->loadModules['SLIDESHOW_SUPPORT'] = array('module' => 'js/slideshow_support.js', 'weight' => 32);
+        $this->loadModules['SLIDESHOW_SUPPORT_CSS'] = array('module' => 'css/slideshow_support.css', 'weight' => 32);
         $this->loadModules['PAGE_SWITCHER']     = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']            = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
 

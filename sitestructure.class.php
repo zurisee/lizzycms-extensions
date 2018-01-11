@@ -557,7 +557,11 @@ EOT;
 
 	
 	private function readCache()
-	{
+	{   // when cache can be used:
+        // - config>caching: true
+        // - cached siteStructure exists
+        // - cached siteStructure is newer than config/sitemap.txt
+        $skipElements = ['currPage', 'config', 'sitemapFile', 'caching'];
 		if ($this->caching) {
 			if (!file_exists($this->cacheFile)) {
 				return false;
@@ -566,7 +570,7 @@ EOT;
 			if ($cacheTime > filemtime($this->sitemapFile)) {
 				$site = unserialize(file_get_contents($this->cacheFile));
 				foreach ($site as $key => $value) {
-					if (($key != 'currPage') && ($key != 'currPageRec')) {
+					if (!in_array($key, $skipElements)) {
 						$this->$key = $value;
 					}
 				}
@@ -577,6 +581,14 @@ EOT;
 	} // readCache
 
 
+
+
+    public function clearCache()
+    {
+        if (file_exists($this->cacheFile)) {
+            unlink($this->cacheFile);
+        }
+    } // clearCache
 
 	public function getNumberOfPages()
 	{

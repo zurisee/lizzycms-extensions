@@ -674,7 +674,10 @@ class Lizzy
 	//....................................................
 	private function injectPageSwitcher()
 	{
-        if ($this->config->pageSwitcher) {
+        if ($this->config->slideShowSupport) {
+            require_once($this->config->systemPath."slideshow-support.php");
+
+        } elseif ($this->config->pageSwitcher) {
             require_once($this->config->systemPath."page_switcher.php");
         }
 	} // injectPageSwitcher
@@ -1108,12 +1111,9 @@ EOT;
 			return false;
 		}
 		if ($this->config->caching) {
-			if (!file_exists($this->config->cachePath)) {
-				mkdir($this->config->cachePath, 0770);
-			}
 			$cache = $this->page->getEncoded(); //json_encode($this->page);
-			$cacheFile = $this->config->cachePath.$this->cacheFileName();
-			
+            $cacheFile = $this->pathToPage.$this->config->cacheFileName;
+
 			file_put_contents($cacheFile, $cache);
 		}
 	} // writeCache
@@ -1128,8 +1128,8 @@ EOT;
 			return false;
 		}
 		if ($this->config->caching) {
-			$cacheFile = $this->config->cachePath.$this->cacheFileName();
-			if (!file_exists($cacheFile)) {
+            $cacheFile = $this->pathToPage.$this->config->cacheFileName;
+            if (!file_exists($cacheFile)) {
 				return false;
 			}
 			$fTime = filemtime($cacheFile);
@@ -1158,33 +1158,42 @@ EOT;
 		foreach($dir as $file) {
 			unlink($file);
 		}
+
+		$dir = getDirDeep($this->config->pagesPath, true);
+		foreach ($dir as $folder) {
+		    $filename = $folder.$this->config->cacheFileName;
+		    if (file_exists($filename)) {
+		        unlink($filename);
+            }
+        }
 	} // clearCache
 
 
 
-	//....................................................
-    private function cacheFileName()
+
+
+    //....................................................
+    private function clearCaches()
     {
-		$currRec = &$this->siteStructure->currPageRec;
-		return substr(str_replace('/', '_', $currRec['folder']), 0, -1).'.dat';
-	} // cacheFileName
+        $this->clearCache();                            // clear page caches
+        $this->siteStructure->clearCache();             // clear siteStructure cache
+        unset($_SESSION['lizzy']);                      // reset SESSION data
+        $_SESSION['lizzy']['reset'] = true;
+        $this->userRec = false;
+
+        if (file_exists(ERROR_LOG_ARCHIVE)) {   // clear error log
+            unlink(ERROR_LOG_ARCHIVE);
+        }
+    } // clearCaches
 
 
 
-
-	//....................................................
+        //....................................................
 	private function handleUrlArgs()
 	{
         if (getUrlArg('reset')) {			            // reset (cache)
-            $this->clearCache();
-            unset($_SESSION['lizzy']);                      // reset SESSION data
-            $_SESSION['lizzy']['reset'] = true;
-            $this->userRec = false;
-
-            if (file_exists(ERROR_LOG_ARCHIVE)) {   // clear error log
-                unlink(ERROR_LOG_ARCHIVE);
-            }
-            reloadAgent();
+            $this->clearCaches();
+            reloadAgent();  //  reload to get rid of url-arg ?reset
         }
 
 
@@ -1616,11 +1625,14 @@ EOT;
 
         } elseif ($this->housekeeping) {
             $this->checkInstallation2();
+            $this->clearCaches();
             if ($this->config->enableDailyUserTask) {
                 if (file_exists($this->config->userCodePath.'user-daily-task.php')) {
                     require( $this->config->userCodePath.'user-daily-task.php' );
                 }
             }
+            touch(HOUSEKEEPING_FILE);
+            chmod(HOUSEKEEPING_FILE, 0770);
         }
     } // dailyHousekeeping
 

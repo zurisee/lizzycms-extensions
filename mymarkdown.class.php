@@ -193,6 +193,7 @@ class MyMarkdown
 
 		$str = $this->handleInTextVariableDefitions($str);
 
+		$str = str_replace('\\<', '&lt;', $str);       // shield \<
 		$str = str_replace('\\[[', '@/@[@\\@', $str);       // shield \[[
 		$str = str_replace(['\\{', '\\}'], ['&#123;', '&#125;'], $str);    // shield \{{
 		$str = preg_replace('/(\n\{\{.*\}\}\n)/U', "\n$1\n", $str); // {{}} alone on line -> add LFs
