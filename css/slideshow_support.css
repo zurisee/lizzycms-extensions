@@ -41,7 +41,7 @@ section:first-child {
 	transition: all 0.3s;
 	opacity: 1;
 }
-.withheld {
+.withhold {
 	color: #ddd;
 	opacity: 0;
 }

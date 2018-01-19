@@ -47,6 +47,7 @@ class Defaults
             'jQueryModule'              => ['JQUERY', 'One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
             'quickview'                 => [false, '[true|false] enables automatic Quickview of images' ],
             'enableEditing'             => [false, '[true|false] enables online editing' ],
+            'hideWhileEditing'          => [false, 'List of CSS-selectors which shall be hidden while online editing is active, e.g. [#menu, .logo]' ],
             'cssFramework'              => [false, 'Name of CSS-Framework to be invoked {Bootstrap/PureCSS/w3.css}' ],
             'supportLegacyBrowsers'     => [false, 'Determines whether jQuery 3 can be loaded, if false jQuery 1 is invoked' ],
             'forceBrowserCacheUpdate'   => [false, 'Forces the browser to reload css and js resources' ],

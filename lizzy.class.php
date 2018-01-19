@@ -80,7 +80,7 @@ class Lizzy
 
         $globalParams['autoForceBrowserCache'] = $this->config->autoForceBrowserCache;
 
-        if ($this->config->sitemapFile) {
+        if ($this->config->sitemapFile || $this->config->sitemapFromFolders) {
 			$this->siteStructure = new SiteStructure($this->config, $this->reqPagePath);
             $this->currPage = $this->reqPagePath = $this->siteStructure->currPage;
 
@@ -665,6 +665,9 @@ class Lizzy
 		}
 		require_once SYSTEM_PATH.'editor.class.php';
         require_once SYSTEM_PATH.'page-source.class.php';
+
+        $this->config->editingMode =$this->editingMode;
+
         $ed = new ContentEditor($this->page);
 		$ed->injectEditor($this->pagePath);
 	} // injectEditor
@@ -1358,7 +1361,7 @@ EOT;
 	private function renderMD()
 	{
         $mdStr = get_post_data('md', true);
-
+        $mdStr = urldecode($mdStr);
         $doSave = getUrlArg('save');
 		if ($doSave && ($filename = get_post_data('filename'))) {
 			$permitted = $this->auth->checkGroupMembership('editors');
@@ -1378,11 +1381,12 @@ EOT;
 		$pg = new Page;
 		$mdStr = $this->extractFrontmatter($mdStr, $pg);
 		$md->parse($mdStr, $pg);
-		$out = $pg->get('body');
+		$out = $pg->get('content');
 		if (getUrlArg('html')) {
 			$out = "<pre>\n".htmlentities($out)."\n</pre>\n";
 		}
-		if ($mdStr) {
+		if (false && $mdStr) {
+//		if ($mdStr) {
 			$out = <<<EOT
 <!DOCTYPE html>
 <html lang="de">

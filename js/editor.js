@@ -4,7 +4,6 @@
 
 
 var lastMdUpdateTime = 0;
-var lastMdUpdate = '';
 var $edWrapper = null;
 var origText = '';
 var simplemde = null;
@@ -12,15 +11,10 @@ var cmdKeyPressed = false;
 var filename = '';
 var $editBtn = null;
 
-
 $( document ).ready(function() {
-
     prepareEditing();       // insert editing buttons
-
     setupEventHandlers();   // show-files-, edit-, cancel-buttons, page-history etc.
-
     setupKeyHandlers();     // F4, ESC, meta-s, meta-Return
-
 }); // ready
 
 
@@ -158,10 +152,13 @@ function startEditor( $editBtn ) {
                 autofocus: true,
                 allowAtxHeaderWithoutSpace: true,
                 previewRender: function(plainText, preview) { // Async method
-                    setTimeout(function(){
-                        preview.innerHTML = customMarkdownParser(plainText);
-                    }, 250);
-                    return "Loading...";
+                    if (lastMdUpdateTime) { // reset timer if there was one set
+                        clearTimeout(lastMdUpdateTime);
+                    }
+                    lastMdUpdateTime = setTimeout(function(){   // invoke update with delay
+                        customMarkdownParser(encodeURI(plainText), preview);
+                    }, 1000);
+                    return origText;
                 },
                 hideIcons: ["guide"],
                 showIcons: ["code", "table", "horizontal-rule"],
@@ -275,6 +272,7 @@ function saveSitemapData( leaveEditor )
 		hideElements(false);
 	}
 	var sitemap = simplemde.value();
+    sitemap = encodeURI(sitemap);   // -> php urldecode() to decode
 	$.ajax({
 		type: "POST",
 		url: '?save',
@@ -323,21 +321,21 @@ function saveData( leaveEditor )
 
 
 
-function customMarkdownParser(mdStr) {
-    var n = Date.now(); 
-    if (lastMdUpdate && (lastMdUpdateTime > (n - 300))) {
-        lastMdUpdateTime = n;
-        return lastMdUpdate;
-    }
-    lastMdUpdateTime = n;
-    lastMdUpdate = $.ajax({
+function customMarkdownParser(mdStr, preview)
+{   // requests the server to return compiled markdown
+    $.ajax({
         type: "POST",
         url: systemPath + '?compile',
         data: { md: mdStr },
-        async: false
-    }).responseText;
-    return lastMdUpdate;
+        async: true,
+        success: function( html ) {
+            preview.innerHTML = html;
+            origText = html;
+        }
+
+    });
 } // customMarkdownParser
+
 
 
 
@@ -351,5 +349,10 @@ function hideElements( state ) {
                 $(elem).show();
             }
         });
+    }
+    if (state || (typeof state == 'unknown')) {
+        $('.hideWhileEditing').hide();
+    } else {
+        $('.hideWhileEditing').show();
     }
 } // hideElements

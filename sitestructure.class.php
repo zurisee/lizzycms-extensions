@@ -26,7 +26,7 @@ class SiteStructure
 
 		$this->sitemapFile = $config->sitemapFile;
 		$this->currPage = $currPage;
-		if (!file_exists($this->sitemapFile)) {
+		if (!$this->config->sitemapFromFolders && !file_exists($this->sitemapFile)) {
 			$this->currPageRec = array('folder' => '', 'name' => '');
 			$this->list = false;
 			return;

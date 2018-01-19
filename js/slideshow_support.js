@@ -158,15 +158,15 @@ $( document ).ready(function() {
 
 
     function revealWithheldElements( all )  // forward -> move to next page or reveal elements
-    {   // as long as there are elements '.withheld', reveal them one by one
-        // allow switching to next page if there are no '.withheld' left
+    {   // as long as there are elements '.withhold', reveal them one by one
+        // allow switching to next page if there are no '.withhold' left
         if (typeof all !== 'undefined') {
-            $('.withheld').removeClass('withheld').addClass('revealed');
+            $('.withhold').removeClass('withhold').addClass('revealed');
             return true;
         }
-        var $this = $('.withheld').first();
+        var $this = $('.withhold').first();
         if ( $this.length > 0) {
-            $this.removeClass('withheld').addClass('revealed');
+            $this.removeClass('withhold').addClass('revealed');
             return true;
         } else {
             // $('.inhibitPageSwitch').removeClass('inhibitPageSwitch');
@@ -183,7 +183,7 @@ $( document ).ready(function() {
         // allow switchen to previous page if there are no '.revealed' elements
         console.log( 'hiding' );
         if (($('.revealed').length > 0) && ($('.reveal-all').length == 0)) {
-            $('.revealed').addClass('withheld').removeClass('revealed');
+            $('.revealed').addClass('withhold').removeClass('revealed');
             return true;
         } else {
             // $('.inhibitPageSwitch').removeClass('inhibitPageSwitch');

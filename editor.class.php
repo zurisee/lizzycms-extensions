@@ -44,7 +44,9 @@ class ContentEditor
             }
 			$inx++;
 		}
-		
+
+		// hideWhileEditing -> handled in page.class.php: bodyEndInjections()
+
 		$this->page->addJqFiles("~sys/js/editor.js");
 		$this->page->addCssFiles(["~sys/css/editor.css","~sys/third-party/font-awesome/css/font-awesome.min.css","~sys/third-party/simplemde/simplemde.min.css"]);
 		$this->page->addJsFiles("~sys/third-party/simplemde/simplemde.min.js");

@@ -20,10 +20,15 @@ $this->trans->addVariable('comments', "\n</section>\n<section class='comments'>\
 $this->trans->addVariable('speaker-notes', "\n</section>\n<section class='speaker-notes'>\n");
 
 $nextLabel = $this->trans->getVariable('nextPageLabel');
+if (!$nextLabel) {
+    $nextLabel = '&#8827;';
+}
 $prevLabel = $this->trans->getVariable('prevPageLabel');
+if (!$prevLabel) {
+    $prevLabel = '&#8826;';
+}
 
 $str = <<<EOT
-
     <div class='nextPrevPageLinks'>
         <div class='prevPageLink'><a href='~/{$this->siteStructure->prevPage}'>$prevLabel</a></div>
         <div class='nextPageLink'><a href='~/{$this->siteStructure->nextPage}'>$nextLabel</a></div>

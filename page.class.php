@@ -468,6 +468,16 @@ class Page
         $appRootJs = "var appRoot = '$pathToRoot';";
         $sysPathJs = "var systemPath = '$pathToRoot{$this->config->systemPath}';";
 
+        if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->hideWhileEditing) {  // for online-editing: add hideWhileEditing
+            $selectors = '';
+            foreach (explode(',', $this->config->hideWhileEditing) as $elem) {
+                $elem = trim(str_replace(['"',"'"], '', $elem));
+                $selectors .= "'".$elem."',";
+            }
+            $selectors = rtrim($selectors, ',');
+            $sysPathJs .= "\n\t\tvar hideWhileEditing = [$selectors];";
+        }
+
         $bodyEndInjections = "\t<script>\n\t\t$appRootJs $sysPathJs\n\t</script>\n".$bodyEndInjections;
         if ($tmp = $this->get('body_end_injections')) {
             $bodyEndInjections .= $tmp;
