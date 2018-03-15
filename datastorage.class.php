@@ -143,6 +143,49 @@ class DataStorage
 
 
 
+
+    //---------------------------------------------------------------------------
+    public function initRecs($ids)
+    {
+        $data = $this->lowLevelRead();
+        $keys = array_keys($data);
+        if (is_array($ids)) {
+            foreach ($ids as $id) {
+                if (!in_array($id, $keys)) {
+                    $data[$id] = '';
+                }
+            }
+        } elseif (is_string($ids)) {
+            if (!in_array($ids, $keys)) {
+                $data[$ids] = '';
+            }
+        } else {
+            return null;
+        }
+        return $this->lowLevelWrite($data);
+    } // initRecs
+
+
+
+    //---------------------------------------------------------------------------
+    public function findRec($key, $value)
+    {
+        $data = $this->lowLevelRead();
+
+        foreach ($data as $datakey => $rec) {
+            foreach ($rec as $k => $v) {
+                if (($key == $k) && ($value == $v)) {
+                    return $datakey;
+                }
+            }
+        }
+        return false;
+    } // findRec
+
+
+
+
+
     //---------------------------------------------------------------------------
     public function lock($key)
     {
@@ -234,27 +277,27 @@ class DataStorage
 
     //---------------------------------------------------------------------------
     private function lowLevelWrite($data)
-    {
+    {   // returns true if successful
+        $rawData = $this->encode($data);
         if ($this->lockDB) {
             clearstatcache();
             $fp = fopen($this->dataFile, "r+");
             $try = 3;
             while ($try > 0) {
                 if (flock($fp, LOCK_EX)) {  // acquire an exclusive lock on the file
-                    $rawData = $this->encode($data);
-                    file_put_contents($this->dataFile, $rawData);
+                    ftruncate($fp, 0) ;
+                    fwrite($fp, $rawData);
                     flock($fp, LOCK_UN);    // release the lock
                     fclose($fp);
-                    $try = -1;
+                    return true;
                 } else {
                     $try--;
                     usleep(100);
                 }
             }
-            return ($try == -1);
+            return false;
 
         } else {    // skip locking DB
-            $rawData = $this->encode($data);
             file_put_contents($this->dataFile, $rawData);
             return true;
         }
@@ -272,7 +315,7 @@ class DataStorage
             clearstatcache();
             $fp = fopen($this->dataFile, 'r');
             if (flock($fp, LOCK_SH)) {
-                $rawData = file_get_contents($this->dataFile);
+                $rawData = fread($fp, 100000);
                 flock($fp, LOCK_UN);    // release the lock
                 fclose($fp);
                 $encod = mb_detect_encoding($rawData, 'UTF-8, ISO-8859-1');

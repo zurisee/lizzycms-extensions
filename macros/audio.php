@@ -5,6 +5,9 @@
  *	Macro(): includes an audio player
 */
 
+// @info: renders an accessible media player in sound mode.
+
+
 // Code injections:
 $ablePlayerPath = "~sys/third-party/ableplayer/";
 $page->addJsFiles(["{$ablePlayerPath}modernizr.custom.js","{$ablePlayerPath}js.cookie.js", "{$ablePlayerPath}ableplayer.min.js", "JQUERY"]);

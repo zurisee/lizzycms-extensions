@@ -1,5 +1,8 @@
 <?php
 
+// @info: Renders an upload button and implements the entire upload functionality.
+
+
 require_once SYSTEM_PATH.'forms.class.php';
 $page->addCssFiles('~sys/css/lizzy_forms.css');
 

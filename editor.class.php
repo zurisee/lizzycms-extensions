@@ -28,7 +28,7 @@ class ContentEditor
 			$p = strpos($html, '>', $p)+1;
 		}
 		while ($p !== false) {
-			$html = substr($html, 0, $p)."\n\t\t\t<button class='btn_editor' title='{{ Edit Section }}'></button>\n<div id='editor_wrapper$inx' class='editor_wrapper'>\n".substr($html, $p);
+			$html = substr($html, 0, $p)."\n\t\t\t<button class='lzy-editor-btn' title='{{ Edit Section }}'></button>\n<div id='lzy-editor-wrapper$inx' class='lzy-editor-wrapper'>\n".substr($html, $p);
 
 			$p = strpos($html, '</section>', $p) - 1;
 			$html = substr($html, 0, $p)."\n</div>\n\t\t\t</section>\n\t\t\t$edSelector".substr($html, $p+11);
@@ -45,26 +45,27 @@ class ContentEditor
 			$inx++;
 		}
 
-		// hideWhileEditing -> handled in page.class.php: bodyEndInjections()
+		// admin_hideWhileEditing -> handled in page.class.php: bodyEndInjections()
 
+		$this->page->addHead("<script src=\"~sys/third-party/font-awesome/5.0.6/svg-with-js/js/fontawesome-all.min.js\"></script>");
 		$this->page->addJqFiles("~sys/js/editor.js");
-		$this->page->addCssFiles(["~sys/css/editor.css","~sys/third-party/font-awesome/css/font-awesome.min.css","~sys/third-party/simplemde/simplemde.min.css"]);
+		$this->page->addCssFiles(["~sys/css/editor.css","~sys/third-party/simplemde/simplemde.min.css"]);
 		$this->page->addJsFiles("~sys/third-party/simplemde/simplemde.min.js");
 		$buttons = <<<EOT
-			<button class="btn_save" title='{{ Save }}'><img src='~sys/rsc/save.png' alt='{{ Save }}' /></button>
-			<button class="btn_done" title='{{ Done }}'><img src='~sys/rsc/done.png' alt='{{ Done }}' /></button>
-			<button class="btn_cancel" title='{{ Cancel }}'><img src='~sys/rsc/cancel.png' alt='{{ Cancel }}' /></button>
+			<button class="lzy-save-btn" title='{{ Save }}'><img src='~sys/rsc/save.png' alt='{{ Save }}' /></button>
+			<button class="lzy-done-btn" title='{{ Done }}'><img src='~sys/rsc/done.png' alt='{{ Done }}' /></button>
+			<button class="lzy-cancel-btn" title='{{ Cancel }}'><img src='~sys/rsc/cancel.png' alt='{{ Cancel }}' /></button>
 
 EOT;
 
 		$html .= <<<EOT
 
-	<div id='editing-html' style='display:none;'>
-		<div class="edit_btns edit_btns1">
+	<div id='lzy-editing-html' style='display:none;'>
+		<div class="lzy-edit-btns lzy-edit-btns1">
 $buttons
 		</div>
-		<textarea class="editor">@data</textarea>
-		<div class="edit_btns2 edit_btns2">
+		<textarea class="lzy-editor">@data</textarea>
+		<div class="lzy-edit-btns2 lzy-edit-btns2">
 $buttons
 		</div>
 	</div>
@@ -82,7 +83,7 @@ EOT;
     {
 		require_once SYSTEM_PATH.'file_upload.class.php';
 
-        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->pagesPath.$filePath;
+        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->path_pagesPath.$filePath;
 		$uploader = new FileUpload($this->page);
         return $uploader->render($filePath);
     } // injectUploader

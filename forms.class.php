@@ -120,7 +120,7 @@ class Forms
     private function formHead($args)
     {
 		$this->currForm->class = $class = (isset($args['class'])) ? $args['class'] : translateToIdentifier($this->currForm->formName);
-		$_class = " class='lizzy-form $class'";
+		$_class = " class='lzy-form $class'";
 		
 		$this->currForm->method = (isset($args['method'])) ? $args['method'] : 'post';
 		$_method = " method='{$this->currForm->method}'";
@@ -328,7 +328,7 @@ EOT;
         $out .= <<<EOT
         
             <input type="hidden" name="form-upload-path" value="$targetPath1" />
-            <label class="$id lizzy-form-file-upload-label ios_button" for="$id">$label<input id="$id" class="lizzy-form-file-upload" type="file" name="files[]" data-url="$server" multiple /></label>
+            <label class="$id lzy-form-file-upload-label lzy-button" for="$id">$label<input id="$id" class="lzy-form-file-upload" type="file" name="files[]" data-url="$server" multiple /></label>
 
 			<div class='progress-indicator progress-indicator$inx' style="display: none;">
 				<progress id="progressBar$inx" class="progressBar" max='100' value='0'>
@@ -451,11 +451,43 @@ EOT;
 		$id = ($id) ? $id : "fld_{$this->currRec->name}";
         $requiredMarker = $this->getRequiredMarker();
 		$label = $this->currRec->label;
-		if ($requiredMarker && (strpos($label, ':') !== false)) {
-			$label = rtrim($label, ':').' '.$requiredMarker.':';
-		} else {
-			$label .= ' '.$requiredMarker;
-		}
+		if ($this->translateLabel) {
+		    $hasColon = (strpos($label, ':') !== false);
+		    $hasAsterisk = (strpos($label, '*') !== false);
+            $label = trim(str_replace([':', '*'], '', $label));
+            $label = "{{ $label }}";
+            if ($hasColon) {
+                $label .= ':';
+            }
+            if ($hasAsterisk) {
+                $label .= ' *';
+            }
+        } else {
+            if ($requiredMarker && (strpos($label, ':') !== false)) {
+                $label = rtrim($label, ':').' '.$requiredMarker.':';
+            } else {
+                $label .= ' '.$requiredMarker;
+            }
+        }
+//        $requiredMarker = $this->getRequiredMarker();
+//		$label = $this->currRec->label;
+//		if ($requiredMarker && (strpos($label, ':') !== false)) {
+//			$label = rtrim($label, ':').' '.$requiredMarker.':';
+//		} else {
+//			$label .= ' '.$requiredMarker;
+//		}
+//		if ($this->translateLabel) {
+//		    $hasColon = (strpos($label, ':') !== false);
+//		    $hasAsterisk = (strpos($label, '*') !== false);
+//            $label = trim(str_replace([':', '*'], '', $label));
+//            $label = "{{ $label }}";
+//            if ($hasColon) {
+//                $label .= ':';
+//            }
+//            if ($hasAsterisk) {
+//                $label .= ' *';
+//            }
+//        }
         return "\t\t\t<label for='$id'>$label</label>\n";
     } // getLabel
 
@@ -483,18 +515,22 @@ EOT;
 			if ($args['type'] != 'form-head') {
                 fatalError("Error: syntax error \nor form field definition encountered without previous element of type 'form-head'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
-	        $formId = (isset($args['class'])) ? $args['class'] : translateToIdentifier($args['label']);
+            $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form'.($this->inx + 1);
+	        $formId = (isset($args['class'])) ? $args['class'] : translateToIdentifier($label);
+
 			$this->formDescr[ $formId ] = new FormDescriptor;
 			$this->currForm = &$this->formDescr[ $formId ];
 			$this->currForm->formId = $formId;
 			
-			$this->currForm->formName = (isset($args['label'])) ? $args['label'] : 'My Form';
+			$this->currForm->formName = $label;
 
 			$this->currForm->formData['labels'] = [];
 			$this->currForm->formData['names'] = [];
 			$this->userSuppliedData = $this->getUserSuppliedData($formId);
 
 		} else {
+            $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form-Elem'.($this->inx + 1);
+            $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : false;
 			$formId = $this->currForm->formId;
 			$this->currForm = &$this->formDescr[ $formId ];
 		}
@@ -502,10 +538,7 @@ EOT;
 
 		$type = (isset($args['type'])) ? $args['type'] : 'text';
 		if ($args['type'] == 'form-tail') {	// end-element is exception, doesn't need a label
-			$args['label'] = 'form-tail';
-		}
-		if (!isset($args['label'])) {
-            fatalError("Error: label missing for form element", 'File: '.__FILE__.' Line: '.__LINE__);
+			$label = 'form-tail';
 		}
 		if ($type == 'form-head') {
 			$this->currRec = new FormElement;
@@ -514,7 +547,7 @@ EOT;
 		}
 
 		
-		$elemId = translateToIdentifier($args['label']);
+		$elemId = translateToIdentifier($label);
 		
 		$this->currForm->formElements[ $elemId ] = new FormElement;
 		$this->currRec = &$this->currForm->formElements[ $elemId ];
@@ -522,7 +555,6 @@ EOT;
 		
 		$rec->type = $type;
 
-        $label = $args['label'];
 		if (strpos($label, '*')) {
 			$label = trim(str_replace('*', '', $label));
 			$args['required'] = true;
@@ -628,7 +660,7 @@ EOT;
 //-------------------------------------------------------------
 	private function restoreFormDescr($formId)
 	{
-		return (isset($_SESSION['lizzy'][$formId])) ? unserialize($_SESSION[$formId]) : null;
+		return (isset($_SESSION['lizzy'][$formId])) ? unserialize($_SESSION['lizzy'][$formId]) : null;
 	} // restoreFormDescr
 
 
@@ -642,7 +674,7 @@ EOT;
 //-------------------------------------------------------------
 	private function getUserSuppliedData($formId)
 	{
-		return (isset($_SESSION['lizzy'][$formId.'_userData'])) ? unserialize($_SESSION[$formId.'_userData']) : null;
+		return (isset($_SESSION['lizzy'][$formId.'_userData'])) ? unserialize($_SESSION['lizzy'][$formId.'_userData']) : null;
 	} // getUserSuppliedData
 
 

@@ -6,7 +6,7 @@
 */
 
 $thisFile = __FILE__;
-$userFileName = CONFIG_PATH.$this->config->usersFile;
+$userFileName = CONFIG_PATH.$this->config->admin_usersFile;
 
 $out = <<<EOT
 

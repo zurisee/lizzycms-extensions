@@ -77,7 +77,7 @@ function _renderPureCss($site, $tree, $indent, $showHidden = false)
         $liClass = 'pure-menu-item';
         if ($elem['isCurrPage']) {
             $liClass .= ' curr active';
-            if ($site->config->selflinkAvoid) {
+            if ($site->config->feature_selflinkAvoid) {
                 $path = '#main';
             }
         } elseif ($elem['active']) {

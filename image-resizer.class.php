@@ -162,22 +162,6 @@ class ImageResizer
         }
     } // provideImages
     
-//    //--------------------------------------------------
-//    public function provideThumbnails()
-//    {
-//    	global $globalParams;
-//
-//        $files = getDir($globalParams['pathToPage'].'*');
-//        $thumbPath = $globalParams['pathToPage'].'thumbnail/';
-//        foreach ($files as $file) {
-//            if (preg_match('/\.(jpg|gif|png|bmp)$/i', $file)) {
-//                if (!file_exists(($th = $thumbPath.basename($file)))) {
-//                    mylog("creating thumbnail for: $file");
-//                    $this->resizeImage($file, $th, 80, 60);
-//                }
-//            }
-//        }
-//    } // provideThumbnails
 
 } // class ImageResizer
 

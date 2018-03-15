@@ -1,5 +1,7 @@
 <?php
 
+// @info: Renders a navigation menu.
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
@@ -14,7 +16,7 @@ $this->addMacro($macroName, function () {
 
     $args = $this->getArgsArray($macroName);
 
-	if ($this->siteStructure) {
+	if (isset($this->siteStructure) && $this->siteStructure) {
 		$out = $this->siteStructure->render($inx, $this->page, $args);
 	} else {
 		$out = '';

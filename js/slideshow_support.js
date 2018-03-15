@@ -24,7 +24,7 @@ $( document ).ready(function() {
             }
 			if ((prevLink != 'undefined') && prevLink && (ev.type == 'swiperight')) {
                 if (slideSupportActive &&  hideRevealedElements() ) {
-                    console.log( 'withheld' );
+                    console.log( 'hidden' );
                     return false;
                 }
                 window.location = prevLink;

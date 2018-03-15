@@ -57,7 +57,7 @@ class ImageGallery
     public function render()
     {
         if (!$this->id) {
-            return "<div class='lizzy-album-error'><code>album()</code> Macro:<br />No images found in {$this->galleryPath}</div>";
+            return "<div class='lzy-album-error'><code>album()</code> Macro:<br />No images found in {$this->galleryPath}</div>";
         }
         $imagesPath = '~/'.$this->galleryPath.$this->imagePath;
         $thumbsPath = '~/'.$this->galleryPath.$this->thumbsPath;

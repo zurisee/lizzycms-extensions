@@ -1,5 +1,8 @@
 <?php
 
+// @info: Renders images wrapped in an HTML &lt;pic> tag.
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
@@ -23,7 +26,7 @@ $this->addMacro($macroName, function () {
     $modifier = '';
 
     // prepare quickview:
-    if (($this->config->quickview && ($class === null)) || strpos($class, 'quickview') !== false) {
+    if (($this->config->feature_quickview && ($class === null)) || strpos($class, 'quickview') !== false) {
         if (preg_match('/([^\[]*)\[.*(\.\w+)/', $src, $m)) {
             $basename = $m[1];
             $ext = $m[2];
@@ -37,7 +40,7 @@ $this->addMacro($macroName, function () {
                 }
                 list($w, $h) = getimagesize($imgFullsizeFile);
                 $auxAttr = " data-qv-src='~/$imgFullsizeFile' data-qv-width='$w' data-qv-height='$h'";
-                if ($this->config->quickview && (strpos($class, 'quickview') === false)) {
+                if ($this->config->feature_quickview && (strpos($class, 'quickview') === false)) {
                     $class .= ' quickview';
                 }
             } else {

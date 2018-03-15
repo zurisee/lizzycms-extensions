@@ -22,8 +22,11 @@ class Page
     private $autoAttrFiles = '';
     private $body_end_injections = '';
     private $message = '';
+    private $popup = false;
     private $pageSubstitution = false;
     private $override = false;   // if set, will replace the page content
+    private $mdCompileOverride = false;
+    private $mdCompileOverlay = false;
     private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
     private $debugMsg = false;
     private $wrapperTag = 'section';
@@ -64,14 +67,24 @@ class Page
             $this->$key = $value;
             return true;
         }
-        if (isset($this->$key)) {
+
+        if (isset($this->$key)) {   // property already set
             if ($this->$key) {
-                $this->$key .= $value;
+                if ($value) {
+                    if (strpos(',jqFiles,jsFiles,cssFiles,', ",$key,") !== false) {
+                        $this->$key .= ',' . $value;
+                    } elseif (strpos(',jq,js,css,', ",$key,") !== false) {
+                        $this->$key .= "\t\t\t$value\n";
+                    } else {
+                        $this->$key .= $value;
+                    }
+                }
             } else {
                 $this->$key = $value;
             }
             return true;
-        } else {
+
+        } else {    // new property
             $this->$key = $value;
             return false;
         }
@@ -79,14 +92,14 @@ class Page
 
 
 
-    public function merge($page)
+    public function merge($page, $propertiesToReplace = '')
     {
         if (!(is_object($page) || is_array($page))) {
             return;
         }
         foreach ($page as $key => $value) {
             if ($key == 'config') { continue; }
-            if ($key == 'wrapperTag') {
+            if (($key == 'wrapperTag') || (strpos($propertiesToReplace, $key) !== false)) {
                 $this->appendValue($key, $value, true);
             } else {
                 $this->appendValue($key, $value);
@@ -111,7 +124,7 @@ class Page
         if ($p) {   // body already populated -> insert just before </body> end tag.
             $this->body = substr($this->body, 0, $p).$str.substr($this->body, $p);
         } else {
-            $this->addToProperty($this->body, $str, $replace);
+            $this->addToProperty('body', $str, $replace);
         }
     } // addBody
 
@@ -120,7 +133,7 @@ class Page
     //-----------------------------------------------------------------------
     public function addContent($str, $replace = false)
     {
-        $this->addToProperty($this->content, $str, $replace);
+        $this->addToProperty('content', $str, $replace);
     } // addContent
 
 
@@ -128,7 +141,7 @@ class Page
     //-----------------------------------------------------------------------
     public function addHead($str, $replace = false)
     {
-        $this->addToProperty($this->head, $str, $replace);
+        $this->addToProperty('head', $str, $replace);
     } // addHead
 
 
@@ -160,7 +173,7 @@ class Page
     //-----------------------------------------------------------------------
     public function addCss($str, $replace = false)
     {
-        $this->addToProperty($this->css, $str, $replace);
+        $this->addToProperty('css', $str, $replace);
     } // addCss
 
 
@@ -187,7 +200,7 @@ class Page
     //-----------------------------------------------------------------------
     public function addJs($str, $replace = false)
     {
-        $this->addToProperty($this->js, $str, $replace);
+        $this->addToProperty('js', $str, $replace);
     } // addJs
 
 
@@ -214,11 +227,12 @@ class Page
     //-----------------------------------------------------------------------
     public function addJQ($str, $replace = false)
     {
-        if ((strpos($str, '.editable') !== false) && (strpos($this->jq, '.editable') !== false)) {
+        //??? avoid adding 'lzy-editable' multiple times:
+        if ((strpos($str, '.lzy-editable') !== false) && (strpos($this->jq, '.lzy-editable') !== false)) {
             return;
         }
 
-        $this->addToProperty($this->jq, $str, $replace);
+        $this->addToProperty('jq', $str, $replace);
     } // addJQ
 
 
@@ -226,7 +240,7 @@ class Page
     //-----------------------------------------------------------------------
     public function addBody_end_injections($str, $replace = false)
     {
-        $this->addToProperty($this->body_end_injections, $str, $replace);
+        $this->addToProperty('body_end_injections', $str, $replace);
     } // addBody_end_injections
 
 
@@ -234,9 +248,27 @@ class Page
     //-----------------------------------------------------------------------
     public function addMessage($str, $replace = false)
     {
-        $this->addToProperty($this->message, $str, $replace);
+        $this->addToProperty('message', $str, $replace);
     } // addMessage
 
+
+
+    //-----------------------------------------------------------------------
+    public function addPopup($inx, $args)
+    {
+        if (!$this->popup) {
+            require_once SYSTEM_PATH.'popup.class.php';
+            $this->popup = new PopupWidget($this);
+            $this->popup->createPopupTemplate();
+        }
+
+        if (isset($args[0]) && ($args[0] == 'help')) {
+            return $this->popup->renderHelp();
+        }
+
+        $this->popup->addPopup( $inx, $args );
+        return "\t<!-- lzy-popup invoked -->\n";
+    }
 
 
     //-----------------------------------------------------------------------
@@ -248,17 +280,37 @@ class Page
 
 
     //-----------------------------------------------------------------------
-    public function addOverride($str, $replace = false)
+    public function setOverrideMdCompile($mdCompile)
     {
-        $this->addToProperty($this->override, $str, $replace);
+        $this->mdCompileOverride = $mdCompile;
+    }
+
+
+
+    //-----------------------------------------------------------------------
+    public function addOverride($str, $replace = false, $mdCompile = true)
+    {
+        $this->addToProperty('override', $str, $replace);
+        $this->mdCompileOverride = $mdCompile;
     } // addOverride
 
 
 
     //-----------------------------------------------------------------------
-    public function addOverlay($str, $replace = false)
+    public function setOverlayMdCompile($mdCompile)
     {
-        $this->addToProperty($this->overlay, $str, $replace);
+        $this->mdCompileOverlay = $mdCompile;
+    }
+
+
+
+    //-----------------------------------------------------------------------
+    public function addOverlay($str, $replace = false, $mdCompile = null)
+    {
+        $this->addToProperty('overlay', $str, $replace);
+        if ($mdCompile !== null) {
+            $this->mdCompileOverlay = $mdCompile;
+        }
     } // addOverlay
 
 
@@ -266,18 +318,21 @@ class Page
     //-----------------------------------------------------------------------
     public function addDebugMsg($str, $replace = false)
     {
-        $this->addToProperty($this->debugMsg, $str, $replace);
+        $this->addToProperty('debugMsg', $str, $replace);
     } // addDebugMsg
 
 
 
     //-----------------------------------------------------------------------
-    protected function addToProperty(&$property, $var, $replace = false)
+    protected function addToProperty($key, $var, $replace = false)
     {
+        if (strpos(',jq,js,css,', ",$key,") !== false) {
+            $var = "\t\t\t$var\n";
+        }
         if ($replace) {
-            $property = $var."\n";
+            $this->$key = $var;
         } else {
-            $property .= $var."\n";
+            $this->$key .= $var;
         }
     } // addToProperty
 
@@ -312,7 +367,9 @@ class Page
     public function applyOverride()
     {
         if ($o = $this->get('override', true)) {
-            $o = compileMarkdownStr($o);
+            if ($this->mdCompileOverride) {
+                $o = compileMarkdownStr($o);
+            }
             $this->addContent($o, true);
             return true;
         }
@@ -327,6 +384,9 @@ class Page
         $overlay = $this->get('overlay', true);
 
         if ($overlay) {
+            if ($this->mdCompileOverlay) {
+                $overlay = compileMarkdownStr($overlay);
+            }
             $this->addBody("<div class='overlay'>$overlay</div>\n");
             $this->set('overlay', '');
             $this->removeModule('jqFiles', 'PAGE_SWITCHER');
@@ -372,7 +432,7 @@ class Page
     {
         $pageSubstitution = $this->get('pageSubstitution', true);
         if ($pageSubstitution) {
-            $this->addBody($pageSubstitution, true);
+            $this->substitutePage('');
             return true;
         }
         return false;
@@ -385,8 +445,16 @@ class Page
     public function autoInvokeClassBasedModules($content)
     {
         foreach ($this->config->classBasedModules as $class => $modules) {
+            $varname = 'class_'.$class;
+            $urlArg = '';
+            if (isset($this->config->$varname) && ($class != $this->config->$varname)) {
+                $class0 = $class;
+                $class = $this->config->$varname;
+                $urlArg = "?$class0=$class";
+            }
             if (preg_match("/class\=.*['\"\s] $class ['\"\s]/x", $content, $m)) {
                 foreach ($modules as $module => $rsc) {
+                    $rsc .= $urlArg;
                     if ($module == 'cssFiles') {
                         $this->addCssFiles($rsc);
                     } elseif ($module == 'css') {
@@ -424,8 +492,13 @@ class Page
         if ($description) {
             $description = "\t<meta name='description' content='$description'>\n";
         }
+        $headInjections .= $keywords.$description;
 
-        $headInjections .= $keywords.$description."\n".$this->getModules('css', $this->get('cssFiles'));
+        if ($this->config->feature_loadFontAwesome) {   // Font-Awesome support needs to go into head:
+            $headInjections .= "\t<script defer src='~sys/{$this->config->loadModules['FONTAWESOME']['module']}'></script>\n";
+        }
+
+        $headInjections .= $this->getModules('css', $this->get('cssFiles'));
         if ($this->get('css')) {
             $headInjections .= "\t<style>\n".$this->get('css')."\n\t</style>\n";
         }
@@ -444,51 +517,60 @@ class Page
         global $globalParams;
         $bodyEndInjections = '';
 
-        $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
-        if (($this->config->loadJQuery) || ($this->config->autoLoadJQuery)) {
-            $this->addJqFiles($this->config->jQueryModule);
+        if ($this->config->feature_touchDeviceSupport) {
+            $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
+        } else {
+            $this->addJqFiles("AUXILIARY,MAC_KEYS");
+        }
+
+        if (($this->config->feature_loadJQuery) || ($this->config->feature_autoLoadJQuery)) {
+            $this->addJqFiles($this->config->feature_jQueryModule);
         }
         if ($this->get('jsFiles')) {
             $bodyEndInjections .= $this->getModules('js', $this->get('jsFiles'));
         }
         if ($this->get('jq') && !$this->get('jqFiles')) {
-            $bodyEndInjections .= $this->getModules('js', $this->config->jQueryModule);
+            $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
         }
         if ($this->get('jqFiles') || $this->get('jq')) {
             $bodyEndInjections .= $this->getModules('js', $this->get('jqFiles'));
         }
-        if ($this->get('js')) {
-            $bodyEndInjections .= "\t<script>\n".$this->get('js')."\n\t</script>\n";
+        $js = $this->get('js');
+        if ($js) {
+            $js = "\t\t$js\n";
         }
         if ($this->get('jq')) {
-            $bodyEndInjections .= "\t<script>\n\t\t\$( document ).ready(function() {\n\t\t".$this->get('jq')."\n\t\t});\n\t</script>\n";
+            $bodyEndInjections .= "\t<script>\n\t\t\$( document ).ready(function() {\n".$this->get('jq')."\t\t});\n\t</script>\n";
+        }
+
+        if ($this->get('lightbox')) {
+            $bodyEndInjections .= $this->get('lightbox');
         }
 
         $pathToRoot = $globalParams['pathToRoot'];
         $appRootJs = "var appRoot = '$pathToRoot';";
         $sysPathJs = "var systemPath = '$pathToRoot{$this->config->systemPath}';";
 
-        if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->hideWhileEditing) {  // for online-editing: add hideWhileEditing
+        if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->admin_hideWhileEditing) {  // for online-editing: add admin_hideWhileEditing
             $selectors = '';
-            foreach (explode(',', $this->config->hideWhileEditing) as $elem) {
+            foreach (explode(',', $this->config->admin_hideWhileEditing) as $elem) {
                 $elem = trim(str_replace(['"',"'"], '', $elem));
                 $selectors .= "'".$elem."',";
             }
             $selectors = rtrim($selectors, ',');
-            $sysPathJs .= "\n\t\tvar hideWhileEditing = [$selectors];";
+            $sysPathJs .= "\n\t\tvar admin_hideWhileEditing = [$selectors];";
         }
 
-        $bodyEndInjections = "\t<script>\n\t\t$appRootJs $sysPathJs\n\t</script>\n".$bodyEndInjections;
+        $bodyEndInjections = "\t<script>\n\t\t$appRootJs $sysPathJs\n$js\t</script>\n".$bodyEndInjections;
         if ($tmp = $this->get('body_end_injections')) {
             $bodyEndInjections .= $tmp;
             $this->set('body_end_injections', '');
         }
 
 
-        if (($this->config->allowDebugInfo) &&
-            (($this->config->showDebugInfo)) || getUrlArgStatic('debug')) {
+        if (($this->config->debug_allowDebugInfo) &&
+            (($this->config->debug_showDebugInfo)) || getUrlArgStatic('debug')) {
             if ($this->config->isPrivileged) {
-//            if ($this->config->isPrivileged || $this->config->isLocalhost) {
                 $bodyEndInjections .= $this->renderDebugInfo();
             }
         }
@@ -509,10 +591,7 @@ class Page
     private function getModules($type, $key)
     {
         global $globalParams;
-        $forceUpdate = '';
-        if (file_exists('.#logs/version-code.txt')) {
-            $forceUpdate = '?fup='.file_get_contents('.#logs/version-code.txt');
-        }
+
         // makes sure that explicit version of JQUERY gets precedence over unspecific one
         $key = str_replace(',', "\n", $key);
         $lines = explode("\n", $key);
@@ -522,6 +601,11 @@ class Page
         $jQweight = $this->config->jQueryWeight;
         foreach($lines as $mod) {
             $mod = trim($mod);
+            $urlArg = '';
+            if (preg_match('/(.*)(\?.*)/', $mod, $m)) {
+                $mod = $m[1];
+                $urlArg = $m[2];
+            }
             if (in_array($mod, array_keys($this->config->loadModules))) {
                 if (empty($modules[$this->config->loadModules[$mod]['weight']])) {
                     if (($mod == 'JQUERY') || preg_match('/^JQUERY\d/', $mod)) {	// call for jQuery (but not jQueryUI etc)
@@ -530,12 +614,19 @@ class Page
                             $this->jQloaded = true;
                         }
                     } else {
-                        $modules[$this->config->loadModules[$mod]['weight']] = $sys.$this->config->loadModules[$mod]['module'];
+                        $name = $sys.$this->config->loadModules[$mod]['module'];
+                        if (strpos($name, ',') !== false) {     // case multiple files sep by comma:
+                            foreach (explode(',', $name) as $i => $item) {
+                                $modules[$this->config->loadModules[$mod]['weight']+$i] = $item . $urlArg;
+                            }
+                        } else {
+                            $modules[$this->config->loadModules[$mod]['weight']] = $name . $urlArg;
+                        }
                     }
                 } else {
                     $prevMod = $modules[$this->config->loadModules[$mod]['weight']];
                     if (strcmp($mod, $prevMod) > 0) {
-                        $modules[$this->config->loadModules[$mod]['weight']] = $mod;
+                        $modules[$this->config->loadModules[$mod]['weight']] = $mod.$urlArg;
                     }
                 }
             } else {
@@ -544,13 +635,13 @@ class Page
                 }
                 if ($type == 'js') {
                     if (strpos($mod, "<script") !== false) {
-                        $modules[0] .= $mod;
+                        $modules[0] .= $mod.$urlArg;
                     } else {
                         $modules[0] .= "<script src='$mod'></script>\n";
                     }
                 } else  {
                     if (strpos($mod, "<link") !== false) {
-                        $modules[0] .= $mod;
+                        $modules[0] .= $mod.$urlArg;
                     } else {
                         $modules[0] .= "<link   href='$mod' rel='stylesheet'>\n";
                     }
@@ -561,6 +652,7 @@ class Page
 
         if (isset($modules[$jQweight]) && (strpos($modules[$jQweight], 'JQUERY') === 0)) {
             if ($globalParams['legacyBrowser']) {
+                writeLog("Legacy-Browser -> jQuery1 loaded.");
                 $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
             } else {
                 $modules[$jQweight] = $sys . $this->config->loadModules[$modules[$jQweight]]['module'];
@@ -570,7 +662,12 @@ class Page
 
         if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[$jQweight])) {	// automatically prepend jQuery if missing
             if ($this->jQloaded == false) {
-                $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY']['module'];
+                if ($globalParams['legacyBrowser']) {
+                    writeLog("Legacy-Browser -> jQuery1 loaded.");
+                    $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
+                } else {
+                    $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY']['module'];
+                }
                 $this->jQloaded = true;
             }
         }

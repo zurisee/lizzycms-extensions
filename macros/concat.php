@@ -1,5 +1,8 @@
 <?php
 
+// @info: Just concatenates the arguments. But before it does so, it tries to translate each argument.
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {

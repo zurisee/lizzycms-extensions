@@ -1,4 +1,4 @@
-/* Lizzy Basic CSS */
+  /* Lizzy Basic CSS */
 
 html {
   box-sizing: border-box;
@@ -8,7 +8,7 @@ body, main {
 }
 
 *, *:before, *:after {
-  box-sizing: inherit;
+  /* box-sizing: inherit; */
 }
 
 html body, section {
@@ -16,8 +16,8 @@ html body, section {
 	padding: 0;
 }
 div, section {
-	box-sizing: border-box;
-	vertical-align: top;
+	/* box-sizing: border-box; */
+	/* vertical-align: top; */
 }
 
 p {
@@ -127,29 +127,24 @@ nav a {
 	width: 6em;
 }
 
-.dl-as-table {
-  /*content:'styles.scss:36';*/ }
   .dl-as-table dl {
-    /*content:'styles.scss:37';*/
     display: flex;
     flex-flow: row;
     flex-wrap: wrap;
     max-width: 600px;
     overflow: visible; }
   .dl-as-table dl dt {
-    /*content:'styles.scss:44';*/
     flex: 0 0 5em;
     text-overflow: ellipsis;
     overflow: hidden; }
   .dl-as-table dl dd {
-    /*content:'styles.scss:49';*/
     flex: 0 0 calc(100% - 5em);
     margin-left: auto;
     text-align: left;
     text-overflow: ellipsis;
     overflow: hidden; }
 
-.lizzy-h-space {
+.lzy-h-space {
 	display: inline-block;
 	width: 2em;
 }
@@ -196,39 +191,8 @@ var {
 	border-radius: 5px;
 }
 
-.lizzy-login-wrapper * {
-    vertical-align: top;
-}
-.lizzy-login-wrapper form {
-	margin: 1em 0;
-	border: 1px dotted gray;
-	padding: 20px;
-	max-width: 400px;
-}
-.lizzy-login-wrapper label {
-	display: block;
-	margin: 10px 0 4px 0;
-}
-.lizzy-login-wrapper .c1 {
-	display: inline-block;
-    margin-right: 1em;
-}
 
-.lizzy-login-wrapper input {
-	width: 100%;
-    line-height: 1.5em;
-}
-.lizzy-login-wrapper output.err_msg {
-	display: block;
-	line-height: 1.4em;
-	padding: 2px 8px;
-	margin-bottom: 0.5em;
-	border: 1px solid #fdd;
-	background: #fee;
-}
-.lizzy-login-wrapper output.err_msg:empty, .login_message:empty {
-	display: none;
-}
+
 .login_message {
 	color: red;
 	margin: 5px 0;
@@ -252,115 +216,147 @@ var {
     height: 1.5em;
     margin-top: 3px;
 }
-
-
-/* --- Authentication ----- */
-.login-info-panel {
-    display: block;
-    border: 1px dotted green;
-    padding: 8px 10px;
-    background: #efe;
-    margin: 10px 0;
-    font-size: 90%;
+/* hide/show icon for passwords:
+.lzy-form-show-password input:checked ~ label .login-form-icon {
+    outline: 1px solid red;
 }
-#info-onetimelogin,
-#password-alternative {
-    border-bottom: none;
-}
-#show_password {
-    display: inline-block;
-    float: right;
-}
-#show_password input,
-#show_password label {
-    display: inline-block;
-    padding: 0;
-    margin: 0;
-}
-#fld_show_password {
-    width: 1.5em;
-}
-#lbl_show_password {
-    display: inline-block;
-}
-::-webkit-input-placeholder { /* Chrome/Opera/Safari */
-  text-align: right;
-  font-style: italic;
-  padding-right: 4px;
-  font-size: 90%;
-}
-::-moz-placeholder { /* Firefox 19+ */
-  text-align: right;
-  font-style: italic;
-  padding-right: 4px;
-  font-size: 90%;
-}
-:-ms-input-placeholder { /* IE 10+ */
-  text-align: right;
-  font-style: italic;
-  padding-right: 4px;
-  font-size: 90%;
-}
-:-moz-placeholder { /* Firefox 18- */
-  text-align: right;
-  font-style: italic;
-  padding-right: 4px;
-  font-size: 90%;
-}
-::placeholder { /* generic */
-  text-align: right;
-  font-style: italic;
-  padding-right: 4px;
-  font-size: 90%;
-}
-
-#btn_submit {
-    margin-top: 1em;
-}
-
-.onetime-link-sent {
-    font-size: 12pt;
-    padding: 1em;
-    border: 1px solid orange;
-    margin: 3em;
-}
-.onetime-code-entry {
-    margin: 1em 0;
-}
-
-.debug-mail {
-    border: 1px dashed blue;
-    padding: 1em;
-    margin: 2em 0;
-}
-.lizzy-login-wrapper input {
-    border: 0.25px solid gray;
-    line-height: 2em;
-}
-.lizzy-login-wrapper button {
-    padding: 0.5em 2em;
-}
-@media screen and (max-width : 480px) {
-    .lizzy-login-wrapper form {
-        border: none;
-        padding: 20px 0;
-        max-width: none;
-    }
-    .onetime-link-sent {
-        border: none;
-        margin: 0;
-    }
-    body .lizzy-login-tab-labels ul li label {
-        padding: 12px;
-    }
-}
-
+*/
 .layout .menu-link {
     font-size: 16px;
 }
 
 
+.login-form-icon {
+    height: 14pt;
+    /* width: 24px; */
+}
+.lzy-login-form .lzy-form-show-password input {
+    display: none;
+}
 
+footer div {
+    float: right;
+}
+.lzy-edit-icon {
+    margin-top: 2px;
+}
+footer img {
+    width: 18px;
+}
+footer a {
+	border-bottom: none;
+}
+
+.debug-mail {
+    border: 1px dashed yellow;
+    background: #ffe;
+    padding: 15px;
+    margin-top: 30px;
+}
+
+
+
+/* === popup / lightbox =================== */
+.lzy-popup-widget {
+    position: fixed;
+    top:  0;
+    left:  0;
+}
+
+.lzy-popup-background {
+    position: fixed;
+    top: 0; 
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 49;
+    display: block;
+    background: rgba(0,0,0,0);
+}
+.lzy-lightbox .lzy-popup-background {
+    background: rgba(50,50,50,0.7);
+}
+.lzy-popup-widget {
+    overflow: visible !important;
+}
+
+.lzy-popup-wrapper {
+    width: 15em;
+    min-height: 1.5em;
+    background: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+}
+.lzy-lightbox .lzy-popup-wrapper {
+    transform: translate(-50%, -50%); 
+    top: 50%;
+    left: 50%;
+}
+.lzy-popup-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    border-bottom: 1px solid #ccc;
+    padding: 10px 18px;
+}
+.lzy-popup-header ~ .lzy-popup-close-button {
+    background: transparent;
+}
+.lzy-popup-header:empty {
+    display: none;
+}
+.lzy-popup-close-button {
+    position: absolute;
+    top: -1.1em;
+    right: -1.3em;
+    border: none;
+    z-index:  52;
+    background:  transparent;
+    color: #444;
+}
+.lzy-popup-body {
+    position: relative;
+    padding: 20px;
+    margin: 0;
+    overflow:  auto;
+}
+.lzy-lightbox .lzy-popup-wrapper {
+    z-index: 50;
+}
+.lzy-popup-header ~ .lzy-popup-body {
+    padding: 20px;
+}
+.lzy-lightbox .lzy-popup-close-button {
+    color: #aaa;
+}
+
+.lzy-popup-widget.lzy-tooltip .lzy-popup-background {
+    display: none;
+}
+
+.lzy-tooltip {
+    height: 1.2em;
+    padding: 4px 10px;
+}
+
+
+.lzy-account-form-wrapper .lzy-delete-profile-popup {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 20em;
+    height: 10em;
+    background: #ffe2c4;
+    border: 1px solid gray;
+    border-radius: 10px;
+    z-index: 999;
+}
+.lzy-delete-profile-request-button,
+.lzy-delete-profile-confirm-button {
+/*    padding: 10px 20px;*/
+}
 
 /* --- fade out effect --- */
 @-webkit-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
@@ -497,21 +493,24 @@ table.lizzyTable {
     overflow:auto;
 }
 
+.mark-undefined-variable {
+    background: #ffb;
+}
 mark {
     padding: 0 3px;
 }
-.lizzy-album-error {
+.lzy-album-error {
     background: #fee;
     border: 1px solid red;
     padding: 1em 2em;
 }
-.lizzy-config-viewer dt strong {
+.lzy-config-viewer dt strong {
     color: navy;
 }
-.lizzy-config-viewer dt code {
+.lzy-config-viewer dt code {
     color: black;
 }
-.lizzy-config-viewer dt code.lizzy-config-viewer-hl {
+.lzy-config-viewer dt code.lzy-config-viewer-hl {
     color: red;
 }
 
@@ -526,7 +525,7 @@ nav li {
 
 
 /* === Mobile ========================================= */
-.ios_button {
+.lzy-button {
   color: #666;
   font-family: helvetica, arial, sans-serif;
   border-radius: 4px;
@@ -587,3 +586,26 @@ nav li {
 		page-break-after: always;
 	}
 }
+
+.lzy-login-link-menu {
+    position: relative;
+    clear: both;
+}
+.lzy-login-link-menu div {
+    display: block;
+    clear: both;
+    float: none;
+}
+.lzy-login-menu {
+    width: 14em;
+    clear: both;
+    position: absolute;
+    top: 2em;
+    right: 0;
+    background: #ddd;
+    padding: 1em;
+    text-align: left;
+}
+
+
+/* --- ?list -------------------------- */

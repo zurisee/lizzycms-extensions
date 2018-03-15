@@ -1,4 +1,7 @@
 <?php
+
+// @info: Renders an accessible media player in video mode.
+
 //
 // Use H.264/MPEG-4 or YouTube
 // Convert with MacX Video Converter Free Edition (http://www.macxdvd.com/mac-dvd-video-converter-how-to/free-mp4-converter-mac.htm)

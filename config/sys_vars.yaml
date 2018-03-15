@@ -9,6 +9,14 @@ clear: '<div style="clear:both;"></div>'
 
 
 #--- Forms -----------------------------------------------
+Username:
+    de: Benutzername
+    en: Username
+
+Password:
+    de: Kennwort
+    en: Password
+
 
 cancel:
     de: abbrechen
@@ -41,6 +49,8 @@ Uploaded file list:
     de: "Hochgeladene Dateien:"
     en: "Uploaded files:"
 
+
+
 #--- Links -------------------------------
 opens mail app: 
     de: 'Öffnet in Mail-Anwendung'
@@ -49,6 +59,7 @@ opens mail app:
 opens in new win:
     de: Öffnet in neuem Fester
     en: Opens in new window
+
 
 
 #--- Language Selection ------------------
@@ -62,15 +73,46 @@ select en: "<img src='~sys/rsc/en.png' class='lang-icon' alt='' /><span class='i
 
     
 # --- Login ------------------------------
-Username:
-    de: Benutzername
-    en: Username
+lzy-onetimelogin-email-info-title:
+    de: "Hilfe: Zugang per E-Mail"
+    en: "Help on access by e-mail"
 
-Password:
+
+lzy-onetimelogin-email-info-text:
+    de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
+    <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
+    <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
+    en: "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
+    <p>This Link contains an <strong>access code</strong>. This code is only valid one time and within the next 15 minutes.</p>
+    <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
+
+lzy-login-username-prompt:
+    de: E-Mail Adresse (oder Benutzername)
+    en: E-mail address (or username)
+
+info-lzy-onetimelogin-title:
+
+lzy-login-username-info-text:
+    de: "Falls Sie Benutzernamen und Kennwort kennen, können Sie sich hier anmelden. Geben Sie in das folgende Feld Ihren Benutzernamen ein. Dies entspricht normalerweise Ihrer E-Mail Adresse."
+    en: "If you know your username and password you can log in now. Enter your username in the following field. Usually your e-mail address is used as your username."
+
+lzy-login-password-prompt:
     de: Kennwort
     en: Password
 
-Login:
+lzy-login-username-info-title:
+    de: Hilfe
+    en: Help
+
+lzy-login-password-info:
+    de: "Geben Sie hier Ihr Kennwort ein. Verwenden Sie 'Anmelden ohne Kennwort', falls Sie ihr Kennwort nicht kennen (oder dieses nicht funktionierte)."
+    en: "Enter your password here. Use <strong>login by e-mail</strong> if you don't have your password available (if that didn't work)."
+
+login-email-prompt:
+    de: Ihre E-Mail Adresse
+    en: Your e-mail address
+
+lzy-login-send:
     de: Anmelden
     en: Login
 
@@ -103,8 +145,10 @@ LoginLink:
     en: Login
 
 Logged in as:
-    de: Angemeldet als
-    en: Logged in as
+    de: Hallo
+    en: Hello
+#    de: Angemeldet als
+#    en: Logged in as
    
 page requires login:
     de: "Sie müssen angemeldet sein, um die gesuchte Seite sehen zu können."
@@ -123,61 +167,80 @@ email required for one-time-access-link:
     de: Eine E-Mail-Adresse wird benötigt, um den einmaligen Zugangs-Link zu senden.
     en: "We need your e-mail address to send you a one-time access link."
 
-login with password:
-    de: Anmeldung mit <br>Kennwort
-    en: Login with <br>password
+#login with password:
+#    de: Anmeldung mit <br>Kennwort
+#    en: Login with <br>password
 
-login without password:
-    de: Anmeldung ohne <br>Kennwort
-    en: Login without <br>password
+#login without password:
+#    de: Anmeldung ohne <br>Kennwort
+#    en: Login without <br>password
+
+#login with choice:
+#    de: Anmeldung
+#    en: Log in
+
+#login with password:
+#    de: mit <br>Kennwort
+#    en: by <br>password
+#
+#login without password:
+#    de: ohne <br>Kennwort
+#    en: by <br>e-mail
 
 
-info-onetimelogin:
-    de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
-    <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
-    <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
-    en: "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
-    <p>This Link contains an <strong>access code</strong>. This code is only valid one time and within the next 15 minutes.</p>
-    <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
+#info-onetimelogin-title:
+#    de: "Hilfe: Zugang per E-Mail"
+#    en: "Help on access by e-mail"
 
-info-onetimelogin2:
+#info-onetimelogin-text:
+#    de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
+#    <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
+#    <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
+#    en: "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
+#    <p>This Link contains an <strong>access code</strong>. This code is only valid one time and within the next 15 minutes.</p>
+#    <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
+
+un-pw-login-info:
     de: "Geben Sie Ihren Benutzernamen ein.<br>Kontaktieren Sie den {{ Webmaster }}, falls Sie noch keine Zugangsdaten besitzen."
     en: "Enter your username.<br>Contact the {{ Webmaster }} if you don't have credentials for this website."
-password-info:
+
+#login-password-info:
+login-password-login-info:
     de: "Geben Sie Ihr Kennwort ein.Kontaktieren Sie den {{ Webmaster }}, falls Sie das Kennwort vergessen haben oder ein sonstiges Problem aufgetreten ist."
     en: "Enter your password.<br>Contact the {{ Webmaster }} if you forgot your password or some other problem has come up."
+
+info-password-login-title:
+    de: 'Hilfe: zum Kennwort'
+    en: 'Help on password'
+
+
+
 
 //maillink Webmaster: "{{ concat('forgot password1', webmaster-email,'?subject=',login-problems,'&body=%0a%0aURL:%20',pageUrl, '\'\>Webmaster</a>') }}"
 
 #forgot password:
 #    de: "<a href='mailto:webmaster-email'>Kennwort funktioniert nicht oder vergessen...</a>"
 #    en: "<a href='mailto:webmaster-email'>Password not working or forgotten...</a>"
-login-problems:
-    de: Probleme beim Anmelden
-    en: Login problems
+#login-problems:
+#    de: Probleme beim Anmelden
+#    en: Login problems
     
-forgot password1:
-    de: "<a href='mailto:"
-    en: "<a href='mailto:"
+#forgot password1:
+#    de: "<a href='mailto:"
+#    en: "<a href='mailto:"
+#
+#forgot password2:
+#    de: "'>Kennwort funktioniert nicht oder vergessen...</a>"
+#    en: "'>Password not working or forgotten...</a>"
 
-forgot password2:
-    de: "'>Kennwort funktioniert nicht oder vergessen...</a>"
-    en: "'>Password not working or forgotten...</a>"
-
-info-onetimelogin-title:
-    de: "Einmal-Kennwort per E-Mail möglich"
-    en: "One-time password support"
-
-password-alternative:
-    de: "Falls Sie über Benutzername und Passwort verfügen, können Sie sich auch direkt anmelden. Die Checkbox rechts bewirkt, dass Ihr Passwort nicht lesbar ist auf dem Bildschirm, während Sie es eingeben."
-    en: "If you have a valid username and password you may log in directly. If you are in an unfriendly environment, activate the checkbox to hide the password you are entering."
-password-alternative-title:
-    de: "Leer lassen im Fall von Einmal-Kennwort"
-    en: "Leave empty in case of One-time password"
     
-Login show password:
-    de: anzeigen
-    en: show
+#Login show password:
+#    de: Kennwort offen anzeigen
+#    en: Show password in plain text
+
+#Login show password:
+#    de: anzeigen
+#    en: show
 
 Login-Email:
     de: Ihre E-Mail Adresse
@@ -195,42 +258,33 @@ Err empty email:
     de: Sie müssen eine E-Mail Adresse eingeben
     en: You need to enter an e-mail address
 
-onetime access link sent:
-    de: "<h1>Zugangs-Link versendet</h1>
-    <p>Wir haben eine E-Mail an Sie gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
-    &rarr; Klicken Sie auf diesen Link. So gelangen Sie zurück zu dieser Seite. </p>"
-    en: "<h1>Access Link sent</h1>
-    <p>We have sent an e-mail to you. It contains a <strong>link</strong>.<br />
-    &rarr; Click on this link to access the web-page you wanted to see. </p>"
 
-enter onetime code:
-    de: "Code aus zugesandter E-Mail:"
-    en: "One-time code from e-mail:"
 
-onetime access link sent2:
-    de: "Link und Code können nur verwendet werden bis:"
-    en: "This link and this code only work until:"
     
-onetime access link sent3:
-    de: "<p><br />Alternativ können Sie sich auch mit Benutzername und Kennwort anmelden.</p>"
-    en: "<p><br />Alternatively, if you have a valid username and password you may log in directly.</p>"
-    
-Email Access-Link Subject:
-    de: "Zugangslink für"
-    en: "Access Link for"
+#Email Access-Link Subject:
+#    de: "Zugangslink für"
+#    en: "Access Link for"
+#
+#Email Access-Link1:
+#    de: "Guten Tag\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
+#    en: "Hello\n\nHere is the link with which you can access the webpage: \n\n\t"
+#    
+#Email Access-Link2:
+#    de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
+#    en: "\n\nOr you can enter the following code into the entry field in the webpage:"
+#
+#Email Access-Link3:
+#    de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nBeste Grüsse, Ihre Lizzy\n"
+#    en: "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
+#
+#
 
-Email Access-Link1:
-    de: "Guten Tag\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
-    en: "Hello\n\nHere is the link with which you can access the webpage: \n\n\t"
-    
-Email Access-Link2:
-    de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
-    en: "\n\nOr you can enter the following code into the entry field in the webpage:"
 
-Email Access-Link3:
-    de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nBeste Grüsse, Ihre Lizzy\n"
-    en: "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
-    
+
+Your Profile:
+    de: Ihr Profil
+    en: Your Profile
+
 
 
 #--- Insecure Connection ----------------------------
@@ -244,18 +298,6 @@ Please switch to:
 
 
 
-#--- Editing ---------------------------------------
-turn edit mode on:
-    de: Bearbeiten ein
-    en: Edit
-
-turn edit mode off:
-    de: Bearbeiten aus
-    en: Stop Editing
-
-Edit Section:
-    de: Bereich bearbeiten
-    en: Edit section
 
 
 
@@ -280,4 +322,15 @@ Page unknown:
     de: Die gesuchte Seite existiert nicht in dieser Website.
     en: Sorry, the page you asked for could not be found within this website.
 
-    
+lzy-popup-close-button: '✕'
+#lzy-lightbox-close-button: '☒'
+#lzy-popup-close-button: '☒'
+
+
+#--- Editing -------------------------------------
+turn edit mode on:
+    de: Seite bearbeiten
+    en: Edit page
+
+
+

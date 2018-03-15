@@ -22,8 +22,8 @@ $( document ).ready(function() {
 
 function prepareEditing()
 {
-    $('.edit-sitemap').prepend('<button class="btn_editor">Edit</button>');
-    $('body').addClass('editor-mode');
+    $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn">Edit</button>');
+    $('body').addClass('lzy-editor-mode');
 } // prepareEditing
 
 
@@ -31,28 +31,28 @@ function prepareEditing()
 
 function setupEventHandlers()
 {
-    $('#btn_show_files').click(function() {	// button to open file list and upload functions
+    $('#lzy-show-files-btn').click(function() {	// button to open file list and upload functions
         showFiles( this );
     });
 
 
-    $('.btn_editor').click(function() {
+    $('.lzy-editor-btn').click(function() {
         $editBtn = $(this);
         startEditor( $editBtn );
     });
 
 
-    $('.editor_wrapper').click(function() {
+    $('.lzy-editor-wrapper').click(function() {
         if (simplemde === null) {   // avoid starting editor if already started
             var $wrapper = $(this).parent();
-            $editBtn = $('.btn_editor', $wrapper);
+            $editBtn = $('.lzy-editor-btn', $wrapper);
             startEditor( $editBtn );
         }
     });
 
 
 
-    $('.edit-sitemap .btn_editor').click(function() {
+    $('.lzy-edit-sitemap .lzy-editor-btn').click(function() {
         startSitemapEditor();
     });
 
@@ -105,7 +105,7 @@ function setupKeyHandlers()
         }
 
         if (keyCode == 115) {   // F4
-            var $editBtns = $('main .btn_editor');
+            var $editBtns = $('main .lzy-editor-btn');
             $editBtn = $editBtns.first();
             if (simplemde === null) {
                 startEditor( $editBtn );
@@ -129,26 +129,26 @@ function setupKeyHandlers()
 function startEditor( $editBtn ) {
     $editBtn.hide();
     hideElements(true);
-    $('body').addClass('editing');
+    $('body').addClass('lzy-editing');
     var $section = $editBtn.parent();
     $edWrapper = $('div', $section);
     origText = $edWrapper.html();
     $edWrapper.html('');
-    $section.addClass('editing');
+    $section.addClass('lzy-editing');
     filename = $section.attr('data-filename');
 
     $.ajax({
         type: "POST",
         url: systemPath + '_ajax_server.php?getfile',
-        data: { filename: filename },
+        data: { lzy_filename: filename },
         success: function( data ) {
-            var editingHtml = $('#editing-html').html();
+            var editingHtml = $('#lzy-editing-html').html();
             editingHtml = editingHtml.replace(/@data/, data);
             $edWrapper.html(editingHtml);
             simplemde = new SimpleMDE({
                 element: $('textarea', $edWrapper)[0],
                 spellChecker: false,
-                placeholder: 'Hier schreiben...',
+                placeholder: 'Write here...',
                 autofocus: true,
                 allowAtxHeaderWithoutSpace: true,
                 previewRender: function(plainText, preview) { // Async method
@@ -166,18 +166,18 @@ function startEditor( $editBtn ) {
 
 
             });
-            $('.ed-selector').hide();
+            $('.lzy-ed-selector').hide();
 
-            $('.btn_cancel').click(function() {
+            $('.lzy-cancel-btn').click(function() {
                 var href = window.location.pathname;
                 window.location.href = href;
             });
 
-            $('.btn_save').click(function() {
+            $('.lzy-save-btn').click(function() {
                 saveData( false );
             });
 
-            $('.btn_done').click(function() {
+            $('.lzy-done-btn').click(function() {
                 saveData( true );
             });
         },
@@ -189,7 +189,7 @@ function startEditor( $editBtn ) {
 
 
 function startSitemapEditor() {
-    $('body').addClass('editing');
+    $('body').addClass('lzy-editing');
     $('header').addClass('dispno');
     $edWrapper = $('main section');
     origText = $edWrapper.html();
@@ -198,9 +198,9 @@ function startSitemapEditor() {
     $.ajax({
         type: "POST",
         url: systemPath + '_ajax_server.php?getfile',
-        data: { filename: filename },
+        data: { lzy_filename: filename },
         success: function( data ) {
-            var editingHtml = $('#editing-html').html();
+            var editingHtml = $('#lzy-editing-html').html();
             editingHtml = editingHtml.replace(/@data/, data);
             $edWrapper.html(editingHtml);
             simplemde = new SimpleMDE({
@@ -212,16 +212,16 @@ function startSitemapEditor() {
                 toolbar: false,
                 tabSize: 8,
             });
-            $('.btn_cancel').click(function() {
+            $('.lzy-cancel-btn').click(function() {
                 var href = window.location.pathname;
                 window.location.href = href;
             });
 
-            $('.btn_save').click(function() {
+            $('.lzy-save-btn').click(function() {
                 saveSitemapData( false );
             });
 
-            $('.btn_done').click(function() {
+            $('.lzy-done-btn').click(function() {
                 saveSitemapData( true );
             });
         }
@@ -247,14 +247,14 @@ function abortEditor()
 function showFiles( that )
 {
     $(that).hide();
-    $('#fileupload').show();
+    $('#lzy-fileupload').show();
 
     $.ajax({	// load uploader (from main.js)
         // Uncomment the following to send cross-domain cookies:
         //xhrFields: {withCredentials: true},
-        url: $('#fileupload').fileupload('option', 'url'),
+        url: $('#lzy-fileupload').lzy-fileupload('option', 'url'),
         dataType: 'json',
-        context: $('#fileupload')[0]
+        context: $('#lzy-fileupload')[0]
     }).always(function () {
         $(this).removeClass('fileupload-processing');
     }).done(function (result) {
@@ -275,16 +275,16 @@ function saveSitemapData( leaveEditor )
     sitemap = encodeURI(sitemap);   // -> php urldecode() to decode
 	$.ajax({
 		type: "POST",
-		url: '?save',
+		url: '?lzy-save',
 		// url: systemPath + '?save',
-		data: { filename: 'sitemap', sitemap: sitemap },
+		data: { lzy_filename: 'sitemap', sitemap: sitemap },
 		success: function( data ) {
 			if (leaveEditor) {
 				// var href = window.location.pathname;
 				location.href = location.pathname;
 				// window.location.href = window.location.pathname;
 			} else {
-                $('textarea.editor').html(data);
+                $('textarea.lzy-editor').html(data);
 			}
 		},
 	});
@@ -302,17 +302,17 @@ function saveData( leaveEditor )
     mdStr = encodeURI(mdStr);   // -> php urldecode() to decode
 	$.ajax({
 		type: "POST",
-		url: '?compile&save',
+		url: '?lzy-compile&lzy-save',
         'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
 		// url: systemPath + '?compile&save',
-		data: { filename: filename, md: mdStr },
+		data: { lzy_filename: filename, lzy_md: mdStr },
 		success: function( data ) {
 			if (leaveEditor) {
 				// var href = window.location.pathname;
 				// window.location.href = window.location.pathname;
                 location.reload();
 			} else {
-                $('textarea.editor').html(data);
+                $('textarea.lzy-editor').html(data);
 			}
 		},
 	});
@@ -325,8 +325,8 @@ function customMarkdownParser(mdStr, preview)
 {   // requests the server to return compiled markdown
     $.ajax({
         type: "POST",
-        url: systemPath + '?compile',
-        data: { md: mdStr },
+        url: systemPath + '?lzy-compile',
+        data: { lzy_md: mdStr },
         async: true,
         success: function( html ) {
             preview.innerHTML = html;
@@ -341,8 +341,8 @@ function customMarkdownParser(mdStr, preview)
 
 
 function hideElements( state ) {
-    if (typeof hideWhileEditing == 'object') {
-        hideWhileEditing.forEach(function (elem) {
+    if (typeof admin_hideWhileEditing == 'object') {
+        admin_hideWhileEditing.forEach(function (elem) {
             if (state || (typeof state == 'unknown')) {
                 $(elem).hide();
             } else {
@@ -351,8 +351,8 @@ function hideElements( state ) {
         });
     }
     if (state || (typeof state == 'unknown')) {
-        $('.hideWhileEditing').hide();
+        $('.lzy-admin-hideWhileEditing').hide();
     } else {
-        $('.hideWhileEditing').show();
+        $('.lzy-admin-hideWhileEditing').show();
     }
 } // hideElements

@@ -1,5 +1,8 @@
 <?php
 
+// @info: Renders vertical space of given height.
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {

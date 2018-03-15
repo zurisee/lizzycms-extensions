@@ -1,5 +1,8 @@
 <?php
 
+// @info: Provides sequential access to data-tables.
+
+
 require_once SYSTEM_PATH.'datastorage.class.php';
 
 $macroName = basename(__FILE__, '.php');

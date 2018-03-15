@@ -26,16 +26,11 @@ $( document ).ready(function() {
 
 	// Key handling:
     $( 'body' ).keydown( function (e) {
-        var keycode = e.which;
-
-        // Exceptions, where arrow keys should NOT switch page:
-        if ($( document.activeElement ).closest('form').length ||	// Focus within form field
-            $( document.activeElement ).closest('input').length ||	// Focus within input field
-            $('.inhibitPageSwitch').length  ||				        // class .inhibitPageSwitch found
-            ($('.ug-lightbox').length && ($('.ug-lightbox').css('display') != 'none'))) {	        // special case: ug-album in full screen mode
-                return document.defaultAction;
+        if (isProtectedTarget()) {
+            return document.defaultAction;
         }
 
+        var keycode = e.which;
 
         // Standard arrow key handling:
         if ((keycode == 37) || (keycode == 33)) {	// left or pgup
@@ -61,3 +56,22 @@ $( document ).ready(function() {
     });
 });
 
+
+
+
+function isProtectedTarget()
+{
+    // Exceptions, where arrow keys should NOT switch page:
+    if ($( document.activeElement ).closest('form').length ||	        // Focus within form field
+        $( document.activeElement ).closest('input').length ||	        // Focus within input field
+        $('.inhibitPageSwitch').length  ||				                // class .inhibitPageSwitch found
+        ($('.ug-lightbox').length &&
+            ($('.ug-lightbox').css('display') != 'none')) ||            // special case: ug-album in full screen mode
+        $( document.activeElement ).closest('.lzy-panels-widget').length	// Focus within lzy-panels-widget field
+    )
+    {
+        // console.log('skipping page-switcher');
+        return true;
+    }
+    return false;
+}

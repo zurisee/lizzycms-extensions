@@ -47,7 +47,7 @@ function _renderBootstrapMenu($inx, $site, $ulClass, $liClass, $aClass, $tree, $
         $tree = $site->getSiteTree();
     }
 
-    if ($mutliLang = $site->config->multiLanguageSupport) {
+    if ($mutliLang = $site->config->site_multiLanguageSupport) {
         $currLang = $site->config->lang;
     }
 
@@ -82,7 +82,7 @@ function _renderBootstrapMenu($inx, $site, $ulClass, $liClass, $aClass, $tree, $
 
         if ($elem['isCurrPage']) {
             $liClass .= ' curr active';
-            if ($site->config->selflinkAvoid) {
+            if ($site->config->feature_selflinkAvoid) {
                 $path = '#main';
             }
         } elseif ($elem['active']) {

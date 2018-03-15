@@ -1,49 +1,66 @@
 # Settings:
 # see https://getlizzy.net/ for documentation
+#   in particular https://getlizzy.net/?config
 
 # activate options by removing the leading '#'
 
-#allowDebugInfo: true	# default=false
-#autoAdminOnLocalhost: false	# default=true
-#autoAttrFile: true	# default=false
-#autoForceBrowserCache: true	# default=false
-#autoLoadClassBasedModules: false	# default=true
-#autoLoadJQuery: true	# default=false
-#caching: true	# default=false
-#collectBrowserSignatures: true	# default=false
-#cssFramework: true	# default=false
-#dataPath: data/
-#defaultAccessLinkValidyTime: 900
-#defaultLanguage: en
-#enableDailyUserTask: false	# default=true
-#enableEditing: true	# default=false
-#errorLogging: true	# default=false
-#forceBrowserCacheUpdate: true	# default=false
-#jQueryModule: JQUERY
-#loadJQuery: true	# default=false
-#logClientAccesses: true	# default=false
-#logPath: true	# default=false
-#multiLanguageSupport: true	# default=false
-#pageSwitcher: true	# default=false
-#pageTemplateFile: page_template.html
-#pagesPath: pages/
-#permitOneTimeAccessLink: false	# default=true
-#permitUserCode: true	# default=false
-#permitUserVarDefs: sandboxed
-#quickview: true	# default=false
-#scssCompileWithLineNumbers: true	# default=false
-#selflinkAvoid: false	# default=true
-#showDebugInfo: true	# default=false
-#sitemapFile: sitemap.txt
-#sitemapFromFolders: true	# default=false
-#stylesPath: css/
-#supportLegacyBrowsers: true	# default=false
-#supportedLanguages: en
-#userCodePath: code/
-#userComputedVariablesFile: user-var-defs.php
-#userVariables: variables*.yaml
-#usersFile: users.yaml
-#webmasterEmail: false	# default=true
+#admin_autoAdminOnLocalhost: false                # default=true
+#admin_defaultAccessLinkValidyTime: ''            # default=900
+#admin_enableAccessLink: false                    # default=true
+#admin_enableAutoCreateAccount: true              # default=false
+#admin_enableDailyUserTask: false                 # default=true
+#admin_enableEditing: true                        # default=false
+#admin_hideWhileEditing: true                     # default=false
+#admin_logClientAccesses: true                    # default=false
+#admin_usersFile: ''                              # default=users.yaml
+#admin_webmasterEmail: false                      # default=true
 
-__END__
+#class_accordiontabs: ''                          # default=accordion
+#class_editable: ''                               # default=editable
+#class_zoomTarget: ''                             # default=zoomTarget
 
+#custom_computedVariablesFile: ''                 # default=user-var-defs.php
+#custom_permitUserCode: true                      # default=false
+#custom_permitUserVarDefs: ''                     # default=sandboxed
+#custom_variables: ''                             # default=variables*.yaml
+
+#debug_allowDebugInfo: true                       # default=false
+#debug_collectBrowserSignatures: true             # default=false
+#debug_errorLogging: true                         # default=false
+#debug_logClientAccesses: true                    # default=false
+#debug_monitorUnusedVariables: true               # default=false
+#debug_showDebugInfo: true                        # default=false
+#debug_showUndefinedVariables: false              # default=true
+#debug_showVariablesUnreplaced: true              # default=false
+
+#feature_autoAttrFile: true                       # default=false
+#feature_autoForceBrowserCache: true              # default=false
+#feature_autoLoadClassBasedModules: false         # default=true
+#feature_autoLoadJQuery: true                     # default=false
+#feature_cssFramework: true                       # default=false
+#feature_enableSelfSignUp: true                   # default=false
+#debug_forceBrowserCacheUpdate: true            # default=false
+#feature_jQueryModule: ''                         # default=JQUERY
+#feature_loadJQuery: true                         # default=false
+#feature_pageSwitcher: true                       # default=false
+#feature_quickview: true                          # default=false
+#feature_register_allow: true                     # default=false
+#feature_register_requireOldPW: true              # default=false
+#feature_renderTxtFiles: true                     # default=false
+#feature_selflinkAvoid: false                     # default=true
+#feature_sitemapFromFolders: true                 # default=false
+#feature_slideShowSupport: true                   # default=false
+#feature_supportLegacyBrowsers: true              # default=false
+
+#path_dataPath: ''                                # default=data/
+#path_logPath: true                               # default=false
+#path_pagesPath: ''                               # default=pages/
+#path_stylesPath: ''                              # default=css/
+#path_userCodePath: ''                            # default=code/
+
+#site_defaultLanguage: ''                         # default=en
+#site_enableCaching: true                         # default=false
+#site_multiLanguageSupport: true                  # default=false
+#site_pageTemplateFile: ''                        # default=page_template.html
+#site_sitemapFile: ''                             # default=sitemap.txt
+#site_supportedLanguages: ''                      # default=en

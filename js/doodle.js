@@ -1,32 +1,64 @@
 
 $( document ).ready(function() {
-	$('.doodle_answer input').change(function() {	// update sums
-		var targ = $( this ).attr('class');
-		var $targ = $('.doodle-sums-row #'+targ);
-		var diff = $( this ).is(":checked") ? 1 : -1;
-		var val0 = $targ.text();
-		if (val0 == '') {
-            val0 = 0;
-        } else {
-        	val0 = parseInt(val0);
+	$('.lzy-doodle-answer input').change(function() {	// update sums
+        var $thisForm = $( this ).closest('form');
+        var n = $('[name=lzy-doodle-number-of-options]', $thisForm).val();
+        var type = $('[name=lzy-doodle-type]', $thisForm).val();
+
+        // create empty sums array:
+        var sums = [];
+        for (var c=0; c<n; c++) {
+            sums[c] = 0;
         }
-		var val = val0 + diff;
-		$targ.text( val );
+
+        // get sums of checked elements in rows:
+        var r = 0;
+        $('.lzy-doodle-answer-row', $thisForm).each(function() {
+            var $this = $( this );
+            var c = 0;
+            $('.lzy-doodle-elem input', $this).each(function() {
+                // if (typeof $(this).attr('checked') != 'undefined') {
+                if ( $(this).prop('checked') ) {
+                    sums[c] += 1;
+                }
+                c++;
+            });
+            r++;
+        });
+
+        // add current choice:
+        var c = 0;
+        $('.lzy-doodle-new-entry-row .lzy-doodle-answer input', $thisForm).each(function() {
+            // if (typeof $(this).attr('checked') != 'undefined') {
+            if ($(this).prop('checked')) {
+                sums[c] += 1;
+            }
+            c++;
+        });
+
+        // write to sums row:
+        var c = 0;
+        $('.lzy-doodle-sums-row .lzy-doodle-elem', $thisForm).each(function() {
+            $(this).text(sums[c]);
+            c++;
+        });
 	});
 
 
-    $('.doodle_answer_submit').click(function(e) {	// submit
+    $('.lzy-doodle-answer-submit').click(function(e) {	// submit
         var $thisForm = $( this ).parent().parent();
-        var name = $('.doodle_entry_name', $thisForm).val();
+        var name = $('.lzy-doodle-entry-name', $thisForm).val();
+        // var type = $('.lzy-doodle-type', $thisForm).val();
         if (!name) {
             e.preventDefault();
+            $('.lzy-doodle-err-msg').show();
         } else {
-            $('.doodle-name-elem', $thisForm).each(function() {
+            $('.lzy-doodle-name-elem', $thisForm).each(function() {
                 var n = $(this).text();
                 if (name == n) {
                     if (!confirm('Name exists, overwrite that entry?')) {
                         e.preventDefault();
-                        $('#doodle_entry_name', $thisForm).val('');
+                        $('#lzy-doodle-entry-name', $thisForm).val('');
                     }
                 }
             });

@@ -7,7 +7,7 @@ class UaDetector extends Detector
 {
     public function __construct($collectBrowserSignatures = false)
     {
-        $this->collectBrowserSignatures = $collectBrowserSignatures;
+        $this->debug_collectBrowserSignatures = $collectBrowserSignatures;
         $this->ua = $this->analyse();
         $this->uaStr = $_SERVER['HTTP_USER_AGENT'];
 
@@ -138,7 +138,7 @@ class UaDetector extends Detector
     {
         $signature = "{$this->browserSignature}\t\t({$this->uaStr})";
 
-        if ($this->collectBrowserSignatures) {
+        if ($this->debug_collectBrowserSignatures) {
             if (file_exists(BROWSER_SIGNATURES_FILE)) {
                 $signatures = file(BROWSER_SIGNATURES_FILE);
                 foreach ($signatures as $sig) {
@@ -146,6 +146,10 @@ class UaDetector extends Detector
                         return; // already recorded
                     }
                 }
+            }
+            if (!file_exists(BROWSER_SIGNATURES_FILE)) {
+                preparePath(BROWSER_SIGNATURES_FILE);
+                touch(BROWSER_SIGNATURES_FILE);
             }
             file_put_contents(BROWSER_SIGNATURES_FILE, $signature . "\n", FILE_APPEND);
         }

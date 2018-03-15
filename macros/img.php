@@ -1,5 +1,8 @@
 <?php
 
+// @info: Is a generic macro to add images to the page.
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
@@ -52,7 +55,7 @@ $this->addMacro($macroName, function () {
         return "<div class='missing-img $class'>Image missing: '$srcFile'</div>";
     }
     // prepare quickview:
-    if (($this->config->quickview && !preg_match('/\bnoquickview\b/', $class)) ||   // config setting, but no 'noquickview' override
+    if (($this->config->feature_quickview && !preg_match('/\bnoquickview\b/', $class)) ||   // config setting, but no 'noquickview' override
             preg_match('/\bquickview\b/', $class)) {                                // or 'quickview' class
         if ($imgFullsizeFile) {
             if (file_exists($imgFullsizeFile)) {
@@ -63,7 +66,7 @@ $this->addMacro($macroName, function () {
                     $this->page->quickviewLoaded = true;
                 }
                 $auxAttr = " data-qv-src='~/$imgFullsizeFile' data-qv-width='$w0' data-qv-height='$h0'";
-                if ($this->config->quickview && (strpos($class, 'quickview') === false)) {
+                if ($this->config->feature_quickview && (strpos($class, 'quickview') === false)) {
                     $class .= ' quickview';
                 }
             } else {

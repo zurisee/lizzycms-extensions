@@ -176,7 +176,11 @@ function convertYaml($str, $stopOnError = true, $origin = '')
 function getYamlFile($filename)
 {
 	$yaml = getFile($filename, true);
-	$data = convertYaml($yaml);
+	if ($yaml) {
+        $data = convertYaml($yaml);
+    } else {
+	    $data = [];
+    }
 	return $data;
 } // getYamlFile
 
@@ -824,7 +828,9 @@ function getClientIP($normalize = false)
 function reloadAgent($target = false)
 {
     global $globalParams;
-    if ($target) {
+    if ($target === true) {
+        $target = $globalParams['requestedUrl'];
+    } elseif ($target) {
         $target = resolvePath($target, false,'https');
     } else {
         $target = $globalParams['pageUrl'];
@@ -1020,7 +1026,7 @@ function writeLog($str, $destination = false)
 {
     global $globalParams;
 
-    if (($path = $globalParams['logPath']) && ($destination != 'errlog')) {
+    if (($path = $globalParams['path_logPath']) && ($destination != 'errlog')) {
         if ($destination) {
             if (($destination[0] == '~') || ($destination[0] == '/')) {
                 $destination = resolvePath($destination);
@@ -1303,63 +1309,6 @@ function trunkPath($path, $n = 1, $leaveNotRemove = true)
 
 
 
-////-----------------------------------------------------------------------------
-//function sort2dArray($array, $col, $hasHeaders = true)
-//{
-//    if ($hasHeaders) {
-//        $headers = $array[0];
-//        array_shift($array);
-//    }
-//    usort($array, make_comparer($col));
-//
-//    if ($hasHeaders) {
-//        $array = array_merge([$headers], $array);
-//    }
-//    return $array;
-//} // sort2dArray
-
-
-
-////-----------------------------------------------------------------------------
-//function make_comparer() {
-//    // Normalize criteria up front so that the comparer finds everything tidy
-//    $criteria = func_get_args();
-//    foreach ($criteria as $index => $criterion) {
-//        $criteria[$index] = is_array($criterion)
-//            ? array_pad($criterion, 3, null)
-//            : array($criterion, SORT_ASC, null);
-//    }
-//
-//    return function($first, $second) use (&$criteria) {
-//        foreach ($criteria as $criterion) {
-//            // How will we compare this round?
-//            list($column, $sortOrder, $projection) = $criterion;
-//            $sortOrder = $sortOrder === SORT_DESC ? -1 : 1;
-//
-//            // If a projection was defined project the values now
-//            if ($projection) {
-//                $lhs = call_user_func($projection, $first[$column]);
-//                $rhs = call_user_func($projection, $second[$column]);
-//            }
-//            else {
-//                $lhs = $first[$column];
-//                $rhs = $second[$column];
-//            }
-//
-//            // Do the actual comparison; do not return if equal
-//            if ($lhs < $rhs) {
-//                return -1 * $sortOrder;
-//            }
-//            else if ($lhs > $rhs) {
-//                return 1 * $sortOrder;
-//            }
-//        }
-//
-//        return 0; // tiebreakers exhausted, so $first == $second
-//    };
-//} // make_comparer
-
-
 
 //-----------------------------------------------------------------------------
 function compileMarkdownStr($mdStr, $removeWrappingPTags = false)
@@ -1406,6 +1355,7 @@ function fatalError($msg, $origin = '', $offendingFile = '')
 // $origin =, 'File: '.__FILE__.' Line: '.__LINE__;
 {
     global $globalParams;
+    $out = '';
     $problemSrc = '';
     if ($offendingFile) {
         $problemSrc = "problemSrc: $offendingFile, ";
@@ -1416,7 +1366,8 @@ function fatalError($msg, $origin = '', $offendingFile = '')
     if ($origin) {
         if (preg_match('/File:\s*(.*)\s*Line:(.*)/', $origin, $m)) {
             $file = trim($m[1]);
-            $file = substr($file, strlen($globalParams['absAppRoot']));
+            $l = (isset($globalParams['absAppRoot'])) ? $globalParams['absAppRoot']: 0;
+            $file = substr($file, strlen($l));
             $line = trim($m[2]);
             $origin = "$file::$line";
         }
@@ -1425,12 +1376,17 @@ function fatalError($msg, $origin = '', $offendingFile = '')
     preparePath(ERROR_LOG);
     file_put_contents(ERROR_LOG, $out, FILE_APPEND);
 
-    if ($offendingFile) {
+    if ($origin && $offendingFile) {
         require_once SYSTEM_PATH.'page-source.class.php';
         PageSource::rollBack($offendingFile); //???
         reloadAgent();
     }
-    exit;
+
+    if (isset($globalParams['localCall']) && $globalParams['localCall']) {
+        exit($msg);
+    } else {
+        exit;
+    }
 } // fatalError
 
 
@@ -1460,12 +1416,3 @@ function handleFatalPhpError() {
 
 
 
-//function getClientIP()
-//{
-//    $elems = explode('.', $_SERVER['REMOTE_ADDR']);
-//    foreach ($elems as $i => $e) {
-//        $elems[$i] = str_pad($e, 3, "0", STR_PAD_LEFT);
-//    }
-//    $ip = implode('.', $elems);
-//    return implode('.', $elems);
-//}

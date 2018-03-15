@@ -1,5 +1,7 @@
 <?php
 
+// @info: Presents images in a folder as an album.
+
 $page->addCssFiles("~sys/third-party/unite_gallery/css/unite-gallery.css");
 $page->addJqFiles(["JQUERY", "~sys/third-party/unite_gallery/js/unitegallery.min.js", "~sys/third-party/unite_gallery/themes/tiles/ug-theme-tiles.js"]);
 //$page->addJq("\t$('.gallery').unitegallery({ tiles_type:'justified', tile_enable_textpanel:true, tile_textpanel_title_text_align: 'center' });\n\t$('body').addClass('pageSwitchInhibited');");

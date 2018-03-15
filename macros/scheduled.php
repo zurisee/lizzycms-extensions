@@ -1,5 +1,7 @@
 <?php
 
+// @info: Renders or hides some text based on time.
+
 /*
 ** For manipulating the embedding page, use $page:
 **		$page->addHead('');

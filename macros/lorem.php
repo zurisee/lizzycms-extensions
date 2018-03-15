@@ -1,5 +1,7 @@
 <?php
 
+// @info: Adds pseudo text to the page.
+
 /*
 ** For manipulating the embedding page, use $page:
 **		$page->addHead('')

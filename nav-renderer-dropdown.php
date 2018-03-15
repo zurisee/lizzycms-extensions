@@ -61,7 +61,7 @@ function _renderDropdownMenu($inx, $site, $ulClass, $liClass, $aClass, $tree, $i
         $tree = $site->getSiteTree();
     }
 
-    if ($mutliLang = $site->config->multiLanguageSupport) {
+    if ($mutliLang = $site->config->site_multiLanguageSupport) {
         $currLang = $site->config->lang;
     }
 
@@ -95,7 +95,7 @@ function _renderDropdownMenu($inx, $site, $ulClass, $liClass, $aClass, $tree, $i
 
         if ($elem['isCurrPage']) {
             $liClass .= ' curr active';
-            if ($site->config->selflinkAvoid) {
+            if ($site->config->feature_selflinkAvoid) {
                 $path = '#main';
             }
         } elseif ($elem['active']) {

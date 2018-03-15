@@ -5,6 +5,7 @@
 **  all requests pass through this file
 */
 
+ob_start();
 date_default_timezone_set('CET');
 
 if (!file_exists('_lizzy/')) {
@@ -13,4 +14,10 @@ if (!file_exists('_lizzy/')) {
 require_once '_lizzy/lizzy.class.php';
 
 $website = new Lizzy();
-exit( $website->render() );
+$out = $website->render();
+
+if (strlen($str = ob_get_clean ()) > 1) {
+	file_put_contents('ob.txt', $str);
+}
+
+exit( $out );

@@ -46,7 +46,6 @@ mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r(
 $upload_handler = new UploadHandler($options);
 
 
-
 function mylog($text)
 {
     file_put_contents('../../.#logs/log.txt', date('Y-m-d H:i:s') . "  $text\n", FILE_APPEND);

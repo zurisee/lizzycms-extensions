@@ -15,13 +15,7 @@ class MySandbox
         $this->setup($configPath, $vars);
 
         try {
-//            $this->sandbox->defineMagicConsts(['__FILE__' => __FILE__]);
-            $res = $this->sandbox->execute($phpCode);
-//            if (is_array($res)) {
-//                foreach ($res as $key => $value) {
-//                    $this->addVariable($key, $value);
-//                }
-//            }
+            $this->sandbox->execute($phpCode);
         } catch(Exception $e) {
             $phpCode = htmlspecialchars($phpCode);
             fatalError("Error while executing user code '$phpFile' in sandbox: <br>".$e->getMessage()."<pre>$phpCode</pre>", 'File: '.__FILE__.' Line: '.__LINE__);

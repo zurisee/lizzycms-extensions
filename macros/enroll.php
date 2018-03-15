@@ -1,5 +1,7 @@
 <?php
 
+// @info:  Lets you set up enrollment lists where people can put their name to indicate that they intend to participate at some event, for instance.
+
 $macroName = basename(__FILE__, '.php');
 define('ENROLL_LOG_FILE', 'enroll.txt');
 define('ENROLL_DATA_FILE', 'enroll.yaml');
@@ -76,7 +78,7 @@ class enroll
 	
 		if (isset($_POST) && $_POST) {
 			$action = get_post_data('type');
-			$id = $this->enroll_list_id = trim(get_post_data('list_id'));
+			$id = $this->enroll_list_id = trim(get_post_data('lzy-enroll-list-id'));
 			$name = get_post_data('name');
 			if (!$name) {
 				return;
@@ -182,6 +184,9 @@ class enroll
 		}
 	} // handle $_POST
 
+
+
+
 	//-----------------------------------------------------------------------------------------------
 	function enroll($enroll_list_name, $n_needed, $n_reserve = 0) {
 		global $enroll_form_created, $page;
@@ -197,7 +202,7 @@ class enroll
 		$dialogs = '';
 		if (!$enroll_form_created) {
 			$enroll_form_created = true;
-			$dialogs .= "\n<!-- Enrollment Dialogs ------------------------------->\n<div id='popup-bg' class='hide_dialog'>\n";
+			$dialogs .= "\n<!-- Enrollment Dialogs ------------------------------->\n<div id='lzy-enroll-popup-bg' class='lzy-enroll-hide-dialog'>\n";
 			$dialogs .= $this->create_add_dialog();
 			$dialogs .= $this->create_delete_dialog();
 			$dialogs .= "</div>\n<!-- /enroll_dialogs -->\n";
@@ -208,19 +213,19 @@ class enroll
 		}
 	
 			
-		$out = "\n\t<div class='$this->enroll_list_id enrollment_list' data-dialog-title='$enroll_list_name'>\n";
+		$out = "\n\t<div class='$this->enroll_list_id lzy-enrollment-list' data-dialog-title='$enroll_list_name'>\n";
 	
 		$nn = $n_needed + $n_reserve;
 		$new_field_done = false;
 		for ($n=0; $n < $nn; $n++) {			// loop over list
-			$res = ($n >= $n_needed) ? ' enroll_reserve_field': '';
+			$res = ($n >= $n_needed) ? ' lzy-enroll-reserve-field': '';
 			$name =  '';
 			$email = '';
 			$phone = '';
 			$time =  '';
 			$a = '&nbsp;';
 			$icon = '';
-			$num = "<span class='num'>".($n+1).":</span>";
+			$num = "<span class='lzy-num'>".($n+1).":</span>";
 			$tooltip = 'Name löschen';
 	
 			if (isset($entry[$n]['Name'])) {	// Name exists -> delete
@@ -234,10 +239,10 @@ class enroll
 					$tooltip = $name;
 				}
 				if ((intval($entry[$n]['time']) > time()-(3600*24)) || $this->admin_mode) {
-					$icon = "<span class='enroll_del'>−</span>";
-					$a = "<a href='#delDialog' title='$tooltip'><span class='name'>$name</span>$icon</a>";
+					$icon = "<span class='lzy-enroll-del'>−</span>";
+					$a = "<a href='#delDialog' title='$tooltip'><span class='lzy-name'>$name</span>$icon</a>";
 				} else {
-					$a = "<span class='name'>$name</span>";
+					$a = "<span class='lzy-name'>$name</span>";
 				
 				}	
 				$class = 'del_field';
@@ -245,23 +250,23 @@ class enroll
 			} else {			// add
 				if (!$new_field_done) {
 					$name = '{{ Enroll me }}';
-					$icon = "<span class='enroll_add'>+</span>";
-					$a = "<a href='#addDialog' title='Neuen Namen eintragen' data-rel='popup' data-position-to='window' data-transition='pop'>\n\t\t\t<span class='name'>$name</span>$icon\n\t\t</a>";
+					$icon = "<span class='lzy-enroll-add'>+</span>";
+					$a = "<a href='#addDialog' title='Neuen Namen eintragen' data-rel='popup' data-position-to='window' data-transition='pop'>\n\t\t\t<span class='lzy-name'>$name</span>$icon\n\t\t</a>";
 					$new_field_done = true;
-					$class = 'add_field';
+					$class = 'lzy-enroll-add-field';
 	
 				} else {		// free cell
 					$name = '&nbsp;';
-					$class = 'empty_field';
+					$class = 'lzy-enroll-empty-field';
 	
 					$a = "&nbsp;";
 				}			
 			}
 			
-			$out .= "<div class='enroll_field $class$res'>\n\t\t$num\n\t\t$a\n\t</div><!-- /$class -->";
+			$out .= "<div class='lzy-enroll-field $class$res'>\n\t\t$num\n\t\t$a\n\t</div><!-- /$class -->";
 		}
 	
-		$out .= "\t</div> <!-- /enrollment_list -->\n  ";
+		$out .= "\t</div> <!-- /lzy-enrollment-list -->\n  ";
 
 		return $out;
 	} // m_enroll
@@ -302,7 +307,7 @@ class enroll
 		$out = <<<EOT
 
 	<!-- Enrollment jQuery Scripts -------------------------------->
-		var \$err_msg = $('.err_msg');
+		var \$err_msg = $('.lzy-err-msg');
 		if (\$err_msg.text()) {						// ErrMsg dialog
 			\$form = \$err_msg.parent();
 			var dialog_id = '#' + \$form.parent().attr('id');
@@ -310,10 +315,10 @@ class enroll
 				$('#a_name', \$form).val('{$this->name}');
 				$('#a_email', \$form).val('{$this->email}');
 				$('#a_phone', \$form).val('{$this->phone}');
-				$('#add_list_id', \$form).val('{$this->enroll_list_id}');
-				$('#a_type', \$form).val('{$this->action}');
+				$('#lzy-add-list-id', \$form).val('{$this->enroll_list_id}');
+				$('#lzy-enroll-add-type', \$form).val('{$this->action}');
 				var dialog_title = '{$this->enroll_list_name}';
-				$('#addDialog').removeClass("hide_dialog");
+				$('#addDialog').removeClass("lzy-enroll-hide-dialog");
 				if ('{$this->focus}' != '') {
 					$('#addDialog #a_{$this->focus}').focus();
 				}
@@ -322,35 +327,35 @@ class enroll
 				$('#d_name', \$form).val('{$this->name}');
 				$('#d_email', \$form).val('{$this->email}');
 				$('#d_phone', \$form).val('{$this->phone}');
-				$('#add_list_id', \$form).val('{$this->enroll_list_id}');
-				$('#d_type', \$form).val('{$this->action}');
+				$('#lzy-add-list-id', \$form).val('{$this->enroll_list_id}');
+				$('#lzy-enroll-del-type', \$form).val('{$this->action}');
 				var dialog_title = '{$this->enroll_list_name}';
-				$('#delDialog').removeClass("hide_dialog");
+				$('#delDialog').removeClass("lzy-enroll-hide-dialog");
 				if ('{$this->focus}' != '') {
 					$('#delDialog #d_{$this->focus}').focus();
 				}
 			}
 		}
 
-		$('.enrollment_list .add_field a').click(function(e) {		// open add dialog
+		$('.lzy-enrollment-list .lzy-enroll-add-field a').click(function(e) {		// open add dialog
 			e.preventDefault();
 			revealPopup('#addDialog', e.pageX, e.pageY);
 
 			var \$wrapper = $(this).parent().parent();	// <a> of the click
 			var dialog_title = \$wrapper.attr('data-dialog-title');
 			var elem_class = \$wrapper.attr('class').replace(/\s.*/, '');
-			$('#add_list_id').val(elem_class);
-			$('#addDialog').removeClass("hide_dialog");
+			$('#lzy-add-list-id').val(elem_class);
+			$('#addDialog').removeClass("lzy-enroll-hide-dialog");
 		});
 		
-		$('.enrollment_list .del_field a').click(function(e) {		// open delete dialog
+		$('.lzy-enrollment-list .del_field a').click(function(e) {		// open delete dialog
 			e.preventDefault();
 			revealPopup('#delDialog', e.pageX, e.pageY);
 
 			var \$wrapper = $(this).parent().parent();	// <a> of the click
 			var dialog_title = \$wrapper.attr('data-dialog-title');
 			var elem_class = \$wrapper.attr('class').replace(/\s.*/, '');
-			var name = $('.name', \$(this)).text();
+			var name = $('.lzy-name', \$(this)).text();
 			var email = '';
 			if (name.match(/\</)) {
 				email = name.replace(/.*\</, '').replace(/\>.*/, '');
@@ -361,12 +366,12 @@ class enroll
 			$('#del_Name_text').text(name);
 			$('#del_EMail').val(email);
 			$('#delete_list_id').val(elem_class);
-			$(dialog_id).removeClass("hide_dialog");
+			$(dialog_id).removeClass("lzy-enroll-hide-dialog");
 		});
 		
 		$('button#a_submit').click(function(e) {	// submit button in add dialog
 			$(this).prop("disabled",true);
-			$('#form_add').submit();
+			$('#lzy-enroll-add-form').submit();
 		});
 		$('button#d_submit').click(function(e) {	// cancel button in delete dialog
 			$(this).prop("disabled",true);
@@ -380,7 +385,7 @@ class enroll
 			e.preventDefault();
 			window.location = '$dest';
 		});
-		$('.dialog-close').click(function(e) {	// close icon in dialog
+		$('.lzy-enroll-dialog-close').click(function(e) {	// close icon in dialog
 			e.preventDefault();
 			window.location = '$dest';
 		});
@@ -403,7 +408,7 @@ class enroll
 				}
 				$(id).css('left', mouseX).css('top', mouseY);
 			}
-			$('#popup-bg').removeClass("hide_dialog");
+			$('#lzy-enroll-popup-bg').removeClass("lzy-enroll-hide-dialog");
 		} // revealPopup
 EOT;
 
@@ -414,32 +419,32 @@ EOT;
 	function create_add_dialog() {
 		$err_msg = '';
 		if (($this->action == 'add') && $this->err_msg) {
-			$err_msg = "\n\t<div class='err_msg'>$this->err_msg</div>";
+			$err_msg = "\n\t<div class='lzy-err-msg'>$this->err_msg</div>";
 		}
 		$url = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
 		$form = <<<EOT
 
-<div id="addDialog" data-role="popup" data-theme="a" class="enrollment_dialog hide_dialog">
-	<div class='dialog-close'>⊗</div>
-    <form id="form_add" method='post' action='$url'>$err_msg
-	<input type="hidden" id='add_list_id' name='list_id' value='' />
-	<input type="hidden" id='a_type' name='type' value='add' />
+<div id="addDialog" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
+	<div class='lzy-enroll-dialog-close'>⊗</div>
+    <form id="lzy-enroll-add-form" method='post' action='$url'>$err_msg
+	<input type="hidden" id='lzy-enroll-add-list-id' name='lzy-enroll-list-id' value='' />
+	<input type="hidden" id='lzy-enroll-add-type' name='lzy-enroll-type' value='add' />
         <div>
             <h3>{{ Enroll add }}</h3>
-            <label for="name" class="ui-hidden-accessible">Name:</label>
-            <input type="text" name="name" id="a_name" value="" placeholder="{{ placeholder name }}" data-theme="a" required aria-required="true" autofocus />
+            <label for="lzy-name" class="ui-hidden-accessible">Name:</label>
+            <input type="text" name="lzy-name" id="a_name" value="" placeholder="{{ placeholder name }}" data-theme="a" required aria-required="true" autofocus />
 	    
-            <label for="email" class="ui-hidden-accessible">E-Mail:</label>
-            <input type="text" name="email" id="a_email" value="" placeholder="name@domain.net" data-theme="a" required aria-required="true" />
+            <label for="lzy-add-email" class="ui-hidden-accessible">E-Mail:</label>
+            <input type="text" name="lzy-email" id="lzy-add-email" value="" placeholder="name@domain.net" data-theme="a" required aria-required="true" />
 
-            <label for="phone" class="ui-hidden-accessible">Handy:</label>
-            <input type="text" name="phone" id="a_phone" value="" placeholder="{{ placeholder mobile number }}" data-theme="a" />
+            <label for="lzy-phone" class="ui-hidden-accessible">Handy:</label>
+            <input type="text" name="lzy-phone" id="lzy-phone" value="" placeholder="{{ placeholder mobile number }}" data-theme="a" />
 
             <button type="submit" id="a_submit" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Enroll now }}</button>
             <button type="cancel" id="a_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Cancel }}</button>
         </div>
     <div style='clear:both;'></div>
-	<div class='Enroll_comment'>{{ Enroll add comment }}</div>
+	<div class='lzy-enroll-comment'>{{ Enroll add comment }}</div>
    </form>
 </div><!-- /addDialog -->
 
@@ -452,30 +457,30 @@ EOT;
 	function create_delete_dialog() {
 		$err_msg = '';
 		if (($this->action == 'delete') && $this->err_msg) {
-			$err_msg = "\n\t<div class='err_msg'>$this->err_msg</div>";
+			$err_msg = "\n\t<div class='lzy-err-msg'>$this->err_msg</div>";
 		}
 		$url = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
 		$form = <<<EOT
 
-<div id="delDialog" data-role="popup" data-theme="a" class="enrollment_dialog hide_dialog">
-	<div class='dialog-close'>⊗</div>
+<div id="delDialog" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
+	<div class='lzy-enroll-dialog-close'>⊗</div>
     <form id="form_del" action='$url' method='post' >$err_msg
         <div>
 		<h3>{{ Enroll delete }}</h3>
-		<input type="hidden" id='delete_list_id' name='list_id' value='' />
-		<input type="hidden" id='d_type' name='type' value='delete' />
+		<input type="hidden" id='lzy-enroll-del-list-id' name='lzy-enroll-list-id' value='' />
+		<input type="hidden" id='lzy-enroll-del-type' name='lzy-enroll-type' value='delete' />
 		
-		<input type="hidden" id='del_Name' name='name' value='unknown' />
-		<div class='name'>{{ Enroll delete for }}:</div><div class='c2' id='del_Name_text'></div><br />
+		<input type="hidden" id='del_Name' name='lzy-name' value='unknown' />
+		<div class='lzy-name'>{{ Enroll delete for }}:</div><div class='lzy-c2' id='del_Name_text'></div><br />
 		
-		<label class='ui-hidden-accessible name' for='email'>E-Mail:</label>
-		<input type="text" id='del_EMail' name='email' placeholder="name@domain.net" data-theme="a" autofocus />
+		<label class='ui-hidden-accessible lzy-name' for='lzy-del-email'>E-Mail:</label>
+		<input type="text" id='lzy-del-email' name='lzy-email' placeholder="name@domain.net" data-theme="a" autofocus />
 		
 		<button type="submit" id="d_submit" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Enroll delete now }}</button>
 		<button type="cancel" id="d_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Cancel }}</button>
 	</div>
     <div style='clear:both;'></div>
-	<div class='Enroll_comment'>{{ Enroll delete comment }}</div>
+	<div class='lzy-enroll-comment'>{{ Enroll delete comment }}</div>
     </form>
 </div><!-- /delDialog  -->
 

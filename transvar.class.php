@@ -19,6 +19,7 @@ class Transvar
 {
 	private $transvars = array();
 	private $usedVars = array();
+	private $undefinedVars = array();
 	private $macros = array();
 	private $macroInfo = array();
 	private $invocationCounter = array();
@@ -26,35 +27,10 @@ class Transvar
 	public $page;
 
 	//....................................................
-	public function __construct($config, $file, $siteStructure)
+	public function __construct($config)
 	{
 		$this->page = new Page;
-		$this->siteStructure = $siteStructure;
 		$this->config = $config;
-		if (is_array($file)) {
-			$a = $file;
-			foreach ($a as $f) {
-				$files = glob($f);
-				foreach ($files as $ff) {
-					if (substr(basename($ff),0,1) == '#') {
-						continue;
-					}
-					$this->readFile($ff);
-				}
-			}
-		} elseif (strpos($file, '*') !== false) {
-			$files = glob($file);
-			foreach ($files as $f) {
-				if (substr(basename($f),0,1) == '#') {
-					continue;
-				}
-				$this->readFile($f);
-			}
-		} else {
-			$this->readFile($file);
-		}
-
-		$this->loadStandardVariables();
 
 	} // __construct
 
@@ -75,7 +51,7 @@ class Transvar
             $html = $page->get('body');
             $html = $this->shieldSpecialVars($html);
 
-            $this->addVariable('content', $page->get('content'));
+            $this->addVariable('content', $page->get('content'), false);
         }
 
         $html = $this->adaptBraces($html, $substitutionMode);
@@ -90,6 +66,16 @@ class Transvar
         $html = $this->translateVars($html, 'app', SUBSTITUTE_UNDEFINED);
         $this->handleLatePageSubstitution();
 
+        if (!isset($this->firstRun)) {  // avoid indefinite loop
+            // in case a macro has raised a request for override etc, we need to re-run rendering routine:
+            if ($this->page->get('override') ||
+                $this->page->get('overlay') ||
+                $this->page->get('pageSubstitution') ||
+                $this->page->get('message')) {
+                $this->firstRun = true;
+                return $this->render($page, $lang, $substitutionMode);
+            }
+        }
 		return $html;
 	} // render
 
@@ -112,7 +98,7 @@ class Transvar
             }
             // handle macro-modifiers, e.g. {{# }}
 			$c1 = $var{0};
-            if (strpos('#^!&', $c1) !== false) {
+            if (strpos('#^!&', $c1) !== false) {    // modifier? #, ^, !, &
 				$var = trim(substr($var, 1));
 				if ($c1 == '#') {
 					$commmented = true;
@@ -125,17 +111,18 @@ class Transvar
 				}
 			}
 
-            if ($dontCache) {
+            if ($dontCache) {   // don't cache -> shield now and translate after read-cache
                 $str = substr($str, 0, $p1) . "{||{ $var }||}" . substr($str, $p2 + 2);
 
             } else {
                 if (!$commmented) {
-                    if (strpos($var, '{{') !== false) {
+                    if (strpos($var, '{{') !== false) {     // nested transvar/macros
                         $var = $this->translateMacros($var, $namespace);
                     }
+
                     $var = str_replace("\n", '', $var);    // remove newlines
-                    if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {    // macro
-                        $macro = $m[1];
+                    if (preg_match('/^([\w\-]+)\((.*)\)/', $var, $m)) {    // macro
+                        $macro = str_replace(['-','_'], '', $m[1]);
 
                         $argStr = $m[2];
                         $this->macroArgs[$macro] = parseArgumentStr($argStr);
@@ -147,7 +134,9 @@ class Transvar
                         if (isset($this->macros[$macro])) { // and try to execute it
                             $val = $this->macros[$macro]($this);
                             if (trim($argStr) == 'help') {
-                                $val = $this->getMacroHelp($macro);
+                                if ($val2 = $this->getMacroHelp($macro)) {
+                                    $val = $val2;
+                                }
                             }
                             if ($compileMd) {
                                 $val = compileMarkdownStr($val);
@@ -198,7 +187,7 @@ class Transvar
                 continue;
             }
 
-            if (preg_match('/^ [\#^\!\&]? \s* [\w_]+ \( /x', $var)) { // skip macros()
+            if (preg_match('/^ [\#^\!\&]? \s* [\w\-]+ \( /x', $var)) { // skip macros()
                 list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
                 continue;
             }
@@ -233,7 +222,7 @@ class Transvar
                     } else {                                        // variable
                         $val = $this->getVariable($var, '', $namespace, $substitutionMode);
                         if ($val === false) {
-                            $val = $this->doUserCode($var, $this->config->permitUserCode);
+                            $val = $this->doUserCode($var, $this->config->custom_permitUserCode);
                         }
                         if ($compileMd) {
                             $val = compileMarkdownStr($val);
@@ -266,6 +255,12 @@ class Transvar
 
 
 
+
+
+    public function setMacroInfo($macroName, $info)
+    {
+        $this->macroInfo[] = [$macroName, $info];
+    }
 
 
     //....................................................
@@ -400,27 +395,24 @@ class Transvar
         $page = $this->page = new Page;
         $sys = '~/'.$this->config->systemPath;
         $macrosPath = $this->config->macrosPath;
+        $macros = [];
         $files = getDir($this->config->macrosPath.'*.php');
         foreach ($files as $file) {
-            $f = basename($file);
             $moduleName = basename($file, '.php');
-            if (!isset($modules[$f])) {
-                $modules[$f] = 0;
+
+            $info = '';
+            $lines = file($file);
+            $l = array_filter($lines, function($v, $k) {
+                return (strpos($v, '@info') !== false);
+            }, ARRAY_FILTER_USE_BOTH);
+            if ($l) {
+                $info = preg_replace('/^[^\:]*\s*:\s*/', '', array_pop($l));
             }
-            require_once($file);
-            $a = file($file);
-            $a = preg_grep('/\$this->addMacro/', $a);
-            $l = array_pop($a);
-            $macName = basename($f, '.php');
-            if (preg_match('/'.preg_quote('$this->addMacro($macroName, function (').'(.*)\)/', $l, $m)) {
-                $this->macroInfo[] = "$macName({$m[1]})";
-            }
-            $transvarFile = $macrosPath."transvars/$macName.yaml";
-            if (file_exists($transvarFile)) {
-                $this->readFile($transvarFile);
-            }
+
+            $macros[$moduleName] = $info;
         }
-        ksort($modules);
+        ksort($macros);
+        $this->macroInfo = $macros;
     } // loadAllMacros
 
 
@@ -439,8 +431,8 @@ class Transvar
                 }
             }
         } else {					// check if macro.php is in code/ folder?
-            if ($this->config->permitUserCode) {
-                $file = $this->config->userCodePath.$macroName.'.php';
+            if ($this->config->custom_permitUserCode) {
+                $file = $this->config->path_userCodePath.$macroName.'.php';
                 if (file_exists($file)) {
                     $this->doUserCode($file);
                     foreach($page as $key => $elem) {
@@ -455,19 +447,74 @@ class Transvar
         }
         $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
         if (file_exists($transvarFile)) {
-            $this->readFile($transvarFile);
+            $this->readTransvarsFromFile($transvarFile);
         }
     } // loadMacro
 
 
 
+
+    /**
+     * @param $file
+     */
+    public function readTransvarsFromFiles($file, $markSource = false)
+    {
+        if (is_array($file)) {
+            $a = $file;
+            foreach ($a as $f) {
+                $files = glob($f);
+                foreach ($files as $ff) {
+                    if (substr(basename($ff), 0, 1) == '#') {
+                        continue;
+                    }
+                    $this->readTransvarsFromFile($ff, $markSource);
+                }
+            }
+        } elseif (strpos($file, '*') !== false) {
+            $files = glob($file);
+            foreach ($files as $f) {
+                if (substr(basename($f), 0, 1) == '#') {
+                    continue;
+                }
+                $this->readTransvarsFromFile($f, $markSource);
+            }
+        } else {
+            $this->readTransvarsFromFile($file, $markSource);
+        }
+    }
+
+
+
+
     //....................................................
-    public function readFile($file)
+    public function readTransvarsFromFile($file, $markSource = false)
     {
         if (!file_exists($file)) {
             fatalError("File not found: '$file'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
-        $this->transvars = array_merge($this->transvars, getYamlFile($file));
+        $newVars = getYamlFile($file);
+        if (is_array($newVars)) {
+            $markSource = true;
+            if ($this->config->debug_showVariablesUnreplaced) { // for debugging
+                array_walk($newVars, function(&$value, &$key, $file) {
+                    if ($key != 'page_title') {
+                        $value = "<span title='$file'>&#123;&#123; $key }}</span>";
+                    }
+                }, $file);
+                $markSource = false; // no need to also mark source
+            }
+            if ($markSource) {
+                foreach ($newVars as $key => $rec) {
+                    if (!is_array($rec)) {
+                        $v = $rec;
+                        unset($newVars[$key]);
+                        $newVars[$key]['_'] = $v;
+                    }
+                    $newVars[$key]['src'] = $file;
+                };
+            }
+            $this->transvars = array_merge($this->transvars, $newVars);
+        }
     } // readFile
 
 
@@ -522,8 +569,14 @@ class Transvar
 
         if (isset($this->transvars[$key])) {
             $entry = $this->transvars[$key];
+
             if (($key{0} != '_') && (!in_array($key, $this->sysVariables))) {
                 $this->usedVars[$namespace.'@:'.$key] = $entry;
+            }
+            if ($this->config->debug_monitorUnusedVariables && is_array($entry)) {
+                if (isset($entry['uu'])) {
+                    unset($this->transvars[$key]['uu']);
+                }
             }
             if (!is_array($entry)) {
                 $out = $entry;
@@ -534,7 +587,7 @@ class Transvar
             } elseif (isset($entry[$lang])) {
                 $out = $entry[$lang];
 
-            } elseif ($entry[$lang] === null) {
+            } elseif (isset($entry[$lang]) && ($entry[$lang] === null)) {
                 fatalError("Error: transvar with empty value: '$key'", 'File: '.__FILE__.' Line: '.__LINE__);
 
             } elseif (isset($entry['_'])) {
@@ -543,12 +596,18 @@ class Transvar
             } elseif (isset($entry['*'])) {
                 $out = $entry['*'];
 
-            } elseif (isset($entry[$this->config->defaultLanguage])) {  // lang-rcs nor explicit default found -> use default-lang
-                $out = $entry[$this->config->defaultLanguage];
+            } elseif (isset($entry[$this->config->site_defaultLanguage])) {  // lang-rcs nor explicit default found -> use default-lang
+                $out = $entry[$this->config->site_defaultLanguage];
 
             } else {    // this should only happen if a wrong value gets into $_SESSION
                 fatalError("Error: transvar without propre value: '$key'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
+        } elseif ($this->config->debug_showUndefinedVariables) {
+            if (!in_array($key, ['PageSource Load previous edition', 'PageSource Load next edition', 'PageSource cancel', 'PageSource activate edition', 'Page-History:'])) {
+                $out = "<span class='mark-undefined-variable'>&#123;&#123; $key }}</span>";
+                $this->undefinedVars[] = $key;
+            }
+
         } else {
             if ((strlen($key) > 0) && ($key{0} != '_') && (!in_array($key, $this->sysVariables))) {
                 $this->usedVars['_@:'.$key] = '';
@@ -581,7 +640,7 @@ class Transvar
     //....................................................
     private function translateSpecialVars($str)
     {
-        if ($this->config->autoLoadClassBasedModules) {
+        if ($this->config->feature_autoLoadClassBasedModules) {
             $this->page->autoInvokeClassBasedModules($str);
         }
         $str = str_replace('@@head_injections@@', $this->page->headInjections(), $str);
@@ -594,9 +653,9 @@ class Transvar
     //....................................................
     public function doUserComputedVariables()
     {
-        $code = $this->config->userCodePath.$this->config->userComputedVariablesFile;
+        $code = $this->config->path_userCodePath.$this->config->custom_computedVariablesFile;
         if (file_exists($code)) {
-            $this->doUserCode( basename($code, '.php'), $this->config->permitUserVarDefs );
+            $this->doUserCode( basename($code, '.php'), $this->config->custom_permitUserVarDefs );
         }
     } // doUserComputedVariable
 
@@ -606,10 +665,10 @@ class Transvar
     {
         $out = false;
         if ($execType === null) {
-            $execType = $this->config->permitUserCode;
+            $execType = $this->config->custom_permitUserCode;
         }
         if ($execType) {
-            $phpFile = $this->config->userCodePath.basename($name,'.php').'.php';
+            $phpFile = $this->config->path_userCodePath.basename($name,'.php').'.php';
             if (file_exists($phpFile)) {
                 $page = &$this->page;
                 if ($execType == 'true') {
@@ -635,13 +694,14 @@ class Transvar
 
 
 	//....................................................
-	public function loadStandardVariables()
+	public function loadStandardVariables($siteStructure)
 	{
-		$this->addVariable('pagetitle', $this->siteStructure->currPageRec['name']);
+	    $this->siteStructure = $siteStructure;
+		$this->addVariable('pagetitle', $siteStructure->currPageRec['name']);
 		
 		if (isset($this->siteStructure->currPageRec['inx'])) {
-			$this->addVariable('numberofpages', $this->siteStructure->getNumberOfPages());
-			$this->addVariable('pagenumber', $this->siteStructure->currPageRec['inx'] + 1);
+			$this->addVariable('numberofpages', $siteStructure->getNumberOfPages());
+			$this->addVariable('pagenumber', $siteStructure->currPageRec['inx'] + 1);
 		} else {
 			$this->addVariable('numberofpages', '');
 			$this->addVariable('pagenumber', '');
@@ -664,7 +724,6 @@ class Transvar
 				$vars[$key] = $entry['_'];
 			} else {
                 logError("Error: transvar without propre value: '$key'");
-//                fatalError("Error: transvar without propre value: '$key'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
 		}
 		return $vars;
@@ -673,66 +732,266 @@ class Transvar
 
 
 	//....................................................
-	public function printAll($lang = false)
+	public function renderAllTranslationObjects($lang = false)
 	{
-		$this->loadAllmacros();
+		$this->loadAllMacros();
 		if ($lang) {
 			$transvars = $this->readAll($lang);
 		} else {
 			$transvars = &$this->transvars;
 		}
-		uksort($transvars, "strnatcasecmp");
 
-		$lines = explode(PHP_EOL, Yaml::dump($transvars));
-		$out = '';
-		foreach ($lines as $l) {
-			$l = htmlentities($l);
-			$l = str_replace("'", '', $l);
-			$l = preg_replace('/^(\S[^:]+):/', "<strong>$1</strong>:", $l);
-			$collect = preg_match('/^\s/', $l);
-			$l = preg_replace("/^\s{2,}/", "<span class='space'>&nbsp;</span>", $l);
-			$l = preg_replace("/^([^:]*):(.*)/", "<span class='tab'>$1:</span><span class='block'>$2</span>", $l);
-			if ($collect) {
-				$out = substr($out, 0, -7)."\n$l</div>\n";
-				continue;
-			}
-			$out .= "<div>$l</div>\n";
-		}
-		$out1 = "<h1>Lizzy</h1>\n<h2>Transvars</h2>$out\n";
+		$out = $this->renderAllVariables($transvars);
 
-		$macros = $this->macroInfo;
-		sort($macros);
-		$out = '';
-		foreach($macros as $m) {
-			$m = preg_replace('/^(.*)\(/', "<strong>$1</strong>(", $m);
-			$out .= "<div>$m</div>\n";
-		}
-		
-		$out2 = "<h2>Macros</h2>$out\n";
-		$out = <<<EOT
-<!DOCTYPE html>
-<html lang="de">
-<head>
-	<meta charset="utf-8" />
-	<title>Lizzy List</title>
-	<style type="text/css">
-		strong { color: maroon; }
-		span { display: inline-block; vertical-align: top;}
-	 	span.tab { width: 12em; }
-		span.space { width: 10em; }
-	 	span.block { width: calc(100% - 12.5em); }
-		div { margin: 3px 0 6px 0; padding: 3px 6px; }
-		div:nth-child(odd) { background: #eee; }
-	</style>
-</head>
-<body>
-$out1
-$out2
-</body>
-</html>
+		$out .= $this->renderAllMacros();
+
+        return $out;
+
+	}
+
+
+
+    private function renderAllVariables($transvars)
+    {
+        uksort($transvars, "strnatcasecmp");
+        $str = "\n\t<div class='lzy-list-transvars'>\n\t\t<h1>Transvars:</h1>\n";
+        foreach ($transvars as $key => $rec) {
+            if (isset($rec['uu'])) {
+                $inactive = ' unused';
+                unset($rec['uu']);
+            } else {
+                $inactive = '';
+            }
+            if (isset($rec['src'])) {
+                $src = " <span class='lzy-list-src'>({$rec['src']})</span>";
+                unset($rec['src']);
+            } else {
+                $src = '';
+            }
+            $str .= <<<EOT
+
+        <div class='lzy-list-entry$inactive'>
+            <div class='lzy-list-line'><span class='lzy-list-var'>$key:</span>$src</div>
+EOT;
+            if (is_array($rec)) {
+                foreach ($rec as $lang => $text) {
+                    $text = htmlentities($text);
+                    $str .= <<<EOT
+
+            <div class='lzy-list-line'>
+                <span class='lzy-list-attr-name'>$lang</span>:
+                <span class='lzy-list-attr-value'>$text</span>
+            </div>
 
 EOT;
-		exit( $out );
-	} // printAll
+                }
+            } else {
+                $rec = htmlentities($rec);
+                $str .= <<<EOT
+
+            <div class='lzy-list-line'>
+                <span class='lzy-list-scalar-value'>$rec</span>
+            </div>
+
+EOT;
+
+            }
+            $str .= <<<EOT
+        </div>
+
+EOT;
+        }
+        $str .= "\t</div>\n";
+        return $str;
+    }
+
+
+
+
+    private function renderAllMacros()
+    {
+        $macros = $this->macroInfo;
+        $out = '';
+        foreach($macros as $name => $info) {
+            $out .= "<div><span class='lzy-macro-name'>$name()</span>: <span class='lzy-macro-info'>$info</span></div>\n";
+        }
+
+        $out = "<h2>Macros</h2>$out\n";
+        return $out;
+    }
+
+
+
+    public function reset( $files )
+    {
+        $this->processFiles($files, 'resetFile');
+    }
+
+
+
+
+    /**
+     * @param $file
+     */
+    private function resetFile($file)
+    {
+        copy($file, $file.'.0');
+        $lines = file($file);
+        $out = '';
+        foreach ($lines as $i => $l) {
+            $l1 = isset($lines[$i+1]) ? $lines[$i+1] : '';
+            if (preg_match('/^[^\#]*:\s*$/', $l) && (strpos($l1, 'uu: true') === false)) {
+                $out .= "$l    uu: true\n";
+            } else {
+                $out .= $l;
+            }
+        }
+        file_put_contents($file, $out);
+    }
+
+
+
+
+    public function postprocess()
+    {
+        $this->updateUndefinedVarsFile();
+        return $this->processFiles($GLOBALS['files'], 'updateTransvarFile');
+    }
+
+
+
+
+    public function removeUnusedVariables()
+    {
+        return $this->processFiles($GLOBALS['files'], 'removeUnusedVariableFromFile');
+    }
+
+
+
+
+    private function removeUnusedVariableFromFile($filename)
+    {
+        $lines = file($filename);
+        $out = '';
+        $outInactive = '';
+        $var = false;
+        $end = false;
+        $modified = false;
+        $note = '';
+        $rec = '';
+        $unused = false;
+        foreach ($lines as $line) {
+            if (strpos($line, '__END__') === 0) {
+                $end = true;
+            }
+
+            if (preg_match('/^([^\#]*):\s*$/m', $line, $m)) {   // beginning of var
+                if ($unused) {      // append previous rec:
+                    $note .= "<p>$var</p>\n";
+                    $outInactive .= $rec;
+                } else {
+                    $out .= $rec;
+                }
+                $var = $m[1];
+                $rec = '';
+                $unused = false;
+            }
+            if ((isset($line{0}) && ($line{0} != '/')) && (!$end && strpos($line, 'uu: true') !== false)) {
+                if (isset($this->transvars[$var]['uu'])) {
+                    $unused = true;
+                }
+            }
+            $rec .= $line;
+        }
+
+        if ($outInactive) {
+            $out .= "\n\n__END__\n#############################################\n# Unused Variables:\n\n".$outInactive;
+            $note = "<h2>File updated: $filename</h2>\n".$note;
+            file_put_contents($filename . ".1", $out);
+        }
+        return $note;
+    }
+
+
+
+    public function renderUnusedVariables()
+    {
+        return $this->processFiles($GLOBALS['files'], 'renderUnusedInFile');
+    }
+
+
+
+    private function updateTransvarFile($filename)
+    {
+        $lines = file($filename);
+        $out = '';
+        $var = false;
+        $end = false;
+        $modified = false;
+        $note = '';
+        foreach ($lines as $line) {
+            if (strpos($line, '__END__') === 0) {
+                $end = true;
+            }
+            if (preg_match('/^([^\#]*):\s*$/m', $line, $m)) {
+                $var = $m[1];
+            }
+            if ((isset($line{0}) && ($line{0} != '/')) && (!$end && strpos($line, 'uu: true') !== false)) {
+                if (isset($this->transvars[$var]['uu'])) {
+                    $out .= $line;
+                } else {
+                    $note .= "used var: $var<br>\n";
+                    $modified = true;
+                }
+            } else {
+                $out .= $line;
+            }
+        }
+
+        if ($modified) {
+            $note = "<h2>$filename</h2>\n".$note;
+            file_put_contents($filename, $out);
+        }
+        return $note;
+    }
+    
+    
+    
+    private function processFiles($filenames, $fun)
+    {
+        $note = '';
+        foreach($filenames as $file) {
+            if (substr($file, -1) == '*') {
+                $files2 = getDir($file);
+                foreach ($files2 as $f) {
+                    if (fileExt($f) == 'yaml') {
+                        $note .= $this->$fun($f);
+                    }
+                }
+            } else {
+                $note .= $this->$fun($file);
+            }
+        }
+        return $note;
+    }
+
+    private function updateUndefinedVarsFile()
+    {
+        if (!$this->undefinedVars) {
+            return;
+        }
+        $undefinedVars = getYamlFile(UNDEFINED_VARS_FILE);
+        $rec = [];
+        foreach ($this->config->site_supportedLanguages as $l) {
+            $rec[$l] = '';
+        }
+
+        foreach ($this->undefinedVars as $key) {
+            $undefinedVars[$key] = $rec;
+        }
+        ksort($undefinedVars);
+        writeToYamlFile(UNDEFINED_VARS_FILE, $undefinedVars);
+    }
+
 
 } // Transvar

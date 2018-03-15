@@ -1,5 +1,8 @@
 <?php
 
+// @info: Renders a page number (i.e. the page's position within the sitemap.)
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function ( ) {

@@ -150,7 +150,10 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return false;
     }
-    
+
+
+
+
     protected function consumeTabulator($lines, $current)
     {
         $block = [
@@ -174,6 +177,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return [$block, $last];
     }
+
+
+
 
     protected function renderTabulator($block)
     {
@@ -233,6 +239,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return false;
     }
+
+
+
     
     protected function consumeDefinitionList($lines, $current)
     {
@@ -256,6 +265,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return [$block, $i];
     }
+
+
+
 
     protected function renderDefinitionList($block)
     {

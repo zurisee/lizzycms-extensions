@@ -1,5 +1,5 @@
 body {
-    color: #777;
+    /* color: #777; */
 }
 
 .pure-img-responsive {
@@ -13,20 +13,20 @@ Add transition to containers so they can push in and out.
 #layout,
 .menu,
 .menu-link {
-    -webkit-transition: all 0.2s ease-out;
+    /* -webkit-transition: all 0.2s ease-out; */
     -moz-transition: all 0.2s ease-out;
     -ms-transition: all 0.2s ease-out;
     -o-transition: all 0.2s ease-out;
-    transition: all 0.2s ease-out;
+    /* transition: all 0.2s ease-out; */
 }
 
 /*
 This is the parent `<div>` that contains the menu and the content area.
 */
 #layout {
-    position: relative;
-    left: 0;
-    padding-left: 0;
+    /* position: relative; */
+    /* left: 0; */
+    /* padding-left: 0; */
 }
     #layout.active .menu {
         left: 150px;
@@ -216,8 +216,8 @@ Hides the menu at `48em`, but modify this based on your app's needs.
     }
 
     #layout {
-        padding-left: 150px; /* left col width ".menu" */
-        left: 0;
+        /* padding-left: 150px; */ /* left col width ".menu" */
+        /* left: 0; */
     }
     .menu {
         left: 150px;

@@ -1,18 +1,25 @@
 <?php
 
+// @info: Renders a set of options and accepts the user's choice.
+
 $page->addCssFiles('DOODLE_CSS');
 $page->addJqFiles('DOODLE');
 
 $macroName = basename(__FILE__, '.php');
 
-if (isset($_POST['doodle_entry_name'])) {
-    $name = get_post_data('doodle_entry_name');
-    $n = get_post_data('doodle_number_of_options');
-    $a = [];
-    for ($i=0; $i<$n; $i++) {
-        $a[$i] = (get_post_data("doodle_entry_answer$i") == 'on') ? 1 : 0;
+if (isset($_POST['lzy-doodle-entry-name'])) {
+    $name = get_post_data('lzy-doodle-entry-name');
+    $type = get_post_data('lzy-doodle-type');
+    if ($type == 'checkbox') {
+        $n = get_post_data('lzy-doodle-number-of-options');
+        $a = [];
+        for ($i = 0; $i < $n; $i++) {
+            $a[$i] = (get_post_data("lzy-doodle-entry-answer$i") == 'on') ? 1 : 0;
+        }
+    } else {
+        $a = get_post_data('lzy-doodle-entry-answer');
     }
-    $file0 = get_post_data('doodle_filename');
+    $file0 = get_post_data('lzy-doodle-filename');
     $file = resolvePath($file0, true);
     $data = getYamlFile($file);
     $data[$name] = $a;
@@ -28,28 +35,37 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 
     $options = $this->getArg($macroName, 'options', 'List of options', '');
-    $type = $this->getArg($macroName, 'type', 'List of options', '');
+    $multipleAnswers = $this->getArg($macroName, 'multipleAnswers', '', true);
+    $multipleAnswers = ($multipleAnswers != 'false');
 
     $file0 = $this->getArg($macroName, 'file', '(optional) file to store data', "~page/doodle$inx.yaml");
     $options = ltrim($options, '[');
     $options = rtrim($options, ']');
     $options = explode('|', $options);
 
+    $type =  ($multipleAnswers) ? 'checkbox' : 'radio';
+
     $optionsHeader = '';
     $newEntryForm = '';
-    $sumRow = '<div class="doodle-name-elem"></div>';
+    $sumRow = '<div class="lzy-doodle-name-elem"></div>';
     foreach ($options as $i => $option) {
+        if ($multipleAnswers) {
+            $input = "\t\t\t\t<input id=\"lzy-doodle-entry-answeri$inx-$i\" class=\"i$inx-$i\" name=\"lzy-doodle-entry-answer$i\" type=\"checkbox\" />";
+        } else {
+            $input = "\t\t\t\t<input id=\"lzy-doodle-entry-answeri$inx-$i\" class=\"i$inx-$i\" name=\"lzy-doodle-entry-answer\" value='$i' type=\"radio\" />";
+        }
         $option = trim($option);
-        $optionsHeader .= "\t\t\t<div class=\"doodle-elem\">$option</div>\n";
+        $optionsHeader .= "\t\t\t<div class=\"lzy-doodle-elem\">$option</div>\n";
         $newEntryForm .= <<<EOT
-        <div class="doodle-elem doodle_answer">
-            <label class="doodle_answer_label invisible" for="doodle_entry_answeri$inx-$i">Answer</label>
-            <input id="doodle_entry_answeri$inx-$i" class="i$inx-$i" name="doodle_entry_answer$i" type="checkbox" />
-        </div>
+            <div class="lzy-doodle-elem lzy-doodle-answer">
+                <label class="lzy-doodle-answer-label invisible" for="lzy-doodle-entry-answeri$inx-$i">{{ lzy-doodle-answer }}</label>
+$input
+            </div><!-- /lzy-doodle-elem -->
+
 
 EOT;
         $sums[$i] = 0;
-        $sumRow .= "\t\t\t<div id='i$inx-$i' class=\"doodle-elem\">0</div>\n";
+        $sumRow .= "\t\t\t<div id='i$inx-$i' class=\"lzy-doodle-elem\">0</div>\n";
     }
 
 
@@ -62,55 +78,64 @@ EOT;
     $file1 = str_replace('~', '&#126;', $file0);
     $n = $i+1;
     $newEntryForm = <<<EOT
-        <input type="hidden" name="doodle_number_of_options" value="$n" />
-        <input type="hidden" name="doodle_filename" value="$file1" />
-        <div class="doodle-row doodle-new-entry-row">
-            <div class="doodle-elem doodle-name-elem doodle_answer_name">
-                <label class="doodle_answer_name invisible" for="doodle_entry_name$inx">Name</label>
-                <input id="doodle_entry_name$inx" class="doodle_entry_name" name="doodle_entry_name" type="text" value="$currUserName" />
+        <input type="hidden" name="lzy-doodle-number-of-options" value="$n" />
+        <input type="hidden" name="lzy-doodle-filename" value="$file1" />
+        <input type="hidden" name="lzy-doodle-type" value="$type" />
+        <div class="lzy-doodle-row lzy-doodle-new-entry-row">
+            <div class="lzy-doodle-elem lzy-doodle-name-elem lzy-doodle-answer-name">
+                <label class="lzy-doodle-answer-name invisible" for="lzy-doodle-entry-name$inx">{{ lzy-doodle-name }}</label>
+                <input id="lzy-doodle-entry-name$inx" class="lzy-doodle-entry-name" name="lzy-doodle-entry-name" type="text" value="$currUserName" />
             </div>
 $newEntryForm
-        </div>
+        </div> <!-- /lzy-doodle-row -->
 
 EOT;
 
     $file = resolvePath($file0, true);
     $data = getYamlFile($file);
     $entries = '';
-    if (is_array(($data))) {
+    $sums = array_fill(0, $n, 0);
+    if ($data && is_array(($data))) {
          foreach ($data as $name => $rec) {
-            $entry = "\t\t\t<div class=\"doodle-name-elem doodle-elem\">$name</div>\n";
-            foreach ($rec as $answer) {
-                $check = ($answer) ? ' checked="checked"' : '';
-                $entry .= "\t\t\t<div class=\"doodle-elem\"><input type=\"checkbox\" disabled$check></div>\n";
-            };
+            $entry = "\t\t\t<div class=\"lzy-doodle-name-elem lzy-doodle-elem\">$name</div>\n";
+            if (is_array($rec)) {
+                foreach ($rec as $i => $answer) {
+                    $check = '';
+                    if ($answer) {
+                        $check = ' checked="checked"';
+                        $sums[$i]++;
+                    }
+                    $entry .= "\t\t\t<div class=\"lzy-doodle-elem\"><input type=\"$type\" disabled$check></div>\n";
+                };
+            } else {
+                $selected = intval($rec);
+                for ($i=0; $i<$n; $i++) {
+                    $check = '';
+                    if ($i == $selected) {
+                        $check = ' checked="checked"';
+                        $sums[$i]++;
+                    }
+                    $entry .= "\t\t\t<div class=\"lzy-doodle-elem\"><input type=\"$type\" disabled$check></div>\n";
+                }
+            }
             $entries .= <<<EOT
-        <div class="doodle-row">
+        <div class="lzy-doodle-row lzy-doodle-answer-row">
 $entry
-        </div>
+        </div><!-- /lzy-doodle-answer-row -->
 
 EOT;
         }
 
-        $sumRow = "\t\t\t<div class=\"doodle-name-elem\"></div>\n";
-        foreach ($data as $name => $rec) {
-            foreach ($rec as $i => $answer) {
-                if (!isset($sums[$i])) {
-                    $sums[$i] = 0;
-                }
-                if ($answer) {
-                    $sums[$i]++;
-                }
-            }
-        }
-        foreach (array_shift($data) as $i => $answer) {
-            $sumRow .= "\t\t\t<div id='i$inx-$i' class=\"doodle-elem\">{$sums[$i]}</div>\n";
+        $sumRow = "\t\t\t<div class=\"lzy-doodle-name-elem\"></div>\n";
+        for ($i=0; $i<$n; $i++) {
+            $v = (isset($sums[$i]) && $sums[$i])? $sums[$i] : '0';
+            $sumRow .= "\t\t\t<div id='i$inx-$i' class=\"lzy-doodle-elem\">$v</div>\n";
         }
     } else {
 
     }
     $sumRow = <<<EOT
-        <div class="doodle-row doodle-sums-row">
+        <div class="lzy-doodle-row lzy-doodle-sums-row">
 $sumRow
         </div>
 EOT;
@@ -118,21 +143,22 @@ EOT;
 
 
     $str = <<<EOT
-    <form class="doodle-answer-form" method="post">
-    <div class="doodle doodle$inx">
+    <form class="lzy-doodle-answer-form" method="post">
+      <div class="lzy-doodle lzy-doodle$inx">
         
-        <div class="doodle-row doodle-hdr">
-           <div class="doodle-name-elem"></div>
+        <div class="lzy-doodle-row lzy-doodle-hdr">
+           <div class="lzy-doodle-name-elem"></div>
 $optionsHeader
         </div>
 $entries
 $newEntryForm
 $sumRow
-    </div> <!-- /doodle$inx -->
-        <div class="doodle-submit">
-            <input class="doodle_answer_submit ios_button" type="submit" value="{{ submit }}">
+      </div> <!-- /lzy-doodle$inx -->
+      <div class="lzy-doodle-row lzy-doodle-err-msg" style="display: none;"><output>{{ lzy-doodle-name-mandatory }}</output></div>
+        <div class="lzy-doodle-submit">
+            <input class="lzy-doodle-answer-submit lzy-button" type="submit" value="{{ submit }}">
         </div>
-    </form>
+  </form>
 
 EOT;
 

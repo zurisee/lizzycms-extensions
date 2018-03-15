@@ -1,5 +1,8 @@
 <?php
 
+// @info: Renders components of online forms.
+
+
 require_once SYSTEM_PATH.'forms.class.php';
 
 /*

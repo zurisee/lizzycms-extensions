@@ -1,5 +1,7 @@
 <?php
 
+// @info: Initiates loading of a CSS=Framework.
+
 /*
 ** For manipulating the embedding page, use $page:
 **		$page->addHead('');
@@ -25,7 +27,7 @@ $this->addMacro($macroName, function () {
 
     $name = strtolower( $this->getArg($macroName, 'name', 'Name of the css-framework to be loaded and activated', '') );
 
-    $this->config->cssFramework = $name;
+    $this->config->feature_cssFramework = $name;
     return '';
 //    $page = $this->page;
 //    $out = "<!-- Framework '$name' loaded -->";
@@ -50,7 +52,7 @@ $this->addMacro($macroName, function () {
 //
 //        default:
 //            $out = '<!-- No Framework loaded -->';
-//            $this->config->cssFramework = false;
+//            $this->config->feature_cssFramework = false;
 //            break;
 //    }
 //	return $out;

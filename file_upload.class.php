@@ -26,12 +26,12 @@ class FileUpload
 
         $html = <<<EOT
 
-<div class="file-uploader container">
-    <button id='btn_show_files'>Show Files</button>
+<div class="lzy-file-uploader container">
+    <button id='lzy-show-files-btn'>Show Files</button>
     <!-- The file upload form used as target for the file upload widget -->
-    <form id="fileupload" action="" method="POST" enctype="multipart/form-data" data-upload-path="$filePath">
+    <form id="lzy-fileupload" action="" method="POST" enctype="multipart/form-data" data-upload-path="$filePath">
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
-        <div class="row fileupload-buttonbar">
+        <div class="row lzy-fileupload-buttonbar">
             <div class="col-lg-7">
                 <!-- The fileinput-button span is used to style the file input field as button -->
                 <span class="btn btn-success fileinput-button">
@@ -53,10 +53,10 @@ class FileUpload
                 </button>
                 <input type="checkbox" class="toggle">
                 <!-- The global file processing state -->
-                <span class="fileupload-process"></span>
+                <span class="lzy-fileupload-process"></span>
             </div>
             <!-- The global progress state -->
-            <div class="col-lg-5 fileupload-progress fade">
+            <div class="col-lg-5 lzy-fileupload-progress fade">
                 <!-- The global progress bar -->
                 <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-bar progress-bar-success" style="width:0%;"></div>

@@ -53,10 +53,13 @@ fieldset.label {
 	width: 7em;
 	height: 2em;
 }
+.field-wrapper * {
+    vertical-align: middle;
+}
 
 
 /* file upload */
-.lizzy-form-file-upload {
+.lzy-form-file-upload {
     position: absolute;
     top: 0;
     left: 0;
@@ -68,13 +71,13 @@ fieldset.label {
     height: 100%;
     overflow:  hidden;
 }
-.lizzy-form-file-upload::before {
+.lzy-form-file-upload::before {
     content: " ";
     position: absolute;
     top:0;right:0;bottom: 0; left: 0;
     background: white;
 }
-.lizzy-form-file-upload-label {
+.lzy-form-file-upload-label {
     position: relative;
     width:  initial;
     padding: 5px 15px;

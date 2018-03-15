@@ -29,7 +29,7 @@ class PageSource
             $name = $m[1];
             $select .= "\t\t<option value='$i'$selected>$name</option>\n";
         }
-        $select = "\t<span class='ed-dropdown'><select class='ed-dropdown' title='{{ PageSource Chose page edition }}'>$select</select></span>\n";
+        $select = "\t<span class='lzy-ed-dropdown'><select class='lzy-ed-dropdown' title='{{ PageSource Chose page edition }}'>$select</select></span>\n";
 
         if ($currEd !== null) {
             $nRecF = sizeof($recF);
@@ -50,21 +50,21 @@ class PageSource
             $edPlus1 = false;
         }
         if ($edMinus1) {
-            $edSelector = "<span class='ed-selector'><a href='?ed=-$edMinus1&file=$filename' title='{{ PageSource Load previous edition }}'>◀︎</a></span>";
+            $edSelector = "<span class='lzy-ed-selector'><a href='?ed=-$edMinus1&file=$filename' title='{{ PageSource Load previous edition }}'>◀︎</a></span>";
         } else {
-            $edSelector = "<span class='ed-selector ed-selector-inactive'>◀︎</span>";
+            $edSelector = "<span class='lzy-ed-selector lzy-ed-selector-inactive'>◀︎</span>";
         }
         if ($edPlus1) {
-            $edSelector .= "<span class='ed-selector'><a href='?ed=-$edPlus1&file=$filename' title='{{ PageSource Load next edition }}'>▶︎</a></span>";
+            $edSelector .= "<span class='lzy-ed-selector'><a href='?ed=-$edPlus1&file=$filename' title='{{ PageSource Load next edition }}'>▶︎</a></span>";
         } else {
-            $edSelector .= "<span class='ed-selector ed-selector-inactive'>▶︎</span>";
+            $edSelector .= "<span class='lzy-ed-selector lzy-ed-selector-inactive'>▶︎</span>";
         }
         if ($currEd != 0) {
-            $edSelectorButtons = "<span class='ed-selector-cancel'><a href='./' title='{{ PageSource cancel }}'>✗</a></span><span class='ed-selector-save'><a href='?ed-save=$currEd&file=$filename' title='{{ PageSource activate edition }}'>✓</a></span>";
+            $edSelectorButtons = "<span class='lzy-ed-selector-cancel'><a href='./' title='{{ PageSource cancel }}'>✗</a></span><span class='lzy-ed-selector-save'><a href='?ed-save=$currEd&file=$filename' title='{{ PageSource activate edition }}'>✓</a></span>";
         } else {
-            $edSelectorButtons = "<span class='ed-selector-cancel ed-selector-inactive'>✗</span><span class='ed-selector-save ed-selector-inactive'>✓</span>";
+            $edSelectorButtons = "<span class='lzy-ed-selector-cancel lzy-ed-selector-inactive'>✗</span><span class='lzy-ed-selector-save lzy-ed-selector-inactive'>✓</span>";
         }
-        return "<div class='ed-selector' data-filename='$filename'><p class='ed-selector-prompt'>{{ Page-History: }}</p>$edSelector$select$edSelectorButtons</div>";
+        return "<div class='lzy-ed-selector' data-filename='$filename'><p class='lzy-ed-selector-prompt'>{{ Page-History: }}</p>$edSelector$select$edSelectorButtons</div>";
     } // renderEditionSelector
 
 

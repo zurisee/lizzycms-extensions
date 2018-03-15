@@ -1,5 +1,7 @@
 <?php
 
+// @info: Renders given content multipe times.
+
 /*
 ** For manipulating the embedding page, use $page:
 **		$page->addHead('');

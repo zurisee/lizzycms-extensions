@@ -24,20 +24,20 @@ class SiteStructure
 
         $this->config = $config;
 
-		$this->sitemapFile = $config->sitemapFile;
+		$this->site_sitemapFile = $config->site_sitemapFile;
 		$this->currPage = $currPage;
-		if (!$this->config->sitemapFromFolders && !file_exists($this->sitemapFile)) {
+		if (!$this->config->feature_sitemapFromFolders && !file_exists($this->site_sitemapFile)) {
 			$this->currPageRec = array('folder' => '', 'name' => '');
 			$this->list = false;
 			return;
 		}
-		$this->caching = $this->config->caching;
+		$this->site_enableCaching = $this->config->site_enableCaching;
 		$this->cachePath = $this->config->cachePath; //'.#cache/';
 		$this->cacheFile = $this->cachePath.'_siteStructure.dat';
 
 
 		if (!$this->readCache()) {
-            if ($config->sitemapFromFolders) {
+            if ($config->feature_sitemapFromFolders) {
                 $this->list = $this->getSitemapFromFolders();
             } else {
                 $this->list = $this->getList();
@@ -96,12 +96,16 @@ class SiteStructure
 
 
 
+
     //....................................................
     private function getSitemapFromFolders() {
         $list = array();
         $i = 0;
-        return $this->_traverseDir($this->config->pagesPath,$i, 0, $list);
+        return $this->_traverseDir($this->config->path_pagesPath,$i, 0, $list);
     } // getSitemapFromFolders
+
+
+
 
     //....................................................
     private function _traverseDir($path, &$i, $level, &$list)
@@ -142,7 +146,7 @@ class SiteStructure
     //....................................................
 	private function getList()
 	{
-		$lines = file($this->sitemapFile);
+		$lines = file($this->site_sitemapFile);
 		$list = array();
 		$i = -1;
 		$lastLevel = 0;
@@ -181,7 +185,7 @@ class SiteStructure
 				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
 				if ($m[3] && !preg_match('/^\s*:\s*$/', $m[3])) {
 					$json = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);
-					$args = convertYaml($json, true, $this->sitemapFile);
+					$args = convertYaml($json, true, $this->site_sitemapFile);
 					if ($args) {
 						foreach($args as $key => $value) {
 							if ($key == 'folder') {
@@ -351,14 +355,14 @@ class SiteStructure
             return '';
         }
 
-        $type = (isset($page->cssFramework)) ? $page->cssFramework : false;
-        $type = ($this->config->cssFramework) ? $this->config->cssFramework : $type;
+        $type = (isset($page->feature_cssFramework)) ? $page->feature_cssFramework : false;
+        $type = ($this->config->feature_cssFramework) ? $this->config->feature_cssFramework : $type;
         $type = (isset($options['type'])) ? $options['type']: $type;
         $type = strtolower($type);
         if ($type) {
             $rendererFile = "nav-renderer-$type.php";
-            if (file_exists($this->config->userCodePath."$rendererFile")) {
-                require_once ($this->config->userCodePath."$rendererFile");
+            if (file_exists($this->config->path_userCodePath."$rendererFile")) {
+                require_once ($this->config->path_userCodePath."$rendererFile");
                 return renderMenu($this, $page, $options);
 
             } elseif (file_exists(SYSTEM_PATH.$rendererFile)) {
@@ -418,7 +422,7 @@ EOT;
 		$nav = '';
 		$_nav = '';
 		
-		if ($mutliLang = $this->config->multiLanguageSupport) {
+		if ($mutliLang = $this->config->site_multiLanguageSupport) {
 			$currLang = $this->config->lang;
 		}		
 
@@ -449,7 +453,7 @@ EOT;
 			$liClass = $this->liClass;
 			if ($elem['isCurrPage']) {
 				$liClass .= ' curr active';
-				if ($this->config->selflinkAvoid) {
+				if ($this->config->feature_selflinkAvoid) {
                     $path = '#main';
                 }
 			} elseif ($elem['active']) {
@@ -505,7 +509,7 @@ EOT;
 		$found = false;
 		foreach($list as $key => $elem) {
 			if ($found || ($str == $elem['name']) || ($str == $elem['folder']) || ($str.'/' == $elem['folder'])) {
-				$folder = $this->config->pagesPath.$elem['folder'];
+				$folder = $this->config->path_pagesPath.$elem['folder'];
 				if (!$found && !file_exists($folder)) { // if folder doesen't exist, let it be created later in handleMissingFolder()
                     $found = true;
                     break;
@@ -515,7 +519,7 @@ EOT;
                     break;
 				}
 				
-				$dir = getDir($this->config->pagesPath.$elem['folder'].'*');	// check whether folder is empty, if so, move to the next non-empty one
+				$dir = getDir($this->config->path_pagesPath.$elem['folder'].'*');	// check whether folder is empty, if so, move to the next non-empty one
 				$nFiles = sizeof(array_filter($dir, function($f) {
                     return ((substr($f, -3) == '.md') || (substr($f, -5) == '.link') || (substr($f, -5) == '.html'));
 				}));
@@ -544,7 +548,7 @@ EOT;
 	
 	private function writeCache()
 	{
-		if ($this->caching) {
+		if ($this->site_enableCaching) {
 			if (!file_exists($this->cachePath)) {
 				mkdir($this->cachePath, 0770);
 			}
@@ -558,16 +562,16 @@ EOT;
 	
 	private function readCache()
 	{   // when cache can be used:
-        // - config>caching: true
+        // - config>site_enableCaching: true
         // - cached siteStructure exists
         // - cached siteStructure is newer than config/sitemap.txt
-        $skipElements = ['currPage', 'config', 'sitemapFile', 'caching'];
-		if ($this->caching) {
+        $skipElements = ['currPage', 'config', 'site_sitemapFile', 'site_enableCaching'];
+		if ($this->site_enableCaching) {
 			if (!file_exists($this->cacheFile)) {
 				return false;
 			}
 			$cacheTime = filemtime($this->cacheFile);
-			if ($cacheTime > filemtime($this->sitemapFile)) {
+			if ($cacheTime > filemtime($this->site_sitemapFile)) {
 				$site = unserialize(file_get_contents($this->cacheFile));
 				foreach ($site as $key => $value) {
 					if (!in_array($key, $skipElements)) {

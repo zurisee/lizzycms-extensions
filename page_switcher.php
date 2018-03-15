@@ -7,7 +7,11 @@
 
 if (!$GLOBALS['globalParams']['legacyBrowser']) {
     $this->page->addJsFiles("HAMMERJS");
-    $this->page->addJqFiles(["HAMMERJQ", "TOUCH_DETECTOR", "PAGE_SWITCHER", "JQUERY"]);
+    if ($this->config->feature_touchDeviceSupport) {
+        $this->page->addJqFiles(["HAMMERJQ", "TOUCH_DETECTOR", "PAGE_SWITCHER", "JQUERY"]);
+    } else {
+        $this->page->addJqFiles(["HAMMERJQ", "PAGE_SWITCHER", "JQUERY"]);
+    }
 }
 
 $nextLabel = $this->trans->getVariable('nextPageLabel');

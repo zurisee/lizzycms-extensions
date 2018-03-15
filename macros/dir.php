@@ -1,10 +1,12 @@
 <?php
+// @info: Reads a folder and renders a list of files to be downloaded or opened.
 
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
+//	$this->setMacroInfo($macroName, "Reads a folder and renders a list of files to be downloaded or opened.");
 
     $pattern = $this->getArg($macroName, 'pattern', 'The search-pattern with which to look for files (-> \'glob style\')', '*');
     $path0 = $this->getArg($macroName, 'path', 'Selects the folder to be read', '~page/');

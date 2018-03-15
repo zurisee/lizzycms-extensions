@@ -6,7 +6,6 @@
 	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
 	<link href="~sys/css/lizzy_basics.css" rel="stylesheet" />
 	<link href="~/css/_styles.css" rel="stylesheet" />
-	<script src="~sys/js/lizzylog.js"></script>
 {{^head_injections }}
 </head>
 <body class='{{ page_name_class }}{{^debug_class }}'>
@@ -28,7 +27,8 @@
 
 
 		<footer class='footer'>
-{{^ footer }}{{^ toggle-edit-mode }}{{ Log-in }}
+{{^ footer }}
+			<div id='loggedInUser'>{{^ toggle-edit-mode }}{{ Log-in }}</div>
 		</footer>
 
   </div><!-- /.page -->

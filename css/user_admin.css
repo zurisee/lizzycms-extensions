@@ -1,0 +1,212 @@
+
+/* --- Authentication ----- */
+
+
+
+.lzy-login-form,
+.lzy-signup-form {
+    margin: 1em 0;
+    border: 1px solid #ddd;
+    padding: 20px;
+    max-width: 400px;
+}
+
+.lzy-login-form input,
+.lzy-signup-form input {
+	width: 100%;
+    line-height: 1.5em;
+}
+.lzy-login-form > label,
+.lzy-signup-form > label {
+    display: block;
+    margin: 10px 0;
+}
+
+.lzy-signup-form button,
+.lzy-login-form button,
+.lzy-login-form-button {
+    min-width: 6em;
+    padding: 5px 1.5em;
+    margin-top: 10px;
+}
+.lzy-account-form-message {
+    margin-bottom: 1em;
+}
+
+.lzy-form-username-label > span,
+.lzy-form-password-label > span {
+	display: inline-block;
+    margin-right: 1em;
+}
+
+.lzy-form-password > input,
+.lzy-login-username > input {
+    padding: 5px 10px;
+}
+
+.lzy-form-show-password {
+    float: right;
+}
+.lzy-form-show-password a {
+    display: inline-block;
+}
+
+.lzy-textarea-label textarea {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    height: 5em;
+}
+/*
+
+.lzy-form-show-password label,
+.lzy-form-show-password input {
+    display: inline-block;
+}
+.lzy-form-show-password label {
+    width: auto;
+}
+.lzy-form-show-password input {
+    width: 1.5em;
+}
+*/
+
+.lzy-error-message {
+	display: block;
+	line-height: 1.4em;
+	padding: 2px 8px;
+	margin-bottom: 0.5em;
+	border: 1px solid #fdd;
+	background: #fee;
+}
+
+.lzy-account-form-wrapper output:empty {
+	display: none;
+}
+
+.lzy-login-submit-button,
+.lzy-signup-submit-button {
+    margin-top: 5px;
+}
+
+.lzy-account-form-wrapper input {
+    border: 0.2px solid #bbb;
+    padding: 3px 0.5em;
+    margin-top: 0.5em;
+}
+.lzy-account-form-wrapper input:focus {
+    box-shadow: 0 0 5px 2px #67770e;
+    outline: none;    
+}
+
+
+.lzy-account-form-notification {
+    color: red;
+    font-style: italic;
+}
+
+
+.lzy-login-multi-mode .lzy-login-form,
+.lzy-login-multi-mode .lzy-signup-form {
+    border: none;
+}
+
+.lzy-admin-info {
+    display: block;
+    border: 1px dotted green;
+    padding: 8px 10px;
+    background: #eef4cc;
+    margin: 10px 0;
+    font-size: 90%;
+}
+
+
+.lzy-logged-in-confirmation {
+    border: 1px solid #ddd;
+    padding: 2em;
+    
+}
+
+/*
+.lzy-form-show-password a,
+a.lzy-show-onetimelogin-info,
+a.lzy-show-un-pw-login-info,
+a.lzy-show-password-login-info,
+a.lzy-show-signup-password-info,
+a.lzy-show-signup-info
+*/
+.lzy-form-show-password a,
+.lzy-admin-show-info {
+    border-bottom: none;
+}
+.lzy-form-show-password {
+    height: 18px; /* height of icon */
+}
+
+/*input.lzy-login-email:not([value=""]):not(:focus):invalid{*/
+input.lzy-login-email:not([value=""]):not(:focus):not(:placeholder-shown):invalid {
+  background-color: #fee;
+}
+/*form input.lzy-login-email[type=email]:empty {*/
+/*
+form input.lzy-login-email[value=""] {
+    background: #fff;
+}
+form input.lzy-login-email[] {
+    background: #fee;
+}
+input.lzy-login-email[type=email]:invalid {
+    background: #fee;
+}
+input.lzy-login-email[type=email]:valid {
+    background: #efe;
+}
+*/
+
+::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+  text-align: right;
+  font-style: italic;
+  padding-right: 4px;
+  font-size: 90%;
+}
+::-moz-placeholder { /* Firefox 19+ */
+  text-align: right;
+  font-style: italic;
+  padding-right: 4px;
+  font-size: 90%;
+}
+:-ms-input-placeholder { /* IE 10+ */
+  text-align: right;
+  font-style: italic;
+  padding-right: 4px;
+  font-size: 90%;
+}
+:-moz-placeholder { /* Firefox 18- */
+  text-align: right;
+  font-style: italic;
+  padding-right: 4px;
+  font-size: 90%;
+}
+::placeholder { /* generic */
+  text-align: right;
+  font-style: italic;
+  padding-right: 4px;
+  font-size: 90%;
+}
+
+
+
+/* Add User*/
+.lzy-adduser-wrapper span {
+    display: inline-block;
+}
+.lzy-adduser-wrapper .lzy-adduser-mail {
+    width: 15em;
+}
+
+.lzy-admin-task-response,
+.lzy-adduser-wrapper {
+    padding: 15px;
+    border: 1px solid #ddd;
+    margin-top: 4em;
+}

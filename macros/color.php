@@ -1,5 +1,8 @@
 <?php
 
+// @info: Renders text in the color defined in the second argument.
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {

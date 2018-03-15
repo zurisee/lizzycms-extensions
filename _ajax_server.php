@@ -8,7 +8,7 @@
  *  Protocol:
 
 conn
-	GET:	?conn
+	GET:	?conn=list-of-editable-fields
 
 upd
 	GET:	?upd=time
@@ -20,7 +20,8 @@ unlock
 	GET:	?unlock=id
 
 save
-	POST:	save => data
+	GET:	?save=id
+    POST:   text => data
 
 get
 	GET:	?get=id
@@ -59,12 +60,14 @@ class AjaxServer
 {
 	public function __construct()
 	{
+        $this->terminatePolling = false;
 		if (sizeof($_GET) < 1) {
 			exit('Hello, this is '.basename(__FILE__));
 		}
 		session_start();
 		if (!isset($_SESSION['lizzy']['userAgent'])) {
             $this->clientID = '????';
+            $this->user = '????';
             $this->mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
             exit('failed');
         }
@@ -120,8 +123,8 @@ class AjaxServer
 			exit;
 		}
 
-		if (isset($_GET['conn'])) {	// initial interaction with client, defines used ids
-			$this->initConnection();
+        if ($ids = $this->get_request_data('conn')) {	    // conn  initial interaction with client, defines used ids
+			$this->initConnection( $ids );
 			exit;
 		}
 
@@ -153,10 +156,14 @@ class AjaxServer
 			$this->info();
 		}
 
+		if ($this->get_request_data('end') !== null) {	// end update
+			$this->endPolling();
+		}
+
 		if ($this->get_request_data('getfile') !== null) {	// send md-file
 			$md = '';
-			if (isset($_POST['filename'])) {
-			    $filename = $_POST['filename'];
+			if (isset($_POST['lzy_filename'])) {
+			    $filename = $_POST['lzy_filename'];
                 $approot = trunkPath($_SERVER['SCRIPT_FILENAME']);
                 if ($filename == 'sitemap') {
 			        $filename = $approot . 'config/sitemap.txt';
@@ -196,7 +203,7 @@ EOT;
 
 
 	//---------------------------------------------------------------------------
-	private function initConnection() {
+	private function initConnection($ids) {
 		session_start();
 		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
             $this->mylog("*** Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
@@ -205,6 +212,7 @@ EOT;
 
         $pagePath = $_SESSION['lizzy']['pagePath'];
         $pathToPage = $_SESSION['lizzy']['pathToPage'];
+
         $this->mylog("=======");
         $this->mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent} (pagePath: $pagePath)");
 
@@ -220,13 +228,23 @@ EOT;
 		session_write_close();
 
         $this->mylog("Database File: $dbFile");
-        $this->db = new DataStorage($dbFile, $this->sessionId);
+        $this->db = new DataStorage($dbFile, $this->sessionId, true);
+
+        $ids = explode(',', rtrim($ids, ','));
+        $this->db->initRecs($ids);
 
 		$this->db->unlock(true);
 		exit('ok#conn');
 	} // initConnection
 
 
+
+    private function endPolling()
+    {
+        $this->terminatePolling = true;
+        $this->mylog("termination initiated");
+        exit('#termination initiated');
+    }
 
 	//---------------------------------------------------------------------------
 	private function update($pollDuration = 60)
@@ -236,7 +254,8 @@ EOT;
         $tClient = $this->getLastUpdated();
         for ($i=0; $i<$pollCycles; $i++) {
             if (!isset($this->db)) {
-                exit('{}#Error: db not initialized');
+                sleep(1);
+                exit('#Error: db not initialized');
             }
             $tData = $this->db->lastModified();
             if ($tData > $tClient) {
@@ -251,6 +270,9 @@ EOT;
                 if ($id = $this->db->unlockTimedOut(LOCK_TIMEOUT)) {
                     $this->mylog("% update ########## FORCED UNLOCK: $id");
                 }
+            }
+            if ($this->terminatePolling) {
+                exit('#long-polling ended');
             }
 			sleep(LONG_POLL_FREQ);
 		}
@@ -317,8 +339,10 @@ EOT;
 		}
 		$text = $this->get_request_data('text');
 		$this->mylog("save: $id -> [$text]");
-		$this->db->write($id, $text);
-		$this->db->unlock($id);
+		if (!$this->db->write($id, $text)) {
+            $this->mylog("### save failed!: $id -> [$text]");
+        }
+		$this->db->unlock(true); // unlock all owner's locks
 		$data = $this->db->read();
 
 		exit($this->prepareClientData($data,  true).'#save');

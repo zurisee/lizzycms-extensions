@@ -1,5 +1,8 @@
 <?php
 
+// @info: Inserts some (horizontal) space of given width.
+
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
@@ -9,6 +12,6 @@ $this->addMacro($macroName, function () {
     $width = $this->getArg($macroName, 'width', 'Width of inserted space. Use any form allowed in CSS, e.g. 3em, 20px or 1cm', '');
 
     $width = ($width) ? " style='width:$width'" : '';
-	$str = "<span class='lizzy-h-space'$width></span>";
+	$str = "<span class='lzy-h-space'$width></span>";
 	return $str;
 });

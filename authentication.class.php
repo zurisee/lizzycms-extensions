@@ -4,63 +4,142 @@ class Authentication
 {
 	public $message = '';
 	private $userRec = false;
+    public $mailIsPending = false;
 
     public function __construct($usersFile, $config)
+//    public function __construct($usersFile, $that)
     {
+//        $this->config = $that->config;
+//        $this->localCall = $that->config->isLocalhost;
+//        $this->page = $that->page;
+//        $this->trans = $that->trans;
         $this->config = $config;
         $this->localCall = $config->isLocalhost;
+        $this->userDB = $usersFile;
     	$this->knownUsers = getYamlFile($usersFile);
         $this->loginTimes = (isset($_SESSION['lizzy']['loginTimes'])) ? unserialize($_SESSION['lizzy']['loginTimes']) : array();
 		if (!isset($_SESSION['lizzy']['user'])) {
 			$_SESSION['lizzy']['user'] = false;
 		}
+        setStaticVariable('lastLoginMsg', '');
     } // __construct
 
 
 
 
-    public function authenticate($credentials = false, $trans = null)
+    public function authenticate()
     {
-        $this->trans = $trans;
-        $uname = 'unknown';
-        $emailRequest = false;
-        if (!$credentials) {
-            if (isset($_POST['onetime-code']) && isset($_POST['login_user'])) {     // user sent accessCode
-                $this->validateOnetimeAccessCode(false, $_POST['onetime-code']);
-
-            } elseif (isset($_POST['login_name']) && isset($_POST['login_password'])) { // user sent un & pw
-                $credentials = array('username' => $_POST['login_name'], 'password' => $_POST['login_password']);
-                $uname = (isset($_POST['login_user'])) ?$_POST['login_user'] : '';
-
-            } elseif (isset($_POST['login_email'])) {           // user sent email
-                $emailRequest = $_POST['login_email'];
-            }
-        }
-
         $ip = getClientIP();
-        $uname .= " [$ip]";
-        // Case request for one-time-url-passcode -> email supplied as key:
-        if ($emailRequest) {
+        $uname = "unknown [$ip]";
+
+        $res = null;
+        if (isset($_POST['lzy-onetime-code']) && isset($_POST['lzy-login-user'])) {                         // user sent accessCode
+            $str = $this->validateOnetimeAccessCode(false, $_POST['lzy-onetime-code']);
+            $res = [false, $str, 'Override'];
+
+        } elseif (get_post_data('lzy-user-signup') == 'signup-email') {      // user sent email for signing up
+            $email = get_post_data('lzy-self-signup-email-email');
+            $group = getStaticVariable('self-signup-to-group');
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $adm = new AdminTasks($this);
+            $str = $adm->sendSignupMail($email, $group);
+            $this->mailIsPending = true;
+            $res = [false, $str, 'Override'];
+
+        } elseif (isset($_POST['lzy-login-username']) && isset($_POST['lzy-login-password-password'])) {    // user sent un & pw
+            $credentials = array('username' => $_POST['lzy-login-username'], 'password' => $_POST['lzy-login-password-password']);
+            if (!$this->validateCredentials($credentials)) {
+                return null;
+            }
+
+        } elseif (isset($_POST['lzy-onetimelogin-email-email'])) {                                          // user sent email for logging in
+            $emailRequest = $_POST['lzy-onetimelogin-email-email'];
             $res = $this->checkAccessCode($emailRequest);
             writeLog("one time link sent: $uname", LOGIN_LOG_FILENAME);
-            if ($res === false) {
-                return false;
+            if ($res !== false) {
+                $this->mailIsPending = true;
+                $res = [false, $res, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
+            }
+        }
+        if ($res === null) {        // no login attempt detected -> check whether already logged in:
+            $this->getLoggedInUser();
+            $res = (isset($this->userRec['name'])) ? $this->userRec['name'] : false;
+        }
+        return $res;
+    }
+
+
+
+
+    public function adminActivities()
+    {
+        if (!$this->isAdmin() || !isset($_POST['lzy-user-admin'])) {
+            return false;
+        }
+
+        require_once SYSTEM_PATH.'admintasks.class.php';
+        $adm = new AdminTasks($this);
+
+        $requestType = get_post_data('lzy-user-admin');
+        $res = false;
+        if ($requestType == 'add-users') {                // admin is adding users
+            $emails = get_post_data('lzy-add-users-email-list');
+            $group = get_post_data('lzy-add-user-group');
+            $str = $adm->addUsers($emails, $group);
+            $res = [false, $str, 'Override'];
+
+        } elseif ($requestType == 'add-user') {           // admin is adding a user
+            $email = get_post_data('lzy-add-user-email');
+            $un = get_post_data('lzy-add-user-username');
+            $key = ($un) ? $un : $email;
+            $rec[$key] = [
+                'email' => $email,
+                'group' => get_post_data('lzy-add-user-group'),
+                'username' => $un,
+                'displayName' => get_post_data('lzy-add-user-displayname'),
+                'emaillist' => get_post_data('lzy-add-user-emaillist')
+            ];
+            $str = $adm->addUser($rec);
+            $res = [false, $str, 'Override'];
+
+
+        } elseif ($requestType == 'change-password') {           // user is changing his/her password:
+            $user = get_post_data('lzy-user');
+            $password = get_post_data('lzy-change-password-password');
+            $password2 = get_post_data('lzy-change-password2-password2');
+            $res = $this->isValidPassword($password, $password2);
+            if ($res == '') {
+                $str = $adm->changePassword($user, $password);
             } else {
-                return [false, $res];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
-                // so, if we get to this point, user has NOT yet been authenticated.
+                $this->message = "<div class='lzy-adduser-wrapper'>$res</div>";
+                return false;
             }
+            $res = [false, $str, 'Override'];
 
-		} elseif ($credentials) {
-            $this->validateCredentials($credentials);
-            if ($this->userRec['name'] && getUrlArg('login')) {
-                reloadAgent();  // to get rid of '?login'
-            }
 
-        } else {
-            $this->getLoggedInUser();   // check whether user is already logged in
-		}
-		return (isset($this->userRec['name'])) ? $this->userRec['name'] : false;
-	} // authenticate
+        } elseif ($requestType == 'lzy-change-username') {        // user changes username
+            $username = get_post_data('lzy-change-user-username');
+            $displayName = get_post_data('lzy-change-user-displayname');
+            $str = $adm->changeUsername($username, $displayName);
+            $res = [false, $str, 'Override'];
+
+
+        } elseif ($requestType == 'lzy-change-email') {           // user changes mail address
+            $email = get_post_data('lzy-change-user-email-email');
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $adm = new AdminTasks($this);
+            $str = $adm->sendChangeMailAddress_Mail($email);
+            $this->mailIsPending = true;
+            $res = [false, $str, 'Override'];
+
+
+        } elseif ($requestType == 'lzy-delete-account') {           // user deletes account
+            $str = $adm->deleteUserAccount();
+            $res = [false, $str, 'Override'];
+        }
+        return $res;
+    }
+
 
 
 
@@ -69,33 +148,40 @@ class Authentication
 	private function validateCredentials($credentials)
 	{
         $requestingUser = strtolower($credentials['username']);
-        if (($requestingUser == 'admin') && $this->localCall && !$this->config->autoAdminOnLocalhost) { // allow empty pw for admin on localhost
+
+        // admin login on local host:
+        if (($requestingUser == 'admin') && $this->localCall && !$this->config->admin_autoAdminOnLocalhost) { // allow empty pw for admin on localhost
             $this->setUserAsLoggedIn('admin', null, 'Localhost Admin');
             reloadAgent();
             return;
         }
 
-		$rec = (isset($this->knownUsers[$requestingUser])) ? $this->knownUsers[$requestingUser] : [];
-		$rec['name'] = $requestingUser;
-		$correctPW = (isset($rec['password'])) ? $rec['password'] : '';
-		$providedPW = isset($credentials['password']) ? $credentials['password'] : '####';
+		if (isset($this->knownUsers[$requestingUser])) {    // user found in user-DB:
+            $rec = $this->knownUsers[$requestingUser];
+            $rec['name'] = $requestingUser; //???
+            $correctPW = (isset($rec['password'])) ? $rec['password'] : '';
+            $providedPW = isset($credentials['password']) ? trim($credentials['password']) : '####';
 
-		if (password_verify($providedPW, $correctPW)) {  // login succeeded
-            writeLog("logged in: $requestingUser [".getClientIP(true).']', LOGIN_LOG_FILENAME);
-		    $this->setUserAsLoggedIn($requestingUser, $rec);
+            // check username and password:
+            if (password_verify($providedPW, $correctPW)) {  // login succeeded
+                writeLog("logged in: $requestingUser [" . getClientIP(true) . ']', LOGIN_LOG_FILENAME);
+                $this->setUserAsLoggedIn($requestingUser, $rec);
+                return true;
 
-		} else {                                        // login failed: pw wrong
-            $rep = '';
-            if ($this->handleFailedLogins()) {
-                $rep = ' REPEATED';
+            } else {                                        // login failed: pw wrong
+                $rep = '';
+                if ($this->handleFailedLogins()) {
+                    $rep = ' REPEATED';
+                }
+                $this->monitorFailedLoginAttempts();
+                writeLog("*** Login failed$rep (wrong pw): $requestingUser [" . getClientIP(true) . ']', LOGIN_LOG_FILENAME);
+                $this->message = '{{ Login failed }}';
+                setStaticVariable('lastLoginMsg', '{{ Login failed }}');
+                $this->unsetLoggedInUser();
             }
-            $this->monitorFailedLoginAttempts();
-            writeLog("*** Login failed$rep (wrong pw): $requestingUser [".getClientIP(true).']', LOGIN_LOG_FILENAME);
-			$this->message = '{{ Login failed }}';
-
-            $this->unsetLoggedInUser();
-		}
-	} // validateCredentials
+        }
+        return false;
+    } // validateCredentials
 
 
 
@@ -135,6 +221,7 @@ class Authentication
             return false;
         }
         $submittedEmail = strtolower($emailRequest);
+        $group = '';
         $found = false;
         $user = '';
         if (isset($this->knownUsers[$submittedEmail])) {    // check whether it's a username rather than an email
@@ -174,7 +261,7 @@ class Authentication
                         }
                         $emails = array_merge($emails, $e2);
                         foreach ($emails as $email) {
-                            if (!$email) { continue; }
+                            if (!trim($email)) { continue; }
                             $email = strtolower(trim(preg_replace('/.*\<([^\>]+)\>.*/', "$1", $email)));
                             if (($email{0} != '#') && ($email == $submittedEmail)) {
                                 $found = true;
@@ -192,54 +279,16 @@ class Authentication
             return false;
         }
 
-        $accessCodeValidyTime = isset($rec['accessCodeValidyTime']) ? $rec['accessCodeValidyTime'] : $this->config->defaultAccessLinkValidyTime;
-        $validUntil = time() + $accessCodeValidyTime;
-        setlocale (LC_TIME, 'de_DE.utf-8');     //??? should adapt to ... what?
-        $validUntilStr = strftime('%R  (%x)', $validUntil);
+        require_once SYSTEM_PATH.'admintasks.class.php';
+        $adm = new AdminTasks();
 
-        $hash = $this->createHash();
+        $accessCodeValidyTime = isset($rec['accessCodeValidyTime']) ? $rec['accessCodeValidyTime'] : $this->config->admin_defaultAccessLinkValidyTime;
+        $message = $adm->sendCodeByMail($submittedEmail, 'email-login', $accessCodeValidyTime, $name, $user, $group);
 
-        $onetime[time()] = ['hash' => $hash, 'user' => $name, 'validUntil' => $validUntil];
-        writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
-
-        $url = $globalParams['pageUrl'].$hash . '/';
-        $subject = "[{{ site_title }}] {{ Email Access-Link Subject }} {$globalParams['host']}";
-        $message = "{{ Email Access-Link1 }} $url {{ Email Access-Link2 }} $hash {{ Email Access-Link3 }} \n";
-
-        $this->sendMail($submittedEmail, $subject, $message);
-
-
-
-        $message = <<<EOT
-
-    <div class='onetime-link-sent'>
-    {{ onetime access link sent }}
-
-    <form class="onetime-code-entry" method="post">
-        <label for="">{{ enter onetime code }}</label>
-        <input type="hidden" value="$user" name="login_user" />
-        <input id="ontime-code" type="text" name="onetime-code" style="text-transform:uppercase;width:6em;" />
-        <input type="submit" class='ios_button' value="{{ submit }}" />
-    </form>
-
-    <p> {{ onetime access link sent2 }} $validUntilStr</p>
-    <p> {{ onetime access link sent3 }}</p>
-    </div>
-
-EOT;
-
-            return $message;
+        return $message;
     } // checkAccessCode
 
 
-
-
-    private function createHash($size = 6)
-    {
-        $hash = chr(rand(65, 90));
-        $hash .= strtoupper(substr(sha1(rand()), 0, $size-1));
-        return $hash;
-    } // createHash
 
 
 
@@ -275,7 +324,7 @@ EOT;
             return $pagePath;
         }
 
-        $tlim = time() - 3600;  // max defaultAccessLinkValidyTime
+        $tlim = time() - 3600;  // max admin_defaultAccessLinkValidyTime
         $found = false;
         foreach ($onetime as $t => $rec) {  // find matching entry in list of one-time-hashes
             if ($t < $tlim) {
@@ -289,24 +338,38 @@ EOT;
                 break;
             }
         }
+
         if (isset($this->knownUsers[$user])) {
             $rec = $this->knownUsers[$user];
+            if (!isset($rec['user'])) {
+                $rec['user'] = $user;
+            }
             if (isset($rec['accessCodeValidyTime'])) {
                 $accessCodeValidyTime = $rec['accessCodeValidyTime'];
             } else {
-                $accessCodeValidyTime = $this->config->defaultAccessLinkValidyTime;
+                $accessCodeValidyTime = $this->config->admin_defaultAccessLinkValidyTime;
             }
             $tlim = time() - $accessCodeValidyTime;
-            $aaa = strftime('%c', $tlim);
             if ($t < $tlim) {
                 $found = false;
                 $user = false;
                 unset($onetime[$t]);
             }
+
+        } elseif (isset($rec['mode']) && ($rec['mode'] == 'email-signup')) {
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $adm = new AdminTasks($this);
+            $adm->createGuestUserAccount($rec['user']);
+
+        } elseif (isset($rec['mode']) && ($rec['mode'] == 'email-change-email')) {
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $adm = new AdminTasks($this);
+            $adm->changeEMail($rec['user']);
         }
 
         writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
         if ($found) {
+            $this->knownUsers[$rec['user']] = ['email' => $rec['user'], 'group' => $rec['group']];
             $displayName = $this->setUserAsLoggedIn($user);
 
             if ($displayName) {
@@ -314,6 +377,7 @@ EOT;
             }
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
             reloadAgent('~/'.$pagePath); // access granted, remove hash-code from url
+//            return '{{ one-time-access-code: success }}';
         }
         $rep = '';
         if ($this->handleFailedLogins()) {
@@ -350,7 +414,8 @@ EOT;
 
 
 
-    private function setUserAsLoggedIn($user, $rec = null, $displayName = '')
+    public function setUserAsLoggedIn($user, $rec = null, $displayName = '')
+//    private function setUserAsLoggedIn($user, $rec = null, $displayName = '')
 	{
 	    if (($rec == null) && isset($this->knownUsers[$user])) {
 	        $rec = $this->knownUsers[$user];
@@ -363,6 +428,8 @@ EOT;
         $this->loginTimes[$user] = time();
         session_regenerate_id();
         $_SESSION['lizzy']['user'] = $user;
+        $GLOBALS['globalParams']['isAdmin'] = $this->isAdmin();
+        $_SESSION['lizzy']['isAdmin'] = $this->isAdmin();
         $_SESSION['lizzy']['loginTimes'] = serialize($this->loginTimes);
 
         if ($displayName) {
@@ -381,7 +448,7 @@ EOT;
 
 
 
-    private function getLoggedInUser()
+    public function getLoggedInUser( $returnRec = false )
 	{
 		$rec = false;
 		$user = isset($_SESSION['lizzy']['user']) ? $_SESSION['lizzy']['user'] : false;
@@ -399,16 +466,27 @@ EOT;
                 }
             }
 		}
-		$this->userRec = $rec;
-		return ($rec != false);
+		if ($returnRec) {
+		    return $rec;
+
+        } else {
+            $this->userRec = $rec;
+            return ($rec != false);
+        }
     } // getLoggedInUser
 
 
 
 
+    public function getKnownUsers()
+    {
+        return $this->knownUsers;
+    }
+
+
     public function checkGroupMembership($requiredGroup)
     {
-        if ($this->localCall && $this->config->autoAdminOnLocalhost) {	// no restriction
+        if ($this->localCall && $this->config->admin_autoAdminOnLocalhost) {	// no restriction
 	        return true;
         }
 
@@ -431,7 +509,7 @@ EOT;
 
     public function checkAdmission($lockProfile)
 	{
-		if (($lockProfile == false) || ($this->localCall && $this->config->autoAdminOnLocalhost)) {	// no restriction
+		if (($lockProfile == false) || ($this->localCall && $this->config->admin_autoAdminOnLocalhost)) {	// no restriction
 			return true;
 		}
 		
@@ -442,7 +520,7 @@ EOT;
             $rec['name'] = '';
         }
 
-        if ($this->isGroupMember($rec['group'], 'admins')) { // admins have access by default
+        if (isset($rec['group']) && $this->isGroupMember($rec['group'], 'admins')) { // admins have access by default
 		    return true;
         }
 
@@ -478,362 +556,6 @@ EOT;
 
 
 
-    public function renderForm($message = '', $warning = '')
-    {
-        $warning = ($warning) ? $warning : $this->message;
-		$this->page = new Page;
-		if ($this->config->permitOneTimeAccessLink) {
-		    $str = $this->createMultimodeLoginForm($message, $warning);
-        } else {
-		    $str = $this->createPWAccessForm($message, $warning);
-        }
-
-		$this->page->addOverride($str);
-
-        return $this->page;
-    } // authForm
-
-
-
-    //-------------------------------------------------------------
-    private function createMultimodeLoginForm($message, $warning)
-    {
-        global $globalParams;
-        if ($message) {
-            $message = "<div class='lizzy-login-message'>$message</div>";
-        }
-        if (!$warning) {
-            $warning = $this->message;
-        }
-        $subject = '{{login-problems}}';
-        $body = '%0a%0a{{page}}:%20' . $globalParams['pageUrl'];
-        $loginProblemMail = "{{ concat('forgot password1', webmaster-email,'?subject=$subject&body=$body', 'forgot password2') }}";
-        $html = <<<EOT
-
-<div class='lizzy-login-wrapper'>
-    <h2>{{ Login }}</h2>
-    $message
-
-    <div class="lizzy-login">
-        <input class='lizzy-login-tab-radio lizzy-login-tab-radio1' id='lizzy-login-without_password' type='radio' name='lizzy-login-tab-radio1' checked="checked" /><input class='lizzy-login-tab-radio lizzy-login-tab-radio2' id='lizzy-login-with_password' type='radio' name='lizzy-login-tab-radio1' />
-    
-        <nav class="lizzy-login-tab-labels">
-            <ul>
-                <li class='lizzy-login-tab-label1'><label for='lizzy-login-without_password'>{{ login without password }}</label></li>
-                <li class='lizzy-login-tab-label2'><label for='lizzy-login-with_password'>{{ login with password }}</label></li>
-    
-            </ul>
-        </nav>
-        <div class="lizzy-login-tabs">
-            <div class="lizzy-login-tab1">
-    
-                    <form action="./" method="POST">
-                        <div class='login_message'>$warning</div>
-                        <label for="fld_name" id="lbl_login_user"><span class='c1'>{{ Login-Email }}:</span><a href="#" id="info-onetimelogin" title="{{ info-onetimelogin-title }}">&#9432;</a> <span id="info-onetimelogin-text" class="login-info-panel dispno">{{ info-onetimelogin }}</span></label>
-                        <input type="text" id="login_email" name="login_email" required aria-required="true" placeholder="name@domain.net">
-                        <output id="msg_un" class='err_msg' aria-live="polite" aria-relevant="additions"></output>
-                               
-                        <button class="ios_button submit" name="btn_submit" value="submit" id="btn_submit" >{{ onetime-link-send }}</button>
-                    </form>
-                
-            </div><!-- / .lizzy-login-tab1 -->
-            
-            <div class="lizzy-login-tab2">
-               
-                    <form action="./" method="POST">
-                        <div class='login_message'>$warning</div>
-                        <label for="fld_name" id="lbl_login_user2"><span class='c1'>{{ Username }}:</span><a href="#" id="info-onetimelogin2" title="{{ info-onetimelogin-title2 }}">&#9432;</a> <span id="info-onetimelogin-text2" class="login-info-panel dispno">{{ info-onetimelogin2 }}</span></label>
-                        <input type="text" id="fld_username" name="login_name" required aria-required="true" placeholder="name@domain.net">
-                        <output id="msg_un2" class='err_msg' aria-live="polite" aria-relevant="additions"></output>
-                        
-                        <label for="fld_password" id="lbl_login_password"><span class='c1'>{{ Password }}:</span><a href="#" id="password-alternative" title="{{ password-alternative-title }}">&#9432;</a> 
-                        <div id="show_password"><input type="checkbox" id="fld_show_password"><label for="fld_show_password">{{ Login show password }}</label></div></label>
-                        <span id="info-password-alternative-text" class="login-info-panel dispno">{{ password-info }}</span>
-                        <input type="password" id="fld_password" name='login_password' >
-                        <output id="msg_pw" class='err_msg2' aria-live="polite" aria-relevant="additions"></output>
-                        
-                        <div class="lizzi-login-no-password">$loginProblemMail</div>
-                        <button class="ios_button submit" name="btn_submit" value="submit" id="btn_submit2">{{ onetime-link-send }}</button>
-                    </form>
-    
-            </div><!-- / .lizzy-login-tab2 -->
-    
-        </div><!-- / .lizzy-login-tabs -->
-    
-    </div><!-- / .lizzy-login -->
-</div><!-- / .login-wrapper -->
-
-
-EOT;
-
-        $jq = <<<EOT
-	$('#login_email').focus();
-	$('#fld_show_password').click(function(e) {
-	    if ($('#fld_password').attr('type') == 'text') {
-    	    $('#fld_password').attr('type', 'password');
-    	} else {
-    	    $('#fld_password').attr('type', 'text');
-    	} 
-	});
-	$('#info-onetimelogin').click(function(e) {
-	    $('#info-onetimelogin-text').toggleClass('dispno');
-	});
-	$('#info-onetimelogin2').click(function(e) {
-	    $('#info-onetimelogin-text2').toggleClass('dispno');
-	});
-	$('#password-alternative').click(function(e) {
-	    $('#info-password-alternative-text').toggleClass('dispno');
-	});
-	$('#one-time-access-link').click(function(e) {
-		e.preventDefault();
-	    var loginEmail = $('#fld_username').val();
-	    if (loginEmail.match(/[^@]+@[^@]+\.\w+/)) {
-	        console.log('email address looks good');
-	    } else {
-	        $('#lbl_login_user .err_msg').text('{{ email required for one-time-access-link }}');
-        	$('#fld_username').focus();
-	    }
-	});
-	$('#btn_submit').click(function(e) {
-		e.preventDefault();
-		$( this ).prop('disabled', true);
-		var url = window.location.href;
-		if (!(url.match(/^https:\/\//) || url.match(/^http:\/\/localhost/) || url.match(/^http:\/\/192\.168/) )) {
-			alert('{{ Warning insecure connection }}');
-			return;
-		}
-		$('.lizzy-login-tab1 form').attr('action', url);
-		$("#lbl_login_user output").text('');
-		$("#lbl_login_password output").text('');
-		var un = $('#login_email').val();
-		if (!un) {
-			$("#msg_un").text('{{ Err empty email }}');
-    		$( this ).prop('disabled', false);
-			return;
-		}
-		if (false && (location.protocol != 'https:')) {
-			alert('No HTTPS Connection!');
-			return;
-		}
-		$('.lizzy-login-tab1 form').submit();
-	});
-
-
-	$('#btn_submit2').click(function(e) {
-		e.preventDefault();
-		$( this ).prop('disabled', true);
-		var url = window.location.href;
-		if (!(url.match(/^https:\/\//) || url.match(/^http:\/\/localhost/) || url.match(/^http:\/\/192\.168/) )) {
-    		$( this ).prop('disabled', false);
-			alert('{{ Warning insecure connection }}');
-			return;
-		}
-		$('.lizzy-login-wrapper form').attr('action', url);
-		$("#lbl_login_user output").text('');
-		$("#lbl_login_password output").text('');
-		var un = $('#fld_username').val();
-		var pw = $('#fld_password').val();
-		if (!un) {
-			$("#msg_un2").text('{{ Err empty username or email }}');
-    		$( this ).prop('disabled', false);
-			return;
-		}
-		if (!pw) {
-		    $('#fld_password').focus();
-    		$( this ).prop('disabled', false);
-		    return;
-		}
-		if (false && (location.protocol != 'https:')) {
-			alert('No HTTPS Connection!');
-			return;
-		}
-		$('.lizzy-login-tab2 form').submit();
-		
-	});
-    $('.lizzy-login-tab-label1').click(function() {
-        setTimeout(function(){ $('#login_email').focus(); }, 20);
-    });
-    $('.lizzy-login-tab-label2').click(function() {
-        setTimeout(function(){ $('#fld_username').focus(); }, 20);
-    });
-
-EOT;
-        $this->page->addJQ($jq);
-
-        $css = <<<EOT
-.lizzy-login-wrapper {
-    width: 27em;
-    max-width: 100%;
-    min-width:   19em;
-}
-.lizzy-login-wrapper form {
-    border: none;
-}
-
-nav.lizzy-login-tab-labels {
-  margin-bottom: 0!important; }
-
-.lizzy-login-message {
-    margin-bottom: 1em; }
-.lizzy-login-tabs {
-  border: 1px solid #ddd;
-  padding: 15px; 
-  margin-top: -4px;}
-
-.lizzy-login-tab-radio, .lizzy-login-tabs > div {
-  display: none; }
-
-.lizzy-login-tab-radio1:checked ~ .lizzy-login-tabs .lizzy-login-tab1, 
-.lizzy-login-tab-radio2:checked ~ .lizzy-login-tabs .lizzy-login-tab2 {
-  display: block; }
-
-  .lizzy-login-tab-labels ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    font-size: 0; }
-    .lizzy-login-tab-labels ul li {
-      padding: 0;
-      margin: 0;
-      font-size: 12pt; }
-      .lizzy-login-tab-labels ul li label {
-        float: left;
-        padding: 15px 25px;
-        border: 1px solid #ddd;
-        border-bottom: 0;
-        background: #eee;
-        color: #444; 
-        border-radius: 0.7em 0.7em 0 0;}
-        .lizzy-login-tab-labels ul li label:hover {
-          background: #ddd; }
-        .lizzy-login-tab-labels ul li label:active {
-          background: #fff; }
-      .lizzy-login-tab-labels ul li:not(:last-child) label {
-        border-right-width: 0; }
-
-.lizzy-login-tab-radio1:checked ~ nav .lizzy-login-tab-label1 label, 
-.lizzy-login-tab-radio2:checked ~ nav .lizzy-login-tab-label2 label {
-    background: white;
-    color: #111;
-    position: relative; }
-.lizzy-login-tab-radio1:checked ~ nav .lizzy-login-tab-label1 label:after, 
-.lizzy-login-tab-radio2:checked ~ nav .lizzy-login-tab-label2 label:after {
-      content: '';
-      display: block;
-      position: absolute;
-      height: 2px;
-      width: 100%;
-      background: #fff;
-      left: 0;
-      bottom: -1px; }
-.lizzi-login-no-password {
-    margin: 1em 0;
-     text-align: right;}
-.lizzy-login-tab-labels ul li {
-    width: 50%;}
-.lizzy-login-tab-labels ul li label {
-    width: 100%;}
-
-
-
-@media screen and (max-width : 480px) {
-    .lizzy-login-tab-labels label {
-        font-size: 4.5vw;
-    }
-}
-
-EOT;
-
-        $this->page->addCss($css);
-
-        $html = preg_replace("/\n\s*/m", "\n", $html);  // make sure the MD-compiler doesn't get in the way
-        $html = preg_replace("/\n\s*\n/m", "\n", $html);  // make sure the MD-compiler doesn't get in the way
-        return $html;
-    } // createOneTimeAccessForm
-
-
-    //-------------------------------------------------------------
-    private function createPWAccessForm($message, $warning)
-    {
-        if ($message) {
-            $message = "<p>$message</p>";
-        }
-        if (!$warning) {
-            $warning = $this->message;
-        }
-        $str = <<<EOT
-
-<div class='login_wrapper'>
-    <h2>{{ Login }}</h2>
-    $message
-    <form action="./" method="POST">
-       <div class='login_message'>$warning</div>
-       <label for="fld_name" id="lbl_login_user"><span class='c1'>{{ Username }}:</span>
-            <input type="text" id="fld_username" name="login_user" required aria-required="true">
-            <output class='err_msg' aria-live="polite" aria-relevant="additions"></output>
-        </label>
-        <label for="fld_password" id="lbl_login_password"><span class='c1'>{{ Password }}:</span>
-            <input type="password" id="fld_password" name='login_password' required aria-required="true">
-            <output class='err_msg' aria-live="polite" aria-relevant="additions"></output>
-        </label>
-        <button class="ios_button" name="btn_submit" value="submit" id="btn_submit">{{ Login }}</button>
-    </form>
-</div>
-
-EOT;
-
-        $jq = <<<EOT
-	$('#fld_username').focus();
-	$('#btn_submit').click(function(e) {
-		e.preventDefault();
-		var url = window.location.href;
-		if (!(url.match(/^https:\/\//) || url.match(/^http:\/\/localhost/) || url.match(/^http:\/\/192\.168/) )) {
-			alert('{{ Warning insecure connection }}');
-			return;
-		}
-		$('.login_wrapper form').attr('action', url);
-		$("#lbl_login_user output").text('');
-		$("#lbl_login_password output").text('');
-		var un = $('#fld_username').val();
-		var pw = $('#fld_password').val();
-		console.log('un: '+un+' pw: '+pw);
-		if (!un) {
-			$("#lbl_login_user output").text('{{ Err empty username }}');
-			return;
-		}
-		if (!pw) {
-			$("#lbl_login_password output").text('{{ Err empty password }}');
-			return;
-		}
-		if (false && (location.protocol != 'https:')) {
-			alert('No HTTPS Connection!');
-			return;
-		}
-		$('.login_wrapper form').submit();
-	});
-EOT;
-        $this->page->addJQ($jq);
-        return $str;
-    } // createPWAccessForm
-
-
-
-    //-------------------------------------------------------------
-    private function sendMail($to, $subject, $message)
-    {
-        $from = isset($this->config->webmasterEmail) ? $this->config->webmasterEmail : 'webmaster@domain.net';
-        $this->pendingMail = ['from' => $from, 'to' => $to, 'subject' => $subject, 'message' => $message];
-    } // sendMail
-
-
-
-    //-------------------------------------------------------------
-    public function getPendingMail()
-    {
-        return (isset($this->pendingMail)) ? $this->pendingMail : null;
-    } // getPendingMail
-
-
 
     //-------------------------------------------------------------
     public function logout()
@@ -856,6 +578,8 @@ EOT;
         $this->userRec = null;
         $_SESSION['lizzy']['user'] = false;
         $_SESSION['lizzy']['userDisplayName'] = false;
+        $_SESSION['lizzy']['isAdmin'] = false;
+        $GLOBALS['globalParams']['isAdmin'] = false;
     } // unsetLoggedInUser
 
 
@@ -884,6 +608,23 @@ EOT;
 
 
 
+    private function isValidPassword($password, $password2 = false)
+    {
+        if ($password2 && ($password != $password2)) {
+            return '{{ lzy-change-password-not-equal-response }}';
+        }
+        if (strlen($password) < 8) {
+            return '{{ lzy-change-password-too-short-response }}';
+        }
+        if (!preg_match('/[A-Z]/', $password) ||
+            !preg_match('/\d/', $password) ||
+            !preg_match('/[^\w\d]/', $password)) {
+            return '{{ lzy-change-password-insufficient-response }}';
+        }
+        return '';
+    }
+
+
     //-------------------------------------------------------------
     public function isPrivileged()
     {
@@ -896,7 +637,11 @@ EOT;
     //-------------------------------------------------------------
     public function isAdmin()
     {
+        if (getStaticVariable('isAdmin')) {
+            return true; //??? secure?
+        }
         return $this->checkAdmission('admins');
-    } // isAdmin
+    }
+
 
 } // class Authentication

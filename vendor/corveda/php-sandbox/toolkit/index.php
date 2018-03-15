@@ -14,7 +14,7 @@
         die('<html><body><script>alert("Template could not be loaded!");</script></body></html>');
     }
 
-    if(isset($_POST['save']) || isset($_POST['download'])){
+    if(isset($_POST['lzy-save']) || isset($_POST['download'])){
         if(isset($_POST['download'])){
             $data = json_decode($_POST['download'], true);
             if(!is_array($data)){

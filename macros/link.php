@@ -1,5 +1,7 @@
 <?php
 
+// @info: Renders a link.
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
@@ -43,7 +45,7 @@ $this->addMacro($macroName, function () {
 	    $href0 = $href;
         $href = resolvePath($href, false, 'https');
         if (!$text) {
-            $rec = $this->siteStructure->findSiteElem($href0, true);
+            $rec = isset($this->siteStructure) ? $this->siteStructure->findSiteElem($href0, true) : false;
             if ($rec) {
                 $href = resolvePath('~/'.$rec['folder'], false, 'https');
                 $text = $rec['name'];

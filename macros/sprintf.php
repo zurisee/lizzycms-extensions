@@ -1,22 +1,8 @@
 <?php
 
-/*
-** For manipulating the embedding page, use $page:
-**		$page->addHead('');
-**		$page->addKeywords('');
-**		$page->addDescription('');
-**		$page->addCssFiles('');
-**		$page->addCss('');
-**		$page->addJsFiles('');
-**		$page->addJs('');
-**		$page->addJqFiles('');
-**		$page->addJq('');
-**		$page->addBody_end_injections('');
-**		$page->addMessage('');
-**		$page->addPageReplacement('');
-**		$page->addOverride('');
-**		$page->addOverlay('');
-*/
+// @info: Basically a wrapper to provide access to PHP's sprintf() function.
+
+
 
 $macroName = basename(__FILE__, '.php');
 

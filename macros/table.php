@@ -1,16 +1,7 @@
 <?php
-/*
- * Table Macro
- * takes a data-source containing 2 dimensional array data, wraps it in HTML
- * Data-sources formats:
- * 		- Yaml
- * 		- Json
- * 		- CVS (standard and Microsoft)
- *
- * DataTables Plugin:
- * -> activate by added table-class = 'datatables'
- * for options see https://datatables.net/manual/index
-*/
+
+// @info: Create a Table From Data.
+
 
 define('ORD_A', 	ord('a'));
 require_once SYSTEM_PATH.'datastorage.class.php';

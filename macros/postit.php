@@ -3,12 +3,14 @@
  **	Macro() Plug-in 
  ** displays a visible note in the shape of a "Post-it"sticker
 */
+// @info: Renders content as sticky notes.
+
 
 $page->addHead("\t<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>\n");
 
 $str =  <<<EOT
 
-			$('.post-it').draggable();
+			$('.post-it').panzoom();
 			$('.post-it .close_icon').click(function() {
 				$(this).parent().parent().hide();
 			});
@@ -16,8 +18,8 @@ $str =  <<<EOT
 EOT;
 $page->addJQ($str);
 
-$page->addCssFiles(['JQUERYUI_CSS', '~sys/css/post-it.css']);
-$page->addJqFiles(['JQUERY', 'JQUERYUI', 'JQUERYUI_TOUCH']);
+$page->addCssFiles('~sys/css/post-it.css');
+$page->addJqFiles(['PANZOOM']);
 
 $macroName = basename(__FILE__, '.php');
 $this->addMacro($macroName, function () {
