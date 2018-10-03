@@ -7,10 +7,8 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'cebe\\markdown\\' => array($vendorDir . '/cebe/markdown'),
+    'Symfony\\Polyfill\\Ctype\\' => array($vendorDir . '/symfony/polyfill-ctype'),
     'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
-    'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),
-    'PHPSandbox\\' => array($vendorDir . '/corveda/php-sandbox/src'),
     'Leafo\\ScssPhp\\' => array($vendorDir . '/leafo/scssphp/src'),
-    'FunctionParser\\' => array($vendorDir . '/jeremeamia/FunctionParser/src'),
     'EndorphinStudio\\Detector\\' => array($vendorDir . '/endorphin-studio/browser-detector/src'),
 );

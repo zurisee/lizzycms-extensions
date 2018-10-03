@@ -101,7 +101,7 @@ EOT;
     {
         $destPath = $this->galleryPath.$destPath;
         if (!file_exists($destPath)) {
-            mkdir($destPath, 0770, true);
+            mkdir($destPath, MKDIR_MASK, true);
         }
         
         foreach ($this->sourceFiles as $file) {

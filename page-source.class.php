@@ -64,7 +64,7 @@ class PageSource
         } else {
             $edSelectorButtons = "<span class='lzy-ed-selector-cancel lzy-ed-selector-inactive'>✗</span><span class='lzy-ed-selector-save lzy-ed-selector-inactive'>✓</span>";
         }
-        return "<div class='lzy-ed-selector' data-filename='$filename'><p class='lzy-ed-selector-prompt'>{{ Page-History: }}</p>$edSelector$select$edSelectorButtons</div>";
+        return "<div class='lzy-ed-selector' data-lzy-filename='$filename'><p class='lzy-ed-selector-prompt'>{{ Page-History: }}</p>$edSelector$select$edSelectorButtons</div>";
     } // renderEditionSelector
 
 

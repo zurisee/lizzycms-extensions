@@ -7,45 +7,30 @@
 
 class Defaults
 {
-    public function __construct()
-    {
-        $this->macrosPath               = SYSTEM_PATH.'macros/';
-        $this->configPath               = CONFIG_PATH;
-        $this->systemPath               = SYSTEM_PATH;
-        $this->systemHttpPath           = '~/'.SYSTEM_PATH;
 
-        $this->path_userCodePath        = 'code/';
-        $this->userInitCodeFile         = $this->path_userCodePath.'user-init-code.php';
-        $this->cachePath                = '.#cache/';
-        $this->cacheFileName            = '.#page-cache.dat';
-        $this->siteIdententation        = 4;
-
-
-        // These are the settings that can be used in config/config.yaml:
-        $this->configFileSettings      = [
-            'admin_autoAdminOnLocalhost'        => [true, 'If true, on local host user has admin privileges without login.' ],
+// User configurable Settings -> config/config.yaml:
+private $userConfigurableSettingsAndDefaults      = [
+            'admin_activityLogging'             => [true, 'If true, logs activities to file '.LOG_FILE.'.' ],
+            'admin_autoAdminOnLocalhost'        => [false, 'If true, on local host user has admin privileges without login.' ],
             'admin_enableAccessLink'            => [true, 'Activates one-time-access-link login mechanism.' ],
             'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
             'admin_defaultGuestGroup'           => ['guest', 'Name of default group for self-registration.' ],
-            'admin_enableAutoCreateAccount'     => [false, '[false|true] If true, lets users create their accounts with admin intervention.' ],
+//            'admin_enableAutoCreateAccount'     => [false, '[false|true] If true, lets users create their accounts with admin intervention.' ],
             'admin_enableDailyUserTask'         => [true, '[false|true] If true, looks for "code/user-daily-task.php" and executes it.' ],
             'admin_enableEditing'               => [true, '[true|false] enables online editing' ],
             'admin_hideWhileEditing'            => [false, 'List of CSS-selectors which shall be hidden while online editing is active, e.g. [#menu, .logo]' ],
             'admin_logClientAccesses'           => [false, 'Activates logging of user accesses.' ],
-            'admin_usersFile'                   => ['users.yaml', 'Name of file (in $configPath) that defines user privileges and hashed passwords etc.' ],
             'admin_webmasterEmail'              => [true, 'E-mail address of webmaster' ],
 
-            'class_panels_widget'               => ['lzy-panels-widget', 'Class-name for Lizzy\'s Panels widget that triggers auto-loading of corresponding modules' ],
-            'class_editable'                    => ['lzy-editable', 'Class-name for "Editable Fields" that triggers auto-loading of corresponding modules' ],
-            'class_zoomTarget'                  => ['zoomTarget', 'Class-name for "ZoomTarget Elements" that triggers auto-loading of corresponding modules' ],
-
-            'custom_computedVariablesFile'      => ['user-var-defs.php', 'Filename of PHP-code that will generate ("transvar-)variables.' ],
-            'custom_permitUserCode'             => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '{$this->path_userCodePath}''" ],
+            'custom_permitUserCode'             => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],
+            'custom_permitUserInitCode'         => [false, "[true|false] Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'" ],
             'custom_permitUserVarDefs'          => ['sandboxed', '[\'sandboxed\'|true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
-            'custom_variables'                  => ['variables*.yaml', 	'Filename-pattern to identify files that should be loaded as ("transvar-)variables.' ],
+            'custom_wrapperTag'                 => [false, 	'The HTML tag in which MD-files are wrapped (default: section)' ],
 
             'debug_allowDebugInfo'              => [false, '[false|true|group] If true, debugging Info can be activated: log in as admin and invoke URL-cmd "?debug"' ],
+            'debug_autoForceBrowserCache'       => [false, '[true|false] Determines whether the browser is forced to reload css and js resources when they have been modified.' ],
             'debug_collectBrowserSignatures'    => [false, '[false|true] If true, Lizzy records browser signatures of visitors.' ],
+            'debug_compileScssWithLineNumbers'  => [false, '[false|true] If true, original line numbers are added as comments to compiled CSS."' ],
             'debug_errorLogging'                => [false, 'Enable or disabling logging.' ],
             'debug_forceBrowserCacheUpdate'     => [false, 'Forces the browser to reload css and js resources' ],
             'debug_logClientAccesses'           => [false, '[false|true] If true, Lizzy records visits (IP-addresses and browser/os types).' ],
@@ -56,24 +41,27 @@ class Defaults
             'debug_monitorUnusedVariables'      => [false, '[false|true] If true, Lizzy keeps track of variable usage. Initialize tracking with url-arg "?reset"' ],
 
             //'feature_autoAttrFile'              => [false, 'Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.' ],
-            'feature_autoForceBrowserCache'     => [false, '[true|false] Determines whether the browser is forced to reload css and js resources when they have been modified.' ],
-            'feature_cssFramework'              => ['w3.css', 'Name of CSS-Framework to be invoked {Bootstrap/PureCSS/w3.css}' ],
-            'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
             'feature_autoLoadClassBasedModules' => [true, '[false|true] If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
             'feature_autoLoadJQuery'            => [false, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
+            'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
+            'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
+            'feature_filterRequestString'       => [false, '[true|false] If true, permits only regular text in requests. Special characters and anything enclosed by them will be discarded.' ],
             'feature_jQueryModule'              => ['JQUERY', 'One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
-            'feature_loadJQuery'                => [false, '[true|false] synonym for "feature_autoLoadJQuery"' ],
             'feature_loadFontAwesome'           => [false, '[true|false] loads Font-Awesome support' ],
             'feature_pageSwitcher'              => [false, '[true|false] whether code should be added to support page switching (by arrow-keys or swipe gestures)' ],
-            'feature_quickview'                 => [false, '[true|false] enables automatic Quickview of images' ],
+            'feature_lateImgLoading'            => [false, '[true|false] enables general use of lazy-loading of images' ],
+            'feature_quickview'                 => [true, '[true|false] enables automatic Quickview of images' ],
+            'feature_ImgDefaultMaxDim'          => ['1600x1200', 'Defines the max dimensions ("WxH") to which Lizzy automatically converts images which it finds in the pages folders.' ],
+            'feature_SrcsetDefaultStepSize'     => [300, 'Defines the step size when Lizzy creates srcsets for images.' ],
             'feature_renderTxtFiles'            => [false, '[true|false] If true, all .txt files in the pages folder are rendered (in &lt;pre>-tags, i.e. as is). Otherwise they are ignored.' ],
+            'feature_screenSizeBreakpoint'      => [480, '[px] Determines the point where Lizzy switches from small to large screen mode.' ],
             'feature_selflinkAvoid'             => [true, '[true|false] If true, the nav-link of the current page is replaced with a local page link (to improve accessibility).' ],
             'feature_sitemapFromFolders'        => [false, '[true|false] If true, the sitemap will be derieved from the folder structure under pages/, rather than the config/sitemap.yaml file.' ],
             'feature_slideShowSupport'          => [false, '[true|false] If true, provides support for slide-shows' ],
             'feature_supportLegacyBrowsers'     => [false, '[true|false] Determines whether jQuery 3 can be loaded, if false jQuery 1 is invoked' ],
             'feature_touchDeviceSupport'        => [true, '[true|false] Determines whether to support swipe gestures etc. on touch devices.' ],
 
-            'path_logPath'                      => [false, '[true|Name] Name of folder to which logging output should be sent. Or "false" for disabling logging.' ],
+            'path_logPath'                      => [LOGS_PATH, '[true|Name] Name of folder to which logging output should be sent. Or "false" for disabling logging.' ],
             'path_pagesPath'                    => ['pages/', 'Name of folder in which all pages reside.' ],
             'path_stylesPath'                   => ['css/', 'Name of folder in which style sheets reside' ],
             'path_userCodePath'                 => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
@@ -81,44 +69,67 @@ class Defaults
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
             'site_enableCaching'                => [false, '[true|false] whether caching should be active.' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
-            'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '{$this->path_userCodePath}''"],
-            'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchie simply by indenting.' ],
-            'site_supportedLanguages'           => ['', '' ],
+            'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
+            'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
+            'site_supportedLanguages'           => ['', 'Comma-separated list of language-codes. E.g. "en, de, fr"' ],
+
+];
 
 
-            ];
+    public function __construct($configFile)
+    {
+        $this->macrosPath               = MACROS_PATH;
+        $this->configPath               = CONFIG_PATH;
+        $this->systemPath               = SYSTEM_PATH;
+        $this->systemHttpPath           = '~/'.SYSTEM_PATH;
 
-        // These settings are considered internal, so they shouldn't be altered by apps:
-        $this->configFileSettings['site_supportedLanguages'][0] = $this->configFileSettings['site_defaultLanguage'][0];
-        $this->configFileSettings['site_supportedLanguages'][1] = 'Comma-separated list of language-codes. E.g. "en, de, fr"';
+        $this->userInitCodeFile         = USER_INIT_CODE_FILE;
+        $this->cachePath                = CACHE_PATH;
+        $this->cacheFileName            = CACHE_FILENAME;
+        $this->siteIdententation        = MIN_SITEMAP_INDENTATION;
 
+
+        // values not to be modified by config.yaml file:
+        $this->admin_usersFile                   = 'users.yaml';
+        $this->class_panels_widget               = 'lzy-panels-widget'; // 'Class-name for Lizzy\'s Panels widget that triggers auto-loading of corresponding modules' ],
+        $this->class_editable                    = 'lzy-editable'; // 'Class-name for "Editable Fields" that triggers auto-loading of corresponding modules' ],
+        $this->class_zoomTarget                  = 'zoomTarget'; // 'Class-name for "ZoomTarget Elements" that triggers auto-loading of corresponding modules' ],
+        $this->custom_computedVariablesFile      = 'user-var-defs.php'; // 'Filename of PHP-code that will generate ("transvar-)variables.' ],
+        $this->custom_variables                  = 'variables*.yaml'; // 	'Filename-pattern to identify files that should be loaded as ("transvar-)variables.' ],
 
 
         // shortcuts for modules to be loaded (upon request):
-        // weight value controls the order of invokation. The higher the earlier.
+        // weight value controls the order of invocation. The higher the earlier.
         $this->jQueryWeight = 200;
-        $this->loadModules['JQUERY']                = array('module' => 'third-party/jquery-3.3.1.min.js', 'weight' => $this->jQueryWeight);
-        $this->loadModules['JQUERY3']               = array('module' => 'third-party/jquery-3.3.1.min.js', 'weight' => $this->jQueryWeight);
-        $this->loadModules['JQUERY2']               = array('module' => 'third-party/jquery-2.2.4.min.js', 'weight' => $this->jQueryWeight);
-        $this->loadModules['JQUERY1']               = array('module' => 'third-party/jquery-1.12.4.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY']                = array('module' => 'third-party/jquery/jquery-3.3.1.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY3']               = array('module' => 'third-party/jquery/jquery-3.3.1.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY2']               = array('module' => 'third-party/jquery/jquery-2.2.4.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY1']               = array('module' => 'third-party/jquery/jquery-1.12.4.min.js', 'weight' => $this->jQueryWeight);
 
-        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jquery-ui.min.js', 'weight' => 140);
-        $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jquery-ui.min.css', 'weight' => 140);
+        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js', 'weight' => 140);
+        $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
 
-        $this->loadModules['FONTAWESOME']           = array('module' => 'third-party/font-awesome/5.0.6/svg-with-js/js/fontawesome-all.min.js', 'weight' => 135);
+        $this->loadModules['NORMALIZE_CSS']         = array('module' => 'css/normalize.min.css', 'weight' => 150);
+
+        $this->loadModules['FONTAWESOME_CSS']       = array('module' => 'https://use.fontawesome.com/releases/v5.3.1/css/all.css', 'weight' => 135);
+        //$this->loadModules['FONTAWESOME_CSS']       = array('module' => 'third-party/font-awesome/5.3.1/css/fontawesome.min.css', 'weight' => 135);
+
         $this->loadModules['AUXILIARY']             = array('module' => 'js/auxiliary.js', 'weight' => 130);
 
+        $this->loadModules['NAV']                   = array('module' => 'js/nav.js', 'weight' => 125);
+        $this->loadModules['NAV_CSS']               = array('module' => 'css/_nav.css', 'weight' => 125);
+
         $this->loadModules['EDITABLE']              = array('module' => 'js/editable.js', 'weight' => 120);
-        $this->loadModules['EDITABLE_CSS']          = array('module' => 'css/editable.css.php', 'weight' => 120);
+        $this->loadModules['EDITABLE_CSS']          = array('module' => 'css/editable.css', 'weight' => 120);
 
         $this->loadModules['PANELS']                = array('module' => 'js/panels.js', 'weight' => 110);
-        $this->loadModules['PANELS_CSS']            = array('module' => 'css/panels.css.php', 'weight' => 110);
+        $this->loadModules['PANELS_CSS']            = array('module' => 'css/panels.css', 'weight' => 110);
 
         $this->loadModules['DOODLE']                = array('module' => 'js/doodle.js', 'weight' => 100);
         $this->loadModules['DOODLE_CSS']            = array('module' => 'css/doodle.css', 'weight' => 100);
 
-        $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js', 'weight' => 90);
-        $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 90);
+        $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js', 'weight' => 92);
+        $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 92);
 
         $this->loadModules['POPUPS']                = array('module' => 'js/popup.js', 'weight' => 85);
 
@@ -150,17 +161,91 @@ class Defaults
         // $this->loadModules['BOOTSTRAP_ATTR']        = array('module' => '~/'.$this->configPath.'bootstrap-auto-attrs.yaml', 'weight' => 10);
 
         $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js', 'weight' => 5);
-        $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css,~/css/user_admin.css', 'weight' => 5);
+        $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css', 'weight' => 5);
 
 
 
-        // modules that shall be loaded when corresponding classes are found anywhere in the page:
+        // elementes that shall be loaded when corresponding classes are found anywhere in the page:
+        //   elements: can be any of cssFiles, css, js, jq etc.
         $this->classBasedModules = [
-            'editable' => ['cssFiles' => 'EDITABLE_CSS', 'jqFiles' => 'EDITABLE'],
+            'editable' => ['cssFiles' => 'EDITABLE_CSS', 'jqFiles' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
             'panels_widget' => ['cssFiles' => 'PANELS_CSS', 'jqFiles' => 'PANELS'],
             'zoomTarget' => ['jsFiles' => 'ZOOM_TARGET'],
         ];
 
+        $this->getConfigValues($configFile);
+
+        // userConfigurableSettingsAndDefaults will be needed if ?config arg was used, so keep it
+        if (!getUrlArg('config')) {
+            unset($this->userConfigurableSettingsAndDefaults);
+        }
         return $this;
     }
+
+
+    //....................................................
+    private function getConfigValues($configFile)
+    {
+        $configValues = getYamlFile($configFile);
+
+        $overridableSettings = array_keys($this->userConfigurableSettingsAndDefaults);
+        foreach ($overridableSettings as $key) {
+            if (isset($configValues[$key])) {
+                $val = $configValues[$key];
+                if (stripos($key, 'Path') !== false) {
+                    $val = preg_replace('|/\.\.+|', '', $val);
+                    $val = fixPath(str_replace('/', '', $val));
+                } elseif (stripos($key, 'File') !== false) {
+                    $val = str_replace('/', '', $val);
+                }
+                $this->$key = $val;
+            } else {
+                $this->$key = $this->userConfigurableSettingsAndDefaults[$key][0];
+            }
+        }
+
+        // fix some values:
+        $this->lang = $this->site_defaultLanguage;
+
+        if ($this->path_logPath == '1/') {
+            $this->path_logPath = LOGS_PATH;
+        }
+
+        if (!$this->site_supportedLanguages) {
+            $this->site_supportedLanguages = $this->site_defaultLanguage;
+        }
+        if ($this->site_multiLanguageSupport) {
+            $this->site_supportedLanguages = explode(',', str_replace(' ', '',$this->site_supportedLanguages));
+        }
+        if ($this->site_sitemapFile) {
+            $sitemapFile = $this->configPath . $this->site_sitemapFile;
+
+            if (file_exists($sitemapFile)) {
+                $this->site_sitemapFile = $sitemapFile;
+            } else {
+                $this->site_sitemapFile = false;
+            }
+        }
+
+        if (isLocalCall()) {
+            if (($lc = getUrlArgStatic('localcall')) !== null) {
+                $localCall = $lc;
+            } else {
+                $localCall = true;
+            }
+        } else {
+            $localCall = false;
+            setStaticVariable('localcall', false);
+        }
+
+        $this->isLocalhost = $this->localCall = $localCall;
+
+    } // getConfigValues
+
+
+    public function getConfigInfo()
+    {
+        return $this->userConfigurableSettingsAndDefaults;
+    }
+
 } // Defaults

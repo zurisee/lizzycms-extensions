@@ -16,6 +16,7 @@ echo ""
 echo "  -> Copying files to root of application..."
 # copy basic folders to root of app
 cp -R _lizzy/_parent-folder/* .
+chmod -R 700 code config css data pages
 
 echo ""
 

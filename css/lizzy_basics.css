@@ -49,22 +49,28 @@ a:focus {
 nav a {
 	border-bottom: none;
 }
+.no-underline,
+figure a:hover,
+figure a {
+	text-decoration: none;
+	border-bottom: none;    
+}
 .sup {
 	 vertical-align: super;
 	 font-size: 60%;
 }
 
-.Right {
+.lzy-right {
 	float:right;
 	margin: 0 0 1em 20px;
 	max-width: 50%;
 }
-.Left {
+.lzy-left {
 	float:left;
 	margin: 0 20px 1em 0;
 	max-width: 50%;
 }
-.Left img {
+.lzy-left img {
 	max-width: 100%;
 }
 .dispno,
@@ -77,6 +83,7 @@ nav a {
 	display: block;
 }
 .sr-only,
+.lzy-invisible,
 .invisible {
 	position: absolute !important;
 	right: 200vw;
@@ -127,7 +134,7 @@ nav a {
 	width: 6em;
 }
 
-  .dl-as-table dl {
+.dl-as-table dl {
     display: flex;
     flex-flow: row;
     flex-wrap: wrap;
@@ -154,6 +161,28 @@ nav a {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+
+/* stretch-wrapping boxes: */
+.lzy-stretch-wrapping-box-container {
+    --box-width: 300px;
+    --grid-gap: 10px;
+    display: grid;
+    grid-gap: var(--grid-gap);
+    grid-template-columns: repeat(auto-fill, minmax(var(--box-width), 1fr));
+    grid-auto-flow: dense;
+    padding: var(--grid-gap);
+}
+
+.lzy-stretch-wrapping-box-container > div {
+    overflow: hidden;
+}
+
+.lzy-stretch-wrapping-box-container > div img {
+    width: 100%;
+    height: auto;
+    margin-bottom:-5px;  /* ??? bug workaround? */
 }
 
 
@@ -425,6 +454,16 @@ footer a {
 	overflow: auto;
 	z-index: 999;
 }
+
+.close-overlay {
+    float: right;
+    margin: -15px -15px 10px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16pt;
+    width: 2em;
+    height: 2em;
+  }
 
 .able div {
 	box-sizing: content-box;

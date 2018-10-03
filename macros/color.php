@@ -13,5 +13,6 @@ $this->addMacro($macroName, function () {
     $color = $this->getArg($macroName, 'color', '', '');
 
     $str = "<span style='color:$color'>$text</span>";
+    $this->optionAddNoComment = true;
 	return $str;
 });

@@ -1,16 +1,12 @@
+// === Site specific styles
+
 .page {
 	padding: 20px;
 }
-nav li {
-	list-style: none;
-	display: inline-block;
-	padding: 5px 10px;
-	background: #444;
-	a {
-		border-bottom: none;
-		color: white;
-	}
-	ul {
-		display: none;
-	}
+
+header {
+	--lzy-nav-bg-color: #ddd;
 }
+
+
+__END__

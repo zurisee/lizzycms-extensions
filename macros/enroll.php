@@ -77,9 +77,9 @@ class enroll
 		}
 	
 		if (isset($_POST) && $_POST) {
-			$action = get_post_data('type');
+			$action = get_post_data('lzy-enroll-type');
 			$id = $this->enroll_list_id = trim(get_post_data('lzy-enroll-list-id'));
-			$name = get_post_data('name');
+			$name = get_post_data('lzy-enroll-name');
 			if (!$name) {
 				return;
 			}
@@ -88,8 +88,8 @@ class enroll
 				$name = preg_replace('/\s*\<.*\>$/m', '', $name);
 				$admin_mode = 'admin ';
 			}
-			$email = strtolower(get_post_data('email'));
-			$phone = get_post_data('phone');
+			$email = strtolower(get_post_data('lzy-enroll-email'));
+			$phone = get_post_data('lzy-enroll-phone');
 			file_put_contents($this->logFile, timestamp()."\t$admin_mode$action\t{$this->enroll_list_id}\t$name\t$email\t$phone\t{$_SERVER["HTTP_USER_AGENT"]}\t{$_SERVER['REMOTE_ADDR']}\n", FILE_APPEND);
 	
 			if (!is_legal_email_address($email) && !$this->admin_mode) {
@@ -227,8 +227,9 @@ class enroll
 			$icon = '';
 			$num = "<span class='lzy-num'>".($n+1).":</span>";
 			$tooltip = 'Name löschen';
-	
-			if (isset($entry[$n]['Name'])) {	// Name exists -> delete
+            $class = '';
+
+            if (isset($entry[$n]['Name'])) {	// Name exists -> delete
 				$name =  $entry[$n]['Name'];
 				$email = $entry[$n]['EMail'];
 				$phone = $entry[$n]['Phone'];
@@ -241,12 +242,12 @@ class enroll
 				if ((intval($entry[$n]['time']) > time()-(3600*24)) || $this->admin_mode) {
 					$icon = "<span class='lzy-enroll-del'>−</span>";
 					$a = "<a href='#delDialog' title='$tooltip'><span class='lzy-name'>$name</span>$icon</a>";
+                    $class = 'lzy-enroll-del_field';
 				} else {
-					$a = "<span class='lzy-name'>$name</span>";
+					$a = "<span class='lzy-name' title='$name'>$name</span>";
 				
 				}	
-				$class = 'del_field';
-				
+
 			} else {			// add
 				if (!$new_field_done) {
 					$name = '{{ Enroll me }}';
@@ -280,7 +281,7 @@ class enroll
 <head>
 	<meta charset="utf-8" />
 	<title></title>
-	<style type="text/css">
+	<style>
 		table { border-collapse: collapse;}
 		td { padding: 4px; border: 1px solid gray; min-width: 10em;}
 		td:last-child { display: none;}
@@ -339,18 +340,18 @@ class enroll
 
 		$('.lzy-enrollment-list .lzy-enroll-add-field a').click(function(e) {		// open add dialog
 			e.preventDefault();
-			revealPopup('#addDialog', e.pageX, e.pageY);
+			revealPopup();
 
 			var \$wrapper = $(this).parent().parent();	// <a> of the click
 			var dialog_title = \$wrapper.attr('data-dialog-title');
 			var elem_class = \$wrapper.attr('class').replace(/\s.*/, '');
-			$('#lzy-add-list-id').val(elem_class);
+			$('#lzy-enroll-add-list-id').val(elem_class);
 			$('#addDialog').removeClass("lzy-enroll-hide-dialog");
 		});
 		
-		$('.lzy-enrollment-list .del_field a').click(function(e) {		// open delete dialog
+		$('.lzy-enrollment-list .lzy-enroll-del_field a').click(function(e) {		// open delete dialog
 			e.preventDefault();
-			revealPopup('#delDialog', e.pageX, e.pageY);
+			revealPopup();
 
 			var \$wrapper = $(this).parent().parent();	// <a> of the click
 			var dialog_title = \$wrapper.attr('data-dialog-title');
@@ -365,7 +366,7 @@ class enroll
 			$('#del_Name').val(name);
 			$('#del_Name_text').text(name);
 			$('#del_EMail').val(email);
-			$('#delete_list_id').val(elem_class);
+			$('#lzy-enroll-del-list-id').val(elem_class);
 			$(dialog_id).removeClass("lzy-enroll-hide-dialog");
 		});
 		
@@ -390,24 +391,7 @@ class enroll
 			window.location = '$dest';
 		});
 
-		function revealPopup(id, mouseX, mouseY) {
-			var pageW = $( window ).width();
-			var pageH = $( window ).height();
-			var popupW = 400;
-			var popupH = 380;
-			var maxX = pageW-popupW-20;
-			var maxY = pageH-popupH-0;
-			if (pageW < 480) {
-				$(id).css('left', 0).css('top', 0).css('width', '100%').css('height', '100%');
-			} else {
-				if (mouseX > maxX) {
-					mouseX = maxX;
-				}
-				if (mouseY > maxY) {
-					mouseY = maxY;
-				}
-				$(id).css('left', mouseX).css('top', mouseY);
-			}
+		function revealPopup() {
 			$('#lzy-enroll-popup-bg').removeClass("lzy-enroll-hide-dialog");
 		} // revealPopup
 EOT;
@@ -432,13 +416,13 @@ EOT;
         <div>
             <h3>{{ Enroll add }}</h3>
             <label for="lzy-name" class="ui-hidden-accessible">Name:</label>
-            <input type="text" name="lzy-name" id="a_name" value="" placeholder="{{ placeholder name }}" data-theme="a" required aria-required="true" autofocus />
+            <input type="text" name="lzy-enroll-name" id="a_name" value="" placeholder="{{ placeholder name }}" data-theme="a" required aria-required="true" autofocus />
 	    
             <label for="lzy-add-email" class="ui-hidden-accessible">E-Mail:</label>
-            <input type="text" name="lzy-email" id="lzy-add-email" value="" placeholder="name@domain.net" data-theme="a" required aria-required="true" />
+            <input type="text" name="lzy-enroll-email" id="lzy-add-email" value="" placeholder="name@domain.net" data-theme="a" required aria-required="true" />
 
             <label for="lzy-phone" class="ui-hidden-accessible">Handy:</label>
-            <input type="text" name="lzy-phone" id="lzy-phone" value="" placeholder="{{ placeholder mobile number }}" data-theme="a" />
+            <input type="text" name="lzy-enroll-phone" id="lzy-phone" value="" placeholder="{{ placeholder mobile number }}" data-theme="a" />
 
             <button type="submit" id="a_submit" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Enroll now }}</button>
             <button type="cancel" id="a_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Cancel }}</button>
@@ -470,11 +454,11 @@ EOT;
 		<input type="hidden" id='lzy-enroll-del-list-id' name='lzy-enroll-list-id' value='' />
 		<input type="hidden" id='lzy-enroll-del-type' name='lzy-enroll-type' value='delete' />
 		
-		<input type="hidden" id='del_Name' name='lzy-name' value='unknown' />
+		<input type="hidden" id='del_Name' name='lzy-enroll-name' value='unknown' />
 		<div class='lzy-name'>{{ Enroll delete for }}:</div><div class='lzy-c2' id='del_Name_text'></div><br />
 		
 		<label class='ui-hidden-accessible lzy-name' for='lzy-del-email'>E-Mail:</label>
-		<input type="text" id='lzy-del-email' name='lzy-email' placeholder="name@domain.net" data-theme="a" autofocus />
+		<input type="text" id='lzy-del-email' name='lzy-enroll-email' placeholder="name@domain.net" data-theme="a" autofocus />
 		
 		<button type="submit" id="d_submit" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Enroll delete now }}</button>
 		<button type="cancel" id="d_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Cancel }}</button>

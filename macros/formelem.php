@@ -5,21 +5,6 @@
 
 require_once SYSTEM_PATH.'forms.class.php';
 
-/*
-** For manipulating the embedding page, use $page:
-**		$page->addHead('')
-**		$page->addCssFiles('')
-**		$page->addCss('')
-**		$page->addJsFiles('')
-**		$page->addJs('')
-**		$page->addJqFiles('')
-**		$page->addJq('')
-**		$page->addBody_end_injections('')
-**		$page->addMessage('')
-**		$page->addPageReplacement('')
-**		$page->addOverride('')
-**		$page->addOverlay('')
-*/
 $page->addCssFiles('~sys/css/lizzy_forms.css');
 $page->addJqFiles('JQUERY');
 
@@ -46,7 +31,6 @@ $jq = <<<EOT
 			}
 			var \$label = $("label[for='"+$(this).attr('id')+"']");
 			var label = \$label.text().replace(/[\:\*]/g, '').trim();
-//mylog('label: ' + label + ' for: ' + $(this).attr('type'));
 			\$label.html(label);
 		});
 
@@ -61,25 +45,15 @@ $jq = <<<EOT
 			$('#fld_passwort').attr('type', 'password');
 		}
 	});
-/*
-	$('input[type=submit]').click(function(e) {
-		var \$form = $(this).closest('form');
-console.log('submitting: ');
-		\$form[0].submit();
-	});
-*/
 	$('input[type=reset]').click(function(e) {
 		var \$form = $(this).closest('form');
 		$('.lizzy_time',  \$form ).val(0);
-var t = $('.lizzy_time',  \$form ).val();
-console.log('resetting t: ' + t);
 		\$form[0].submit();
 	});
 	
 	$('input[type=button]').click(function(e) {
 		var \$form = $(this).closest('form');
 		var next = $('.lizzy_next',  \$form ).val();
-console.log(\$form.attr('class') + ' => ' + next);
 		window.location.href = next;
 	});
 

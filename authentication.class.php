@@ -6,16 +6,15 @@ class Authentication
 	private $userRec = false;
     public $mailIsPending = false;
 
-    public function __construct($usersFile, $config)
-//    public function __construct($usersFile, $that)
+
+    public function __construct($lzy)
     {
-//        $this->config = $that->config;
-//        $this->localCall = $that->config->isLocalhost;
-//        $this->page = $that->page;
-//        $this->trans = $that->trans;
-        $this->config = $config;
-        $this->localCall = $config->isLocalhost;
-        $this->userDB = $usersFile;
+
+        //$this->config->configPath.$this->config->admin_usersFile, $this->config
+        $this->lzy = $lzy;
+        $this->config = $this->lzy->config;
+        $this->localCall = $lzy->config->isLocalhost;
+        $this->userDB = $usersFile = $this->config->configPath.$this->config->admin_usersFile;
     	$this->knownUsers = getYamlFile($usersFile);
         $this->loginTimes = (isset($_SESSION['lizzy']['loginTimes'])) ? unserialize($_SESSION['lizzy']['loginTimes']) : array();
 		if (!isset($_SESSION['lizzy']['user'])) {
@@ -40,11 +39,23 @@ class Authentication
         } elseif (get_post_data('lzy-user-signup') == 'signup-email') {      // user sent email for signing up
             $email = get_post_data('lzy-self-signup-email-email');
             $group = getStaticVariable('self-signup-to-group');
+
             require_once SYSTEM_PATH.'admintasks.class.php';
             $adm = new AdminTasks($this);
-            $str = $adm->sendSignupMail($email, $group);
-            $this->mailIsPending = true;
-            $res = [false, $str, 'Override'];
+            if ($this->isKnownUser($email)) {
+                $res = $this->checkAccessCode($email);
+                writeLog("one time link sent: $uname", LOGIN_LOG_FILENAME);
+                if ($res !== false) {
+                    $this->mailIsPending = true;
+                    $res = [false, $res, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
+                } else {
+                    fatalError('not impl yet');
+                }
+            } else {
+                $str = $adm->sendSignupMail($email, $group);
+                $this->mailIsPending = true;
+                $res = [false, $str, 'Override'];
+            }
 
         } elseif (isset($_POST['lzy-login-username']) && isset($_POST['lzy-login-password-password'])) {    // user sent un & pw
             $credentials = array('username' => $_POST['lzy-login-username'], 'password' => $_POST['lzy-login-password-password']);
@@ -149,12 +160,6 @@ class Authentication
 	{
         $requestingUser = strtolower($credentials['username']);
 
-        // admin login on local host:
-        if (($requestingUser == 'admin') && $this->localCall && !$this->config->admin_autoAdminOnLocalhost) { // allow empty pw for admin on localhost
-            $this->setUserAsLoggedIn('admin', null, 'Localhost Admin');
-            reloadAgent();
-            return;
-        }
 
 		if (isset($this->knownUsers[$requestingUser])) {    // user found in user-DB:
             $rec = $this->knownUsers[$requestingUser];
@@ -164,7 +169,7 @@ class Authentication
 
             // check username and password:
             if (password_verify($providedPW, $correctPW)) {  // login succeeded
-                writeLog("logged in: $requestingUser [" . getClientIP(true) . ']', LOGIN_LOG_FILENAME);
+                writeLog("logged in: $requestingUser [{$rec['group']}] (" . getClientIP(true) . ')', LOGIN_LOG_FILENAME);
                 $this->setUserAsLoggedIn($requestingUser, $rec);
                 return true;
 
@@ -359,7 +364,9 @@ class Authentication
         } elseif (isset($rec['mode']) && ($rec['mode'] == 'email-signup')) {
             require_once SYSTEM_PATH.'admintasks.class.php';
             $adm = new AdminTasks($this);
-            $adm->createGuestUserAccount($rec['user']);
+            if (!$adm->createGuestUserAccount($rec['user'])) {
+//??? notify user if account creation failed
+            }
 
         } elseif (isset($rec['mode']) && ($rec['mode'] == 'email-change-email')) {
             require_once SYSTEM_PATH.'admintasks.class.php';
@@ -376,8 +383,8 @@ class Authentication
                 $user .= " ({$displayName})";
             }
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
-            reloadAgent('~/'.$pagePath); // access granted, remove hash-code from url
-//            return '{{ one-time-access-code: success }}';
+            // access granted, remove hash-code from url
+            reloadAgent(true); // access granted, remove hash-code from url
         }
         $rep = '';
         if ($this->handleFailedLogins()) {
@@ -393,6 +400,9 @@ class Authentication
 
     private function validateAccessCode($codeCandidate)
     {
+        if (!$this->knownUsers) {
+            return false;
+        }
         foreach ($this->knownUsers as $user => $rec) {
             if (isset($rec['accessCode'])) {
                 $code = $rec['accessCode'];
@@ -415,7 +425,6 @@ class Authentication
 
 
     public function setUserAsLoggedIn($user, $rec = null, $displayName = '')
-//    private function setUserAsLoggedIn($user, $rec = null, $displayName = '')
 	{
 	    if (($rec == null) && isset($this->knownUsers[$user])) {
 	        $rec = $this->knownUsers[$user];
@@ -454,15 +463,19 @@ class Authentication
 		$user = isset($_SESSION['lizzy']['user']) ? $_SESSION['lizzy']['user'] : false;
 		if ($user) {
 			$rec = (isset($this->knownUsers[$user])) ? $this->knownUsers[$user] : false;
-			$rec['name'] = $user;
+			if (!$rec) {    // just to be safe: if logged in user has nor record, don't allow to proceed
+			    $user = $_SESSION['lizzy']['user'] = false;
+            } else {
+                $rec['name'] = $user;
 
-			$lastLogin = (isset($this->loginTimes[$user])) ? $this->loginTimes[$user] : 0;  // check maxSessionTime
-			if (isset($this->knownUsers[$user]['maxSessionTime'])) {
-                $validityPeriod = $this->knownUsers[$user]['maxSessionTime'];
-                if ($lastLogin < (time() - $validityPeriod)) {
-                    $rec = false;
-                    $this->message = '{{ validity-period expired }}';
-                    $this->unsetLoggedInUser();
+                $lastLogin = (isset($this->loginTimes[$user])) ? $this->loginTimes[$user] : 0;  // check maxSessionTime
+                if (isset($this->knownUsers[$user]['maxSessionTime'])) {
+                    $validityPeriod = $this->knownUsers[$user]['maxSessionTime'];
+                    if ($lastLogin < (time() - $validityPeriod)) {
+                        $rec = false;
+                        $this->message = '{{ validity-period expired }}';
+                        $this->unsetLoggedInUser();
+                    }
                 }
             }
 		}
@@ -480,7 +493,22 @@ class Authentication
 
     public function getKnownUsers()
     {
-        return $this->knownUsers;
+        if (is_array($this->knownUsers)) {
+            return $this->knownUsers;
+        } else {
+            return [];
+        }
+    }
+
+
+    public function isKnownUser($user)
+    {
+        if (is_array($this->knownUsers)) {
+            if (in_array($user, array_keys($this->knownUsers))) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

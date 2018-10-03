@@ -2,21 +2,6 @@
 
 // @info: Renders given content multipe times.
 
-/*
-** For manipulating the embedding page, use $page:
-**		$page->addHead('');
-**		$page->addCssFiles('');
-**		$page->addCss('');
-**		$page->addJsFiles('');
-**		$page->addJs('');
-**		$page->addJqFiles('');
-**		$page->addJq('');
-**		$page->addBody_end_injections('');
-**		$page->addMessage('');
-**		$page->addPageReplacement('');
-**		$page->addOverride('');
-**		$page->addOverlay('');
-*/
 
 $macroName = basename(__FILE__, '.php');
 
@@ -26,6 +11,7 @@ $this->addMacro($macroName, function ($args) {
     $count = $this->getArg($macroName, 'count', 'Number of times to repeat the process');
     $text0 = $this->getArg($macroName, 'text', 'Text to be repeated', '');
     $variable = $this->getArg($macroName, 'variable', 'Variable to be repeated');
+    $file = $this->getArg($macroName, 'file', 'Name of file to be repeatedly included');
     $wrapperClass = $this->getArg($macroName, 'wrapperClass', 'Variable to be repeated', '.repeated');
     $indexPlaceholder = $this->getArg($macroName, 'indexPlaceholder', 'Pattern that will be replaced by the index number, e.g. "##"', '##');
     $bare = $this->getArg($macroName, 'bare', 'Output will be rendered without any wrapper code');
@@ -37,6 +23,14 @@ $this->addMacro($macroName, function ($args) {
 
     if ($variable) {
         $text0 .= $this->getVariable($variable);
+    }
+
+    if ($file) {
+        $file = resolvePath($file, true);
+        if (!fileExists($file)) {
+            fatalError("Error: file not found: '$file'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+        }
+        $text0 .= getFile($file, true);
     }
 
     if ($prefixVar) {

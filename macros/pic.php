@@ -17,7 +17,7 @@ $this->addMacro($macroName, function () {
     $altSizes = $this->getArg($macroName, 'altSizes', '');
 
 
-    $src = makePathRelativeToPage($src);
+    $src = makePathRelativeToPage($src, true);
 
     $imgFullsizeFile = false;
     $auxAttr = '';
@@ -26,7 +26,7 @@ $this->addMacro($macroName, function () {
     $modifier = '';
 
     // prepare quickview:
-    if (($this->config->feature_quickview && ($class === null)) || strpos($class, 'quickview') !== false) {
+    if (($this->config->feature_quickview && ($class === null)) || strpos($class, 'lzy-quickview') !== false) {
         if (preg_match('/([^\[]*)\[.*(\.\w+)/', $src, $m)) {
             $basename = $m[1];
             $ext = $m[2];
@@ -35,13 +35,13 @@ $this->addMacro($macroName, function () {
                 if (!isset($this->page->quickviewLoaded)) {
                     $this->page->addCssFiles('QUICKVIEW_CSS');
                     $this->page->addJqFiles('QUICKVIEW');
-                    $this->page->addJq("\t$('.quickview').quickview();");
+                    $this->page->addJq("\t$('.lzy-quickview').quickview();");
                     $this->page->quickviewLoaded = true;
                 }
                 list($w, $h) = getimagesize($imgFullsizeFile);
                 $auxAttr = " data-qv-src='~/$imgFullsizeFile' data-qv-width='$w' data-qv-height='$h'";
-                if ($this->config->feature_quickview && (strpos($class, 'quickview') === false)) {
-                    $class .= ' quickview';
+                if ($this->config->feature_quickview && (strpos($class, 'lzy-quickview') === false)) {
+                    $class .= ' lzy-quickview';
                 }
             } else {
                 $imgFullsizeFile = false;

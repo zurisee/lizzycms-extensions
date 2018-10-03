@@ -1,0 +1,119 @@
+/**** auto-created from 'css/scss/lizzy_progressive.scss' - do not modify! ****/
+
+/***************************
+ Styles for Progressive Apps
+ (in conjunction with nav() macro
+ ****************************/
+body {
+  --lzy-mobile-header-font-size: 8vw;
+  --lzy-mobile-header-height: 16vw;
+  --lzy-mobile-header-txt-color: #ddd;
+  --lzy-mobile-header-bg-color: #444;
+  --lzy-mobile-bg-color: #fff;
+  --lzy-smallscreen-txt-color: #fff;
+  --lzy-smallscreen-bg-color: #555; }
+
+.lzy-mobile-page-header {
+  text-align: center;
+  height: var(--lzy-mobile-header-height);
+  line-height: var(--lzy-mobile-header-height);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  background: var(--lzy-mobile-header-bg-color); }
+  .lzy-mobile-page-header h1 {
+    font-size: var(--lzy-mobile-header-font-size);
+    font-weight: bold;
+    margin: 0;
+    color: var(--lzy-mobile-header-txt-color); }
+  .lzy-mobile-page-header button {
+    height: var(--lzy-mobile-header-height);
+    width: var(--lzy-mobile-header-height);
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none; }
+    .lzy-mobile-page-header button div {
+      font-size: 8vw;
+      text-align: center;
+      color: var(--lzy-mobile-header-txt-color); }
+
+body.small-screen {
+  min-height: 100vh;
+  position: absolute; }
+  body.small-screen .page {
+    font-size: 12pt;
+    width: 100vw;
+    padding: 0;
+    margin: 0; }
+    body.small-screen .page header {
+      position: absolute;
+      top: 0;
+      left: 0; }
+    body.small-screen .page .lzy-nav-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0; }
+  body.small-screen .lzy-nav.lzy-nav-top-horizontal {
+    position: absolute;
+    top: var(--lzy-mobile-header-height);
+    left: 0;
+    padding: 1em 0; }
+  body.small-screen main {
+    width: calc(100vw - 2em);
+    position: absolute;
+    top: var(--lzy-mobile-header-height);
+    left: 0;
+    padding: 1em;
+    background: var(--lzy-mobile-bg-color);
+    box-shadow: 0 0 15px 0px black;
+    z-index: 2; }
+  body.small-screen .lzy-mobile-page-header {
+    width: 100vw; }
+  body.small-screen footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 0 1em;
+    background: var(--lzy-mobile-header-bg-color);
+    width: calc(100vw - 2em);
+    height: 7vh;
+    line-height: 7vh;
+    color: var(--lzy-mobile-header-txt-color); }
+    body.small-screen footer a {
+      color: var(--lzy-mobile-header-txt-color); }
+  body.small-screen .lzy-mobile-page-header {
+    display: block !important;
+    z-index: 2; }
+
+.lzy-nav-mobile-open main {
+  margin-left: 60vw;
+  transition: margin-left 0.3s; }
+
+body.small-screen #lzy .lzy-nav-wrapper .lzy-nav {
+  padding: 1em 0; }
+  body.small-screen #lzy .lzy-nav-wrapper .lzy-nav > ol {
+    background: transparent; }
+    body.small-screen #lzy .lzy-nav-wrapper .lzy-nav > ol li {
+      background: transparent; }
+    body.small-screen #lzy .lzy-nav-wrapper .lzy-nav > ol li::before, body.small-screen #lzy .lzy-nav-wrapper .lzy-nav > ol a {
+      color: var(--lzy-smallscreen-txt-color); }
+    body.small-screen #lzy .lzy-nav-wrapper .lzy-nav > ol a:focus {
+      box-shadow: inset 0 0 10px red; }
+
+body.small-screen .page main {
+  min-height: 100vh;
+  transition: margin-left 0.3s; }
+
+body.small-screen header {
+  background: var(--lzy-smallscreen-bg-color);
+  width: 60vw;
+  height: 100vh; }
+
+.lzy-mobile-page-header button:focus {
+  box-shadow: inset 0 0 10px red; }

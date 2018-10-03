@@ -1,6 +1,8 @@
 # Transvar Definition File
 
-page_title: $page_name / Lizzy Skeleton
+page_title: $page_name / Lizzy
+
+site_title: Lizzy Website
 
 nextPageLabel: "<span class='nextLinkArrow' title='{{ to next page }}'></span>"
 prevPageLabel: "<span class='prevLinkArrow' title='{{ to prev page }}'></span>"
@@ -11,8 +13,6 @@ to next page:
 to prev page:
     de: zur vorherigen Seite
     en: to previous page
-
-variable name: replacement value
 
 
 
@@ -27,5 +27,5 @@ key: value
 # Variables with language variants:
 key:
     de: Wert
-    en: value
+    en: Value
 

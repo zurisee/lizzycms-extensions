@@ -39,7 +39,7 @@ $macroName = basename(__FILE__, '.php');    // macro name normally the same as t
 
 $this->addMacro($macroName, function () {
     // the actual macro code follows here.
-    // it will be executed for each invokation of this macro within the current page:
+    // it will be executed for each invocation of this macro within the current page:
 
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);

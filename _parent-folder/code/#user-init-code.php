@@ -6,6 +6,7 @@
  * -> will be executed during rendering process, before page template is loaded.
  * -> may define variables, elements to include, page-overlay/-override etc.
  *
+  * Note: to use this feature it must be enabled in config/config.yaml: custom_permitUserInitCode: true
  */
 
 

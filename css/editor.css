@@ -2,9 +2,16 @@
 ** Styles for editing
 */
 
-section {
+.lzy-src-wrapper {
 	padding: 0;
+    position: relative;
+	margin-bottom: 35px;
 }
+/*
+.lzy-editor-wrapper {
+    margin: 20px 0;
+}
+*/
 .lzy-editor-btn {
 	position: absolute;
 	top: -10px;
@@ -18,8 +25,9 @@ section {
 .lzy-edit-sitemap .lzy-editor-btn {
 	top: 2px;
 	right: 2px;
+	z-index: 9999;
 }
-main > section, .lzy-file-uploader {
+main > .lzy-src-wrapper, .lzy-file-uploader {
 	border: 1px dotted #c9e139;
 }
 .lzy-file-uploader.container {
@@ -139,6 +147,15 @@ span.lzy-ed-dropdown select {
     bottom: 0px;
 }
 
-section.lzy-editing {
+.lzy-src-wrapper.lzy-editing {
     margin-bottom: 50px;
+    width: 100%;
+    z-index: 9998;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.editor-statusbar {
+    height: 30px;
 }

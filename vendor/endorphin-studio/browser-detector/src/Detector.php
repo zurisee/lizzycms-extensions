@@ -141,10 +141,14 @@ class Detector
             '6.1' => '7',
             '6.2' => '8',
             '6.3' => '8.1',
-            '6.4' => '10'
+            '6.4' => '10',
+            '10.0' => '10'
         );
-
-        return $versions[$version];
+        if (isset($versions[$version])) {
+            return $versions[$version];
+        } else {
+            return $version;
+        }
     }
 
     /**

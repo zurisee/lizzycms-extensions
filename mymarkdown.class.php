@@ -111,7 +111,7 @@ class MyMarkdown
 			$file = str_replace('"', '', $file);
 			$file = resolvePath($file);
 			if (file_exists($file)) {
-				$s = getFile($file);
+				$s = getFile($file, true);
 			} else {
 				$s = "[include file '$file' not found]";
 			}
@@ -136,7 +136,7 @@ class MyMarkdown
 		}
 		
 		if (!isset($this->page->shieldHtml)) {		// shieldHtml -> true,false
-			$this->page->shieldHtml = true;	// default
+			$this->page->shieldHtml = false;	// default
 		} else {
 			$this->page->shieldHtml = $this->page->shieldHtml;
 		}
@@ -162,7 +162,6 @@ class MyMarkdown
 	//....................................................
 	private function handeCodeBlocks($str)
 	{
-		$inCode = false;
 		$lines = explode(PHP_EOL, $str);
 		$out = '';
 		foreach($lines as $l) {
@@ -193,7 +192,7 @@ class MyMarkdown
 
 		$str = $this->handleInTextVariableDefitions($str);
 
-		$str = str_replace('\\<', '&lt;', $str);       // shield \<
+		$str = str_replace('\\<', '@/@\\lt@\\@', $str);       // shield \<
 		$str = str_replace('\\[[', '@/@[@\\@', $str);       // shield \[[
 		$str = str_replace(['\\{', '\\}'], ['&#123;', '&#125;'], $str);    // shield \{{
 		$str = preg_replace('/(\n\{\{.*\}\}\n)/U', "\n$1\n", $str); // {{}} alone on line -> add LFs
@@ -217,12 +216,12 @@ class MyMarkdown
         // -> shield '-' and '1.' (and '1!.')
         $lines = explode(PHP_EOL, $str);
         foreach ($lines as $i => $l) {
-            if (preg_match('/\{\{\s*tab\b[^\}]*\s*\}\}/', $l)) {
-                if (preg_match('/^[-\*]\s/', $l)) {
+            if (preg_match('/\{\{ \s* tab\b [^\}]* \s* \}\}/x', $l)) {
+                if (preg_match('/^[-\*]\s/', $l)) { // contains - or *
                     $l = substr($l, 2);
                     $lines[$i] = "@/@ul@\\@$l";
 
-                } elseif (preg_match('/^(\d+)(!)?\.\s+(.*)/', $l, $m)) {
+                } elseif (preg_match('/^(\d+)(!)? \. \s+ (.*)/x', $l, $m)) {
                     $l = $m[3];
                     if ($m[2]) {
                         $lines[$i] = "@/@ol@\\@!{$m[1]}@$l";
@@ -323,10 +322,12 @@ class MyMarkdown
 		$out = '';
 		$withinEot = false;
 		$textBlock = '';
+		$var = '';
 		foreach (explode(PHP_EOL, $str) as $l) {
 		    if ($withinEot) {
 		        if (preg_match('/^EOT\s*$/', $l)) {
 		            $withinEot = false;
+                    $textBlock = str_replace("'", '&apos;', $textBlock);
                     $this->variable[$var] = $textBlock;
                 } else {
                     $textBlock .= $l."\n";
@@ -338,6 +339,7 @@ class MyMarkdown
 				$val = trim($m[2]);
 				if ($val == '<<<EOT') {         // handle <<<EOT
 				    $withinEot = true;
+                    $textBlock = '';
 				    continue;
                 }
 				$this->variable[$var] = $this->replaceVariables($val);
@@ -421,6 +423,8 @@ class MyMarkdown
 					$this->variable[$sym] = $mm2m;
 					$l2             = substr($l2, 2);
 				}
+				$str = str_replace("\n", ' ', $str);
+				$str = "{[{[$str]}]}";
 				$l   = $l1 . $str . $l2;
 				$str = $this->variable[$sym];
 			
@@ -442,32 +446,42 @@ class MyMarkdown
 		$preCode = false;
 		$olStart = false;
 		foreach ($lines as $l) {
-			$l = $this->handleInlineStylings($l);
+			$l = $this->postprocessInlineStylings($l);
 			if ($preCode && preg_match('|\</code\>\</pre\>|', $l)) {
 				$preCode = false;
 			} elseif (preg_match('/\<pre\>\<code\>/', $l)) {
 				$preCode = true;
 			}
-			$l = $this->handleShieldedTags($l, $preCode);
-			if (preg_match('|<p>\%\@start\=(\d+)\@\%</p>|', $l, $m)) {
-                $olStart = $m[1];
+			$l = $this->postprocessShieldedTags($l, $preCode);
+
+            if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
+                $l = $m[1];
+            }
+
+            // if enum-list was marked with ! meaning set start value:
+			if (preg_match('|(.*) \%\@start\=(\d+)\@\% (.*)|x', $l, $m)) {
+                $olStart = $m[2];
 			    continue;
+
             } elseif (($olStart !== false) && ($l == '<ol>')) {
 			    $l = "<ol start='$olStart'>";
                 $olStart = false;
             }
-            if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
-                $l = $m[1];
-            }
 			$out .= $l."\n";
 		}
+
+        $out = $this->postprocessLiteralBlock($out); // ::: .box!
+
+        $out = htmlspecialchars_decode($out);
+        $out = str_replace(['@/@\\lt@\\@', '@/@\\gt@\\@'], ['&lt;', '&gt;'], $out); // shielded < and > (source: \< \>)
+
 		return $out;
 	} // postprocess
 
 
 
 	//....................................................
-	private function handleInlineStylings($line)    // [[ xy ]]
+	private function postprocessInlineStylings($line)    // [[ xy ]]
 	{
 	    if (strpos($line, '[[') === false) {
             $line = str_replace('@/@[@\\@', '[[', $line);
@@ -526,14 +540,14 @@ class MyMarkdown
 		$line = str_replace('@/@[@\\@', '[[', $line);
 
 		return $line;
-	} // handleInlineStylings
+	} // postprocessInlineStylings
 
 
 
 	//....................................................
-	private function handleShieldedTags($l, $preCode)
+	private function postprocessShieldedTags($l, $preCode)
 	{
-		if ($this->page && $this->page->shieldHtml) {   // reverse HTML-Tag shields:
+		if ($l) {   // reverse HTML-Tag shields:
 			if ($preCode) {
 				$l = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['&lt;', '&gt;'], $l);
 			} else {
@@ -541,7 +555,24 @@ class MyMarkdown
 			}
 		}
 		return $l;
-	} // handleShieldedTags
+	} // postprocessShieldedTags
 
+
+
+    //....................................................
+    private function postprocessLiteralBlock($str)    // <div data-lzy-literal-block="true">...</div>
+    {
+        $p1 = strpos($str, 'data-lzy-literal-block');
+        while ($p1) {
+            $p2 = strpos($str, '</div>', $p1);
+            $literal = substr($str, $p1 + 34, $p2 - $p1 - 39);
+            $literal = base64_decode($literal);
+            $str = substr($str, 0, $p1) . '>' . $literal . substr($str, $p2);
+            $p1 = strpos($str, 'data-lzy-literal-block');
+        }
+        return $str;
+    } // handleLiteralBlock
+
+    
 } // class MyMarkdown
 

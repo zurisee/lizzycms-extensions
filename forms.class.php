@@ -469,25 +469,7 @@ EOT;
                 $label .= ' '.$requiredMarker;
             }
         }
-//        $requiredMarker = $this->getRequiredMarker();
-//		$label = $this->currRec->label;
-//		if ($requiredMarker && (strpos($label, ':') !== false)) {
-//			$label = rtrim($label, ':').' '.$requiredMarker.':';
-//		} else {
-//			$label .= ' '.$requiredMarker;
-//		}
-//		if ($this->translateLabel) {
-//		    $hasColon = (strpos($label, ':') !== false);
-//		    $hasAsterisk = (strpos($label, '*') !== false);
-//            $label = trim(str_replace([':', '*'], '', $label));
-//            $label = "{{ $label }}";
-//            if ($hasColon) {
-//                $label .= ':';
-//            }
-//            if ($hasAsterisk) {
-//                $label .= ' *';
-//            }
-//        }
+
         return "\t\t\t<label for='$id'>$label</label>\n";
     } // getLabel
 

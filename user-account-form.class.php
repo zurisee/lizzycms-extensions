@@ -7,20 +7,20 @@ $lizzyAccountCounter = 0;
 
 class UserAccountForm
 {
-    public function __construct($that, $infoIcon = '&#9432;')
+    public function __construct($lzy, $infoIcon = '&#9432;')
     {
         global $lizzyAccountCounter;
         $this->infoIcon = $infoIcon;
         if ($GLOBALS['globalParams']['legacyBrowser']) {
             $this->infoIcon = '(i)';
         }
-        if ($that) {
-            $this->config = $that->config;
-            $this->page = $that->page;
-            if (isset($that->trans)) {      //??? hack -> needs to be cleaned up: invoked from diff places
-                $this->trans = $that->trans;
+        if ($lzy) {
+            $this->config = $lzy->config;
+            $this->page = $lzy->page;
+            if (isset($lzy->trans)) {      //??? hack -> needs to be cleaned up: invoked from diff places
+                $this->trans = $lzy->trans;
             } else {
-                $this->trans = $that;
+                $this->trans = $lzy;
             }
             $adminTransvars = resolvePath('~sys/config/admin.yaml');
             $this->trans->readTransvarsFromFile($adminTransvars);
@@ -33,8 +33,8 @@ class UserAccountForm
         }
         $this->loggedInUser = (isset($_SESSION['lizzy']['user'])) ? $_SESSION['lizzy']['user'] : false;
         $this->inx = &$lizzyAccountCounter;
-        $this->message = (isset($that->auth->message)) ? $that->auth->message : '';
-        $this->warning = (isset($that->auth->warning)) ? $that->auth->warning : '';
+        $this->message = (isset($lzy->auth->message)) ? $lzy->auth->message : '';
+        $this->warning = (isset($lzy->auth->warning)) ? $lzy->auth->warning : '';
     }
 
 
@@ -85,9 +85,15 @@ class UserAccountForm
     public function renderSignUpForm($group, $notification = '', $message = '')
     {
         setStaticVariable('self-signup-to-group', $group);
-        $str = "<h2>{{ lzy-self-sign-up }}</h2>";
-        $this->page = new Page;
-        $str .= $this->createSignUpForm($notification, $message);
+        if ($message) {
+            $str = $this->createSignUpForm($notification, '');
+            $str = str_replace('$$', $str, $message);
+
+        } else {
+            $str = "<h2>{{ lzy-self-sign-up }}</h2>";
+            $this->page = new Page;
+            $str .= $this->createSignUpForm($notification);
+        }
 
         $this->page->addOverride($str);
 
@@ -718,7 +724,7 @@ EOT;
                 $loggedInUser = '{{ LoginLink }}';
             }
             $logInVar = <<<EOT
-<div><a href='$linkToThisPage?login' class='login-link' title="$loggedInUser">&nbsp;<img src="~sys/rsc/user.svg" height="24" /></a></div>
+<div><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">&nbsp;{{ user_icon }}</a></div>
 
 EOT;
         }
@@ -775,7 +781,6 @@ EOT;
     {
         global $globalParams;
         if ($this->config->debug_suppressInsecureConnectWarning) {
-            mylog("Insecure-connection warning suppressed");
             return true;
         }
         if (!$this->config->isLocalhost && !(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on')) {

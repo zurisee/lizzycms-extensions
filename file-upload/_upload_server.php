@@ -34,14 +34,15 @@ if (isset($_SESSION['lizzy'][$pagePath]['uploadPath'])) {   // case upload-macro
 } else {
     $dataPath = 'upload/';
 }
-$appRootUrl = $_SESSION['lizzy']['appRootUrl'];
-$absAppRoot = $_SESSION['lizzy']['absAppRoot'];
+$appRootUrl = $_SESSION['lizzy']['appRootUrl']; // e.g. http://localhost/myapp/
+$absAppRoot = $_SESSION['lizzy']['absAppRoot']; // e.g. /Volumes/Data/Localhost/myapp/
 session_abort();
 
 $options = array(
 		'upload_dir' => $absAppRoot.$dataPath,
 		'upload_url' => $appRootUrl.$dataPath,
 	);
+
 mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r($options));
 $upload_handler = new UploadHandler($options);
 

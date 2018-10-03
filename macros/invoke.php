@@ -29,31 +29,4 @@ $this->addMacro($macroName, function () {
 
     $this->config->feature_cssFramework = $name;
     return '';
-//    $page = $this->page;
-//    $out = "<!-- Framework '$name' loaded -->";
-
-//    switch ($name) {
-//        case 'bootstrap':
-//            $page->addCssFiles('~sys/third-party/bootstrap4/css/bootstrap.min.css');
-//            $page->addJqFiles(['~sys/third-party/tether.js/tether.min.js', '~sys/third-party/bootstrap4/js/bootstrap.min.js']);
-//            $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/bootstrap-auto-attrs.yaml');
-//            break;
-//
-//        case 'purecss':
-//            $page->addCssFiles('~sys/third-party/pure-css/pure-min.css');
-//            $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/purecss-auto-attrs.yaml');
-//            break;
-//
-//        case 'w3css':
-//        case 'w3.css':
-//            $page->addCssFiles('~sys/third-party/w3.css/w3.css');
-//            $page->addAutoAttrFiles('~/'.CONFIG_PATH.'/w3css-auto-attrs.yaml');
-//            break;
-//
-//        default:
-//            $out = '<!-- No Framework loaded -->';
-//            $this->config->feature_cssFramework = false;
-//            break;
-//    }
-//	return $out;
 });

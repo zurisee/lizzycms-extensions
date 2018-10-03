@@ -1,5 +1,32 @@
 .lzy-enrollment-dialog {
-    position: absolute;
+    transform: translate(-50%, -50%); 
+    top: 50%;
+    left: 50%;
+    background: #eff;
+    width: 400px;
+    padding: 10px 20px 10px 20px;
+    position: fixed;
+}
+.lzy-enroll-dialog-close {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	font-size: 200%;
+	cursor: pointer;
+}
+#lzy-enroll-popup-bg {
+    position: fixed;
+    top: 0; 
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99;
+	background: rgba(200,200,200,0.8);
+}
+
+/*
+.lzy-enrollment-dialog {
+    position: fixed;
     background: #eff;
     width: 400px;
     padding: 10px 20px 10px 20px;
@@ -21,6 +48,7 @@
 	z-index: 99;
 }
 
+*/
 
 
 /* === colors ================================ */
@@ -120,7 +148,8 @@
 	border: 1px solid #69bdbd;
 }
 .lzy-enrollment-dialog label, .lzy-enrollment-dialog input {
-	display: inline-block;
+	display: block;
+	/*display: inline-block;*/
 	padding: 4px 0;
 }
 .lzy-enrollment-dialog label, #delDialog.lzy-enrollment-dialog .lzy-c1 {

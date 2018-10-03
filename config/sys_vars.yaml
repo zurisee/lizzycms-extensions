@@ -7,6 +7,8 @@ vgap: "<div class='vgap' style='margin:1em 0;'>&nbsp;</div>\n"
 
 clear: '<div style="clear:both;"></div>'
 
+user_icon: "&#128100;"
+
 
 #--- Forms -----------------------------------------------
 Username:
@@ -333,4 +335,8 @@ turn edit mode on:
     en: Edit page
 
 
+# Macro Editable()
+'lzy-editable-temporarily-locked': 
+    de: 'Dieses Feld ist momentan gesperrt, weil es gerade von jemand anderem bearbeitet wird.\n\nBitte versuchen Sie es in ein paar Minuten nochmals. (Seite muss dann neu geladen werden!)'
+    en: 'This field is currently locked because somebody else is editing it.\n\nPlease try again in a few minutes. (Remember to reload the page when trying again.)'
 

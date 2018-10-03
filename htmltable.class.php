@@ -105,7 +105,12 @@ class HtmlTable
             if ($this->captionIndex) {
                 $this->tableCounter = $this->captionIndex;
             }
+            if (preg_match('/(.*)\#\#=(\d+)(.*)/', $this->caption, $m)) {
+                $this->tableCounter = intval($m[2]);
+                $this->caption = $m[1].'##'.$m[3];
+            }
             $this->caption = str_replace('##', $this->tableCounter, $this->caption);
+
             if ($this->renderAsDiv) {
                 $this->caption = "\t\t<div class='caption'>$this->caption</div>\n";
             } else {
@@ -233,7 +238,7 @@ EOT;
         $out = <<<EOT
 
 <table id='$this->id'{$this->tableclass}>
-$this->caption$header
+{$this->caption}$header
 	<tbody>
 $tbody	</tbody>
 </table>
@@ -373,8 +378,11 @@ EOT;
                 } else {
                     $val = '';
                 }
+                $val = str_replace("'", "\\'", $val);
                 $filter = $before."'$val'".$rest;
             }
+            $filter = str_replace(["&#39;", "&apos;"], "'", $filter); // decode coded '
+            $filter = htmlspecialchars_decode($filter); // decode html spec chars
             $filter = "return ($filter);";
             $filter = eval($filter);
         } else {

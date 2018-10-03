@@ -7,9 +7,10 @@
 
 class FileUpload
 {
-    public function __construct($page)
+    public function __construct($lzy)
     {
-        $this->page = $page;
+        $this->lzy = $lzy;
+        $this->page = $lzy->page;
     } // __construct
     
     public function render($filePath)

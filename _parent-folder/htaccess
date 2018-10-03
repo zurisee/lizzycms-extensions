@@ -1,61 +1,38 @@
 RewriteEngine on
 
-# Origin: Grav
-
-## Begin - Exploits
-# If you experience problems on your site block out the operations listed below
-# This attempts to block the most common type of exploit `attempts`
-#
+## Preventive Measures:
 # Block out any script trying to base64_encode data within the URL.
 RewriteCond %{QUERY_STRING} base64_encode[^(]*\([^)]*\) [OR]
-# Block out any script that includes a <script> tag in URL.
-RewriteCond %{QUERY_STRING} (<|%3C)([^s]*s)+cript.*(>|%3E) [NC,OR]
 # Block out any script trying to set a PHP GLOBALS variable via URL.
 RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
 # Block out any script trying to modify a _REQUEST variable via URL.
 RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2})
-# Return 403 Forbidden header and show the content of the root homepage
-RewriteCond %{REQUEST_FILENAME} !_upload_server.php
-#RewriteCond %{REQUEST_FILENAME} !(_lizzy/third-party/jquery-upload/server/php)
-RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
-RewriteCond %{REQUEST_URI} !(/_test)
-#RewriteCond %{REQUEST_URI} !(/css)
+# Block out any script that includes a <script> tag in URL.
+RewriteCond %{QUERY_STRING} (<|%3C)([^s]*s)+cript.*(>|%3E) [NC,OR]
+# Block out use of illegal or unsafe characters in the HTTP Request
+RewriteCond %{THE_REQUEST} ^.*(\\r|\\n|%0A|%0D).* [NC,OR]
+# Block out use of illegal or unsafe characters in the Referer Variable of the HTTP Request
+RewriteCond %{HTTP_REFERER} ^(.*)(<|>|'|%0A|%0D|%27|%3C|%3E|%00).* [NC,OR]
+# Block out use of illegal or unsafe characters in any cookie associated with the HTTP Request
+RewriteCond %{HTTP_COOKIE} ^.*(<|>|'|%0A|%0D|%27|%3C|%3E|%00).* [NC,OR]
+# Block out use of illegal characters in URI or use of malformed URI
+RewriteCond %{REQUEST_URI} ^/(,|;|:|<|>|">|"<|/|\\\.\.\\).{0,9999}.* [NC]
+# => Return 403 Forbidden header (i.e. [F])
 RewriteRule .* index.php [F]
-#
-## End - Exploits
 
-# Make sure request has trailing slash
+
+# Add trailing slash if missing:
 RewriteCond %{REQUEST_URI} !(/$|\.)
 RewriteRule ^(.*)$		%{REQUEST_URI}/ [R=301,L]
 
-# Let PHP-rendered CSS pass through:
-RewriteCond %{REQUEST_URI} (/css|/js)
-RewriteRule ^(.*)$		$1 [L,QSA]
 
-RewriteCond %{REQUEST_FILENAME} !\.map
-RewriteCond %{REQUEST_FILENAME} !_upload_server.php
-RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
-RewriteCond %{REQUEST_URI} !(/_test)
-#RewriteCond %{REQUEST_URI} !(/css|/js) [NC]
-RewriteCond %{REQUEST_URI} !\.(?:css|js|jpe?g|gif|png|pdf|mp3|vtt|webm|m4v|mp4|ogv|svg|eot|ttf|woff2?)(\?.*)?$ [NC]
-RewriteRule ^(.*)$		index.php [L,QSA]
+# Pass through specific service files:
+RewriteCond %{REQUEST_URI} !(_ajax_server|_upload_server).php
+# Redirect requests to index.php, unless it quests resource files, e.g. CSS, JS etc.
+RewriteCond %{REQUEST_URI} !\.(?:css|js|jpe?g|gif|png|pdf|mp3|vtt|webm|m4v|mp4|ogv|svg|eot|ttf|woff2?|map)(\?.*)?$ [NC]
+# Exception: folders that start with '-' are passed through, not handled by Lizzy
+RewriteCond %{REQUEST_URI} !-
 
-## Begin - Security
-# Block all direct access for these folders
-RewriteRule ^(%23|.%23|.git)/(.*) error [F]
-###RewriteRule ^(.git|cache|bin|logs|backup|webserver-configs|tests)/(.*) error [F]
-# Block access to specific file types for these system folders
-RewriteCond %{REQUEST_FILENAME} !_upload_server.php
-RewriteCond %{REQUEST_FILENAME} !_ajax_server.php
-RewriteRule ^_lizzy/(.*)\.(txt|xml|md|html|yaml|php|pl|py|cgi|twig|sh|bat)$ error [F]
-###RewriteRule ^(system|vendor)/(.*)\.(txt|xml|md|html|yaml|php|pl|py|cgi|twig|sh|bat)$ error [F]
-# Block access to specific file types for these user folders
-###RewriteRule ^(user)/(.*)\.(txt|md|yaml|php|pl|py|cgi|twig|sh|bat)$ error [F]
-# Block all direct access to .md files:
-RewriteRule \.md$ error [F]
-# Block all direct access to files and folders beginning with a dot
-RewriteRule (^|/)\.(?!well-known) - [F]
-# Block access to specific files in the root folder
-###RewriteRule ^(LICENSE.txt|composer.lock|composer.json|\.htaccess)$ error [F]
-RewriteRule ^(\.htaccess)$ error [F]
-## End - Security
+RewriteRule ^(.*)$		index.php [L]
+
+

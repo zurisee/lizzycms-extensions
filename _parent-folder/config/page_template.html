@@ -4,25 +4,30 @@
 	<meta charset="utf-8" />
 	<title>{{ page_title }}</title>
 	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
+	<link href="~sys/css/normalize.min.css" rel="stylesheet" />
 	<link href="~sys/css/lizzy_basics.css" rel="stylesheet" />
+	<link href="~sys/css/_lizzy_progressive.css" rel="stylesheet" />
 	<link href="~/css/_styles.css" rel="stylesheet" />
 {{^head_injections }}
 </head>
+
 <body class='{{ page_name_class }}{{^debug_class }}'>
-  <div class='page'>
-
-
+  <div id='lzy' class='page'>
 
 		<header class='header'>
 {{^ header }}
-{{ nav() }}
+{{# nav( side ) }}
+{{ nav( top ) }}
+
 		</header>
 
 
-
+<!-- === page content =============== -->
 		<main class='main'>
+{{ nav( breadcrumb ) }}
 {{ content }}
 		</main>
+<!-- === /page content =============== -->
 
 
 
@@ -31,6 +36,7 @@
 			<div id='loggedInUser'>{{^ toggle-edit-mode }}{{ Log-in }}</div>
 		</footer>
 
+{{^ nav( small-screen-header ) }}
   </div><!-- /.page -->
 
 

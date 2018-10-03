@@ -29,8 +29,11 @@
  *      readRec($key = '*') -> read('*')
 */
 
-define('LIZZY_LOCK', 0);
-define('LIZZY_SID', 1);
+define('LIZZY_META', '_meta_');
+define('LIZZY_LOCK', 'lock');
+define('LIZZY_LOCK_TIME', 'time');
+define('LIZZY_SID', 'sid');
+define('LIZZY_MODIF_TIME', 'modif');
 
 
 use Symfony\Component\Yaml\Yaml;
@@ -41,7 +44,7 @@ class DataStorage
 	private $sid;
 
  	//---------------------------------------------------------------------------
-   public function __construct($dbFile, $sid = '', $lockDB = false, $format = '')
+   public function __construct($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120)
     {
         if (file_exists($dbFile)) {
 	        $this->dataFile = $dbFile;
@@ -58,6 +61,8 @@ class DataStorage
         $this->sid = $sid;
         $this->lockDB = $lockDB;
         $this->format = ($format) ? $format : pathinfo($dbFile, PATHINFO_EXTENSION) ;
+        $this->lockTimeout = $lockTimeout;
+        $this->data = $this->lowLevelRead();
 
         $this->checkDB();   // make sure DB is initialized
         return;
@@ -66,13 +71,22 @@ class DataStorage
 
 
 	//---------------------------------------------------------------------------
-    public function lastModified()
+    public function lastModified($key = false)
     {
-        if (file_exists($this->dataFile)) {
-            clearstatcache();
-            return filemtime($this->dataFile);
+        if ($key) {
+            $data = &$this->data;
+            if (isset($data[LIZZY_META][$key][LIZZY_MODIF_TIME])) {
+                return $data[LIZZY_META][$key][LIZZY_MODIF_TIME];
+            } else {
+                return 0;
+            }
         } else {
-            return 0;
+            if (file_exists($this->dataFile)) {
+                clearstatcache();
+                return filemtime($this->dataFile);
+            } else {
+                return 0;
+            }
         }
     } // lastModified
 
@@ -82,7 +96,7 @@ class DataStorage
 	//---------------------------------------------------------------------------
     public function write($key, $value = null)
     {
-        $data = $this->lowLevelRead();
+        $data = &$this->data;
         if (!is_array($data)) {
             return false;
         }
@@ -93,10 +107,12 @@ class DataStorage
             } else {
                 $array = $key;
                 foreach ($array as $key => $value) {
-                    if (!isset($data['_meta_'][$key][LIZZY_LOCK])) {
+                    if (!isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_LOCK_TIME])) {
                         $data[$key] = $value;
-                    } elseif (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] == $this->sid)) {
+
+                    } elseif (isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID]) && ($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] == $this->sid)) {
                         $data[$key] = $value;
+
                     } else {
                         return false;
                     }
@@ -104,9 +120,15 @@ class DataStorage
             }
 
         } else {
-            $data[$key] = $value;
+            if (strpos($key, '/') === false) {      // regular value
+                $data[$key] = $value;
+                $data[LIZZY_META][$key][LIZZY_MODIF_TIME] = time();
+            } else {                                // meta-value
+                $expr = "\$data['" . str_replace('/', "']['", $key) . "'] = \$value;";
+                eval("$expr");
+            }
         }
-        return $this->lowLevelWrite($data);
+        return $this->lowLevelWrite();
     } // write
 
 
@@ -114,23 +136,29 @@ class DataStorage
 	//---------------------------------------------------------------------------
     public function read($key = '*', $reportLockState = false)
     {
-        $data = $this->lowLevelRead();
+        $data = &$this->data;
         if (!is_array($data)) {
             return null;
         }
         if ($key === '*') {
             if ($reportLockState) {
                 foreach ($data as $key => $value) {
-                    if (($key != '_meta_') &&  isset($data['_meta_'][$key]) &&  // if locked
-                        ($data['_meta_'][$key][LIZZY_SID] != $this->sid)) {           //but not by client that initiated the lock:
+                    if (($key != LIZZY_META) &&  isset($data[LIZZY_META][$key]) &&  // if locked
+                        ($data[LIZZY_META][$key][LIZZY_SID] != $this->sid)) {           //but not by client that initiated the lock:
                             $data[$key] = str_replace('**LOCKED**', '', $value) . '**LOCKED**';
                     }
                 }
             }
-            if (isset($data['_meta_'])) {   // make sure no sessionIds are passed on
-                unset($data['_meta_']);
+            if (isset($data[LIZZY_META])) {   // make sure no sessionIds are passed on
+                unset($data[LIZZY_META]);
             }
             $value = $data;
+
+        } elseif (strpos($key, '/') !== false) {
+            $k = "\$data['" . str_replace('/', "']['", $key) . "']";
+
+            $expr = "if (isset($k)) { return $k; } else { return null; }";
+            $value = eval("$expr");
 
         } elseif (isset($data[$key])) {
             $value = $data[$key];
@@ -147,7 +175,7 @@ class DataStorage
     //---------------------------------------------------------------------------
     public function initRecs($ids)
     {
-        $data = $this->lowLevelRead();
+        $data = &$this->data;
         $keys = array_keys($data);
         if (is_array($ids)) {
             foreach ($ids as $id) {
@@ -162,7 +190,7 @@ class DataStorage
         } else {
             return null;
         }
-        return $this->lowLevelWrite($data);
+        return $this->lowLevelWrite();
     } // initRecs
 
 
@@ -170,7 +198,7 @@ class DataStorage
     //---------------------------------------------------------------------------
     public function findRec($key, $value)
     {
-        $data = $this->lowLevelRead();
+        $data = &$this->data;
 
         foreach ($data as $datakey => $rec) {
             foreach ($rec as $k => $v) {
@@ -187,20 +215,46 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
+    public function isLocked($key)
+    {
+        $data = &$this->data;
+
+        if (!is_array($data) || !$key) {
+            return false;
+        }
+
+        if (isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID])) { // is data element locked?
+            $sid = $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID];
+            if ($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] != $this->sid) { // locked by other sid?
+                return true;   // element was locked, locking failed
+            }
+        }
+        return false;
+    } // lock
+
+
+    //---------------------------------------------------------------------------
     public function lock($key)
     {
-        $data = $this->lowLevelRead();
-        if (!is_array($data)) {
+        $data = &$this->data;
+
+        if (!is_array($data) || !$key) {
             return false;
         }
-        if (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] != $this->sid)) {
-            return false;
+
+        if (isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID])) { // is data element locked?
+            $sid = $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID];
+            if ($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] != $this->sid) { // locked by other sid?
+                return false;   // element was locked, locking failed
+            } else {
+                return true;    // already locked by caller
+            }
         }
-        if ($key) {
-            $data['_meta_'][$key][LIZZY_LOCK] = time();
-            $data['_meta_'][$key][LIZZY_SID] = $this->sid;
-        }
-        return $this->lowLevelWrite($data);
+        $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_LOCK_TIME] = time();
+        $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] = $this->sid;
+        $this->lowLevelWrite();
+
+        return true;
     } // lock
 
 
@@ -208,77 +262,38 @@ class DataStorage
     //---------------------------------------------------------------------------
     public function unlock($key = true)
     {
-        $data = $this->lowLevelRead();
+        $data = &$this->data;
         if (!is_array($data)) {
             return false;
         }
         if ($key === '*') {    // unlock all records
-            if (isset($data['_meta_'])) {
-                unset($data['_meta_']);
+            foreach ($data[LIZZY_META] as $id => $rec) {
+                unset($data[LIZZY_META][$id][LIZZY_LOCK]);
             }
+
         } elseif ($key === true) {    // unlock all owner's records
-            foreach ($data as $key => $value) {
-                if (isset($data['_meta_'][$key][LIZZY_SID]) && ($data['_meta_'][$key][LIZZY_SID] == $this->sid)) {
-                    unset($data['_meta_'][$key]);
+            $mySid = $this->sid;
+            foreach ($data[LIZZY_META] as $key => $value) {
+                if (isset($value[LIZZY_LOCK][LIZZY_SID]) && ($value[LIZZY_LOCK][LIZZY_SID] == $mySid)) {
+                    unset($data[LIZZY_META][$key][LIZZY_LOCK]);
                 }
             }
         } else {
-            if (isset($data['_meta_'][$key])) {
-                unset($data['_meta_'][$key]);
+            if (isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID]) &&
+                ($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] == $this->sid)) {
+                unset($data[LIZZY_META][$key][LIZZY_LOCK]);
             }
         }
-        return $this->lowLevelWrite($data);
+        return $this->lowLevelWrite();
     } // unlock
 
 
 
-    //---------------------------------------------------------------------------
-    public function unlockTimedOut($timeout = 120)
-    {
-        $modified = false;
-        $data = $this->lowLevelRead();
-        if (!is_array($data)) {
-            return false;
-        }
-        $timeLimit = time() - $timeout;
-        foreach ($data as $key => $value) {
-            if ($key == '_meta_') {
-                continue;
-            }
-            if (isset($data['_meta_'][$key][LIZZY_LOCK]) && ($data['_meta_'][$key][LIZZY_LOCK] < $timeLimit)) {
-                unset($data['_meta_'][$key]);
-                $modified = $key;
-            }
-        }
-        if ($modified) {
-            $this->lowLevelWrite($data);
-        }
-        return $modified;
-    } // unlockTimedOut
-
-
 
     //---------------------------------------------------------------------------
-    public function convert($source, $destinationFormat)
-    {
-        if (!file_exists($source)) {
-            fatalError("DataStorage::convert: file not found '$source'", 'File: '.__FILE__.' Line: '.__LINE__);
-        }
-        $this->dataFile = $source;
-        $pi = pathinfo($source);
-        $srcFormat = $pi['extension'];
-        $data = $this->_read();
-        $destFile = $pi['dirname'].'/'.$pi['filename'].'.'.$destinationFormat;
-        $out = $this->encode($data, $destinationFormat);
-        file_put_contents($destFile, $out);
-    } // convert
-
-
-
-    //---------------------------------------------------------------------------
-    private function lowLevelWrite($data)
+    private function lowLevelWrite()
     {   // returns true if successful
-        $rawData = $this->encode($data);
+        $rawData = $this->encode();
         if ($this->lockDB) {
             clearstatcache();
             $fp = fopen($this->dataFile, "r+");
@@ -348,12 +363,37 @@ class DataStorage
         if (!$this->dataFile || !$this->lockDB) {
             return false;
         }
-        $rawData = file_get_contents($this->dataFile);
-        if (!$rawData || (strpos($rawData, '_meta_') === false)) {
-            $this->lowLevelWrite([ '_meta_' => [] ]);   // initialize DB
+        if (!isset($this->data[LIZZY_META])) {
+            $this->data[LIZZY_META] = [];
         }
+
+        $this->resetTimedOutLocks();
+
         return true;
     } // checkDB
+
+
+
+
+    //---------------------------------------------------------------------------
+    private function resetTimedOutLocks()
+    {
+        $th = time() - $this->lockTimeout;
+        $meta = &$this->data[LIZZY_META];
+        $modified = false;
+        foreach ($meta as $id => $rec) {
+            if (isset($rec[LIZZY_LOCK][LIZZY_LOCK_TIME])) {
+                $t = $rec[LIZZY_LOCK][LIZZY_LOCK_TIME];
+                if ($rec[LIZZY_LOCK][LIZZY_LOCK_TIME] < $th) {
+                    unset($meta[$id][LIZZY_LOCK]);
+                    $modified = true;
+                }
+            }
+        }
+        if ($modified) {
+            $this->lowLevelWrite();
+        }
+    } // resetTimedOutLocks
 
 
 
@@ -380,8 +420,9 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
-    private function encode($data, $format = false)
+    private function encode($format = false)
     {
+        $data = &$this->data;
         if (!$format) {
             $format = $this->format;
         }

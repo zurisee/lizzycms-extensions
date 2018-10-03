@@ -7,7 +7,6 @@ var lastMdUpdateTime = 0;
 var $edWrapper = null;
 var origText = '';
 var simplemde = null;
-var cmdKeyPressed = false;
 var filename = '';
 var $editBtn = null;
 
@@ -58,7 +57,7 @@ function setupEventHandlers()
 
     // page-history drop-down list:
     $( "select" ).change(function() {       // handle edition-dropdown-list
-        filename = $( this ).parent().parent().attr('data-filename');
+        filename = $( this ).parent().parent().attr('data-lzy-filename');
         $( "select option:selected" ).each(function() {
             var href = $(this).val();
             if (href != '') {
@@ -135,7 +134,7 @@ function startEditor( $editBtn ) {
     origText = $edWrapper.html();
     $edWrapper.html('');
     $section.addClass('lzy-editing');
-    filename = $section.attr('data-filename');
+    filename = $section.attr('data-lzy-filename');
 
     $.ajax({
         type: "POST",
@@ -174,11 +173,11 @@ function startEditor( $editBtn ) {
             });
 
             $('.lzy-save-btn').click(function() {
-                saveData( false );
+                saveData(this, false );
             });
 
             $('.lzy-done-btn').click(function() {
-                saveData( true );
+                saveData(this, true );
             });
         },
     });
@@ -190,8 +189,7 @@ function startEditor( $editBtn ) {
 
 function startSitemapEditor() {
     $('body').addClass('lzy-editing');
-    $('header').addClass('dispno');
-    $edWrapper = $('main section');
+    $edWrapper = $('.lzy-src-wrapper.lzy-nav-wrapper');
     origText = $edWrapper.html();
 
     filename = 'sitemap';
@@ -218,11 +216,11 @@ function startSitemapEditor() {
             });
 
             $('.lzy-save-btn').click(function() {
-                saveSitemapData( false );
+                saveData(this, false );
             });
 
             $('.lzy-done-btn').click(function() {
-                saveSitemapData( true );
+                saveData(this, true );
             });
         }
     });
@@ -252,7 +250,7 @@ function showFiles( that )
     $.ajax({	// load uploader (from main.js)
         // Uncomment the following to send cross-domain cookies:
         //xhrFields: {withCredentials: true},
-        url: $('#lzy-fileupload').lzy-fileupload('option', 'url'),
+        url: $('#lzy-fileupload').fileupload('option', 'url'),
         dataType: 'json',
         context: $('#lzy-fileupload')[0]
     }).always(function () {
@@ -276,8 +274,7 @@ function saveSitemapData( leaveEditor )
 	$.ajax({
 		type: "POST",
 		url: '?lzy-save',
-		// url: systemPath + '?save',
-		data: { lzy_filename: 'sitemap', sitemap: sitemap },
+		data: { lzy_sitemap: sitemap },
 		success: function( data ) {
 			if (leaveEditor) {
 				// var href = window.location.pathname;
@@ -292,8 +289,14 @@ function saveSitemapData( leaveEditor )
 
 
 
-function saveData( leaveEditor )
+function saveData( obj, leaveEditor )
 {
+    var $el = $( obj ).parent().parent();
+    var isSitemap = $el.hasClass('lzy-edit-sitemap');
+    if (isSitemap) {
+        return saveSitemapData( leaveEditor );
+    }
+
 	if (leaveEditor) {
 		hideElements(false);
 		$editBtn.show();

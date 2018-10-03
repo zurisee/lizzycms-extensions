@@ -3,112 +3,65 @@
 // @info: Is a generic macro to add images to the page.
 
 
+require_once SYSTEM_PATH.'image-tag.class.php';
+
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
-	$macroName = basename(__FILE__, '.php');
-	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-	$inx = $this->invocationCounter[$macroName] + 1;
+    $macroName = basename(__FILE__, '.php');
+    $this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName] + 1);
+    $inx = $this->invocationCounter[$macroName] + 1;
 
     $src = $this->getArg($macroName, 'src', 'Name of image-file');
     $alt = $this->getArg($macroName, 'alt', 'Alt-text for image, i.e. a short text that describes the image');
     $class = $this->getArg($macroName, 'class', 'Class-name that will be applied to the image');
+    $id = $this->getArg($macroName, 'id', 'ID-name that will be applied to the image');
     $caption = $this->getArg($macroName, 'caption', 'Optional caption');
+    $size = $this->getArg($macroName, 'sizes', 'Specifies in which size the image shall be rendered (e.g. "300x200")');
     $srcset = $this->getArg($macroName, 'srcset', "Let's you override the automatic srcset mechanism.");
+    $quickview = $this->getArg($macroName, 'quickview', "If set, activates the quickview mechanism.");
+    $lateImgLoading = $this->getArg($macroName, 'lateImgLoading', "If set, activates the lazy-load mechanism: images get loaded after the page is ready otherwise.");
 
+    $link = $this->getArg($macroName, 'link', "Wrap an <a> tag round the image");
+    $linkClass = $this->getArg($macroName, 'linkClass', "Class applied to <a> tag");
+    $linkTarget = $this->getArg($macroName, 'linkTarget', "Target-attribute applied to <a> tag");
+    $linkTitle = $this->getArg($macroName, 'linkTitle', "Title-attribute applied to <a> tag");
+    $linkType = $this->getArg($macroName, 'linkType', "[extern] used to present the link as an external link");
 
-    $src = makePathRelativeToPage($src);
-
-    $imgFullsizeFile = false;
-    $auxAttr = '';
-    $attr = '';
-    $id = "img$inx";
-    $modifier = '';
-    $w = $h = $w0 = $h0 = 1;
-    $fileFound = false;
-
-    $srcFile = resolvePath($src, true);
-    if (file_exists($srcFile)) {
-        list($w, $h, $type, $attr) = getimagesize($srcFile);
-        $fileFound = true;
+    if (!$id) {
+        $id = "img$inx";
     }
 
-    if (preg_match('/([^\[]*)\[(.*)\](\.\w+)/', $src, $m)) {    // [WxH] size specifier present?
-        $basename = $m[1];
-        $ext = $m[3];
-        list($w, $h) = explode('x', $m[2]);
-        $imgFullsizeFile = resolvePath($basename . $ext, true);
-        if (file_exists($imgFullsizeFile)) {
-            list($w0, $h0) = getimagesize($imgFullsizeFile);
-            $aspRatio = $h0 / $w0;
-        } else {
-            return "<div class='missing-img $class'>Image missing: '$srcFile'</div>";
+    $lateImgLoading = ($lateImgLoading || $this->config->feature_lateImgLoading || (strpos($class, 'lzy-late-loading') !== false));
+
+    // invoke quickview resources if required:
+    if ($this->config->feature_quickview || $quickview || (strpos($class, 'lzy-quickview') !== false)) {
+        $class .= ' lzy-quickview';
+        if (!isset($this->page->quickviewLoaded)) {
+            $this->page->addCssFiles('QUICKVIEW_CSS');
+            $this->page->addJqFiles('QUICKVIEW');
+            $this->page->addJq("\t$('.lzy-quickview').quickview();");
+            $this->page->quickviewLoaded = true;
         }
-
-        if (!$w) {
-            $w = round($h / $aspRatio);
-        } elseif (!$h) {
-            $h = round($w * $aspRatio);
-        }
-        $src = $basename."[{$w}x$h]".$ext;
-    } elseif (!$fileFound) {
-        return "<div class='missing-img $class'>Image missing: '$srcFile'</div>";
-    }
-    // prepare quickview:
-    if (($this->config->feature_quickview && !preg_match('/\bnoquickview\b/', $class)) ||   // config setting, but no 'noquickview' override
-            preg_match('/\bquickview\b/', $class)) {                                // or 'quickview' class
-        if ($imgFullsizeFile) {
-            if (file_exists($imgFullsizeFile)) {
-                if (!isset($this->page->quickviewLoaded)) {
-                    $this->page->addCssFiles('QUICKVIEW_CSS');
-                    $this->page->addJqFiles('QUICKVIEW');
-                    $this->page->addJq("\t$('.quickview').quickview();");
-                    $this->page->quickviewLoaded = true;
-                }
-                $auxAttr = " data-qv-src='~/$imgFullsizeFile' data-qv-width='$w0' data-qv-height='$h0'";
-                if ($this->config->feature_quickview && (strpos($class, 'quickview') === false)) {
-                    $class .= ' quickview';
-                }
-            } else {
-                $imgFullsizeFile = false;
-            }
-        }
+    } elseif ($lateImgLoading) {    // lateImgLading requires quickview.js
+        $this->page->addJqFiles('QUICKVIEW');
     }
 
-    if (file_exists($imgFullsizeFile)) {
-        $fileSize = filesize($imgFullsizeFile);
-    } else {
-        $fileSize = 0;
+    $impTag = new ImageTag($this, $src, $alt, $class, $size, $srcset, $lateImgLoading);
+    $str = $impTag->render($id);
+
+
+    // link around img
+    if ($link) {
+        require_once SYSTEM_PATH . 'create-link.class.php';
+        $cl = new CreateLink();
+
+        $str = str_replace('lzy-quickview', '', $str); // link overrides quickview
+
+        $args = ['text' => $str, 'href' => $link, 'class' => $linkClass, 'type' => $linkType,
+            'target' => $linkTarget, 'title' => $linkTitle, 'target' => '', 'subject' => '', 'body' => ''];
+        $str = $cl->render($args);
     }
-
-    // prepare srcset:
-    if (($srcset === '') && ($fileSize > 100000)) {
-        $i = 2;
-        $w1 = round($w * 2);
-        $h1 = round($h * 2);
-        while (($w1 < $w0) && ($i <= 4)) {
-            $f =  $basename."[{$w1}x{$h1}]".$ext;
-            $srcset .= "$f {$i}x, ";
-            $i++;
-            $w1 = round($w * $i);
-            $h1 = round($h * $i);
-        }
-        $srcset = ' srcset="'.substr($srcset, 0, -2).'"';
-
-    } elseif ($srcset && ($srcset != 'false')) {
-        $srcset = " srcset='$srcset'";
-
-    } else {
-        $srcset = '';
-    }
-
-    if ($class) {
-        $class = " $class";
-    }
-
-    // basic img code:
-    $str = "<img  id='$id' class='img$inx$class' src='$src'$srcset title='$alt' alt='$alt' $attr$auxAttr />";
-
 
     // figure with caption:
     if ($caption) {
@@ -117,9 +70,17 @@ $this->addMacro($macroName, function () {
         } else {
             $this->figureCounter++;
         }
+
+        if (preg_match('/(.*)\#\#=(\d+)(.*)/', $caption, $m)) {
+            $this->figureCounter = intval($m[2]);
+            $caption = $m[1].'##'.$m[3];
+        }
+        // make ref to figure available:
+        $this->addVariable("fig_$id",$this->figureCounter);
+
         $caption = str_replace('##', $this->figureCounter, $caption);
         $caption = "\t<figcaption class='caption'>$caption</figcaption>\n";
-        $str = "<figure id='figure_$id' class='$class'$modifier>\n\t$str\n$caption</figure>\n";
+        $str = "<figure id='figure_$id' class='$class'>\n\t$str\n$caption</figure>\n";
     }
-	return $str;
+    return $str;
 });

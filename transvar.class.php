@@ -27,10 +27,11 @@ class Transvar
 	public $page;
 
 	//....................................................
-	public function __construct($config)
+	public function __construct($lzy)
 	{
+	    $this->lzy = $lzy;
 		$this->page = new Page;
-		$this->config = $config;
+		$this->config = $lzy->config;
 
 	} // __construct
 
@@ -40,6 +41,7 @@ class Transvar
 	//....................................................
 	public function render($page, $lang = false, $substitutionMode = false)
 	{
+        $this->shieldedStrings = [];
 	    if (is_string($page)) {
             $html = $page;
         } else {
@@ -56,9 +58,12 @@ class Transvar
 
         $html = $this->adaptBraces($html, $substitutionMode);
 
-		while (strpos($html, '{{') !== false) {
+        $pp = findNextPattern($html, '{{');
+        while ($pp !== false) {
+            $html = $this->excludeShieldedStrings($html);
 			$html = $this->translateMacros($html);
 			$html = $this->translateVars($html, 'app', $substitutionMode);
+            $pp = findNextPattern($html, '{{');
 		}
 
 		$html = $this->translateSpecialVars($html);
@@ -71,13 +76,44 @@ class Transvar
             if ($this->page->get('override') ||
                 $this->page->get('overlay') ||
                 $this->page->get('pageSubstitution') ||
+                $this->page->get('debugMsg') ||
                 $this->page->get('message')) {
                 $this->firstRun = true;
                 return $this->render($page, $lang, $substitutionMode);
             }
         }
+        $html = $this->replaceShieldedStrings($html);
 		return $html;
 	} // render
+
+
+
+
+    private function excludeShieldedStrings($str) {
+        $p1 = findNextPattern($str, '{[{[');
+        $i  = sizeof($this->shieldedStrings);
+        while ($p1) {
+            $p2 = findNextPattern($str, ']}]}', $p1);
+            if ($p2) {
+                $this->shieldedStrings[$i] = substr($str, $p1+4, $p2-$p1-4);
+                $str = substr($str, 0, $p1+4) . $i . substr($str, $p2);
+                $p1 += strlen("{[{[$i]}]}");
+                $p1 = findNextPattern($str, '{[{[', $p1);
+                $i++;
+            }
+        }
+        return $str;
+    }
+
+
+
+    private function replaceShieldedStrings($str) {
+	    foreach ($this->shieldedStrings as $i => $s) {
+	        $pat = "{[{[".$i."]}]}";
+	        $str = str_replace($pat, $s, $str);
+        }
+        return $str;
+    }
 
 
 
@@ -131,8 +167,16 @@ class Transvar
                         if (!isset($this->macros[$macro])) {     // macro already loaded
                             $this->loadMacro($macro);
                         }
+
                         if (isset($this->macros[$macro])) { // and try to execute it
-                            $val = $this->macros[$macro]($this);
+
+                            $this->optionAddNoComment = false;
+                            $val = $this->macros[$macro]($this);                    // execute the macro
+
+                            if (($this->config->isLocalhost || $this->config->isPrivileged) && !$this->optionAddNoComment) {
+                                $val = "\n\n<!-- Lizzy Macro: $macro() -->\n$val\n<!-- /$macro() -->\n\n\n";   // mark its output
+                            }
+
                             if (trim($argStr) == 'help') {
                                 if ($val2 = $this->getMacroHelp($macro)) {
                                     $val = $val2;
@@ -161,7 +205,14 @@ class Transvar
                 } elseif (!$optional && ($val === false)) {
                     $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2);
                 } else {
-                    $str = substr($str, 0, $p1) . $val . substr($str, $p2 + 2);
+                    $before = substr($str, 0, $p1);
+                    $after = substr($str, $p2 + 2);
+                    // remove spurious <p></p>:
+                    if ((substr($before, -3) == '<p>') && (substr($after, 0,4) == '</p>')) {
+                        $before = substr($before, 0, -3);
+                        $after = substr($after, 4);
+                    }
+                    $str = $before . $val . $after;
                 }
             }
             list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
@@ -174,7 +225,8 @@ class Transvar
 	//....................................................
 	public function translateVars($str, $namespace = 'app', $substitutionMode = false)
 	{
-		list($p1, $p2) = strPosMatching($str);
+
+        list($p1, $p2) = strPosMatching($str);
 		while (($p1 !== false)) {
 			$commmented = false;
 			$optional = false;
@@ -286,6 +338,7 @@ class Transvar
                 } else {
                     $out = null;
                 }
+                $this->macroArgs[$macroName][$name] = $out; // prepare named option as well
             }
         }
         if ($removeNl) {
@@ -299,9 +352,25 @@ class Transvar
 
 
     //....................................................
-    private function getArgsArray($macroName, $removeNl = true)
+    private function getArgsArray($macroName, $removeNl = true, $argNames = false)
     {
+    	//??? unfinished!
+    	// -> removeNl in case of $argNames provided
+    	
         $this->macroHelp[$macroName] = [];
+        if ($argNames && is_array($argNames)) {
+            $an = [];
+            foreach ($argNames as $i => $argName) {
+                if (isset($this->macroArgs[$macroName][$argName])) {
+                    $an[$argName] = $this->macroArgs[$macroName][$argName];
+                } elseif (isset($this->macroArgs[$macroName][$i])) {
+                    $an[$argName] = $this->macroArgs[$macroName][$i];
+                } else {
+                    $an[$argName] = '';
+                }
+            }
+            return $an;
+        }
         if (!$this->macroArgs[$macroName]) {
             return [];
         }
@@ -681,6 +750,10 @@ class Transvar
                         $out = $res;
                     }
                 } else {
+                    fatalError("PHP-Sandbox feature currently not supported.");
+
+                    // To re-enable, run
+                    //  composer install corveda/php-sandbox
                     $sandbox = new MySandbox();
                     $vars['this'] = $this; // feed $trans into sandbox
                     return $sandbox->execute($phpFile, $this->config->configPath, $vars);
@@ -917,6 +990,13 @@ EOT;
     public function renderUnusedVariables()
     {
         return $this->processFiles($GLOBALS['files'], 'renderUnusedInFile');
+    }
+
+
+
+    private function renderUnusedInFile($filename)
+    {
+        return "<p>renderUnusedInFile() not implemented yet [$filename]</p>";
     }
 
 

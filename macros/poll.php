@@ -34,11 +34,6 @@ $this->addMacro($macroName, function () {
 });
 
 
-/**
- * @param $optionsFile
- * @param $options
- * @return array|bool|null|string|string[]
- */
 function determineOptions($optionsFile, $options)
 {
     if ($optionsFile) {
@@ -68,14 +63,6 @@ function determineOptions($optionsFile, $options)
 
 
 
-/**
- * @param $resultFile
- * @param $pollName
- * @param $limitVotesPerUser
- * @param $votesCountFile
- * @param $multAnswers
- * @return array|mixed|null
- */
 function getPreviousResults($resultFile, $pollName, $limitVotesPerUser, $votesCountFile, $multAnswers)
 {
     $resultFile = resolvePath($resultFile, true);
@@ -131,14 +118,6 @@ function getPreviousResults($resultFile, $pollName, $limitVotesPerUser, $votesCo
 
 
 
-/**
- * @param $pollName
- * @param $multAnswers
- * @param $options
- * @param $showResults
- * @param $data
- * @return string
- */
 function renderOutput($pollName, $multAnswers, $options, $showResults, $data)
 {
     $str = "\t<form method='post' class='lzy-poll $pollName'>\n";

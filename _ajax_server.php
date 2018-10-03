@@ -44,10 +44,10 @@ date_default_timezone_set('CET');		// modify as appropriate
 define('DATA_PATH', 		'../data/');		// modify if necessary
 define('SERVICE_LOG', 		'../.#logs/log.txt');	// modify if necessary
 define('ERROR_LOG', 		'../.#logs/errlog.txt');	// modify if necessary
-define('LONG_POLL_FREQ', 	1);		// local polling cycle time, i.e. how often data is read
-define('LOCK_TIMEOUT', 		120); //90);	// max time till field is automatically unlocked
+define('LOCK_TIMEOUT', 		120);	// max time till field is automatically unlocked
 define('MAX_URL_ARG_SIZE', 255);
 define('SYSTEM_PATH','_lizzy/');
+define('MKDIR_MASK',            0700); // remember to modify _lizzy/_install/install.sh as well
 
 require_once 'vendor/autoload.php';
 require_once 'datastorage.class.php';
@@ -64,13 +64,16 @@ class AjaxServer
 		if (sizeof($_GET) < 1) {
 			exit('Hello, this is '.basename(__FILE__));
 		}
-		session_start();
-		if (!isset($_SESSION['lizzy']['userAgent'])) {
-            $this->clientID = '????';
-            $this->user = '????';
-            $this->mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
-            exit('failed');
+        if (!session_start()) {
+            $this->mylog("ERROR in __construct(): failed to start session");
         }
+        $this->clear_duplicate_cookies();
+
+        if (!isset($_SESSION['lizzy']['userAgent'])) {
+            $this->mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
+            exit('restart');
+        }
+
 		$this->sessionId = session_id();
         $this->clientID = substr($this->sessionId, 0, 4);
 		if (!isset($_SESSION['lizzy']['hash'])) {
@@ -82,20 +85,19 @@ class AjaxServer
         if (!isset($_SESSION['lizzy']['pagePath'])) {
 		    die('Fatal Error: $_SESSION[\'lizzy\'][\'pagePath\'] not defined');
         }
-        $pagePath = $_SESSION['lizzy']['pagePath'];
+        $pagePath = isset($_REQUEST['pg']) ? $_REQUEST['pg'] : $_SESSION['lizzy']['pagePath'];
 
         if (isset($_SESSION['lizzy']['db'][$pagePath]) && $_SESSION['lizzy']['db'][$pagePath]) {
-            $dbFile = '../' . $_SESSION['lizzy']['db'][$pagePath];
+            $dbFile = $this->dbFile = '../' . $_SESSION['lizzy']['db'][$pagePath];
             $this->db = new DataStorage($dbFile, $this->sessionId, true);
         }
+        $this->user = '';
         if (isset($_SESSION['lizzy']['userDisplayName']) && $_SESSION['lizzy']['userDisplayName']) {    // get user name for logging
             $this->user = '['.$_SESSION['lizzy']['userDisplayName'].']';
 
         } elseif (isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']) {
             $this->user = '['.$_SESSION['lizzy']['user'].']';
 
-        } else {
-            $this->user = '';
         }
 
 		$this->hash = $_SESSION['lizzy']['hash'];
@@ -123,8 +125,8 @@ class AjaxServer
 			exit;
 		}
 
-        if ($ids = $this->get_request_data('conn')) {	    // conn  initial interaction with client, defines used ids
-			$this->initConnection( $ids );
+        if (isset($_GET['conn'])) {	    // conn  initial interaction with client, defines used ids
+			$this->initConnection();
 			exit;
 		}
 
@@ -133,7 +135,7 @@ class AjaxServer
 			exit;
 		}
 
-		if ($id = $this->get_request_data('lock')) {	// lock an editable field
+		if ($id = $this->get_request_data(LIZZY_LOCK)) {	// lock an editable field
 			$this->lock($id);
 			exit;
 		}
@@ -148,7 +150,8 @@ class AjaxServer
 			exit;
 		}
 
-		if ($msg = $this->get_request_data('log')) {	// remote log, write to backend's log
+		if (isset($_GET['log'])) {	// remote log, write to backend's log
+            $msg = $this->get_request_data('text');
 			$this->mylog("Client: $msg");
 			exit;
 		}
@@ -203,15 +206,20 @@ EOT;
 
 
 	//---------------------------------------------------------------------------
-	private function initConnection($ids) {
-		session_start();
-		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
+	private function initConnection() {
+        $json = $this->get_request_data('ids');
+        $ids = json_decode($json);
+
+        if (!session_start()) {
+            $this->mylog("ERROR in initConnection(): failed to start session");
+        }
+        $this->clear_duplicate_cookies();		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
             $this->mylog("*** Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
             exit('failed#conn');
         }
 
         $pagePath = $_SESSION['lizzy']['pagePath'];
-        $pathToPage = $_SESSION['lizzy']['pathToPage'];
+        $pathToPage = $_SESSION['lizzy']['pagesFolder'].$pagePath;
 
         $this->mylog("=======");
         $this->mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent} (pagePath: $pagePath)");
@@ -230,10 +238,8 @@ EOT;
         $this->mylog("Database File: $dbFile");
         $this->db = new DataStorage($dbFile, $this->sessionId, true);
 
-        $ids = explode(',', rtrim($ids, ','));
         $this->db->initRecs($ids);
 
-		$this->db->unlock(true);
 		exit('ok#conn');
 	} // initConnection
 
@@ -245,42 +251,6 @@ EOT;
         $this->mylog("termination initiated");
         exit('#termination initiated');
     }
-
-	//---------------------------------------------------------------------------
-	private function update($pollDuration = 60)
-	{
-		$pollCycles = ($pollDuration / LONG_POLL_FREQ) + rand(0, 5);
-
-        $tClient = $this->getLastUpdated();
-        for ($i=0; $i<$pollCycles; $i++) {
-            if (!isset($this->db)) {
-                sleep(1);
-                exit('#Error: db not initialized');
-            }
-            $tData = $this->db->lastModified();
-            if ($tData > $tClient) {
-                $data = $this->db->read('*', true);
-                $dataToSend = $this->prepareClientData($data);
-                $this->setLastUpdated($tData);
-                // $this->mylog("% update reply: new data [$dataToSend]");
-                exit($dataToSend.'#upd new data');
-            }
-
-			if ((time()%10) == 0) {        // check timeouts every 10 seconds
-                if ($id = $this->db->unlockTimedOut(LOCK_TIMEOUT)) {
-                    $this->mylog("% update ########## FORCED UNLOCK: $id");
-                }
-            }
-            if ($this->terminatePolling) {
-                exit('#long-polling ended');
-            }
-			sleep(LONG_POLL_FREQ);
-		}
-        $data = $this->db->read('*', true);
-        $dataToSend = $this->prepareClientData($data);
-        $this->setLastUpdated();
-		exit($dataToSend.'#upd heartbeat ('.$pollDuration.'s)');
-	} // update
 
 
 
@@ -295,12 +265,35 @@ EOT;
             $this->mylog("lock: Error: need to initialize connection first");
 			exit('Error: need to initialize connection first');
 		}
+
+		// Safety measure: datasource stated by client must correspond to session data
+        // otherwise, either client got out of sync or somebody tried some manipulation
+        $dataSrc = $this->get_request_data('ds');
+		$dbFile = substr($this->dbFile, 3);
+		if ($dbFile != $dataSrc) {
+		    unset($_SESSION['lizzy']);
+		    exit('restart');
+        }
+
 		if (!$this->db->lock($id)) {
 			$this->mylog("lock: $id -> failed");
 			exit('failed');
+
 		} else {
-			$this->mylog("lock: $id -> ok");
-			exit('ok');
+            $id0 = preg_replace('/_\d+-\d+$/', '', $id);
+            $val = $this->db->read($id);
+		    $th = $this->db->read("_meta_/$id0/lzy-editable-freeze-after");
+		    if ($val && $th) {
+                $t = $this->db->lastModified($id);
+                $th = time() - $th;
+                if ($t && ($t < $th)) {       // too old
+                    exit('frozen');
+                }
+            }
+
+		    $json = json_encode(['res' => 'ok', 'val' => $val]);
+			$this->mylog("lock: $id -> $json");
+			exit($json);
 		}
 	} // lock
 
@@ -324,8 +317,7 @@ EOT;
 
 	//---------------------------------------------------------------------------
 	private function get($id) {
-		$data = $this->db->read($id);
-		exit($this->prepareClientData($data, true).'#get');
+		exit($this->prepareClientData($id).'#get');
 	} // get
 
 
@@ -339,13 +331,21 @@ EOT;
 		}
 		$text = $this->get_request_data('text');
 		$this->mylog("save: $id -> [$text]");
+		$lzyEditableFreezeAfter = $this->db->read('lzy-editable-freeze-after');
+		if ($lzyEditableFreezeAfter) {
+		    $freezeBefore = time() - $lzyEditableFreezeAfter;
+		    $lastModif = $this->db->lastModified($id);
+		    if ($lastModif && ($lastModif < $freezeBefore)) {
+                $this->mylog("### value frozen - save failed!: $id -> [$text]");
+                exit('restart');
+            }
+        }
 		if (!$this->db->write($id, $text)) {
             $this->mylog("### save failed!: $id -> [$text]");
         }
 		$this->db->unlock(true); // unlock all owner's locks
-		$data = $this->db->read();
 
-		exit($this->prepareClientData($data,  true).'#save');
+		exit($this->prepareClientData($id).'#save');
 	} // save
 
 
@@ -357,6 +357,7 @@ EOT;
 			$this->db->unlock('*');
 		}
 		session_start();
+        $this->clear_duplicate_cookies();
 		unset($_SESSION['lizzy']['hash']);
 		unset($_SESSION['lizzy']['lastSentData']);
 		unset($_SESSION['lizzy']['db']);
@@ -368,11 +369,14 @@ EOT;
 
 
 	//------------------------------------------------------------
-	private function prepareClientData($data)
+	private function prepareClientData($key = false)
 	{
+	    $data = $this->db->read('*');
 		if (!$data) {
-			$data = array();
-		}
+			$data = [];
+		} elseif ($key && isset($data[$key])) {
+		    $data = $data[$key];
+        }
 		return json_encode($data);
 	} // prepareClientData
 
@@ -387,7 +391,7 @@ EOT;
 			$out = $this->safeStr($_GET[$varName]);
 
 		} elseif (isset($_POST[$varName])) {
-			$out = $this->safeStr($_POST[$varName]);
+			$out = $_POST[$varName];
 
 		} elseif ($this->isLocalhost && isset($argv)) {	// for local debugging
 			foreach ($argv as $s) {
@@ -403,10 +407,13 @@ EOT;
 
 
 
-	//---------------------------------------------------------------------------
-	private function var_r($data)
+    //---------------------------------------------------------------------------
+	private function var_r($data, $varName = false)
 	{
 		$out = var_export($data, true);
+		if ($varName) {
+		    $out = "$varName: ".$out;
+        }
 		return str_replace("\n", '', $out);
 	} // var_r
 
@@ -417,37 +424,10 @@ EOT;
 	private function mylog($str)
 	{
 		if (!file_exists(dirname(SERVICE_LOG))) {
-			mkdir(dirname(SERVICE_LOG), 0777, true);
+			mkdir(dirname(SERVICE_LOG), MKDIR_MASK, true);
 		}
 		file_put_contents(SERVICE_LOG, $this->timestamp()." {$this->clientID}{$this->user}:  $str\n", FILE_APPEND);
 	} // mylog
-
-
-
-
-	//---------------------------------------------------------------------------
-	private function getLastUpdated()
-    {
-        session_start();
-        $t = $_SESSION['lizzy']['lastUpdated'];
-        session_abort();
-        return $t;
-    } // getLastUpdated
-
-
-
-
-    //---------------------------------------------------------------------------
-    private function setLastUpdated($t = false)
-    {
-        if (!$t) {
-            $t = time();
-        }
-        session_start();
-        $_SESSION['lizzy']['lastUpdated'] = $t;
-        session_write_close();
-        $this->clear_duplicate_cookies();
-    } // setLastUpdated
 
 
 
@@ -469,7 +449,6 @@ EOT;
         if (headers_sent()) {
             return;
         }
-
         $cookies = array();
         foreach (headers_list() as $header) {
             // Identify cookie headers
@@ -557,7 +536,7 @@ function preparePath($path)
 {
     $path = dirname($path.'x');
     if (!file_exists($path)) {
-        if (!mkdir($path, 0777, true)) {
+        if (!mkdir($path, MKDIR_MASK, true)) {
             fatalError("Error: failed to create folder '$path'");
         }
     }
@@ -568,22 +547,8 @@ function preparePath($path)
 //------------------------------------------------------------
 function fatalError($msg)
 {
-    $msg = date('Y-m-d H:i:s')." [_ajax_server.php]\n$msg";
+    $msg = date('Y-m-d H:i:s')." [_ajax_server.php]\n$msg\n";
     file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
     exit;
 } // fatalError
-
-//------------------------------------------------------------------------------
-function var_r($var, $varName = '', $flat = true, $html = true)
-{
-    if ($html) {
-        $out = "<div><pre>$varName: " . var_export($var, true) . "\n</pre></div>\n";
-    } else {
-        $out = "$varName: " . var_export($var, true);
-    }
-    if ($flat) {
-        $out = preg_replace("/\n/", '', $out);
-    }
-    return $out;
-}
 

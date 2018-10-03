@@ -2,20 +2,20 @@
  *  Editable.js
 */
 
+
 var editableObj = new Object();
-var keyTimeout = 0;
-var semaphoreWait = false;
-editableObj.pendingReq = false;
-editableObj.doSave = true;
+editableObj.backend = systemPath+'_ajax_server.php';
+editableObj.doSave = false;
+editableObj.lastText = {};
+editableObj.editing = false;
+editableObj.keyTimeout = false;
+editableObj.fieldIDs = [];
+
+
 
 (function ( $ ) {
 
     $.fn.editable = function( options ) {
-        var settings = $.extend({    // default values:
-            'backend': systemPath+'_ajax_server.php',
-            'showButton': 'auto', // 'auto', true, false
-        }, options );
-
         if ( this.length == 0 ) {
             return;
         }
@@ -23,66 +23,62 @@ editableObj.doSave = true;
         if (typeof invokingClass == 'undefined') {
             invokingClass = 'lzy-editable';
         }
-        initializeEditableField(invokingClass, settings);
+        initializeEditableField(invokingClass);
     };
-    
-    $( window ).on("unload", function() {
-        console.log( ".unload() called." );
-        if (editableObj.pendingReq) {
-            editableObj.pendingReq.abort();
-        }
-        $.get( systemPath+'_ajax_server.php?end', function( data ) {
-            console.log(data);
-        });
+
+    $( window ).bind('beforeunload', function(){
+        endEdit(editableObj, false, true);
+        serverLog('Client disconnected');
     });
-
-
-//    $('.$editable').editable(); //??? -> needed, in case of invokation without macro: unclear how to handle best
 }( jQuery ));
 
-function initializeEditableField(invokingClass, settings)
+
+
+
+function initializeEditableField(invokingClass)
 {
     var edObj = editableObj;
-    edObj.editModeTimeout = 10000;  // automatically terminate editing after 20s of no key activity
-    edObj.longPollingTime = 60;
-    edObj.shortPollingTime = 10;
-    edObj.currentRequest = null;
+    edObj.editModeTimeout = 60000;  // automatically terminate editing after 20s of no key activity
     edObj.invokingClass = invokingClass;
-    edObj.isTouchDevice = 'ontouchstart' in document.documentElement;
-    edObj.backend = settings.backend; // appRoot supplied by script snippet in header
-    if (settings.showButton == 'auto') {
-        edObj.showButton = edObj.isTouchDevice;
+    if ($('body').hasClass('touch')) {
+        edObj.isTouchDevice = true;
+    } else if ($('body').hasClass('not-touch')) {
+        edObj.isTouchDevice = false;
     } else {
-        edObj.showButton = (settings.showButton == 'true');
+        edObj.isTouchDevice = 'ontouchstart' in document.documentElement;
     }
-    edObj.loadOnly = settings.loadOnly;
-    edObj.lastText = '';
-    edObj.inpWidth = {};
-    edObj.btnWidth = {};
-    edObj.editing = false;
-    edObj.keyTimeout = false;
-    edObj.fieldIDs = '';
 
     initEditableFields();
     setupKeyHandler();
-    if (!initializeConnection()) {
-        return;
-    }
+    initializeConnection();
 
-    $(window).resize(function() {
-        setWidths(edObj);
-    });
-
-    $(window).bind('beforeunload', function(){
-        remoteLog('Client disconnected');
-        endEdit(edObj, false, true);
-    });
-    
-    myLog('Editable.js started for class ".'+edObj.invokingClass+'"'+ ((edObj.showButton) ? ' in touch screen' : ' in desktop') + ' mode (backend: '+ edObj.backend+')');
-    if (edObj.showButton) {
-        myLog('showButton enabled!');
-    }
+    mylog('Editable.js started for class ".'+edObj.invokingClass+'" ('+ ((edObj.isTouchDevice) ? 'touch-device' : 'non-touch-device') + ', backend: '+ edObj.backend+')');
 } // initializeEditableField
+
+
+
+
+//--------------------------------------------------------------
+function initializeConnection()
+{
+    var edObj = editableObj;
+    var res = false;
+    var json = JSON.stringify(edObj.fieldIDs);
+    $('.lzy-editable input').addClass('lzy-wait');
+    this.ajaxSend(edObj, 'conn', '', json, function(json) {
+        mylog('Server connection established: ' + json);
+        if (json.match(/failed/)) {
+            mylog('Session aborted');
+            $('main').html("<h1>Error connecting to server.</h1><p>Please try again with another browser or another computer.</p>");
+            res = false;
+        }
+        res = true;
+        $('.lzy-editable input').removeClass('lzy-wait');
+    });
+    return res;
+} // initializeConnection
+
+
 
 
 
@@ -102,189 +98,130 @@ function initEditableFields()
     $editable.each(function(inx, elem) {
         var $elem = $(elem);
         var id = $elem.attr('id');
-        edObj.showButton = edObj.showButton || $elem.hasClass('lzy-editable-show-button');
+
+        var showButton = $elem.hasClass('lzy-editable-show-button');
+        // showButton: in auto-mode on touch-device we need to add class:
+        if ($elem.hasClass('lzy-editable-auto-show-button') && edObj.isTouchDevice) {
+            $elem.addClass('lzy-editable-show-button');
+            showButton = true;
+        }
 
         if (typeof id == 'undefined') {
             id =  edObj.invokingClass + '_field' + (parseInt(inx) + 1);
             $elem.attr('id', id);
         }
 
-        edObj.fieldIDs = edObj.fieldIDs + id + ','; // keep track of fieldIDs
+        edObj.fieldIDs.push(id); // keep track of fieldIDs
 
         var origText = $elem.text();
-        // if (!edObj.loadOnly) {
-            $elem.text('');
-            var _id = '_'+id;
-            var label = $elem.attr('title');
-            var buttons = '';
-            if (edObj.showButton) {
-                buttons = "<div class='lzy-edit_buttons'><button class='lzy-button submit'>"+okSymbol+"<span class='invisible'> Save</span></button>";
-            }
-            if (typeof label == 'undefined') {
-                $elem.html('<input id="'+_id+'" aria-live="polite" aria-relevant="all" value="x" />'+buttons);
-            } else {
-                $elem.html('<label for="'+_id+'" class="invisible">'+label+'</label><input id="'+_id+'" aria-live="polite" aria-relevant="all" value="y" />'+buttons);
-            }
-            $('#'+_id).val(origText);
-            setWidth(edObj, id);
-        // }
+        $elem.text('');
+        var _id = '_'+id;
+        var label = $elem.attr('title');
+        var buttons = '';
+        if (showButton) {
+            buttons = "<button class='lzy-editable-submit-button lzy-button'>"+okSymbol+"<span class='invisible'> Save</span></button>";
+        }
+        if (typeof label == 'undefined') {
+            $elem.html('<input id="'+_id+'" aria-live="polite" aria-relevant="all" />'+buttons);
+        } else {
+            $elem.html('<label for="'+_id+'" class="invisible">'+label+'</label><input id="'+_id+'" aria-live="polite" aria-relevant="all" />'+buttons);
+        }
+        $('#'+_id).val(origText);
     }); // .each
 
 
-    $('.lzy-edit_buttons button').height(h - 4);
     var $edInput = $('input', $editable);
     
     // activate 'loading' indication
-    $editable.addClass('lzy-wait');
+    // $editable.addClass('lzy-wait');
 
-    $edInput.focus(function(e) {
-        var id = $(this).parent().attr('id');
-        if (!$('#_'+id).hasClass('lzy-locked')) {
-            initEdit(edObj, id);
-        } else {
-            myLog('focus: input field is locked ('+id+')');
-            e.preventDefault();
+    $edInput.focus(function(e) {                // on focus()
+        onFocus(edObj, this);
+    });
+
+    $edInput.blur(function(e) {                 // on blur
+        onBlur(edObj, this);
+    });
+
+
+    $editable.click(function(e) {               // on click on ✓ button
+       e.stopPropagation();
+        var $this = $(this);
+        if (!$('input', $this ).hasClass('lzy-editable-active')) {
+            return;
+        }
+        var width = $('.lzy-editable-submit-button', $this).width();
+        var x = $(e.target).width() - e.offsetX;    // width of submit button
+        if (x < width) {
+            mylog('### click on assumed button');
+            onOkClick(edObj, this);
         }
     });
-
-    $edInput.blur(function(e) {
-        var _id = $(this).attr('id');
-        setTimeout(function() {
-            endEdit(edObj, _id, edObj.doSave);
-        }, 100);
+    $('.lzy-editable-submit-button').click(function(e) {    // on click on ✓ button
+       e.stopPropagation();
+        onOkClick(edObj, this);
     });
 
-    $('.lzy-edit_buttons button.submit').click(function(e) {
-        edObj.doSave = true;
-        // var id = $(this).parent().parent().attr('id');
-        // $('#_'+id).blur();
-    });
 } // initEditableFields()
 
 
 
-//--------------------------------------------------------------
-function setWidths(edObj)
-{
-    var $editable = $('.'+this.invokingClass);
-    $editable.each(function(inx, elem) {
-        var id = $(elem).attr('id');
-        setWidth(edObj, id);
-    });
-} // setWidths
-
-
-
-function setWidth(edObj, id)
-{
-    var _id = '_'+id;
-    var $elem = $('#'+id);
-    var $inpElem = $('#'+_id);
-    var height = $elem.height();
-    var width = $elem.width() - parseInt($inpElem.css('padding-right')) - parseInt($inpElem.css('padding-left')) - 2;
-    var btnWidth = height * 1.5;
-    $inpElem.width(width).height(height-2);
-    $('button', $elem).width(btnWidth).height(height);
-    edObj.inpWidth[_id] = $elem.width();
-    edObj.btnWidth[_id] =  (btnWidth + 1);
-} // setWidth
-
-
 
 //--------------------------------------------------------------
-function setupKeyHandler()
-{
-    var edObj = editableObj;
-    $('.'+edObj.invokingClass+' input').keypress(function (e) {
-        if ($(e.target).parent().hasClass('lzy-wait')) {
-            e.preventDefault();
-
-        } else {                // reset editing mode timeout
-            if (edObj.keyTimeout) {
-                clearTimeout(edObj.keyTimeout);
-            }
-            var _id = $(e.target).attr('id');
-            edObj.keyTimeout = setTimeout(timeoutAction, edObj.editModeTimeout);
-        }
-    });
-    $('.'+edObj.invokingClass+' input').keyup(function (e) {
-        var key = e.which;
-        var _id = $(e.target).attr('id');
-        if (key == 13) {             // Enter
-            myLog('keypress: Enter');
-            e.preventDefault();
-            edObj.doSave = true;
-            $('#'+_id).blur();
-            return false;
-        }
-        if(key == 27) {                // ESC
-            myLog('keyup: Esc ('+_id+') ['+edObj.lastText+']');
-            $('#'+_id).val(edObj.lastText);
-            $('#'+_id).blur();
-            return false;
-        }
-    });
-} // setupKeyHandler
-
-
-
-
-function timeoutAction()
-{
-    console.log('edit mode timed out');
-    $('.lzy-editable_active').blur();
-}
-
-
-
-//--------------------------------------------------------------
-function initEdit(edObj, id)
-{
-    console.log('initEdit: '+id);
-    edObj.doSave = !edObj.showButton;
-
-    // try to lock, repeat if failed:
-    if (!this.lock(id, edObj)) {
-        // handle situation where user clicks from one field immediately into the next
-        $('#' + id + ' input').prop('disabled', true);
-        console.log('initEdit -> sem locked, waiting on ' + id);
-
-        var cnt = 0;
-        var intv = setInterval(function () {
-            if (cnt >= 5) {         // give up:
-                clearInterval(intv);
-                console.log('initEdit -> sem still locked, giving up on ' + id);
-                $('#' + id + ' input').prop('disabled', false);
-                endEdit(edObj, '_' + id, false);
-                return;
-            }
-            cnt++;                  // try again:
-            console.log('initEdit -> trying again ('+cnt+') on ' + id);
-            if (this.lock(id, edObj)) {
-                $('#' + id + ' input').prop('disabled', false);
-                clearInterval(intv);
-                initEditCont(id, edObj);
-                return;
-            }
-        }, 1000);
-    } else {
-        initEditCont(id, edObj);
+function initEdit(edObj, id, dataSrc) {
+    if (lockField(edObj, id, dataSrc)) {
+        showButton(id);
     }
 } // initEdit
 
 
 
-
-function initEditCont(id, edObj)
+//--------------------------------------------------------------
+function lockField(edObj, id, dataSrc)
 {
-    edObj.keyTimeout = setTimeout(timeoutAction, edObj.editModeTimeout);
+    mylog( 'lockField: '+id );
+    var url = edObj.backend + "?lock=" + id + "&ds=" + dataSrc +'&pg='+pagePath;
+    var $editableField = $('#' + id);
+    var $inputField = $('#_' + id);
+    edObj.lastText[id] = $inputField.val();
 
-    if (edObj.showButton) {
-        var _id = '_'+id;
-        var shrunkWidth = edObj.inpWidth[_id] - edObj.btnWidth[_id] - 4;
-        $('#'+_id).animate({'width': shrunkWidth}, 250);
-    }
-}
+    $inputField.addClass('lzy-editable-active').addClass('lzy-wait');
+
+    $.get( url, function(json) {
+        if (!json) {
+            return;
+        }
+        if (json == 'restart') {
+            lzyReload();
+
+        } else if (json == 'failed') {      // field already locked
+            $inputField.val(edObj.lastText[id]).blur().addClass('lzy-locked');
+            alert(lzy_editable_msg);
+            mylog( 'field was locked: '+id );
+            return false;
+
+        } else if (json == 'frozen') {      // field already locked
+            $editableField.addClass('lzy-editable-frozen').text(edObj.lastText[id]);
+            mylog( 'field has been frozen: '+id );
+            return false;
+
+        } else {
+            json = json.replace(/(\{.*\}).*/, "$1");    // remove trailing #comment
+            var data = JSON.parse(json);
+            $inputField.removeClass('lzy-wait').removeClass('lzy-locked');
+            if (data.res == 'ok') {
+                $inputField.val(data.val);
+                edObj.lastText[id] = data.val;
+
+                if (edObj.keyTimeout) {
+                    clearTimeout(edObj.keyTimeout);
+                }
+                edObj.keyTimeout = setTimeout(timeoutAction, edObj.editModeTimeout);
+            }
+        }
+    });
+    return true;
+} // lockField
 
 
 
@@ -296,164 +233,118 @@ function endEdit(edObj, _id, sendToServer)
         clearTimeout(edObj.keyTimeout);
         edObj.keyTimeout = false;
     }
-    console.log('endEdit: '+_id);
+
     if (!_id) {
-        _id = $('.lzy-editable_active').attr('id');
+        _id = $('.lzy-editable-active').attr('id');
     }
     if (typeof _id == 'undefined') {
-        myLog('Error: endEdit -> no lzy-editable_active found');
+        mylog('Error: endEdit -> no lzy-editable-active found');
         return;
     }
     var $edInput = $('#'+_id);
-    if (edObj.showButton) {
-        $edInput.animate({'width': edObj.inpWidth[_id]}, 250);
+    $edInput.removeClass('lzy-editable-active');
+
+    if (edObj.value === false) {
+        edObj.value = $edInput.val();
+        mylog('WARNING: edObj.value was not properly set in endEdit()');
     }
-    $edInput.removeClass('lzy-editable_active');
-    var val = $edInput.val();
-    if (typeof val != 'undefined') {
-        if (sendToServer && (val != edObj.lastText)) {
-            ajaxSend(edObj, 'save', _id.substr(1), val, false);
-        } else {
-            unlock(_id.substr(1), edObj);
-            $('#'+_id).val(edObj.lastText);
-        }
-        edObj.lastText = '';
-        edObj.editing = false;
+
+    var id = _id.substr(1);
+    if (sendToServer && (edObj.value != edObj.lastText[id])) {
+        saveAndUnlockField(edObj, id, edObj.value);
     } else {
-        myLog('Error: endEdit -> no value available');
+        unlockField(edObj, id);
+        $('#'+_id).val(edObj.lastText[id]);     // restore original value
+
     }
+    edObj.lastText[id] = '';
+    edObj.editing = false;
+    edObj.value = false;
+    edObj.doSave = false;
+
+    hideButton(_id);
+
 } // endEdit
 
 
 
 //--------------------------------------------------------------
-function lock(id, edObj)
+function saveAndUnlockField(edObj, id, val)
 {
-    if (semaphoreWait) {
-        return false;
-    }
-    myLog('locking #'+id);
-    this.ajaxSend(edObj, 'lock', id, '', function(json) {
-        if (json == 'ok') {
-            var _id = '_' + id;
-            edObj.editing = id;
-            var $edInput = $('#' + _id);
-            edObj.lastText = $edInput.val();
-            $edInput.addClass('lzy-editable_active').select();
-        } else {
-            myLog('% lock failed');
-            endEdit(edObj, id, false);
-            // $('#' + id).blur();
-        }
-    });
-    return true;
-} // lock
+    mylog('saveAndUnlockField '+id+' => '+val);
+    this.ajaxSend(edObj, 'save', id, val, false);
+} // saveAndUnlockField
 
 
 
 //--------------------------------------------------------------
-function unlock(id, edObj)
+function unlockField(edObj, id)
 {
-    myLog('unlocking #'+id);
+    mylog('unlockField '+id);
     this.ajaxSend(edObj, 'unlock', id, '', false);
 } // unlock
 
 
 
 //--------------------------------------------------------------
-function initializeConnection()
+function showButton(id)
 {
-    var edObj = editableObj;
-    var res = false;
-    this.ajaxSend(edObj, 'conn', '', edObj.fieldIDs, function(json) {
-        myLog('Server connection established: ' + json);
-        if (json.match(/failed/)) {
-            myLog('Session aborted');
-            $('main').html("<h1>Error connecting to server.</h1><p>Please try again with another browser or another computer.</p>");
-            res = false;
-        }
-        res = true;
-    });
-    return res;
-} // initializeConnection
+    if ($('#' + id + '.lzy-editable-show-button').length) {
+        var w = $('#' + id).width() - $('#' + id + ' button').width() - 4;
+        $('#_' + id).animate({width: w + 'px'}, 150);
+    }
+} // showButton
 
 
 
 //--------------------------------------------------------------
-function update(pollingTime)
+function hideButton(_id)
 {
-    var edObj = editableObj;
-    if (typeof pollingTime == 'undefined') {
-        pollingTime = (edObj.isTouchDevice) ? edObj.shortPollingTime : edObj.longPollingTime;
+    if ($('#' + _id).parent().hasClass('lzy-editable-show-button')) {
+        // var w = $('#' + _id.substr(1)).width();
+        $('#'+_id).animate({width: '100%'}, 150);
     }
-    this.ajaxSend(edObj, 'upd', '', pollingTime, function(json) {
-        myLog('sendAjax upd response received: '+json);
-    });
-} // update
-
+} // hideButton
 
 
 
 //--------------------------------------------------------------
 function ajaxSend(edObj, cmd, id, data, onSuccess, synchronous)
 {
-    if (cmd == 'upd') {
-        if (edObj.pendingReq) {
-            myLog('ajax-upd skipped: '+edObj.pendingReq);
-            return;
-        }
-        edObj.pendingReq = $.ajax( edObj.backend+"?upd="+data, {
-            cache: false,
-            success: function (json) {
-                edObj.pendingReq = false;
-                console.log('ajax-upd: '+json);
-                updateUi(edObj, json);
-                update();
-            }
-        });
-
-    } else {    // all interactions but upd:
-        semaphoreWait = true;
-        if (id) {
-            $('#' + id).addClass('lzy-wait');
-        }
-        if (edObj.pendingReq) {
-            mylog('upd was pending, aborting now');
-            edObj.pendingReq.abort();
-            edObj.pendingReq = false;
-        }
-        if (cmd == 'conn') {
-            var method = 'GET';
-            var arg = 'conn='+data;
-            var postData = '';
-
-        } else if (cmd == 'save') {
-            data = encodeURIComponent(data);
-            var method = 'POST';
-            var arg = 'save='+id;
-            var postData = 'text='+data;
-
-        } else {
-            var method = 'GET';
-            var arg = cmd+'='+id;
-            var postData = '';
-        }
-
-        $.ajax({
-            url: edObj.backend + "?" + arg,
-            type: method,
-            data: postData,
-            cache: false,
-            success: function (json) {
-                semaphoreWait = false;
-                if ((json != 'failed') && onSuccess) {
-                    onSuccess(json);
-                }
-                updateUi(edObj, json);
-                update(1);
-            }
-        });
+    if (id) {
+        $('#_' + id).addClass('lzy-wait');
     }
+    if (cmd == 'conn') {
+        data = encodeURIComponent(data);
+        var method = 'POST';
+        var arg = 'conn'+'&pg='+pagePath;
+        var postData = 'ids='+data;
+
+    } else if (cmd == 'save') {
+        data = encodeURIComponent(data);
+        var method = 'POST';
+        // var arg = 'save='+id;
+        var arg = 'save='+id+'&pg='+pagePath;
+        var postData = 'text='+data;
+
+    } else {
+        var method = 'GET';
+        // var arg = cmd+'='+id;
+        var arg = cmd+'='+id+'&pg='+pagePath;
+        var postData = '';
+    }
+    $.ajax({
+        url: edObj.backend + "?" + arg,
+        type: method,
+        data: postData,
+        cache: false,
+        success: function (json) {
+            if ((json != 'failed') && onSuccess) {
+                onSuccess(json);
+            }
+            updateUi(edObj, json);
+        }
+    });
 } // ajaxSend
 
 
@@ -461,11 +352,10 @@ function ajaxSend(edObj, cmd, id, data, onSuccess, synchronous)
 function updateUi(edObj, json)
 {
     if (json && json.match(/^\{/)) {
-        myLog('updateUi: ['+json+']');
         json = json.replace(/(\{.*\}).*/, "$1");    // remove trailing #comment
         var data = JSON.parse(json);
         if (data) {
-            var editingField = $('.lzy-editable_active').attr('id');
+            var editingField = $('.lzy-editable-active').attr('id');
             for (var id in data) {
                 if ((id == 'undefined') || !id || (id.substr(0,1) == '_')) {
                     continue;
@@ -490,42 +380,148 @@ function updateUi(edObj, json)
                 }
             }
         }
+    } else if (json == 'restart') {
+        lzyReload();
+    } else if (json == 'frozen') {
+        var editingField = $('.lzy-editable-active').attr('id');
+        $('#' + editingField).addClass('lzy-editable-frozen');
     }
-    
-    // de-activate 'loading' indication
-    $('.lzy-wait').removeClass('lzy-wait');
+
+    $('.lzy-wait').removeClass('lzy-wait'); // de-activate 'loading' indication
 
 } // updateUi
 
 
 
+
+//===================================================
+
 //--------------------------------------------------------------
-function myLog( text )
+function setupKeyHandler()
 {
-    if (typeof mylog !== "undefined") {
-        mylog(text);
-    } else {
-        console.log(text);
+    var edObj = editableObj;
+    $('.'+edObj.invokingClass+' input').keydown(function (e) {
+        var key = e.which;
+        if (key == 9) {                  // Tab
+            onKeyTab(e);
+        }
+    });
+
+    $('.'+edObj.invokingClass+' input').keypress(function (e) {
+        if ($(e.target).hasClass('lzy-wait')) {
+        // if ($(e.target).parent().hasClass('lzy-wait')) {
+            e.preventDefault();
+
+        } else {                // reset editing mode timeout
+            if (edObj.keyTimeout) {
+                clearTimeout(edObj.keyTimeout);
+            }
+            var _id = $(e.target).attr('id');
+            edObj.keyTimeout = setTimeout(timeoutAction, edObj.editModeTimeout);
+        }
+    });
+    $('.'+edObj.invokingClass+' input').keyup(function (e) {
+        var key = e.which;
+        e.preventDefault();
+        if (key == 13) {             // Enter
+            onKeyEnter(e);
+        }
+        if(key == 27) {                // ESC
+            onKeyEsc(e);
+        }
+    });
+} // setupKeyHandler
+
+
+
+//=== Event Handlers ===========================================
+function onFocus(edObj, that)
+{
+    var id = $(that).parent().attr('id');
+    var dataSrc = $('#' + id).attr('data-storage-path');
+    initEdit(edObj, id, dataSrc);
+}
+
+
+
+function onBlur(edObj, that)
+{
+    var _id = $(that).attr('id');
+    edObj.value = $('#' + _id).val();
+
+    // if button not shown, all blurs save values:
+    if (!$('#' + _id).parent().hasClass('lzy-editable-show-button')) {
+        edObj.doSave = true;
     }
-} // myLog
+
+    setTimeout(function() {
+        endEdit(edObj, _id, edObj.doSave);
+    }, 150);
+}
 
 
 
-//--------------------------------------------------------------
-function remoteLog(text)
+function onOkClick(edObj, that)
 {
-    if (!text) {
+    var id = $(that).parent().attr('id');
+    edObj.doSave = true;
+    if (!edObj.value) {
+        edObj.value = $('#_' + id).val();
+    }
+}
+
+
+
+function onKeyEnter(e)
+{
+    var edObj = editableObj;
+    var _id = $(e.target).attr('id');
+    edObj.doSave = true;
+    $('#'+_id).blur();
+}
+
+
+
+function onKeyTab(e)
+{
+    var edObj = editableObj;
+    var _id = $(e.target).attr('id');
+    e.preventDefault();
+    edObj.doSave = true;
+    $('#'+_id).blur();
+
+    // find next editable input field and put focus there:
+    var inx = edObj.fieldIDs.indexOf(_id.substr(1));
+    if (inx >= edObj.fieldIDs.length) {
         return;
     }
+    var next = edObj.fieldIDs[inx + 1];
+    var $next = $('#'+next + ' input');
+    if ($next.length) {
+        setTimeout(function () {
+            $next.focus();
+        }, 300);
+    }
+}
+
+
+
+function onKeyEsc(e)
+{
     var edObj = editableObj;
-    $.ajax({
-        url: edObj.backend+'?log='+text,
-        type: 'GET',
-        data: '',
-        async: true,
-        cache: false,
-    }).fail(function() {
-        myLog('Error: no backend found');
-    });
-} // remoteLog()
+    var _id = $(e.target).attr('id');
+    var id = _id.substr(1);
+    $('#'+_id).val(edObj.lastText[id]);
+    $('#'+_id).blur();
+    return;
+}
+
+
+
+
+function timeoutAction()
+{
+    console.log('edit mode timed out');
+    $('.lzy-editable-active').blur();
+}
 

@@ -40,7 +40,7 @@ $this->addMacro($macroName, function () {
             if (strtolower(fileExt($file)) != 'md') {
                 $allMD = false;
             }
-            $s = getFile($file);
+            $s = getFile($file, true);
             if ($wrapperTag) {
                 $str .= "\n@@1@@\n$s\n@@2@@\n\n";
             } else {

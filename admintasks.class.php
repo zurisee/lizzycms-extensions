@@ -62,11 +62,6 @@ class AdminTasks
             $this->page->merge($pg);
             return $pg;
 
-//        } elseif ($adminTask == 'change-email') {
-//            $pg = $accountForm->renderChangeEmailForm($_SESSION['lizzy']['user'], $notification);
-//            $this->page->merge($pg);
-//            return $pg;
-
         } elseif ($adminTask == 'edit-profile') {
             $html = $accountForm->renderEditProfileForm($_SESSION['lizzy']['user'], $notification);
             $this->page->addOverride($html, true, false);
@@ -173,10 +168,7 @@ class AdminTasks
         $str = '';
         $knownUsers = $this->auth->getKnownUsers();
         if (isset($knownUsers[$user])) {
-//            $rec = $this->auth->knownUsers[$user];
-//            $rec['password'] = password_hash($password, PASSWORD_DEFAULT);
             $this->updateDbUserRec($user, ['password' => password_hash($password, PASSWORD_DEFAULT)]);
-//            $str = "<div class='lzy-adduser-wrapper'>{{ password-changed-response }}</div>";
             $str = "<div class='lzy-admin-task-response'>{{ lzy-password-changed-response }}</div>";
         }
         return $str;
@@ -201,7 +193,6 @@ class AdminTasks
 
         } else {
 
-//            $rec = $this->auth->userRec;
             $rec['name'] = $username;
             $rec['displayName'] = $displayName;
             $this->deleteDbUserRec($user);
@@ -233,9 +224,32 @@ class AdminTasks
 
     public function createGuestUserAccount($email)
     {
-        writeLog("new guest user added: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
-        $this->addUsersToDB([ $email => ['email' => $email, 'group' => 'guest']]);
-//        $this->addUsersToDB(['email' => $email, 'group' => 'guest']);
+        $group = 'guest';
+        if (isset($_SESSION['lizzy']['self-signup-to-group'])) {
+            $group = $_SESSION['lizzy']['self-signup-to-group'];
+            unset($_SESSION['lizzy']['self-signup-to-group']);
+        }
+
+        // for security: self-signup for admin-group only possible as long as there
+        // no accounts registered at all, i.e. only the first signup may become admin:
+        $knownUsers = $this->auth->getKnownUsers();
+
+        if ($group == 'admin') {
+            if (sizeOf($knownUsers) > 0) {
+                writeLog("self-signup for group admin blocked - only allowed if there are NO accounts defined yet!");
+                return false;
+
+            } else {
+                $this->addUsersToDB([ $email => ['email' => $email, 'group' => $group]]);
+                writeLog("new admin user added: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
+                return true;
+            }
+
+        } else {
+            $this->addUsersToDB([ $email => ['email' => $email, 'group' => $group]]);
+            writeLog("new guest user added: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
+            return true;
+        }
     }
 
 
@@ -246,9 +260,6 @@ class AdminTasks
         $user = $rec['name'];
         $rec['email'] = $email;
         $this->updateDbUserRec($user, $rec);
-
-//        $this->addUsersToDB([ $email => ['email' => $email, 'group' => 'guest']]);
-//        $this->addUsersToDB(['email' => $email, 'group' => 'guest']);
     }
 
 
@@ -257,7 +268,6 @@ class AdminTasks
     {
         $from = isset($this->config->admin_webmasterEmail) ? $this->config->admin_webmasterEmail : 'webmaster@domain.net';
         setStaticVariable('pendingMail', ['from' => $from, 'to' => $to, 'subject' => $subject, 'message' => $message]);
-//        $this->pendingMail = ['from' => $from, 'to' => $to, 'subject' => $subject, 'message' => $message];
     } // sendMail
 
 
@@ -266,7 +276,6 @@ class AdminTasks
     public function getPendingMail()
     {
         return  getStaticVariable('pendingMail');
-//        return (isset($this->pendingMail)) ? $this->pendingMail : null;
     } // getPendingMail
 
 
@@ -330,7 +339,6 @@ class AdminTasks
      * @param $user
      * @return string
      */
-//    private function sendSigninCodeByMail($accessCodeValidyTime, $name, $onetime, $globalParams, $submittedEmail, $user)
     public function sendCodeByMail($submittedEmail, $mode, $accessCodeValidyTime, $name, $user, $group)
     {
         global $globalParams;
@@ -346,12 +354,9 @@ class AdminTasks
         writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
 
         $url = $globalParams['pageUrl'] . $hash . '/';
-//        if ($mode == 'login-email') {
         if ($mode == 'email-login') {
             $subject = "[{{ site_title }}] {{ lzy-email-access-link-subject }} {$globalParams['host']}";
             $message = "{{ lzy-email-access-link1 }} $url {{ lzy-email-access-link2 }} $hash {{ lzy-email-access-link3 }} \n";
-//            $subject = "[{{ site_title }}] {{ Email Access-Link Subject }} {$globalParams['host']}";
-//            $message = "{{ Email Access-Link1 }} $url {{ Email Access-Link2 }} $hash {{ Email Access-Link3 }} \n";
 
             $this->sendMail($submittedEmail, $subject, $message);
 
@@ -397,6 +402,7 @@ class AdminTasks
 
             if ($this->localCall) {
                 $this->page->addOverlay("<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre>");
+                $this->page->addJq("$( 'body' ).keydown( function (e) {if (e.which == 27) { $('.overlay').hide(); } });");
             } else {
                 if (!mail($pM['to'], $subject, $message, $headers)) {
                     fatalError("Error: unable to send e-mail", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
@@ -406,43 +412,7 @@ class AdminTasks
     } // sendAccessLinkMail
 
 
-    /**
-     * @param $credentials
-     * @return array|null
-     */
-//    private function evaluateClientRequest($credentials)
-//    {
-//        $res = null;
-//        if (isset($_POST['lzy-onetime-code']) && isset($_POST['lzy-login-user'])) {     // user sent accessCode
-//            $this->validateOnetimeAccessCode(false, $_POST['lzy-onetime-code']);
-//
-//        } elseif (isset($_POST['lzy-user-signup']) && ($_POST['lzy-user-signup'] == 'signup-email')) {           // user sent email for signing up
-//            $email = $_POST['login_email'];
-//            $str = $this->sendSignupMail($email);
-//            $res = [false, $str, 'Override'];
-//
-//        } elseif (isset($_POST['lzy-user-admin']) && ($_POST['lzy-user-admin'] == 'add-users')) {           // user sent email for signing up
-//            $emails = $_POST['add-users-textarea'];
-//            $group = $_POST['lzy-add-user-group'];
-//            $str = $this->addUsers($emails, $group);
-//            $res = [false, $str, 'Override'];
-//
-//        } elseif (isset($_POST['lzy-user-admin']) && ($_POST['lzy-user-admin'] == 'add-user')) {           // user sent email for signing up
-//            $emails = $_POST['add-users-textarea'];
-//            $group = $_POST['lzy-add-user-group'];
-//            $str = $this->addUsers($emails, $group);
-//            $res = [false, $str, 'Override'];
-//
-//        } elseif (isset($_POST['login_name']) && isset($_POST['login_password'])) { // user sent un & pw
-//            $credentials = array('username' => $_POST['login_name'], 'password' => $_POST['login_password']);
-////                $uname = (isset($_POST['lzy-login-user'])) ?$_POST['lzy-login-user'] : '';
-//            $this->validateCredentials($credentials);
-//
-//        } elseif (isset($_POST['login_email'])) {           // user sent email for logging in
-//            $emailRequest = $_POST['login_email'];
-//        }
-//        return $res;
-//    }
+
 
 
     private function createHash($size = 6)

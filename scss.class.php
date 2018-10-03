@@ -10,8 +10,14 @@ class SCssCompiler
 {
     private $cssDestPath;
 
-    public function __construct($fromFiles, $toPath, $localCall = false)
+//    public function __construct($fromFiles, $toPath, $localCall = false)
+    public function __construct( $lzy )
     {
+        // $this->config->path_stylesPath.'scss/*.scss', $this->config->path_stylesPath, $this->localCall
+        $this->config = $lzy->config;
+        $fromFiles = $lzy->config->path_stylesPath.'scss/*.scss';
+        $toPath = $lzy->config->path_stylesPath;
+        $localCall = $lzy->localCall;
         $this->fromFiles = $fromFiles;
         $this->toPath = $toPath;
         $this->localCall = $localCall;
@@ -44,7 +50,7 @@ class SCssCompiler
                 touchFile($targetFile, $t0);
                 $compiled .= basename($file) . ", ";
             } elseif ($t0 < $t1) {
-                fatalError("Warning: compiled stylesheet newer than source: '$targetFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+//                fatalError("Warning: compiled stylesheet newer than source: '$targetFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
             }
         }
         if ($compiled || $forceUpdate) {
@@ -59,12 +65,15 @@ class SCssCompiler
 
     private function getFile($file)
     {
-        $out = getFile($file, true);
-        if ($this->localCall) {
+        $out = getFile($file);
+        if ($this->localCall && $this->config->debug_compileScssWithLineNumbers) {
             $lines = explode(PHP_EOL, $out);
             $out = '';
             foreach ($lines as $i => $l) {
-                $out .= $l;
+                if (preg_match('/^[^\/\*]+\{/', $l)) {
+                    $l .= " /* content: '".($i+1)."'; */";
+                }
+                $out .= $l."\n";
             }
         }
         return $out . "\n";

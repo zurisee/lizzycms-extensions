@@ -2,10 +2,10 @@
 **	Quickview Styles
 */
 
-.quickview {
+.lzy-quickview {
 	cursor: url(../rsc/enlarge.png), auto;
 }
-.quickview-overlay {
+.lzy-quickview-overlay {
 	position: fixed;
 	opacity: 0;
 	display: none;
@@ -14,16 +14,19 @@
 	width: 100vw;
 	height: 100vh;
 	z-index: -1;
-	background: rgba(200, 200, 200, 0.8);
+	background-color: rgba(200, 200, 200, 0.8);
+	background-image: url(../rsc/loader.gif);
+	background-repeat: no-repeat;
+	background-position: center center;
 	cursor: url(../rsc/reduce.png), auto;
 }
-.quickview-overlay img {
+.lzy-quickview-overlay img {
 	position: absolute;
 	opacity: 0;
 	padding: 0;
 	margin: 0;
 }
-.quickview-overlay-active {
+.lzy-quickview-overlay-active {
 	display: block;
 	opacity: 1;
 	z-index: 999;

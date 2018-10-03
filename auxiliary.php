@@ -2,6 +2,7 @@
 
 define('LOG_PATH', '.#logs/');
 define('MAX_URL_ARG_SIZE', 16000);
+define('DEFAULT_ASPECT_RATIO', 0.6667);
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -408,9 +409,15 @@ function is_inCommaSeparatedList($keyword, $list)
 
 
 //--------------------------------------------------------------
-function fileExt($file)
+function fileExt($file, $reverse = false)
 {
-	return pathinfo($file, PATHINFO_EXTENSION);
+    if ($reverse) {
+        $l = strlen(pathinfo($file, PATHINFO_EXTENSION)) + 1;
+        return substr($file, 0, -$l);
+
+    } else {
+        return pathinfo($file, PATHINFO_EXTENSION);
+    }
 } // getDir
 
 
@@ -530,6 +537,15 @@ function makePathDefaultToPage($path)
 
 
 
+//------------------------------------------------------------
+function convertFsToHttpPath($path)
+{
+    $pagesPath = $GLOBALS['globalParams']['pathToPage'];
+    if (($path{0} != '~') && (strpos($path, $pagesPath) == 0)) {
+        $path = '~page/'.substr($path, strlen($pagesPath));
+    }
+    return $path;
+} //convertFsToHttpPath
 
 //------------------------------------------------------------
 function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
@@ -571,13 +587,27 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 
 
 //------------------------------------------------------------
-function makePathRelativeToPage($path)
+function makePathRelativeToPage($path, $forImgRessources = false)
 {
     if (!$path) {
         return '';
     }
-    if ((($ch1=$path[0]) != '/') && ($ch1 != '~') && ($ch1 != '.')/* && ($ch1 != '_')*/) {	//default to path local to page ???always ok?
-        $path = '~page/'.$path;
+
+    if ((($ch1=$path{0}) != '/') && ($ch1 != '~') && ($ch1 != '.')) {	//default to path local to page
+        if ($forImgRessources) {
+            if (($dirname = dirname($path).'/') == './') {
+                $dirname = '';
+            }
+            $path = '~page/' . $dirname.'_/'.basename($path);
+        } else {
+            $path = '~page/' . $path;
+        }
+    } else {
+        if ($forImgRessources) {
+            $dirname = dirname($path) . '/';
+            $basename = basename($path);
+            $path = $dirname . '_/' . basename($path);
+        }
     }
     return $path;
 } // makePathRelativeToPage
@@ -693,7 +723,7 @@ function alphaIndexToInt($str, $headers = false, $ignoreCase = true)
             $headers = array_map('strtolower', $headers);
         }
     }
-    if ($headers && (($i = array_search($str, $headers)) !== false)) {
+    if ($headers && (($i = array_search($str, $headers, true)) !== false)) {
         $int = $i+1;
 
     } elseif (preg_match('/^[a-z]{1,2}$/', strtolower($str))) {
@@ -741,9 +771,10 @@ function getUrlArg($tag, $stringMode = false, $unset = false)
 	if (isset($_GET[$tag])) {
 	    if ($stringMode) {
             $out = safeStr($_GET[$tag], false, true);
-        } else {
+
+        } else {    // boolean mode
             $arg = $_GET[$tag];
-            $out = (($arg != 'false') && ($arg != '0'));
+            $out = (($arg != 'false') && ($arg != '0') && ($arg != 'off') && ($arg != 'no'));
         }
 		if ($unset) {
 			unset($_GET[$tag]);
@@ -877,7 +908,7 @@ function preparePath($path)
 {
 	$path = dirname($path.'x');
     if (!file_exists($path)) {
-        if (!mkdir($path, 0777, true)) {
+        if (!mkdir($path, MKDIR_MASK2, true)) {
             fatalError("Error: failed to create folder '$path'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
     }
@@ -1027,19 +1058,23 @@ function writeLog($str, $destination = false)
     global $globalParams;
 
     if (($path = $globalParams['path_logPath']) && ($destination != 'errlog')) {
+        if (!$globalParams['activityLoggin']) {
+            return;
+        }
         if ($destination) {
             if (($destination[0] == '~') || ($destination[0] == '/')) {
                 $destination = resolvePath($destination);
-            } else {
-                $destination = $path.$destination;
             }
         } else {
-            $destination = $path.'log.txt';
+            $destination = LOG_FILE;
         }
         preparePath($destination);
         file_put_contents($destination, timestamp()."  $str\n", FILE_APPEND);
 
     } elseif ($destination == 'errlog') {
+        if (!$globalParams['errorLoggin']) {
+            return;
+        }
         $destination = $globalParams['errorLogFile'];
         if ($destination) {
             preparePath($destination);
@@ -1194,9 +1229,26 @@ function stripNewlinesWithinTransvars($str)
 
 
 
+
+//-----------------------------------------------------------------------------
+function checkBracesBalance($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
+{
+    $shieldedOpening = substr_count($str, '\\'.$pat1);
+    $opening = substr_count($str, $pat1) - $shieldedOpening;
+    $shieldedClosing = substr_count($str, '\\'.$pat2);
+    $closing = substr_count($str, $pat2) - $shieldedClosing;
+    if ($opening > $closing) {
+        fatalError("Error in source: unbalanced number of &#123;&#123; resp }}");
+    }
+} // checkBracesBalance
+
+
+
 //-----------------------------------------------------------------------------
 function strPosMatching($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 {	// returns positions of opening and closing patterns, ignoring shielded patters (e.g. \{{ )
+
+    checkBracesBalance($str, $pat1, $pat2, $p0);
 
 	$d = strlen($pat2);
     if ((strlen($str) < 4) || ($p0 > strlen($str))) {
@@ -1270,6 +1322,8 @@ function findNextPattern($str, $pat, $p1 = 0)
 	return $p1;
 } // findNextPattern
 
+
+
 //-----------------------------------------------------------------------------
 function trunkPath($path, $n = 1, $leaveNotRemove = true)
 // case $leaveNotRemove == false:
@@ -1308,6 +1362,26 @@ function trunkPath($path, $n = 1, $leaveNotRemove = true)
 } // trunkPath
 
 
+
+
+//-----------------------------------------------------------------------------
+function rrmdir($src) {
+    $src = rtrim($src, '/');
+    $dir = opendir($src);
+    while(false !== ( $file = readdir($dir)) ) {
+        if (( $file != '.' ) && ( $file != '..' )) {
+            $full = $src . '/' . $file;
+            if ( is_dir($full) ) {
+                rrmdir($full);
+            }
+            else {
+                unlink($full);
+            }
+        }
+    }
+    closedir($dir);
+    rmdir($src);
+} // rrmdir
 
 
 //-----------------------------------------------------------------------------
@@ -1371,7 +1445,7 @@ function fatalError($msg, $origin = '', $offendingFile = '')
             $line = trim($m[2]);
             $origin = "$file::$line";
         }
-        $out = date('Y-m-d H:i:s')."  $origin  $problemSrc\n$msg";
+        $out = date('Y-m-d H:i:s')."  $origin  $problemSrc\n$msg\n";
     }
     preparePath(ERROR_LOG);
     file_put_contents(ERROR_LOG, $out, FILE_APPEND);
@@ -1415,4 +1489,84 @@ function handleFatalPhpError() {
 
 
 
+//....................................................
+function parseDimString($str, $imageFile = false, $aspectRatio = false)
+{
+    if (strpos($str, 'x') === false) {
+        if (!$str) {
+            $w = $h = $aspectRatio = 0;
+        } else {
+            if (file_exists($imageFile)) {
+                list($w0, $h0) = getimagesize($imageFile);
+                $aspectRatio = $h0 / $w0;
+            } else {
+                $aspectRatio = DEFAULT_ASPECT_RATIO;
+            }
+            $w = intval($str);
+            $h = round($w * $aspectRatio);
+        }
+    } else {
+        list($w, $h) = explode('x', $str);
+        $w = intval($w);
+        $h = intval($h);
+        if (!$aspectRatio && $imageFile) {
+            if ($imageFile{0} == '~') {
+                $imageFile = resolvePath($imageFile, true);
+            }
+            if (file_exists($imageFile)) {
+                list($w0, $h0) = getimagesize($imageFile);
+                $aspectRatio = $h0 / $w0;
+            } else {
+                $aspectRatio = DEFAULT_ASPECT_RATIO;
+            }
+        } else {
+            $aspectRatio = DEFAULT_ASPECT_RATIO;
+        }
 
+        if (!$w) {
+            $w = round($h / $aspectRatio);
+        } elseif (!$h) {
+            $h = round($w * $aspectRatio);
+        }
+    }
+    return [$w, $h, $aspectRatio];
+} // parseDimString
+
+
+
+//....................................................
+function parseFileName($filename)
+{
+    $path = dirname($filename).'/';
+    $fname = base_name($filename);
+    $dimFound = false;
+
+    if (preg_match('/([^\[]*)\[(.*)\](\.\w+)/', $fname, $m)) {    // [WxH] size specifier present?
+        $basename = $m[1];
+        $dimStr = $m[2];
+        $ext = $m[3];
+
+        $imgFullsizeFile = $path.$basename.$ext;
+
+        list($w, $h, $aspectRatio) = parseDimString($dimStr, $imgFullsizeFile);
+
+        $filename = $path.$basename."[{$w}x$h]".$ext;
+        $dimFound = true;
+
+    } else {
+        $basename = base_name($fname, false);
+        $ext = '.'.fileExt($fname);
+        $f = resolvePath($filename);
+        if (file_exists($f)) {
+            list($w, $h) = getimagesize($f);
+            $aspectRatio = $h / $w;
+        } else {
+            $w = false;
+            $h = false;
+            $aspectRatio = DEFAULT_ASPECT_RATIO;
+        }
+    }
+    $filename = convertFsToHttpPath($filename);
+    $path = convertFsToHttpPath($path);
+    return [$filename, $path, $basename, $ext, $w, $h, $aspectRatio, $dimFound];
+} // parseFileName

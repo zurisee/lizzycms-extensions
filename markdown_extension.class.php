@@ -92,10 +92,11 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             fatalError("Error in Markdown source line $current: $line", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
-        list($id, $class, $style) = $this->parseInlineStyling($rest);
+        list($id, $class, $style, $shield) = $this->parseInlineStyling($rest);
         $block['id'] = $id;
         $block['class'] = $class;
         $block['style'] = $style;
+        $block['shield'] = $shield;
 
         // consume all lines until :::
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
@@ -114,6 +115,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             } else {
                 $block['content'][] = $line;
             }
+        }
+        if ($shield) {
+            $content = implode("\n", $block['content']);
+            unset($block['content']);
+            $content = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $content);
+            $block['content'][0] = base64_encode($content);
         }
         return [$block, $i];
     }
@@ -136,7 +143,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 return '';
             }
         }
-        return "<div$id$class$style>\n$out</div><!-- /$comment -->\n\n";
+        $dataAttr = ($block['shield']) ? ' data-lzy-literal-block="true"' : '';
+        return "<div$id$class$style$dataAttr>\n$out</div><!-- /$comment -->\n\n";
     }
 
 
@@ -145,7 +153,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // ---------------------------------------------------------------
     protected function identifyTabulator($line, $lines, $current)
     {
-        if (preg_match('/\{\{\s*tab\b[^\}]*\s*\}\}/', $line)) { // identify patterns like '{{ tab( 7em ) }}'
+        if (preg_match('/\{\{ \s* tab\b [^\}]* \s* \}\}/x', $line)) { // identify patterns like '{{ tab( 7em ) }}'
             return 'tabulator';
         }
         return false;
@@ -497,11 +505,17 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
         if (!$line) {
-            return ['', '', ''];
+            return ['', '', '', false];
         }
         $id = '';
         $class = '';
         $style = '';
+        $shield = false;
+        if (strpos($line, '!') !== false) {
+            $shield = true;
+            $line = str_replace('!', '', $line);
+        }
+
         if (preg_match('/\s* ([\.\#]?) ([\w_\-]+) (.*)/x', $line, $mm)) {        // class or id
             if (empty($mm[3]) || ($mm[3]{0} != ':')) {
                 if ($mm[1] == '#') {
@@ -536,7 +550,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             }
         }
             $line = '';
-        return [$id, $class, $style];
+        return [$id, $class, $style, $shield];
     } // parseInlineStyling
 
 

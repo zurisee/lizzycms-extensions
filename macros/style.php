@@ -13,5 +13,6 @@ $this->addMacro($macroName, function () {
     $style = $this->getArg($macroName, 'style', 'CSS code to be applied to the given text.', '');
 
     $str = "<span style='$style'>$text</span>";
+    $this->optionAddNoComment = true;
 	return $str;
 });

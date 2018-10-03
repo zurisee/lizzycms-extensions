@@ -6,6 +6,11 @@
 require_once SYSTEM_PATH.'forms.class.php';
 $page->addCssFiles('~sys/css/lizzy_forms.css');
 
+setStaticVariable('pagePath', $GLOBALS['globalParams']['pagePath']);
+setStaticVariable('pathToPage', $GLOBALS['globalParams']['pathToPage']);
+setStaticVariable('appRootUrl', $GLOBALS['globalParams']['host'].$GLOBALS['globalParams']['appRoot']);
+setStaticVariable('absAppRoot', $GLOBALS['globalParams']['absAppRoot']);
+
 $macroName = basename(__FILE__, '.php');
 
 

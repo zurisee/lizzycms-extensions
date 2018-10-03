@@ -22,10 +22,10 @@ $(function () {
     var serverUrl = appRoot+'_lizzy/file-upload/_upload_server.php';
 
     // Initialize the jQuery File Upload widget:
-    $('#fileupload').fileupload({
+    $('#lzy-fileupload').fileupload({
         url: serverUrl
     });
 
-    $('#fileupload').addClass('fileupload-processing');
+    $('#lzy-fileupload').addClass('fileupload-processing');
 
 });

@@ -17,12 +17,13 @@ class SiteStructure
 	public $config;
 
 	//....................................................
-	public function __construct($config, $currPage = false)
+	public function __construct($lzy, $currPage = false)
 	{
+	    $this->lzy = $lzy;
         $this->nextPage = '';
         $this->prevPage = '';
 
-        $this->config = $config;
+        $this->config = $config = $lzy->config;
 
 		$this->site_sitemapFile = $config->site_sitemapFile;
 		$this->currPage = $currPage;
@@ -166,6 +167,8 @@ class SiteStructure
 			if (preg_match('/^(\s*)([^:\{]+)(.*)/', $line, $m)) {
 				$indent = $m[1];
 				$name = trim($m[2]);
+				$args = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);;
+
 				$rec['name'] = $name;
 				if (strlen($indent) == 0) {
                     $level = 0;
@@ -182,15 +185,27 @@ class SiteStructure
 				}
                 $rec['level'] = $level;
 				$lastLevel = $level;
+
 				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
-				if ($m[3] && !preg_match('/^\s*:\s*$/', $m[3])) {
-					$json = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);
-					$args = convertYaml($json, true, $this->site_sitemapFile);
-					if ($args) {
+				if ($args) {
+					$args = convertYaml($args, true, $this->site_sitemapFile);
+					if (is_array($args)) {
 						foreach($args as $key => $value) {
-							if ($key == 'folder') {
-								$folder = fixPath($value);
-								$folder = ($folder == '~/') ? '~/./' : $folder;
+							if (($key == 'folder') || ($key == 'showthis') || ($key == 'goto')) {
+
+							    // if it's folder, take care of absolute URLs, e.g. HTTP://
+							    if (preg_match('|^https?\://|i', $value)) { // external link:
+							        $folder = $value;
+
+                                } else {                                // internal link -> fix it if necessary
+                                    $folder = fixPath($value);
+                                    if (substr($folder, 0, 2) == '~/') {
+                                        $folder = substr($folder, 2);
+                                    }
+                                    if (!$folder) {
+                                        $folder = './';
+                                    }
+                                }
 								$rec[strtolower($key)] = $folder;
 							} else {
 								$rec[strtolower($key)] = $value;
@@ -247,14 +262,14 @@ class SiteStructure
 	{
 		$this->lastLevel = 0;
 		$i = 0;
-		list($tree, $visChildren) = $this->walkTree($this->list, $i, '', 0, null);
+		list($tree, $visChildren) = $this->exploreTree($this->list, $i, '', 0, null);
 		return $tree;
 	} // getTree
 
 
 
 	//....................................................
-	private function walkTree(&$list, &$i, $path, $lastLevel, $parent)
+	private function exploreTree(&$list, &$i, $path, $lastLevel, $parent)
 	{
 	                    // $i -> list-elem counter
 		$j = 0;         // $j -> counter within level
@@ -268,7 +283,9 @@ class SiteStructure
             $level = $list[$i]['level'];
 			if ($level > $lastLevel) {
 				$lastRec = &$list[$i-1];
-				list($subtree, $visChildren) = $this->walkTree($list, $i, $list[$i-1]['folder'], $lastLevel+1, ($i) ? ($i-1) : null);
+
+				list($subtree, $visChildren) = $this->exploreTree($list, $i, $list[$i-1]['folder'], $lastLevel+1, ($i) ? ($i-1) : null);
+
 				$lastRec['hasChildren'] = $visChildren;
 				$tree[$j-1] = (isset($tree[$j-1])) ? array_merge($tree[$j-1], $subtree) : $subtree;
 
@@ -292,7 +309,7 @@ class SiteStructure
 			}
 		}
 		return array($tree, $hasVisibleChildren); // the end, all pages consumed
-	} // walkTree
+	} // exploreTree
 
 
 
@@ -348,146 +365,11 @@ class SiteStructure
 
 
 
-    //....................................................
-    public function render($inx, $page, $options)
-    {
-        if ($this->list == false) {     // it's a "one-pager", don't render any navigation
-            return '';
-        }
 
-        $type = (isset($page->feature_cssFramework)) ? $page->feature_cssFramework : false;
-        $type = ($this->config->feature_cssFramework) ? $this->config->feature_cssFramework : $type;
-        $type = (isset($options['type'])) ? $options['type']: $type;
-        $type = strtolower($type);
-        if ($type) {
-            $rendererFile = "nav-renderer-$type.php";
-            if (file_exists($this->config->path_userCodePath."$rendererFile")) {
-                require_once ($this->config->path_userCodePath."$rendererFile");
-                return renderMenu($this, $page, $options);
-
-            } elseif (file_exists(SYSTEM_PATH.$rendererFile)) {
-                require_once (SYSTEM_PATH.$rendererFile);
-                return renderMenu($this, $page, $options);
-
-            } else {
-                return $this->renderMenu($options);
-            }
-        } else {
-            return $this->renderMenu($options);
-        }
-    } // render
-
-
-
-    //....................................................
-    public function renderMenu($options)
-    {
-        $class = (isset($options['class'])) ? $options['class']: '';
-        $navClass = (isset($navClass) && ($navClass)) ? " class='$navClass'" : '';
-        $ulClass = (isset($options['ulClass'])) ? $options['ulClass']: '';
-        $liClass = (isset($options['liClass'])) ? $options['liClass']: '';
-        $hasChildrenClass = (isset($options['hasChildrenClass'])) ? $options['hasChildrenClass']: '';
-        $aClass = (isset($options['aClass'])) ? $options['aClass']: '';
-        $showHidden = (isset($options['showHidden'])) ? $options['showHidden']: '';
-        $title = (isset($options['title'])) ? $options['title']: '';
-
-		$this->ulClass = $ulClass;
-		$this->liClass = $liClass;
-		$this->hasChildrenClass = ($hasChildrenClass) ? $hasChildrenClass : 'has-children';
-		$this->aClass  = $aClass;
-		$title = ($title) ? "<h1>$title</h1>" : '';
-		$nav = $this->_renderMenu($navClass, false, '', $showHidden);
-		$out = <<<EOT
-	<nav$navClass>
-		$title
-$nav
-	</nav>
-EOT;
-		return $out;
-	} // render
-
-
-
-	//....................................................
-	private function _renderMenu($navClass, $tree, $indent, $showHidden = false)
-	{
-		$navClass = ($navClass) ? " class='$navClass'": '';
-		$indent = str_replace('\t', "\t", $indent);
-		if ($indent == '') {
-			$indent = "\t";
-		}
-		if (!$tree) {
-			$tree = $this->tree;
-		}
-		$nav = '';
-		$_nav = '';
-		
-		if ($mutliLang = $this->config->site_multiLanguageSupport) {
-			$currLang = $this->config->lang;
-		}		
-
-		$ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
-		$out = "$nav$indent<ul$ulClass>\n";
-		$aClass = ($this->aClass) ? " class='{$this->aClass}'" : '';
-		foreach($tree as $n => $elem) {
-			if (!is_int($n)) { continue; }
-			$currClass = '';
-			if ($mutliLang && isset($elem[$currLang])) {
-				$name = $elem[$currLang];
-			} else {
-				$name = $elem['name'];
-			}
-			if (isset($elem['goto'])) {
-				$targInx = $this->findSiteElem($elem['goto']);
-				$targ = $this->list[$targInx];
-				$name = $targ['name'];
-				$path = $targ['folder'];
-			} else {
-				$path = (isset($elem['folder'])) ? $elem['folder'] : '';
-			}
-			if ($path == '') {
-				$path = '~/';
-			} elseif (substr($path, 0, 2) != '~/') {
-				$path = '~/'.$path;
-			}
-			$liClass = $this->liClass;
-			if ($elem['isCurrPage']) {
-				$liClass .= ' curr active';
-				if ($this->config->feature_selflinkAvoid) {
-                    $path = '#main';
-                }
-			} elseif ($elem['active']) {
-				$liClass .= ' active';
-			}
-			if (isset($elem['target'])) {
-				$target = " target='{$elem['target']}'";
-			} else {
-				$target = '';
-			}
-			if ((!$elem['hide']) || $showHidden) {
-				if (isset($elem[0])) {	// does it have children?
-					if ($elem['hasChildren']) {
-						$liClass .= ' '.$this->hasChildrenClass; //' has-children';
-					}
-					if (($elem['isCurrPage']) || ($elem['active'])) {
-						$liClass .= ' open';
-					}
-					$liClass = trim($liClass);
-					$liClass = ($liClass) ? " class='$liClass'" : '';
-					$out .= "$indent\t<li$liClass><a href='$path'$aClass$target><span style='width: calc(100% - 1em);'>$name</span></a>\n";
-					$out .= $this->_renderMenu('', $elem, "$indent\t\t", $showHidden);
-					$out .= "$indent\t</li>\n";
-				} else {
-					$liClass = trim($liClass);
-					$liClass = ($liClass) ? " class='{$liClass}'" : '';
-					$out .= "$indent\t<li$liClass><a href='$path'$aClass$target>$name</a></li>\n";
-				}
-			}
-		}
-		
-		$out .= "$indent</ul>\n$_nav";
-		return $out;
-	} // _renderMenu
+//    private function walkTree($tree)
+//    {
+//
+//    }
 
 
 
@@ -510,15 +392,15 @@ EOT;
 		foreach($list as $key => $elem) {
 			if ($found || ($str == $elem['name']) || ($str == $elem['folder']) || ($str.'/' == $elem['folder'])) {
 				$folder = $this->config->path_pagesPath.$elem['folder'];
-				if (!$found && !file_exists($folder)) { // if folder doesen't exist, let it be created later in handleMissingFolder()
-                    $found = true;
-                    break;
-				}
 				if (isset($elem['showthis']) && $elem['showthis']) {	// no 'skip empty folder trick' in case of showthis
                     $found = true;
                     break;
 				}
-				
+
+                if (!$found && !file_exists($folder)) { // if folder doesen't exist, let it be created later in handleMissingFolder()
+                    $found = true;
+                    break;
+                }
 				$dir = getDir($this->config->path_pagesPath.$elem['folder'].'*');	// check whether folder is empty, if so, move to the next non-empty one
 				$nFiles = sizeof(array_filter($dir, function($f) {
                     return ((substr($f, -3) == '.md') || (substr($f, -5) == '.link') || (substr($f, -5) == '.html'));
@@ -545,12 +427,29 @@ EOT;
 
 
 
+
+    public function hasActiveAncestor($elem)
+    {
+        if ($elem['active']) {
+            return true;
+        }
+        while ($elem['parent']) {
+            $elem = $this->list[$elem['parent']];
+            if ($elem['active']) {
+                return true;
+            }
+        }
+
+        return false;
+    } // hasActiveAncestor
+
+
 	
 	private function writeCache()
 	{
 		if ($this->site_enableCaching) {
 			if (!file_exists($this->cachePath)) {
-				mkdir($this->cachePath, 0770);
+				mkdir($this->cachePath, MKDIR_MASK2);
 			}
 			$cache = serialize($this);
 			file_put_contents($this->cacheFile, $cache);
