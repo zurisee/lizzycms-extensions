@@ -696,7 +696,10 @@ EOT;
 		
 		$userEval = isset($currFormDescr->process) ? $currFormDescr->process : '';
 		if ($userEval) {
-			$result = $this->transvar->doUserCode($userEval);
+			$result = $this->transvar->doUserCode($userEval, null, true);
+			if (is_array($result)) {
+                fatalError($result[1]);
+            }
 			if ($result) {
 				$str = evalForm($userSuppliedData, $currFormDescr);
 			} else {
@@ -708,8 +711,9 @@ EOT;
 		
 		$this->page->addCss(".$formId { display: none; }");
 		
-		$str .= "<div class='form-continue'><a href='{$next}'>{{ form-continue }}</a></div>\n<form class='$formId'>";
-		return $str;
+		$str .= "<div class='lzy-form-continue'><a href='{$next}'>{{ lzy-form-continue }}</a></div>\n<form class='$formId'>";
+        $this->clearCache();
+        return $str;
     } // evaluate
 
 
@@ -749,13 +753,13 @@ EOT;
 		$localCall = (($serverName == 'localhost') || (strpos($remoteAddress, '192.') === 0) || ($remoteAddress == '::1'));
 
 		if ($localCall) {
-			$out = "<div class='form-response'>\n<p>{{ form-data-received-ok }}</p>\n<hr /><pre>\n$str\n</pre>\n</div>\n";
+			$out = "<div class='lzy-form-response'>\n<p>{{ lzy-form-feedback-local }}</p><p><em>{{ lzy-form-data-received-ok }}</em></p>\n<pre>\n$str\n</pre>\n</div>\n";
 		} elseif ($mailto) {
 			$subject = "[$formName] user data received";
 			$this->sendMail($mailto, $mailfrom, $subject, $str);
-			$out = '{{ form-data-received-ok }}';
+			$out = '{{ lzy-form-data-received-ok }}';
 		} else {
-			$out = '{{ form-data-received-ok }}';
+			$out = '{{ lzy-form-data-received-ok }}';
 		}
 		
 		return $out;

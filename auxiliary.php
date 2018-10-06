@@ -1072,7 +1072,7 @@ function writeLog($str, $destination = false)
         file_put_contents($destination, timestamp()."  $str\n", FILE_APPEND);
 
     } elseif ($destination == 'errlog') {
-        if (!$globalParams['errorLoggin']) {
+        if (!$globalParams['errorLogging']) {
             return;
         }
         $destination = $globalParams['errorLogFile'];
@@ -1452,7 +1452,7 @@ function fatalError($msg, $origin = '', $offendingFile = '')
 
     if ($origin && $offendingFile) {
         require_once SYSTEM_PATH.'page-source.class.php';
-        PageSource::rollBack($offendingFile); //???
+        PageSource::rollBack($offendingFile, $msg);
         reloadAgent();
     }
 

@@ -105,3 +105,9 @@ fieldset.label {
     vertical-align: middle;
     padding: 0 15px 0 0;
 }
+
+.lzy-form-response {
+    margin: 1em 0;
+    border: 1px dashed red;
+    padding: 1em;
+}

@@ -26,6 +26,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'hasChildrenClass', 'Class to be applied to elements that have children.');
     $this->getArg($macroName, 'aClass', 'Class to be applied to A tags.');
     $this->getArg($macroName, 'title', 'A title to be inserted just after the NAV tag. If it doesn\'t contain HTML, the title will be wrapped in H1 tags.');
+    $this->getArg($macroName, 'arrow', 'The symbol to be placed in front of nav elements that have children.');
 
     $this->getArg($macroName, 'depth', 'The max depth of headers which shall be included', 6);
     $this->getArg($macroName, 'targetElement', 'For "in-page": specifies the html tag that shall be targeted', false);
@@ -58,7 +59,7 @@ $this->addMacro($macroName, function () {
         return '';
     }
 
-    $nav = new NavRenderer($this->lzy);
+    $nav = new NavRenderer($this->lzy, $inx);
     return $nav->render($options);
 });
 

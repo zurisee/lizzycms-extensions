@@ -275,6 +275,9 @@ class Transvar
                         $val = $this->getVariable($var, '', $namespace, $substitutionMode);
                         if ($val === false) {
                             $val = $this->doUserCode($var, $this->config->custom_permitUserCode);
+                            if (is_array($val)) {
+                                fatalError($val[1]);
+                            }
                         }
                         if ($compileMd) {
                             $val = compileMarkdownStr($val);
@@ -730,7 +733,7 @@ class Transvar
 
 
     //....................................................
-    public function doUserCode($name, $execType = null)
+    public function doUserCode($name, $execType = null, $breakOnError = false)
     {
         $out = false;
         if ($execType === null) {
@@ -758,7 +761,11 @@ class Transvar
                     $vars['this'] = $this; // feed $trans into sandbox
                     return $sandbox->execute($phpFile, $this->config->configPath, $vars);
                 }
+            } elseif ($breakOnError) {
+                return [false, "Requested file '$phpFile' not found."];
             }
+        } elseif ($breakOnError) {
+            return [false, "User-Code not enabled in config/config.yaml (option 'custom_permitUserCode')"];
         }
         return $out;
     } // doUserCode

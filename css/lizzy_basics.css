@@ -1,5 +1,6 @@
   /* Lizzy Basic CSS */
 
+  /* === General =============================== */
 html {
   box-sizing: border-box;
 }
@@ -164,7 +165,31 @@ figure a {
 }
 
 
-/* stretch-wrapping boxes: */
+/* === Module Encapsulation: */
+#lzy .lzy-encapsulated ul,
+#lzy .lzy-encapsulated ol,
+#lzy .lzy-encapsulated li,
+#lzy .lzy-encapsulated div,
+#lzy .lzy-encapsulated a,
+#lzy .lzy-encapsulated img,
+#lzy .lzy-encapsulated label {
+    margin: 0;
+    padding: 0;
+    line-height: initial;
+    border: none;
+    background: transparent;
+    display: block;
+    position: relative;
+    overflow: initial;
+    z-index: initial;
+    width: initial;
+    list-style: initial;
+    box-sizing: border-box;
+}
+
+
+
+           /* stretch-wrapping boxes: */
 .lzy-stretch-wrapping-box-container {
     --box-width: 300px;
     --grid-gap: 10px;

@@ -133,7 +133,7 @@ class PageSource
 
 
     //------------------------------------------------------------
-    public static function rollBack($fileName)
+    public static function rollBack($fileName, $msg = '')
     {
         // first save offending file locally to rollback name:
         $rolledBackName = '#RolledBack '.basename( PageSource::composeRecycleFilename($fileName) );
@@ -143,13 +143,21 @@ class PageSource
         if ($rollBackSrc = PageSource::getRecycledFilename($fileName)) {
             if (file_exists($rollBackSrc)) {
                 copy($rollBackSrc, $fileName);
-                exit("Error found in file '$fileName'.<br> &rarr; Rolled back from from previous edition ($rollBackSrc).<br>Please reload page now.");
+                if ($msg) {
+                    die($msg);
+                } else {
+                    exit("Error found in file '$fileName'.<br> &rarr; Rolled back from from previous edition ($rollBackSrc).<br>Please reload page now.");
+                }
 
             } else {
                 die("rollBack( $fileName ): file not readable");
             }
         } else {
-            die("rollBack( $fileName ): no rollback file available");
+            if ($msg) {
+                die($msg);
+            } else {
+                die("rollBack( $fileName ): no rollback file available");
+            }
         }
     } // rollBackVersion
 

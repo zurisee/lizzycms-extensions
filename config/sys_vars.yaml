@@ -64,6 +64,12 @@ opens in new win:
 
 
 
+#--- Navigation --------------------------
+lzy-nav-elem-button:
+    de: Untermenü öffnen mit Leertaste
+    en: Open sub-menu using space key
+
+
 #--- Language Selection ------------------
 select langauge:
     de: Sprache auswählen 
@@ -339,4 +345,15 @@ turn edit mode on:
 'lzy-editable-temporarily-locked': 
     de: 'Dieses Feld ist momentan gesperrt, weil es gerade von jemand anderem bearbeitet wird.\n\nBitte versuchen Sie es in ein paar Minuten nochmals. (Seite muss dann neu geladen werden!)'
     en: 'This field is currently locked because somebody else is editing it.\n\nPlease try again in a few minutes. (Remember to reload the page when trying again.)'
+
+#--- Forms ----------------------------------------
+lzy-form-data-received-ok:
+    de: "Ihre Eingaben wurden abgespeichert. Besten Dank."
+    en: "Your entries have been saved successfully. Thank you."
+
+lzy-form-feedback-local: "<strong>Feedback on localhost only:</strong>"
+
+lzy-form-continue:
+    de: Weiter...
+    en: Continue...
 

@@ -7,6 +7,7 @@
 
 admin_autoAdminOnLocalhost: true                 # default=false
 
+#admin_activityLogging: false                     # default=true
 #admin_autoAdminOnLocalhost: true                 # default=false
 #admin_defaultAccessLinkValidyTime: ''            # default=900
 #admin_defaultGuestGroup: ''                      # default=guest
@@ -25,6 +26,7 @@ admin_autoAdminOnLocalhost: true                 # default=false
 #debug_allowDebugInfo: true                       # default=false
 #debug_autoForceBrowserCache: true                # default=false
 #debug_collectBrowserSignatures: true             # default=false
+#debug_compileScssWithLineNumbers: true           # default=false
 #debug_errorLogging: true                         # default=false
 #debug_forceBrowserCacheUpdate: true              # default=false
 #debug_logClientAccesses: true                    # default=false
@@ -47,13 +49,14 @@ admin_autoAdminOnLocalhost: true                 # default=false
 #feature_pageSwitcher: true                       # default=false
 #feature_quickview: false                         # default=true
 #feature_renderTxtFiles: true                     # default=false
+#feature_screenSizeBreakpoint: ''                 # default=480
 #feature_selflinkAvoid: false                     # default=true
 #feature_sitemapFromFolders: true                 # default=false
 #feature_slideShowSupport: true                   # default=false
 #feature_supportLegacyBrowsers: true              # default=false
 #feature_touchDeviceSupport: false                # default=true
 
-#path_logPath: true                               # default=false
+#path_logPath: ''                                 # default=.#logs/
 #path_pagesPath: ''                               # default=pages/
 #path_stylesPath: ''                              # default=css/
 #path_userCodePath: ''                            # default=code/
