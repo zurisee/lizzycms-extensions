@@ -5,7 +5,14 @@ Flat-file CMS inspired by lizzards - elegant, nifty and agile
 
 ## What is Lizzy?
 
-Stay tuned - more to come soon.
+A Flat-File Content Management System for small and medium sized Web Presences.
+
+In a nutshell:
+you create your web presence on a local computer, upload it to a web host and bang! it works. 1
+
+You modify something on the host – and it still works.
+
+That means, Lizzy is fully self-contained, its entire production tool-chain is on board. Yet, it's still small and handy. And features a couple of pretty nifty options that let you implement even advanced design patterns in a breeze.
 
 ## Installation
 
@@ -22,3 +29,6 @@ To add content, go to `pages/`, locate the desired folder and edit the `*.md` fi
 To add pages, just add lines to `config/sitemap.txt`. 
 Each line corresponds to a page. Indent to add a hierarchy. Most often there is no need for arguments to pages (which would be added in curly braces, like the example 'Home' shows).
 
+## Documentation
+
+Visit [getlizzy.net](https://getlizzy.net/)
