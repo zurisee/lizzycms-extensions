@@ -8,7 +8,7 @@ Flat-file CMS inspired by lizzards - elegant, nifty and agile
 A Flat-File Content Management System for small and medium sized Web Presences.
 
 In a nutshell:
-you create your web presence on a local computer, upload it to a web host and bang! it works. 1
+you create your web presence on a local computer, upload it to a web host and bang! it works.
 
 You modify something on the host – and it still works.
 
