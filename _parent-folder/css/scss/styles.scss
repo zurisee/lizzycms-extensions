@@ -8,5 +8,10 @@ header {
 	--lzy-nav-bg-color: #ddd;
 }
 
+// note:
+//   nav widget is enapsulated, that's why it takes '#lzy' to override:
+#lzy .lzy-nav-wrapper.primary-nav a {
+	background: #eee;
+}
 
 __END__

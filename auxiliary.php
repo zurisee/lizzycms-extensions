@@ -569,16 +569,19 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
     if (is_string($httpAccess)) {  // http page access:
         $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
         $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
+        $path = preg_replace('|~ext/|', $globalParams['pathToRoot'].EXTENSIONS_PATH, $path);
         $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pagePath'], $path);
 
     } elseif ($httpAccess) {  // http resource access:
         $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
         $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
+        $path = preg_replace('|~ext/|', $globalParams['pathToRoot'].EXTENSIONS_PATH, $path);
         $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pathToPage'], $path);
 
     } else {            // file access:
         $path = preg_replace('|~/|', '', $path);
         $path = preg_replace('|~sys/|', SYSTEM_PATH, $path);
+        $path = preg_replace('|~ext/|', EXTENSIONS_PATH, $path);
         $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pathToPage'], $path);
     }
     return $path;
@@ -622,6 +625,7 @@ function resolveAllPaths($html)
 
 	$html = preg_replace('|~/|', $pathToRoot, $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
+	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
 	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
 	return $html;
 } // resolveAllPaths
@@ -862,7 +866,7 @@ function reloadAgent($target = false)
     if ($target === true) {
         $target = $globalParams['requestedUrl'];
     } elseif ($target) {
-        $target = resolvePath($target, false,'https');
+        $target = resolvePath($target, false, 'https');
     } else {
         $target = $globalParams['pageUrl'];
     }
@@ -1421,6 +1425,17 @@ function isLocalCall()
         return false;
     }
 } // isLocalCall
+
+
+
+
+//------------------------------------------------------------
+function getGitTag()
+{
+    $str = shell_exec('cd _lizzy; git describe --tags --abbrev=0; git log --pretty="%ci" -n1 HEAD');
+    return str_replace("\n", ' ', $str);
+} // getGitTag
+
 
 
 

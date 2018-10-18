@@ -52,6 +52,8 @@
         operateMobileMenuPane( false );
     }
 
+    setupKeyboardEvents();
+
 }( jQuery ));
 
 
@@ -60,19 +62,19 @@ function toggleAccordion($parentLi, newState, deep) {
     var $nextDiv = $( '> div', $parentLi );
     var $nextDivs = $( 'div', $parentLi );
     if (typeof newState == 'undefined') {
-        // var expanded = ($nextDiv.attr('aria-expanded') === 'true');
-        var expanded = ($('input', $parentLi).is(':checked'));
+        var expanded = $parentLi.hasClass('open');
     } else {
         var expanded = !newState;
     }
-    if (expanded) {
+
+    if (expanded) { // -> collapse
         $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
         $parentLi.removeClass('open').css('cursor', 's-resize');    // parent li
         $( 'li', $parentLi ).removeClass('open');            // all li below parent li
         $('a', $nextDivs).attr('tabindex', '-1');            // make un-focusable
         $('input', $nextDivs).prop('checked', false);            // un-check checkbox
 
-    } else {
+    } else { // -> expand
         if ((typeof deep != 'undefined') && deep) {
             $nextDivs.attr({'aria-expanded': 'true', 'aria-hidden':'false' });        // next div
             $parentLi.addClass('open').css('cursor', 'n-resize');    // parent li
@@ -85,7 +87,7 @@ function toggleAccordion($parentLi, newState, deep) {
             $('> div > ol > li > a', $parentLi).attr('tabindex', '0');             // make focusable
         }
     }
-}
+} // toggleAccordion
 
 
 
@@ -107,7 +109,7 @@ function operateMobileMenuPane( newState ) {
         $('> ol > li > a', $primaryNav).attr('tabindex', '0');            // make un-focusable
         $primaryNav.addClass('lzy-nav-collapsed lzy-nav-open-current');
     }
-}
+} // operateMobileMenuPane
 
 
 
@@ -117,5 +119,45 @@ function setHightOnHiddenElements() {
         var h = $('>div>ol', this).height() + 20;                // set height to optimize animation
         $('>div>ol', this).css('margin-top', '-'+h+'px');
     });
-}
+} // setHightOnHiddenElements
 
+
+
+
+function setupKeyboardEvents() {
+    // supports: left/right, up/down, space and home
+    $('.lzy-nav a').keydown(function (event) {
+        var keyCode = event.keyCode;
+        event.stopPropagation();
+
+        if (keyCode == 39) {            // right arrow
+            event.preventDefault();
+            toggleAccordion($(this).parent(), true);
+
+        } else if (keyCode == 37) {    // left arrow
+            event.preventDefault();
+            var expanded = $(this).parent().hasClass('open');
+            if (expanded) { // if open -> close
+                toggleAccordion($(this).parent(), false);
+            } else {    // if already closed -> jump to parent element
+                $('> a', $(this).parent().parent().closest('li')).focus();
+            }
+
+        } else if (keyCode == 36) {    // home
+            event.preventDefault();
+            $('.lzy-lvl1:first-child a').focus();
+
+        } else if (keyCode == 38) {    // up
+            event.preventDefault();
+            $.tabPrev();
+
+        } else if (keyCode == 40) {    // down
+            event.preventDefault();
+            $.tabNext();
+
+        } else if (keyCode == 32) {    // space
+            event.preventDefault();
+            toggleAccordion($(this).parent());
+        }
+    });
+} // setupKeyboardEvents

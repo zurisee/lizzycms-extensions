@@ -2,6 +2,8 @@
 
 // @info: Renders various forms for user administration, e.g. login, change-password etc..
 
+$this->readTransvarsFromFile('~sys/config/useradmin.yaml');
+
 $macroName = basename(__FILE__, '.php');
 
 $page->addJqFiles('USER_ADMIN');

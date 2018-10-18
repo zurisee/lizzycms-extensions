@@ -40,7 +40,7 @@ $this->addMacro($macroName, function () {
         if (!isset($this->page->quickviewLoaded)) {
             $this->page->addCssFiles('QUICKVIEW_CSS');
             $this->page->addJqFiles('QUICKVIEW');
-            $this->page->addJq("\t$('.lzy-quickview').quickview();");
+            $this->page->addJq("\t$('img.lzy-quickview').quickview();");
             $this->page->quickviewLoaded = true;
         }
     } elseif ($lateImgLoading) {    // lateImgLading requires quickview.js

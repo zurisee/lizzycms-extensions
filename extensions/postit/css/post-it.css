@@ -34,7 +34,8 @@
   background: #ffc;
   border-left: 1px solid #eeb;
   border-bottom: 1px solid #eeb;
-  font-family: 'Kalam', cursive;
+  font-family: cursive;
+  /*font-family: 'Kalam', cursive;*/
 }
 .post-it-content .close_icon {
   position: absolute;

@@ -2,10 +2,12 @@
 
 // @info: Renders a set of options and accepts the user's choice.
 
-$page->addCssFiles('DOODLE_CSS');
-$page->addJqFiles('DOODLE');
-
 $macroName = basename(__FILE__, '.php');
+
+$page->addCssFiles("~ext/$macroName/css/doodle.css");
+$page->addJqFiles("~ext/$macroName/js/doodle.js");
+
+$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
 
 if (isset($_POST['lzy-doodle-entry-name'])) {
     $name = get_post_data('lzy-doodle-entry-name');
@@ -34,14 +36,24 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-    $options = $this->getArg($macroName, 'options', 'List of options', '');
-    $multipleAnswers = $this->getArg($macroName, 'multipleAnswers', '', true);
+	$options = $this->getArg($macroName, 'options', "List of doodle-options, separated by '|'.", '');
+	$optionsFile = $this->getArg($macroName, 'optionsFile', "Source file containing list of doodle-options (one per line).", '');
+
+	$multipleAnswers = $this->getArg($macroName, 'multipleAnswers', '[true,false] Defines whether multiple answers are permitted.', true);
     $multipleAnswers = ($multipleAnswers != 'false');
 
-    $file0 = $this->getArg($macroName, 'file', '(optional) file to store data', "~page/doodle$inx.yaml");
+    $file0 = $this->getArg($macroName, 'output', '(optional) File in which to store data', "~page/doodle$inx.yaml");
     $options = ltrim($options, '[');
     $options = rtrim($options, ']');
     $options = explode('|', $options);
+
+    if ($optionsFile) {
+        $optionsFile = makePathRelativeToPage($optionsFile);
+        $optionsFile = resolvePath($optionsFile);
+        if (file_exists($optionsFile)) {
+            $options = array_merge($options, file($optionsFile));
+        }
+    }
 
     $type =  ($multipleAnswers) ? 'checkbox' : 'radio';
 
@@ -49,6 +61,9 @@ $this->addMacro($macroName, function () {
     $newEntryForm = '';
     $sumRow = '<div class="lzy-doodle-name-elem"></div>';
     foreach ($options as $i => $option) {
+        if (!$option) {
+            continue;
+        }
         if ($multipleAnswers) {
             $input = "\t\t\t\t<input id=\"lzy-doodle-entry-answeri$inx-$i\" class=\"i$inx-$i\" name=\"lzy-doodle-entry-answer$i\" type=\"checkbox\" />";
         } else {

@@ -17,7 +17,7 @@ $( document ).ready(function() {
     setupEvents();
 
     $( window ).resize( onResize );
-    onResize();
+    onResize( true );
 
     scrollToWidget();
 });
@@ -50,12 +50,13 @@ function initPanels()
         var header = '';
         var body = '';
 
-        for (i = 0; i < panels.length; ++i) {
-            var panel = panels[i];
-            var i1 = panelWidgetInstance*100 + i + 1;
-            var tabindex = (i == 0) ? '0' : '-1';
+        for (i = 1; i <= panels.length; ++i) {
+            var panel = panels[i-1];
+            var i1 = panelWidgetInstance*100 + i;
+            var tabindex = (i == 1) ? '0' : '-1';
+            var aria = ' aria-setsize="' + panels.length + '" aria-posinset="' + i + '" aria-selected="false" aria-controls="lzy-panel-id' + i1 + '"';
 
-            header += '\t\t<li id="lzy-tabs-mode-panel-header-id' + i1 + '" class="lzy-tabs-mode-panel-header" role="tab" aria-controls="lzy-panel-id' + i1 + '" aria-selected="false" tabindex="'+ tabindex +'">' + panel.hdrText + '</li>\n';
+            header += '\t\t<li id="lzy-tabs-mode-panel-header-id' + i1 + '" class="lzy-tabs-mode-panel-header" role="tab" tabindex="'+ tabindex +'"' + aria + '>' + panel.hdrText + '</li>\n';
 
             body += '\n\n\t<!-- === panel page ==== -->\n\t<div id="lzy-panel-id' + i1 + '" class="lzy-panel-page" role="tabpanel" tabindex="-1" aria-labelledby="lzy-tabs-mode-panel-header-panel-id' + i1 + '" aria-hidden="true">\n' +
                 '\t\t<div class="lzy-accordion-mode-panel-header"><a id="#lzy-panel-controller' + i1 + '" href="#lzy-panel-id' + i1 + '" class="lzy-panel-link" aria-controls="lzy-panel-body-wrapper' + i1 + '" aria-expanded="false">' + panel.hdrText + '</a></div>\n' +
@@ -193,6 +194,8 @@ function openTab( id )
     $panelHdr.attr({ 'aria-hidden': 'false', 'aria-selected':'true'});
 }
 
+
+
 function closeTab( id )
 {
     var tabsHdrId = id.replace(/lzy-panel-/, 'lzy-tabs-mode-panel-header-');
@@ -201,6 +204,8 @@ function closeTab( id )
     var $panelHdr = $( id );
     $panelHdr.attr({ 'aria-hidden': 'true', 'aria-selected':'false'});
 }
+
+
 
 function closePanel( id )
 {
@@ -222,6 +227,60 @@ function closePanel( id )
 
 
 
+function onResize( withoutDelay ) {
+    setMode( withoutDelay );  // Accordion/Tabs or auto depending on window width
+
+    setPanelHeights();
+} // onResize
+
+
+var to = null;
+
+function setMode( withoutDelay ) {
+    $('.lzy-panels-widget').each(function () {
+        $this = $( this );
+        if ($this.hasClass('lzy-accordion')) {
+            $this.removeClass('lzy-tab-mode');
+
+        } else if ($this.hasClass('lzy-tabs')) {
+            $this.addClass('lzy-tab-mode');
+
+        } else {    // set automatically:
+            if (to) {
+                clearTimeout(to);
+            }
+            if ( withoutDelay === true ) {
+                switchOnWidthThreshold( $this );
+            } else {
+                to = setTimeout(function () {
+                    switchOnWidthThreshold($this);
+                }, 250);
+            }
+        }
+    });
+} // setMode
+
+
+
+function switchOnWidthThreshold( $panelWidget ) {
+
+    $panelWidget.addClass('lzy-tab-mode'); // accordian mode
+
+    var windowWidth = $(window).width();
+    var panelsH = $('.lzy-tabs-mode-panels-header-list', $panelWidget).outerHeight()-1;
+    var panelElemH = $('.lzy-tabs-mode-panels-header-list li', $panelWidget).outerHeight();
+    var threshold = parseInt(window.widthThreshold);
+
+    if ((windowWidth < threshold) || (panelsH > panelElemH)) {
+        $panelWidget.removeClass('lzy-tab-mode'); // narrow / accordian mode
+    } else {
+        $panelWidget.addClass('lzy-tab-mode');
+    }
+} // switchOnWidthThreshold
+
+
+
+
 function setPanelHeights()
 {
     $('.lzy-panels-widget:not(.lzy-tab-mode) .lzy-accordion-mode-panel-header').each(function(e) {
@@ -231,55 +290,8 @@ function setPanelHeights()
         var h = $innerWrapper.outerHeight();
         $innerWrapper.css('margin-top', '-' + h + 'px');
     });
-}
+} // setPanelHeights
 
-
-function onResize() {
-    function getWidthOfTabs() {
-        var w = 0;
-        $('.lzy-tabs-mode-panels-header-list').css('display', 'block');
-        $('.lzy-tabs-mode-panel-header').each(function () {
-            var w1 = $(this).css('display', 'inline-block').outerWidth();
-            w = w + w1;
-        });
-        $('.lzy-tabs-mode-panels-header-list').css('display', '');
-        return w;
-    }
-
-    setMode();  // Accordion/Tabs or auto depending on window width
-
-    setPanelHeights();
-}
-
-
-
-function setMode() {
-    $('.lzy-panels-widget').each(function () {
-        $this = $( this );
-        if ($this.hasClass('lzy-accordion')) {
-            $this.removeClass('lzy-tab-mode');
-
-        } else if ($this.hasClass('lzy-tabs')) {
-            $this.addClass('lzy-tab-mode');
-
-        } else {
-            switchOnWidthThreshold( $this );
-        }
-
-    });
-}
-
-
-
-function switchOnWidthThreshold( $panelWidget ) {
-    var windowWidth = $(window).width();
-    var threshold = parseInt(window.widthThreshold);
-    if (windowWidth < threshold) {
-        $panelWidget.removeClass('lzy-tab-mode');
-    } else {
-        $panelWidget.addClass('lzy-tab-mode');
-    }
-}
 
 
 
@@ -350,7 +362,7 @@ function setupKeyboardEvents()
         }
     });
 */
-}
+} // setupKeyboardEvents
 
 
 
@@ -362,6 +374,6 @@ function scrollToWidget() {
         var $widget = $(hash).closest('.lzy-panels-widget');
         $widget[0].scrollIntoView();
     }
-}
+} // scrollToWidget
 
 

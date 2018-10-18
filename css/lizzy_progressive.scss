@@ -29,6 +29,7 @@ $accordionX5Arrow: calc(var(--lzy-nav-accordion-first-indent) + 4 * var(--lzy-na
 
 
 //=== Mobile Nav & Menu Button
+
 .lzy-mobile-page-header {
     text-align: center;
     height: var(--lzy-mobile-header-height);
@@ -63,6 +64,7 @@ $accordionX5Arrow: calc(var(--lzy-nav-accordion-first-indent) + 4 * var(--lzy-na
         }
     }
 }
+
 
 body.small-screen {
     min-height: 100vh;

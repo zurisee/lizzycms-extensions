@@ -22,6 +22,8 @@ class AdminTasks
     }
 
 
+
+
     public function execute($that, $adminTask)
     {
         $notification = getStaticVariable('lastLoginMsg');
@@ -81,13 +83,18 @@ class AdminTasks
         } elseif ($adminTask == 'add-user') {
             $pg = $accountForm->renderAddUserForm($group, $notification);
 
+        } elseif ($adminTask == 'add-extension') {
+            $res = $this->addExtension();
+            $pg = new Page;
+            $pg->addOverlay($res);
+
         } else {
             return "Error: mode unknown 'adminTask'";
         }
         $loginForm = $pg->get('override', true);
         $this->page->merge($pg);
 
-    }
+    } // execute
 
 
 
@@ -330,15 +337,6 @@ class AdminTasks
     }
 
 
-    /**
-     * @param $accessCodeValidyTime
-     * @param $name
-     * @param $onetime
-     * @param $globalParams
-     * @param $submittedEmail
-     * @param $user
-     * @return string
-     */
     public function sendCodeByMail($submittedEmail, $mode, $accessCodeValidyTime, $name, $user, $group)
     {
         global $globalParams;
@@ -422,4 +420,27 @@ class AdminTasks
         return $hash;
     } // createHash
 
-}
+
+
+    private function addExtension()
+    {
+        $fileName = getUrlArg('file', true);
+
+        // download extension zip
+        // unzip outer
+        // check signature
+        // unzip inner to extensions/ folder
+        $res = '';
+        $name = base_name($fileName, false);
+        $zip = new ZipArchive;
+        $res = $zip->open($fileName);
+        if ($res === true) {
+            $zip->extractTo('_lizzy/extensions/');
+            $zip->close();
+            $res = "Extension '$name' successfully installed.";
+        } else {
+            $res = "Error installing extension '$name'.";
+        }
+        return $res;
+    }
+} // class

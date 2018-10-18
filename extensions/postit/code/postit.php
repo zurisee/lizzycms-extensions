@@ -6,7 +6,7 @@
 // @info: Renders content as sticky notes.
 
 
-$page->addHead("\t<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>\n");
+//$page->addHead("\t<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>\n");
 
 $str =  <<<EOT
 
@@ -18,7 +18,8 @@ $str =  <<<EOT
 EOT;
 $page->addJQ($str);
 
-$page->addCssFiles('~sys/css/post-it.css');
+$page->addCssFiles('~ext/postit/css/post-it.css');
+//$page->addCssFiles('~sys/css/post-it.css');
 $page->addJqFiles(['PANZOOM']);
 
 $macroName = basename(__FILE__, '.php');

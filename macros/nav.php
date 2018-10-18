@@ -26,6 +26,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'hasChildrenClass', 'Class to be applied to elements that have children.');
     $this->getArg($macroName, 'aClass', 'Class to be applied to A tags.');
     $this->getArg($macroName, 'title', 'A title to be inserted just after the NAV tag. If it doesn\'t contain HTML, the title will be wrapped in H1 tags.');
+    $this->getArg($macroName, 'ariaLabel', 'A label that describes the role, e.g. "Main Menu" (&rarr; needed by assistive technologies)');
     $this->getArg($macroName, 'arrow', 'The symbol to be placed in front of nav elements that have children.');
 
     $this->getArg($macroName, 'depth', 'The max depth of headers which shall be included', 6);
@@ -77,7 +78,7 @@ function renderSmallScreenHeader($trans, $options)
         $smallScreenHeaderText = "<h1>$smallScreenHeaderText</h1>";
     }
 
-    $out =  "<div class='lzy-mobile-page-header' style='display: none;'>".
+    $out =  "<div class='lzy-mobile-page-header'>".
                 "$smallScreenHeaderText".
                 "<button id='lzy-nav-menu-icon' class='lzy-nav-menu-icon' tabindex='1'><div>&#9776;</div></button>".
             "</div>";

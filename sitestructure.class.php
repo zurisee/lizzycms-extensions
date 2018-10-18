@@ -74,10 +74,18 @@ class SiteStructure
         }
 
 		if ($currNr < (sizeof($this->list) - 1)) {
-			$this->nextPage = $this->list[$currNr + 1]['folder'];
+		    $i = 1;
+		    while ($this->list[$currNr + $i]['hide'] && (($currNr + $i) < (sizeof($this->list) - 1))) {
+		        $i++;
+            }
+			$this->nextPage = $this->list[$currNr + $i]['folder'];
 		}
 		if ($currNr > 0) {
-			$this->prevPage = $this->list[$currNr - 1]['folder'];
+            $i = 1;
+            while ($this->list[$currNr - $i]['hide'] && (($currNr - $i) > 0)) {
+                $i++;
+            }
+			$this->prevPage = $this->list[$currNr - $i]['folder'];
 		}
 	} // __construct
 
@@ -199,9 +207,9 @@ class SiteStructure
 
                                 } else {                                // internal link -> fix it if necessary
                                     $folder = fixPath($value);
-                                    if (substr($folder, 0, 2) == '~/') {
-                                        $folder = substr($folder, 2);
-                                    }
+//                                    if (substr($folder, 0, 2) == '~/') {
+//                                        $folder = substr($folder, 2);
+//                                    }
                                     if (!$folder) {
                                         $folder = './';
                                     }
@@ -376,8 +384,10 @@ class SiteStructure
 	//....................................................
 	public function findSiteElem($str, $returnRec = false)
 	{
-	    if ($str == '/') {
-            $str = './';
+//	    if ($str == '/') {
+	    if (($str == '/') || ($str == './')) {
+            $str = '';
+//            $str = './';
         } elseif ((strlen($str) > 0) && ($str{0} == '/')) {
 	        $str = substr($str, 1);
         } elseif ((strlen($str) > 0) && (substr($str,0,2) == '~/')) {

@@ -167,8 +167,8 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
     > ol ol {
         margin-top: -500rem;
     }
-    li.has-children > input:checked + div > ol { // open next level
-        margin-top: 0 !important;
+    li.has-children.open > div > ol {
+    margin-top: 0 !important;
     }
 } // collapsed
 
@@ -481,4 +481,6 @@ body.large-screen #lzy {
         opacity: 0.6;
     }
 } // lzy-nav-breadcrumb
+
+
 

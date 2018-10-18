@@ -3,12 +3,14 @@
 // @info:  Lets you set up enrollment lists where people can put their name to indicate that they intend to participate at some event, for instance.
 
 $macroName = basename(__FILE__, '.php');
+$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
+
 define('ENROLL_LOG_FILE', 'enroll.txt');
 define('ENROLL_DATA_FILE', 'enroll.yaml');
 
 $enroll_form_created = false;
 
-$page->addCssFiles(['JQUERYUI_CSS', '~sys/css/enroll.css']);
+$page->addCssFiles(['JQUERYUI_CSS', '~ext/enroll/css/enroll.css']);
 
 
 $this->addMacro($macroName, function () {
@@ -17,7 +19,7 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 
     $enroll_list_name = $this->getArg($macroName, 'listname', 'Any word identifying the enrollment list', "Enrollment-List$inx");
-    $n_needed = $this->getArg($macroName, 'n_needed', 'Number of fields in category "needed"', '');
+    $n_needed = $this->getArg($macroName, 'n_needed', 'Number of fields in category "needed"', 1);
     $n_reserve = $this->getArg($macroName, 'n_reserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
     $data_path = $this->getArg($macroName, 'data_path', 'Where to store data files, default is folder local to current page', '~page/');
 

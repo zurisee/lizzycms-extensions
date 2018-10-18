@@ -9,8 +9,6 @@ class Authentication
 
     public function __construct($lzy)
     {
-
-        //$this->config->configPath.$this->config->admin_usersFile, $this->config
         $this->lzy = $lzy;
         $this->config = $this->lzy->config;
         $this->localCall = $lzy->config->isLocalhost;
@@ -77,7 +75,7 @@ class Authentication
             $res = (isset($this->userRec['name'])) ? $this->userRec['name'] : false;
         }
         return $res;
-    }
+    } // authenticate
 
 
 
@@ -437,8 +435,9 @@ class Authentication
         $this->loginTimes[$user] = time();
         session_regenerate_id();
         $_SESSION['lizzy']['user'] = $user;
-        $GLOBALS['globalParams']['isAdmin'] = $this->isAdmin();
-        $_SESSION['lizzy']['isAdmin'] = $this->isAdmin();
+        $isAdmin = $this->isAdmin();
+        $GLOBALS['globalParams']['isAdmin'] = $isAdmin;
+        $_SESSION['lizzy']['isAdmin'] = $isAdmin;
         $_SESSION['lizzy']['loginTimes'] = serialize($this->loginTimes);
 
         if ($displayName) {
@@ -467,6 +466,8 @@ class Authentication
 			    $user = $_SESSION['lizzy']['user'] = false;
             } else {
                 $rec['name'] = $user;
+                $isAdmin = $this->isAdmin(true);
+                $GLOBALS['globalParams']['isAdmin'] = $isAdmin;
 
                 $lastLogin = (isset($this->loginTimes[$user])) ? $this->loginTimes[$user] : 0;  // check maxSessionTime
                 if (isset($this->knownUsers[$user]['maxSessionTime'])) {
@@ -653,6 +654,8 @@ class Authentication
     }
 
 
+
+
     //-------------------------------------------------------------
     public function isPrivileged()
     {
@@ -663,8 +666,11 @@ class Authentication
 
 
     //-------------------------------------------------------------
-    public function isAdmin()
+    public function isAdmin($thorough = false)
     {
+        if ($thorough) {
+            return $this->checkAdmission('admins');
+        }
         if (getStaticVariable('isAdmin')) {
             return true; //??? secure?
         }

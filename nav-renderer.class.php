@@ -5,6 +5,7 @@
 // animation: [dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.
 // options: [top-level, curr-branch, hidden] These are filters that render a subset of items.
 
+$page->addJqFiles('TABBABLE');
 
 class NavRenderer
 {
@@ -108,6 +109,7 @@ class NavRenderer
         $navWrapperClass = (isset($options['navWrapperClass'])) ? $options['navWrapperClass']: '';
         $navOptions = (isset($options['options'])) ? $options['options']: '';
         $title = (isset($options['title'])) ? $options['title']: '';
+        $ariaLabel = (isset($options['ariaLabel'])) ? $options['ariaLabel']: $title;
         $this->listTag = (isset($options['listTag'])) ? $options['listTag']: 'ol';
         $this->listWrapper = (isset($options['listWrapper'])) ? $options['listWrapper']: '';
         $this->arrow = (isset($options['arrow'])) ? $options['arrow']: '&#9657;'; //'&#9656;';
@@ -152,11 +154,15 @@ EOT;
             $_edWrapper = '';
         }
 
+        if (!$ariaLabel) {
+            $ariaLabel = '{{ Main Menu }}';
+        }
+
 
         $out = <<<EOT
 
   <div class='{$editClass}lzy-nav-wrapper$navWrapperClass'$dataAttr>$edWrapper
-$title	  <nav$navClass>
+$title	  <nav$navClass aria-label="$ariaLabel">
 $nav
 	  </nav>
 $_edWrapper  </div>
@@ -228,6 +234,8 @@ EOT;
             }
             if ($path == '') {
                 $path = '~/';
+            } elseif ((($r=strpos($path, '~/')) !== 0) && ($r !== false)) {
+                $path = substr($path, $r);
             } elseif (substr($path, 0, 2) != '~/') {
                 $path = '~/'.$path;
             }
@@ -244,12 +252,20 @@ EOT;
             }
 
             $aria = 'aria-expanded="false" aria-hidden="true"';
+
+            // tabindex:
+            $tabindex = 'tabindex="-1"';
+            if (($elem['parent'] === null) || ($this->list[$elem['parent']]['active'])) {
+                $tabindex = 'tabindex="0"';
+            }
+
             if (!$this->collapse) {
                 if (!($this->horizTop && ($level == 1))) {
                     $btnOpen = ' checked';
                     $liClassOpen = ' open';
                     $aria = 'aria-expanded="true" aria-hidden="false"';
                 }
+                $tabindex = 'tabindex="0"';
 
             } elseif ($elem['active'] && $this->openCurr) {
                 if (!($this->horizTop && ($level == 1))) {  // skip if horzontal & on top level:
@@ -257,6 +273,7 @@ EOT;
                     $liClassOpen = ' open';
                     $aria = 'aria-expanded="true" aria-hidden="false"';
                 }
+                $tabindex = 'tabindex="0"';
             }
 
             if (isset($elem['target'])) {
@@ -279,7 +296,7 @@ EOT;
 
             $btnId = "lzy-nav-el-{$this->inx}$level$n";
             $btn = "$indent\t  <label for='$btnId'>{$this->arrow}<span>{{ lzy-nav-elem-button }}</span></label>\n".
-                   "$indent\t  <input type='checkbox' id='$btnId'$btnOpen />\n";
+                   "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
             if ((!$elem['hide']) || $showHidden) {
                 if (!$stop && isset($elem[0])) {	// does it have children?
@@ -288,7 +305,7 @@ EOT;
                     }
                     $liClass = trim($liClass);
                     $liClass = ($liClass) ? " class='$liClass'" : '';
-                    $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target>$name</a>\n$btn$listWrapper";
+                    $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
 
                     $out .= $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $navOptions);
 
@@ -297,7 +314,7 @@ EOT;
                 } else {
                     $liClass = trim($liClass);
                     $liClass = ($liClass) ? " class='{$liClass}'" : '';
-                    $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target>$name</a></$li>\n";
+                    $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
                 }
             }
         }
@@ -334,12 +351,15 @@ EOT;
         $link = "<a href='~/{$list[0]['folder']}'>{$list[0]['name']}</a>";
         $out = "<li>$link</li>";
         foreach ($elems as $rec) {
-            $link = "<a href='~/{$rec['folder']}'>{$rec['name']}</a>";
+            $aria = ($rec['isCurrPage']) ? ' aria-current="page"' : '';
+            $link = "<a href='~/{$rec['folder']}'$aria>{$rec['name']}</a>";
             $out .= "<li>$sep$link</li>";
         }
 
         $out = <<<EOT
-    <ol class='lzy-nav-breadcrumb'>$out</ol>
+    <nav aria-label="breadcrumbs">
+      <ol class='lzy-nav-breadcrumb'>$out</ol>
+    </nav>
 EOT;
 
         return $out;

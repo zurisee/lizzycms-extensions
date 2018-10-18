@@ -14,6 +14,7 @@ define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 define('CACHE_PATH',            '.#cache/');
 define('LOGS_PATH',             '.#logs/');
 define('MACROS_PATH',           SYSTEM_PATH.'macros/');
+define('EXTENSIONS_PATH',       SYSTEM_PATH.'extensions/');
 define('USER_INIT_CODE_FILE',   USER_CODE_PATH.'user-init-code.php');
 define('CACHE_FILENAME',        '.#page-cache.dat');
 
@@ -161,8 +162,6 @@ class Lizzy
 
         $this->setTransvars2();
 
-        $this->injectCssFramework();
-
         if ($accessGranted) {
             $this->runUserInitCode();
         }
@@ -186,7 +185,7 @@ class Lizzy
 
 		$html = $this->applyForcedBrowserCacheUpdate($html);
 
-        $html = resolveAllPaths($html, true);	// replace ~/, ~sys/, ~page/ with actual values
+        $html = resolveAllPaths($html, true);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
 
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
@@ -684,7 +683,9 @@ class Lizzy
         } else {
             $this->trans->addVariable('lang-selection', '');
         }
-	} // setTransvars1
+        $this->trans->addVariable('lzy-version', getGitTag());
+
+    } // setTransvars1
 
 
 
@@ -733,39 +734,6 @@ class Lizzy
         }
     } // warnOnErrors
 
-
-
-	//....................................................
-	private function injectCssFramework()
-    {
-        $page = $this->page;
-        $type = (isset($page->feature_cssFramework)) ? $page->feature_cssFramework : false;
-        $type = ($this->config->feature_cssFramework) ? $this->config->feature_cssFramework : $type;
-        $type = strtolower($type);
-
-        switch ($type) {
-//            case 'bootstrap':
-//                $page->addCssFiles('BOOTSTRAP_CSS');
-//                $page->addJqFiles(['TETHER', 'BOOTSTRAP']);
-//                $page->addAutoAttrFiles('BOOTSTRAP_ATTR');
-//                break;
-
-            case 'purecss':
-                $page->addCssFiles('PURECSS_CSS');
-                $page->addAutoAttrFiles('PURECSS_ATTR');
-                break;
-
-            case 'w3css':
-            case 'w3.css':
-                $page->addCssFiles('W3CSS_CSS');
-                $page->addAutoAttrFiles('W3CSS_ATTR');
-                break;
-
-            default:
-                $this->config->feature_cssFramework = false;
-                break;
-        }
-    } // injectCssFramework
 
 
 
@@ -1315,6 +1283,7 @@ EOT;
 Available URL-commands:
 
 <a href='?help'>?help</a>		    this message
+<a href='?admin'>?admin</a>		    perform admin tasks
 <a href='?list'>?list</a>		    list of transvars and macros()
 <a href='?config'>?config</a>		    list configuration-items in the config-file
 <a href='?localcall'>?localcall=false</a>    to test behavior as if on non-local host
@@ -1423,7 +1392,7 @@ EOT;
 
     }
 
-        //....................................................
+    //....................................................
 	private function saveSitemapFile($filename)
 	{
         $str = get_post_data('lzy_sitemap', true);
@@ -1755,6 +1724,8 @@ EOT;
     } // checkInstallation2
 
 
+
+    //....................................................
     public function postprocess($html)
     {
         $note = $this->trans->postprocess();
@@ -1766,6 +1737,8 @@ EOT;
     }
 
 
+
+    //....................................................
     public function getEditingMode()
     {
         return $this->editingMode;

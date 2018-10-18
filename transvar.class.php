@@ -497,30 +497,51 @@ class Transvar
         $page = &$this->page;
         if (file_exists($file)) {	// filename == macroname
             require_once($file);
-            foreach($page as $key => $elem) {
-                if ($elem && ($key != 'config')) {
-                    $page->$key = $elem;
-                }
-            }
-        } else {					// check if macro.php is in code/ folder?
-            if ($this->config->custom_permitUserCode) {
-                $file = $this->config->path_userCodePath.$macroName.'.php';
-                if (file_exists($file)) {
-                    $this->doUserCode($file);
-                    foreach($page as $key => $elem) {
-                        if ($elem && ($key != 'config')) {
-                            $page->$key = $elem;
-                        }
-                    }
-                }
+
+            // -> vars to be loaded by macros!!
+//            // load associated vars
+//            $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
+//            if (file_exists($transvarFile)) {
+//                $this->readTransvarsFromFile($transvarFile);
+//            }
+
+//            foreach($page as $key => $elem) {
+//                if ($elem && ($key != 'config')) {
+//                    $page->$key = $elem;
+//                }
+//            }
+//$page = $page;
+
+        } else {
+            $file = $this->config->extensionsPath."$macroName/code/".$macroName.'.php';
+            if (file_exists($file)) {    // filename == macroname
+                require_once($file);
+//                foreach($page as $key => $elem) {
+//                    if ($elem && ($key != 'config')) {
+//                        $page->$key = $elem;
+//                    }
+//                }
             } else {
-                logError("Error: Macro '$macroName' not found");
+                // check user-code: if macro.php is in code/ folder:
+                if ($this->config->custom_permitUserCode) {
+                    $file = $this->config->path_userCodePath . $macroName . '.php';
+                    if (file_exists($file)) {
+                        $this->doUserCode($file);
+//                        foreach ($page as $key => $elem) {
+//                            if ($elem && ($key != 'config')) {
+//                                $page->$key = $elem;
+//                            }
+//                        }
+                    }
+                } else {
+                    logError("Error: Macro '$macroName' not found");
+                }
             }
         }
-        $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
-        if (file_exists($transvarFile)) {
-            $this->readTransvarsFromFile($transvarFile);
-        }
+//        $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
+//        if (file_exists($transvarFile)) {
+//            $this->readTransvarsFromFile($transvarFile);
+//        }
     } // loadMacro
 
 
@@ -561,6 +582,9 @@ class Transvar
     //....................................................
     public function readTransvarsFromFile($file, $markSource = false)
     {
+        if ($file[0] == '~') {
+            $file = resolvePath($file);
+        }
         if (!file_exists($file)) {
             fatalError("File not found: '$file'", 'File: '.__FILE__.' Line: '.__LINE__);
         }

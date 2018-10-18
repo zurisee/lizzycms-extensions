@@ -1,15 +1,15 @@
 <?php
 
 // @info: Renders a field that can be modified by the user. Changes are persistent and can immediately be seen by other visitors.
+$macroName = basename(__FILE__, '.php');
 
-$page->addCssFiles('EDITABLE_CSS');
+
 $msg = $this->getVariable('lzy-editable-temporarily-locked');
 $page->addJs("var lzy_editable_msg = '$msg';");
 
 $_SESSION['lizzy']['pagePath'] = $GLOBALS['globalParams']['pagePath'];
 $_SESSION['lizzy']['pagesFolder'] = $GLOBALS['globalParams']['pagesFolder'];
 
-$macroName = basename(__FILE__, '.php');
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);

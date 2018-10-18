@@ -79,6 +79,7 @@ private $userConfigurableSettingsAndDefaults      = [
     public function __construct($configFile)
     {
         $this->macrosPath               = MACROS_PATH;
+        $this->extensionsPath           = EXTENSIONS_PATH;
         $this->configPath               = CONFIG_PATH;
         $this->systemPath               = SYSTEM_PATH;
         $this->systemHttpPath           = '~/'.SYSTEM_PATH;
@@ -112,21 +113,18 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['NORMALIZE_CSS']         = array('module' => 'css/normalize.min.css', 'weight' => 150);
 
         $this->loadModules['FONTAWESOME_CSS']       = array('module' => 'https://use.fontawesome.com/releases/v5.3.1/css/all.css', 'weight' => 135);
-        //$this->loadModules['FONTAWESOME_CSS']       = array('module' => 'third-party/font-awesome/5.3.1/css/fontawesome.min.css', 'weight' => 135);
 
         $this->loadModules['AUXILIARY']             = array('module' => 'js/auxiliary.js', 'weight' => 130);
 
+        $this->loadModules['TABBABLE']              = array('module' => 'third-party/tabbable/jquery.tabbable.min.js', 'weight' => 126);
         $this->loadModules['NAV']                   = array('module' => 'js/nav.js', 'weight' => 125);
         $this->loadModules['NAV_CSS']               = array('module' => 'css/_nav.css', 'weight' => 125);
 
-        $this->loadModules['EDITABLE']              = array('module' => 'js/editable.js', 'weight' => 120);
-        $this->loadModules['EDITABLE_CSS']          = array('module' => 'css/editable.css', 'weight' => 120);
+        $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js', 'weight' => 120);
+        $this->loadModules['EDITABLE_CSS']          = array('module' => 'extensions/editable/css/editable.css', 'weight' => 120);
 
         $this->loadModules['PANELS']                = array('module' => 'js/panels.js', 'weight' => 110);
         $this->loadModules['PANELS_CSS']            = array('module' => 'css/panels.css', 'weight' => 110);
-
-        $this->loadModules['DOODLE']                = array('module' => 'js/doodle.js', 'weight' => 100);
-        $this->loadModules['DOODLE_CSS']            = array('module' => 'css/doodle.css', 'weight' => 100);
 
         $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js', 'weight' => 92);
         $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 92);
@@ -149,16 +147,6 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['PAGE_SWITCHER']         = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']                = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
 
-
-        $this->loadModules['W3CSS_CSS']             = array('module' => 'third-party/w3.css/w3.css', 'weight' => 10);
-        // $this->loadModules['W3CSS_ATTR']            = array('module' => '~/'.$this->configPath.'w3css-auto-attrs.yaml', 'weight' => 10);
-
-        $this->loadModules['PURECSS_CSS']           = array('module' => 'third-party/pure-css/pure-min.css', 'weight' => 10);
-        // $this->loadModules['PURECSS_ATTR']          = array('module' => '~/'.$this->configPath.'purecss-auto-attrs.yaml', 'weight' => 10);
-
-        $this->loadModules['BOOTSTRAP_CSS']         = array('module' => 'third-party/bootstrap4/css/bootstrap.min.css', 'weight' => 10);
-        $this->loadModules['BOOTSTRAP']             = array('module' => 'third-party/bootstrap4/js/bootstrap.min.js', 'weight' => 10);
-        // $this->loadModules['BOOTSTRAP_ATTR']        = array('module' => '~/'.$this->configPath.'bootstrap-auto-attrs.yaml', 'weight' => 10);
 
         $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js', 'weight' => 5);
         $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css', 'weight' => 5);
