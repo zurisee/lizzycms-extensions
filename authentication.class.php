@@ -470,9 +470,15 @@ class Authentication
                 $GLOBALS['globalParams']['isAdmin'] = $isAdmin;
 
                 $lastLogin = (isset($this->loginTimes[$user])) ? $this->loginTimes[$user] : 0;  // check maxSessionTime
-                if (isset($this->knownUsers[$user]['maxSessionTime'])) {
-                    $validityPeriod = $this->knownUsers[$user]['maxSessionTime'];
+                if (isset($this->knownUsers[$user]['validity-period'])) {
+                    $validityPeriod = $this->knownUsers[$user]['validity-period'];
                     if ($lastLogin < (time() - $validityPeriod)) {
+                        $rec = false;
+                        $this->message = '{{ validity-period expired }}';
+                        $this->unsetLoggedInUser();
+                    }
+                } elseif ($this->config->admin_defaultLoginValidityPeriod) {
+                    if ($lastLogin < (time() - $this->config->admin_defaultLoginValidityPeriod)) {
                         $rec = false;
                         $this->message = '{{ validity-period expired }}';
                         $this->unsetLoggedInUser();

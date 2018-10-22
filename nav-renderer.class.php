@@ -233,12 +233,22 @@ EOT;
                 $path = (isset($elem['folder'])) ? $elem['folder'] : '';
             }
             if ($path == '') {
-                $path = '~/';
+                $path = './';
+//                $path = '~/'; ??? should be ok, check later!
+
             } elseif ((($r=strpos($path, '~/')) !== 0) && ($r !== false)) {
+                // theoretical case: ~/ appears somewhere within the path -> remove everything before
                 $path = substr($path, $r);
+
+            } elseif ($path{0} == '/') {
+                // case path starts with '/', -> assume app-root, turn it into '~/':
+                $path = '~'.$path;
+
             } elseif (substr($path, 0, 2) != '~/') {
+                // case path starts without indicator, where it's rooted -> assume app-root:
                 $path = '~/'.$path;
             }
+
             $btnOpen = '';
             $liClassOpen = '';
             $liClass = $this->liClass." lzy-lvl$level";

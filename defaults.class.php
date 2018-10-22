@@ -15,6 +15,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'admin_enableAccessLink'            => [true, 'Activates one-time-access-link login mechanism.' ],
             'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
             'admin_defaultGuestGroup'           => ['guest', 'Name of default group for self-registration.' ],
+            'admin_defaultLoginValidityPeriod'  => [86400, 'Defines how long a user can access the page since the last login.' ],
 //            'admin_enableAutoCreateAccount'     => [false, '[false|true] If true, lets users create their accounts with admin intervention.' ],
             'admin_enableDailyUserTask'         => [true, '[false|true] If true, looks for "code/user-daily-task.php" and executes it.' ],
             'admin_enableEditing'               => [true, '[true|false] enables online editing' ],
