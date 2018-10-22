@@ -99,6 +99,10 @@ class Forms
                 $elem = $this->renderFileUpload();
                 break;
 
+            case 'dropdown':
+                $elem = $this->renderDropdown();
+                break;
+
             case 'form-tail':
 				return $this->formTail();
 
@@ -281,6 +285,26 @@ EOT;
         $out .= "\t\t\t<input type='tel' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderTel
+
+
+//-------------------------------------------------------------
+    private function renderDropdown()
+    {
+        $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
+        $out = $this->getLabel();
+        $out .= "\t\t\t<select id='fld_{$this->currRec->name}' name='{$this->currRec->name}'>\n";
+        $out .= "\t\t\t\t<option value=''></option>\n";
+
+        foreach ($values as $item) {
+            if ($item) {
+                $val = translateToIdentifier($item);
+                $out .= "\t\t\t\t<option value='$val'>$item</option>\n";
+            }
+        }
+        $out .= "\t\t\t</select>\n";
+
+        return $out;
+    } // renderDropdown
 
 
 //-------------------------------------------------------------
