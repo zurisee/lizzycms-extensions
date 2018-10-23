@@ -233,8 +233,7 @@ EOT;
                 $path = (isset($elem['folder'])) ? $elem['folder'] : '';
             }
             if ($path == '') {
-                $path = './';
-//                $path = '~/'; ??? should be ok, check later!
+                $path = $GLOBALS['globalParams']['host'].substr($GLOBALS['globalParams']['appRoot'],1);
 
             } elseif ((($r=strpos($path, '~/')) !== 0) && ($r !== false)) {
                 // theoretical case: ~/ appears somewhere within the path -> remove everything before
