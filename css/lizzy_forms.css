@@ -10,11 +10,15 @@ label,
 	width: 7em;
 }
 legend {
+    padding: 0 0.5em;
+}
+.label legend {
 	display: inline-block;
 	width: 7em;
 	float: left;
 	margin-right: 3px;
 	position: relative;
+    padding: 0;
 	top: -3px;
 }
 .radio-elem,
