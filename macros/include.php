@@ -10,6 +10,7 @@ $this->addMacro($macroName, function () {
 
     $file = $this->getArg($macroName, 'file', 'Identifies the file to be included', '');
     $folder = $this->getArg($macroName, 'folder', 'Identifies the folder to be included', '');
+    $reverseOrder = $this->getArg($macroName, 'reverseOrder', '[true,false] If true, renders included objects in reverse order.', false);
     $wrapperTag = $this->getArg($macroName, 'wrapperTag', '(optional) HTML-tag in which to wrap the content of each included file', false);
     $wrapperClass = $this->getArg($macroName, 'wrapperClass', '(optional) class applied to each file-wrapper', false);
     $outerWrapperTag = $this->getArg($macroName, 'outerWrapperTag', '(optional) HTML-tag in which to wrap the set of included files', false);
@@ -36,6 +37,9 @@ $this->addMacro($macroName, function () {
     if ($folder) {
         $folder = resolvePath(fixPath($folder), true);
         $files = getDir($folder.'*');
+        if ($reverseOrder) {
+            rsort($files);
+        }
         foreach ($files as $file) {
             if (strtolower(fileExt($file)) != 'md') {
                 $allMD = false;
