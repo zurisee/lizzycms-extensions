@@ -3,7 +3,8 @@
  *	Lizzy - forms rendering module
 */
 
-define('CSV_SEPARATOR', ';');
+define('CSV_SEPARATOR', ',');
+//define('CSV_SEPARATOR', ';');
 define('CSV_QUOTE', 	'"');
 define('DATA_EXPIRATION_TIME', false);
 
@@ -41,7 +42,7 @@ class Forms
         }
 
         $this->inx++;
-        $this->parseArgs($args); 
+        $this->parseArgs($args);
         
         switch ($this->currRec->type) {
             case 'form-head':
@@ -79,6 +80,10 @@ class Forms
                 $elem = $this->renderDate();
                 break;
 
+            case 'time':
+                $elem = $this->renderTime();
+                break;
+
             case 'month':
                 $elem = $this->renderMonth();
                 break;
@@ -102,6 +107,12 @@ class Forms
             case 'dropdown':
                 $elem = $this->renderDropdown();
                 break;
+
+            case 'fieldset':
+                return $this->renderFieldsetBegin();
+
+            case 'fieldset-end':
+                return "\t\t\t\t</fieldset>\n";
 
             case 'form-tail':
 				return $this->formTail();
@@ -138,6 +149,7 @@ class Forms
 		$this->currForm->action = (isset($args['action'])) ? $args['action'] : '';
 		$this->currForm->class = (isset($args['class'])) ? $args['class'] : '';
 		$this->currForm->next = (isset($args['next'])) ? $args['next'] : './';
+		$this->currForm->file = (isset($args['file'])) ? $args['file'] : '';
 
 		$time = time();
 
@@ -253,6 +265,15 @@ EOT;
 
 
 //-------------------------------------------------------------
+    private function renderTime()
+    {
+        $out = $this->getLabel();
+        $out .= "\t\t\t<input type='time' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        return $out;
+    } // renderDate
+
+
+//-------------------------------------------------------------
     private function renderMonth()
     {
         $out = $this->getLabel();
@@ -297,14 +318,43 @@ EOT;
 
         foreach ($values as $item) {
             if ($item) {
+                $selected = '';
+                if (strpos($item, '!') !== false) {
+                    $selected = ' selected';
+                    $item = str_replace('!', '', $item);
+                }
                 $val = translateToIdentifier($item);
-                $out .= "\t\t\t\t<option value='$val'>$item</option>\n";
+                $out .= "\t\t\t\t<option value='$val'$selected>$item</option>\n";
             }
         }
         $out .= "\t\t\t</select>\n";
 
         return $out;
     } // renderDropdown
+
+
+//-------------------------------------------------------------
+    private function renderFieldsetBegin()
+    {
+        if (!isset($this->currRec->legend)) {
+            $this->currRec->legend = '';
+        }
+        if ($this->currRec->legend) {
+            $legend = "\t\t\t\t<legend>{$this->currRec->legend}</legend>\n";
+        } else {
+            $legend = '';
+        }
+        $autoClass = ($this->currRec->legend) ? translateToIdentifier($this->currRec->legend).' ' : '';
+
+        if ($autoClass || $this->currRec->class) {
+            $class = " class='$autoClass{$this->currRec->class}'";
+        } else {
+            $class = "$autoClass";
+        }
+        $out = "\t\t\t<fieldset$class>\n$legend";
+        return $out;
+    } // renderTel
+
 
 
 //-------------------------------------------------------------
@@ -554,11 +604,15 @@ EOT;
 
 		
 		$elemId = translateToIdentifier($label);
-		
-		$this->currForm->formElements[ $elemId ] = new FormElement;
-		$this->currRec = &$this->currForm->formElements[ $elemId ];
-		$rec = &$this->currRec;
-		
+
+//		if ($type != 'fieldset') {
+            $this->currForm->formElements[$elemId] = new FormElement;
+            $this->currRec = &$this->currForm->formElements[$elemId];
+//        } else {
+//            $this->currRec = new FormElement;
+//        }
+        $rec = &$this->currRec;
+
 		$rec->type = $type;
 
 		if (strpos($label, '*')) {
@@ -604,7 +658,8 @@ EOT;
             if ($type == 'form-head') {
 			$this->currForm->formData['labels'][0] = 'Date';
 			$this->currForm->formData['names'] = [];
-		} elseif (($type != 'button') && ($type != 'form-tail')) {
+//		} elseif (($type != 'button') && ($type != 'form-tail')) {
+		} elseif (($type != 'button') && ($type != 'form-tail') && (strpos($type, 'fieldset') === false)) {
 			$rec->shortLabel = (isset($args['shortlabel'])) ? $args['shortlabel'] : $label;
 			if ($type == 'checkbox') {
 				$checkBoxLabels = ($rec->value) ? preg_split('/\s*\|\s*/', $rec->value) : [];
@@ -799,7 +854,11 @@ EOT;
 		$formId = $currFormDescr->formId;
 		$cvsHead = "{$quoteChar}Timestamp$quoteChar".CSV_SEPARATOR;;
 
-		$fileName = resolvePath("~page/{$formId}_data.csv");
+		if (isset($currFormDescr->file) && $currFormDescr->file) {
+		    $fileName = resolvePath($currFormDescr->file);
+        } else {
+            $fileName = resolvePath("~page/{$formId}_data.csv");
+        }
 		$labels = $currFormDescr->formData['labels'];
 		$names = $currFormDescr->formData['names'];
 		$userSuppliedData = $this->userSuppliedData;

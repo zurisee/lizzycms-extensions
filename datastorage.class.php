@@ -403,6 +403,7 @@ class DataStorage
     {
         $data = false;
         if ($this->format == 'json') {
+            $rawData = str_replace(["\r", "\n", "\t"], '', $rawData);
             $data = json_decode($rawData, true);
 
         } elseif ($this->format == 'yaml') {

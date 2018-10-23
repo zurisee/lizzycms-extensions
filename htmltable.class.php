@@ -181,7 +181,7 @@ EOT;
                         $name = '???';
                     }
                 }
-                $header .= "\t\t<th>$name</th>\n";
+                $header .= "\t\t<th title='$name'>$name</th>\n";
             }
             $header .= "\t  </tr>\n\t</thead>\n";
             $row++;
