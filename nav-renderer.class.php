@@ -212,8 +212,8 @@ EOT;
             $li = 'li';
         }
 
-        $ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
-        $out = "$indent<{$this->listTag}$ulClass>\n";
+        $modif = false;
+        $out = '';
 
         $aClass = ($this->aClass) ? " class='{$this->aClass}'" : '';
         foreach($tree as $n => $elem) {
@@ -307,28 +307,46 @@ EOT;
             $btn = "$indent\t  <label for='$btnId'>{$this->arrow}<span>{{ lzy-nav-elem-button }}</span></label>\n".
                    "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
-            if ((!$elem['hide']) || $showHidden) {
+            if (!isset($elem['hide!'])) {
+                $elem['hide!'] = false;
+            }
+            if (((!$elem['hide']) || $showHidden) && !$elem['hide!']) {
                 if (!$stop && isset($elem[0])) {	// does it have children?
-                    if ($elem['hasChildren']) {
-                        $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
-                    }
+                    $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
                     $liClass = trim($liClass);
                     $liClass = ($liClass) ? " class='$liClass'" : '';
-                    $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
 
-                    $out .= $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $navOptions);
+                    // --- recursion:
+                    $out1 = $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $navOptions);
 
-                    $out .= "$_listWrapper$indent\t  </$li>\n";
+                    if ($out1) {
+                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
+                        $out .= $out1;
+                        $out .= "$_listWrapper$indent\t  </$li>\n";
+                        $modif = true;
+                        $hasChildren = true;
+                    }
 
                 } else {
                     $liClass = trim($liClass);
                     $liClass = ($liClass) ? " class='{$liClass}'" : '';
                     $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
+                    $modif = true;
                 }
             }
         }
 
-        $out .= "$indent</{$this->listTag}>\n";
+        if ($modif) {
+            $ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
+            if ($level > 1) {
+                $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
+            } else {
+                $out = "$indent<{$this->listTag}$ulClass>\n".$out;
+            }
+            $out .= "$indent</{$this->listTag}>\n";
+        } else {
+            $out = '';
+        }
         return $out;
     } // _renderSitemap
 

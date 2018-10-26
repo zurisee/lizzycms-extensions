@@ -149,11 +149,6 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
 
 
 // collapsed:
-#lzy .lzy-nav:not(.lzy-nav-collapsed.lzy-nav-top-horizontal) {
-    ol {
-        margin-top: 0 !important;
-    }
-}
 #lzy .lzy-nav.lzy-nav-top-horizontal:not(.lzy-nav-collapsed) {
     .lzy-lvl2 ol {
         margin-top: 0 !important;
@@ -163,15 +158,10 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
     }
 }
 
-#lzy .lzy-nav.lzy-nav-collapsed {
-    > ol ol {
-        margin-top: -500rem;
-    }
-    li.has-children.open > div > ol {
+// open
+.lzy-nav.lzy-nav-collapsed li.has-children.open > div > ol {
     margin-top: 0 !important;
-    }
-} // collapsed
-
+}
 
 
 

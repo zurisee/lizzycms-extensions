@@ -67,6 +67,7 @@ class SiteStructure
                 'urlExt' => '',
                 'active' => false,
                 'hide' => false,
+                'hide!' => false,
                 'hasChildren' => false,
                 'parent' => null
             ];
@@ -141,6 +142,7 @@ class SiteStructure
                 $rec['urlExt'] = '';
                 $rec['active'] = false;
                 $rec['hide'] = false;
+                $rec['hide!'] = false;
 
                 $i++;
                 $list[] = $rec;
@@ -226,14 +228,16 @@ class SiteStructure
 				$rec['urlExt'] = '';
 				$rec['active'] = false;
 				$rec['hide'] = (isset($rec['hide'])) ? $rec['hide'] : false;
+                $rec['hide!'] = (isset($rec['hide!'])) ? $rec['hide!'] : false;;
 
 				// case: page only visible to privileged users:
 				if (preg_match('/non\-?privileged/i',$rec['hide'])) {
-				    if ($this->config->isPrivileged) {
-                        $rec['hide!'] = false;
-                    } else {
-                        $rec['hide!'] = true;
-                    }
+//				    if ($this->config->isPrivileged) {
+//                        $rec['hide!'] = false;
+//                    } else {
+//                        $rec['hide!'] = true;
+//                    }
+                    $rec['hide!'] = !$this->config->isPrivileged;
                 }
 
                 // check time dependency:
@@ -253,9 +257,9 @@ class SiteStructure
                     $t = strtotime($rec['hidetill']);
                     $rec['hide!'] |= (time() < $t);
                 }
-                if (isset($rec['hide!'])) {
-                    unset($rec['hide']);
-                }
+//                if (isset($rec['hide!'])) {
+//                    unset($rec['hide']);
+//                }
 
                 $list[] = $rec;
             }

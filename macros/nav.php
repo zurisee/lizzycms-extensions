@@ -15,7 +15,7 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 
     $type = $this->getArg($macroName, 'type', '[top, side, sitemap, in-page] Specifies the type of output to be rendered.', '');
-    $class = $this->getArg($macroName, 'class', 'Class to be applied to the surrounding NAV tag.');
+    $class = $this->getArg($macroName, 'class', 'Class to be applied to the surrounding NAV tag. (alias for \'navClass\')');
     $this->getArg($macroName, 'layout', '[horizontal, vertical] Specifies direction of top-level items.', '');
     $this->getArg($macroName, 'animation', '[dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.', '');
     $this->getArg($macroName, 'options', '[top-level, curr-branch] These are filters that render a subset of items.', '');
@@ -52,7 +52,7 @@ $this->addMacro($macroName, function () {
 
     // make 'class' synonym for 'navClass'
     if ($class) {
-        $options['navClass'] = $class;
+        $options['navClass'] .= ' '.$class;
     }
 
     // case of one-pager -> has no site structure, so skip:
