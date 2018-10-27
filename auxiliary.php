@@ -1430,10 +1430,14 @@ function isLocalCall()
 
 
 //------------------------------------------------------------
-function getGitTag()
+function getGitTag($shortForm = true)
 {
     $str = shell_exec('cd _lizzy; git describe --tags --abbrev=0; git log --pretty="%ci" -n1 HEAD');
-    return str_replace("\n", ' ', $str);
+    if ($shortForm) {
+        return preg_replace("/\n.*/", ' ', $str);
+    } else {
+        return str_replace("\n", ' ', $str);
+    }
 } // getGitTag
 
 
