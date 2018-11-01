@@ -32,6 +32,16 @@ class MyMarkdown
 		'CLEAR' => '<div style="clear:both;"></div>',
 	);
 
+    private $cssAttrNames =
+        ['align', 'all', 'animation', 'backface', 'background', 'border', 'bottom', 'box',
+            'break', 'caption', 'caret', 'charset', 'clear', 'clip', 'color', 'column', 'columns',
+            'content', 'counter', 'cursor', 'direction', 'display', 'empty', 'filter', 'flex',
+            'float', 'font', 'grid', 'hanging', 'height', 'hyphens', 'image', 'import', 'isolation',
+            'justify', 'keyframes', 'left', 'letter', 'line', 'list', 'margin', 'max', 'media', 'min',
+            'mix', 'object', 'opacity', 'order', 'orphans', 'outline', 'overflow', 'Specifies',
+            'padding', 'page', 'perspective', 'pointer', 'position', 'quotes', 'resize', 'right',
+            'scroll', 'tab', 'table', 'text', 'top', 'transform', 'transition', 'unicode', 'user',
+            'vertical', 'visibility', 'white', 'widows', 'width', 'word', 'writing', 'z-index'];
 
 
 
@@ -493,20 +503,31 @@ class MyMarkdown
 			$s2 = trim($m[2]);
 			$id = '';
 			$class = '';
+			$attr = '';
 			$style = '';
 			$span = '';
 
-			if (preg_match('/([^"]*)"([^"]*)"(.*)/', $s2, $mm)) {			// span
-				$span = $mm[2];
-				$s2 = $mm[1] . $mm[3];
-			}
+			$c1 = trim($s2){0};
+			if ($c1 == '"') {		                                                        // span
+                if (preg_match('/([^"]*)"([^"]*)"(.*)/', $s2, $mm)) {	// "
+                    $span = $mm[2];
+                    $s2 = $mm[1] . $mm[3];
+                }
+            } elseif ($c1 == "'") {
+                if (preg_match("/([^ ']*)'([^']*)'(.*)/", $s2, $mm)) {	 // '
+                    $span = $mm[2];
+                    $s2 = $mm[1] . $mm[3];
+                }
+            }
 
-
-			if (preg_match('/([^\.]*)\.([\w_\-\.]+)(.*)/', $s2, $mm)) {		// class
-				$class = str_replace('.', ' ', $mm[2]);
-				$class = " class='$class'";
+            $cl = '';
+			while (preg_match('/([^\.]*)\.([\w_\-\.]+)(.*)/', $s2, $mm)) {		// class
+				$cl .= ' '.str_replace('.', ' ', $mm[2]);
 				$s2 = $mm[1].$mm[3];
 			}
+			if ($cl) {
+                $class .= " class='".trim($cl)."'";
+            }
 
 			if (preg_match('/([^\#]*)\#([\w_\-]+)(.*)/', $s2, $mm)) {		// id
 				$id = $mm[2];
@@ -514,25 +535,24 @@ class MyMarkdown
 				$s2 = $mm[1].$mm[3];
 			}
 
-			if (preg_match_all('/([\w\-]+):\s*([^;]*);?/', $s2, $mm)) {		// styles
+			if (preg_match_all('/([\w\-]+):\s*([^;\s]*);?/', $s2, $mm)) {		// styles or attr
 				foreach ($mm[0] as $s2) {
 					$s2 = str_replace(' ', '', $s2);
-					$style .= rtrim($s2, ';').';';
+					list($key, $val) = explode(':', $s2);
+                    if ($this->isCssProperty($key)) {
+                        $style .= rtrim($s2, ';') . ';';
+                    } else {
+                        $val = str_replace(';', '', $val);
+                        $attr .= ' '.trim("$key:'$val'");
+                    }
 				}
-				$style = " style='$style'";
+				$style = $style ? " style='$style'" : '';
 			}
 
 			if ($span) {
-				$span = "<span$id$class$style>$span</span>";
-				$id = '';
-				$class = '';
-				$style = '';
-			}
-
-			if (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $s1, $mm)) {	// now insert into preceding tag
-				$s1 = $mm[1] . "$id$class$style>" . $mm[2] . $span;
-			} else {
-				$s1 .= $span;
+                $s1 .= "<span$id$class$style$attr>$span</span>";
+			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $s1, $mm)) {	// now insert into preceding tag
+				$s1 = $mm[1] . "$id$class$style$attr>" . $mm[2] . $span;
 			}
 			$line = $s1.$m[3];
 		}
@@ -573,6 +593,13 @@ class MyMarkdown
         return $str;
     } // handleLiteralBlock
 
-    
+
+    private function isCssProperty($str)
+    {
+        $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
+        return (sizeof($res) > 0);
+    }
+
+
 } // class MyMarkdown
 

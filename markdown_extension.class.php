@@ -2,6 +2,17 @@
 
 class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 {
+    private $cssAttrNames =
+        ['align', 'all', 'animation', 'backface', 'background', 'border', 'bottom', 'box',
+            'break', 'caption', 'caret', 'charset', 'clear', 'clip', 'color', 'column', 'columns',
+            'content', 'counter', 'cursor', 'direction', 'display', 'empty', 'filter', 'flex',
+            'float', 'font', 'grid', 'hanging', 'height', 'hyphens', 'image', 'import', 'isolation',
+            'justify', 'keyframes', 'left', 'letter', 'line', 'list', 'margin', 'max', 'media', 'min',
+            'mix', 'object', 'opacity', 'order', 'orphans', 'outline', 'overflow', 'Specifies',
+            'padding', 'page', 'perspective', 'pointer', 'position', 'quotes', 'resize', 'right',
+            'scroll', 'tab', 'table', 'text', 'top', 'transform', 'transition', 'unicode', 'user',
+            'vertical', 'visibility', 'white', 'widows', 'width', 'word', 'writing', 'z-index'];
+
     public function __construct($page = false)
     {
         $this->page = $page;
@@ -92,11 +103,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             fatalError("Error in Markdown source line $current: $line", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
-        list($id, $class, $style, $shield) = $this->parseInlineStyling($rest);
-        $block['id'] = $id;
-        $block['class'] = $class;
-        $block['style'] = $style;
-        $block['shield'] = $shield;
+        $block = array_merge($block, $this->parseInlineStyling($rest));
 
         // consume all lines until :::
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
@@ -116,7 +123,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $block['content'][] = $line;
             }
         }
-        if ($shield) {
+        if ($block['shield']) {
             $content = implode("\n", $block['content']);
             unset($block['content']);
             $content = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $content);
@@ -127,14 +134,15 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
     protected function renderDivBlock($block)
     {
+        $tag = $block['tag'];
         $class = ($block['class']) ? ' class="'.$block['class'].'"' : '';
         $id = ($block['id']) ? " id='{$block['id']}'" : '';
         $style = ($block['style']) ? " style='{$block['style']}'" : '';
+        $attr = $block['attr'];
         $out = implode("\n", $block['content']);
         $out = \cebe\markdown\Markdown::parse($out);
         $comment = ($block['id']) ? ' #'.$block['id'] : '';
         $comment .= ($block['class']) ? ' .'.$block['class'] : '';
-        $comment .= ($block['style']) ? ' '.$block['style'] : '';
 
 
         if (preg_match('/lang:\s*(\w\w)/', $style, $m)) {   // check language selector
@@ -144,7 +152,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             }
         }
         $dataAttr = ($block['shield']) ? ' data-lzy-literal-block="true"' : '';
-        return "<div$id$class$style$dataAttr>\n$out</div><!-- /$comment -->\n\n";
+        return "<$tag$id$class$style$dataAttr$attr>\n$out</$tag><!-- /$comment -->\n\n";
     }
 
 
@@ -507,24 +515,20 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         if (!$line) {
             return ['', '', '', false];
         }
+        $tag = 'div';
         $id = '';
         $class = '';
         $style = '';
+        $attr = '';
         $shield = false;
         if (strpos($line, '!') !== false) {
             $shield = true;
             $line = str_replace('!', '', $line);
         }
 
-        if (preg_match('/\s* ([\.\#]?) ([\w_\-]+) (.*)/x', $line, $mm)) {        // class or id
-            if (empty($mm[3]) || ($mm[3]{0} != ':')) {
-                if ($mm[1] == '#') {
-                    $id = $mm[2];
-                } else {
-                    $class = $mm[2];
-                }
-                $line = $mm[3];
-            }
+        if (preg_match('/^\s* ([\w]+) (.*)/x', $line, $mm)) {        // tag
+            $tag = $mm[1];
+            $line = $mm[2];
         }
 
         while ($line) {
@@ -532,26 +536,37 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             if (preg_match('/([^\#]*) \# ([\w_\-]+)(.*)/x', $line, $mm)) {        // id
                 $id = $mm[2];
                 $line = $mm[1] . $mm[3];
+
             } elseif (preg_match('/([^\.]*) \. ([\w_\-\.]+) (.*)/x', $line, $mm)) {        // class
                 $class .= ' '.str_replace('.', ' ', $mm[2]);
                 $line = $mm[1] . $mm[3];
+
             } else {
                 break;
             }
             $line = trim($line);
         }
 
-        $styles = parseArgumentStr($line,';');          // styles
+        $styles = parseArgumentStr($line,' ');          // styles
         if ($styles) {
             foreach ($styles as $key => $val) {
                 if (!is_int($key)) {
-                    $style .= "$key:$val;";
+                    if ($this->isCssProperty($key)) {
+                        $style .= "$key:$val;";
+                    } else {
+                        $attr .= " $key:'$val'";
+                    }
                 }
             }
         }
-            $line = '';
-        return [$id, $class, $style, $shield];
+        return ['tag' =>$tag, 'id' => $id, 'class' => trim($class), 'style' => trim($style), 'attr' => $attr, 'shield' => $shield];
     } // parseInlineStyling
 
+
+    private function isCssProperty($str)
+    {
+        $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
+        return (sizeof($res) > 0);
+    }
 
 } // class MyMarkdown
