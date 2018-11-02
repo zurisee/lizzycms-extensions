@@ -521,7 +521,7 @@ class MyMarkdown
             }
 
             $cl = '';
-			while (preg_match('/([^\.]*)\.([\w_\-\.]+)(.*)/', $s2, $mm)) {		// class
+			while (preg_match('/([^\.]*)\.([\w\-\.]+)(.*)/', $s2, $mm)) {		// class
 				$cl .= ' '.str_replace('.', ' ', $mm[2]);
 				$s2 = $mm[1].$mm[3];
 			}
@@ -529,7 +529,7 @@ class MyMarkdown
                 $class .= " class='".trim($cl)."'";
             }
 
-			if (preg_match('/([^\#]*)\#([\w_\-]+)(.*)/', $s2, $mm)) {		// id
+			if (preg_match('/([^\#]*)\#([\w\-]+)(.*)/', $s2, $mm)) {		// id
 				$id = $mm[2];
 				$id = " id='$id'";
 				$s2 = $mm[1].$mm[3];

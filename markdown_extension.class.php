@@ -533,11 +533,11 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
         while ($line) {
 
-            if (preg_match('/([^\#]*) \# ([\w_\-]+)(.*)/x', $line, $mm)) {        // id
+            if (preg_match('/([^\#]*) \# ([\w\-]+)(.*)/x', $line, $mm)) {        // id
                 $id = $mm[2];
                 $line = $mm[1] . $mm[3];
 
-            } elseif (preg_match('/([^\.]*) \. ([\w_\-\.]+) (.*)/x', $line, $mm)) {        // class
+            } elseif (preg_match('/([^\.]*) \. ([\w\-\.]+) (.*)/x', $line, $mm)) {        // class
                 $class .= ' '.str_replace('.', ' ', $mm[2]);
                 $line = $mm[1] . $mm[3];
 
