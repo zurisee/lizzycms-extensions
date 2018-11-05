@@ -21,6 +21,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'admin_enableEditing'               => [true, '[true|false] enables online editing' ],
             'admin_hideWhileEditing'            => [false, 'List of CSS-selectors which shall be hidden while online editing is active, e.g. [#menu, .logo]' ],
             'admin_logClientAccesses'           => [false, 'Activates logging of user accesses.' ],
+            'admin_useRequestRewrite'           => [true, '[true|false] If true, assumes web-server supports request-rewrite (e.g. .htaccess).' ],
             'admin_webmasterEmail'              => [true, 'E-mail address of webmaster' ],
 
             'custom_permitUserCode'             => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],

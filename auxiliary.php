@@ -465,7 +465,7 @@ function dir_name($path)
         return $path;
     }
     $path = preg_replace('/[\#\?].*/', '', $path);
-    if (strpos($path, '.') !== false) {  // contains a '.'
+    if (strpos(basename($path), '.') !== false) {  // if it contains a '.' we assume it's a file
         return dirname($path).'/';
     } else {
         return rtrim($path, '/').'/';
@@ -618,17 +618,44 @@ function makePathRelativeToPage($path, $forImgRessources = false)
 
 
 //------------------------------------------------------------
-function resolveAllPaths($html)
+function resolveAllPaths($html, $requestRewriteActive = true)
 {
 	global $globalParams;
 	$pathToRoot = $globalParams['pathToRoot'];
 
-	$html = preg_replace('|~/|', $pathToRoot, $html);
+    if (!$requestRewriteActive) {
+        $html = resolveHrefs($html);
+    }
+
+    $html = preg_replace('|~/|', $pathToRoot, $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
 	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
 	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
 	return $html;
 } // resolveAllPaths
+
+
+
+function resolveHrefs($html)
+{
+    $appRoot = $GLOBALS["globalParams"]["appRoot"];
+    $prefix = $appRoot.'?lzy=';
+    $p = strpos($html, '~/');
+    while ($p !== false) {
+        if (substr($html, $p-6, 5) == 'href=') {
+            $s = substr($html, $p + 2, 30);
+            if (preg_match('|^([\w-/\.]*)|', substr($html, $p + 2, 30), $m)) {
+                $s = $m[1];
+                if (!file_exists($s)) {
+                    $html = substr($html, 0, $p) . $prefix . substr($html, $p + 2);
+                }
+            }
+        }
+        $p = strpos($html, '~/', $p + 2);
+    }
+    return $html;
+} // resolveHrefs
+
 
 
 

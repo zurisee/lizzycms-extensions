@@ -185,7 +185,7 @@ class Lizzy
 
 		$html = $this->applyForcedBrowserCacheUpdate($html);
 
-        $html = resolveAllPaths($html, true);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+        $html = resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
 
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
@@ -469,7 +469,13 @@ class Lizzy
         if ($requestedPagePath == '.') {
             $requestedPagePath = '';
         }
+
+        // if operating without request-rewrite, we rely on page request being transmitted in url-arg 'lzy':
+        if (isset($_GET['lzy'])) {
+            $requestedPath = $_GET['lzy'];
+        }
         $pagePath       = substr($requestedPath, strlen($appRoot));
+
         $pagePath0      = $pagePath;
         $pagePath       = strtolower($pagePath);
         if ($this->config->feature_filterRequestString) {
@@ -482,10 +488,11 @@ class Lizzy
         $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;
 
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
-        $globalParams['host'] = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].'/';
-        $this->pageUrl = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$requestedPath;
+        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
+        $globalParams['host'] = $requestScheme.$_SERVER['HTTP_HOST'].'/';
+        $this->pageUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestedPath;
         $globalParams['pageUrl'] = $this->pageUrl;
-        $requestedUrl = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$requestUri;
+        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
         $globalParams['requestedUrl'] = $requestedUrl;
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
 
@@ -541,7 +548,7 @@ class Lizzy
 
         $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php
         $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$pagePath;
-        $baseUrl = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
+        $baseUrl = $requestScheme.$_SERVER['SERVER_NAME'];
         $_SESSION['lizzy']['appRootUrl'] = $baseUrl.$appRoot; // https://domain.net/...
         $_SESSION['lizzy']['absAppRoot'] = $absAppRoot;
 
