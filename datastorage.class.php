@@ -35,6 +35,8 @@ define('LIZZY_LOCK_TIME', 'time');
 define('LIZZY_SID', 'sid');
 define('LIZZY_MODIF_TIME', 'modif');
 
+require_once SYSTEM_PATH.'vendor/autoload.php';
+
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -55,7 +57,11 @@ class DataStorage
 	            touch($this->dataFile);
 
             } else {
-                fatalError("DataStorage: unable to create file '$dbFile'", 'File: '.__FILE__.' Line: '.__LINE__);
+			    if (function_exists(fatalError)) {
+                    fatalError("DataStorage: unable to create file '$dbFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+                } else {
+			        die("DataStorage: unable to create file '$dbFile'");
+                }
 			}
         }
         $this->sid = $sid;
@@ -134,6 +140,19 @@ class DataStorage
 
 
 	//---------------------------------------------------------------------------
+    public function append($newData)
+    {
+        $data = &$this->data;
+        if (!is_array($data)) {
+            return false;
+        }
+            $data = array_merge($data, $newData);
+        return $this->lowLevelWrite();
+    } // append
+
+
+
+	//---------------------------------------------------------------------------
     public function read($key = '*', $reportLockState = false)
     {
         $data = &$this->data;
@@ -171,8 +190,17 @@ class DataStorage
 
 
 
-
     //---------------------------------------------------------------------------
+    public function delete($key)
+    {
+        if (isset($this->data[$key])) {
+            unset($this->data[$key]);
+            return $this->lowLevelWrite();
+        }
+    } // delete
+
+
+        //---------------------------------------------------------------------------
     public function initRecs($ids)
     {
         $data = &$this->data;
@@ -407,7 +435,7 @@ class DataStorage
             $data = json_decode($rawData, true);
 
         } elseif ($this->format == 'yaml') {
-            $data = convertYaml($rawData);
+            $data = $this->convertYaml($rawData);
 
         } elseif (($this->format == 'csv') || ($this->format == 'txt')) {
             $data = parseCsv($rawData);
@@ -431,12 +459,39 @@ class DataStorage
         if ($format == 'json') {
             $encodedData = json_encode($data);
         } elseif ($format == 'yaml') {
-            $encodedData = convertToYaml($data);
+            $encodedData = $this->convertToYaml($data);
         } elseif ($format == 'csv') {
             $encodedData = arrayToCsv($data);
         }
         return $encodedData;
     } // encode
+
+
+
+    //--------------------------------------------------------------
+    private function convertYaml($str)
+    {
+        $data = null;
+        if ($str) {
+            $str = str_replace("\t", '    ', $str);
+            try {
+                $data = Yaml::parse($str);
+            } catch(Exception $e) {
+                die("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
+            }
+        }
+        return $data;
+    } // convertYaml
+
+
+
+
+//--------------------------------------------------------------
+    private function convertToYaml($data, $level = 3)
+    {
+        return Yaml::dump($data, $level);
+    } // convertToYaml
+
 
 } // DataStorage
 
