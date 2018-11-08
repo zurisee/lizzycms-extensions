@@ -46,13 +46,11 @@ EOT;
         $height = isset($args['height']) ? $args['height'] : '80';
         $offsetX = isset($args['offsetX']) ? $args['offsetX'] : '0';
         $offsetY = isset($args['offsetY']) ? $args['offsetY'] : '0';
-        $draggable = isset($args['draggable']) && ($args['draggable'] != 'false') ? 'true' : 'false'; // default = false
-        //$draggable = isset($args['draggable']) && ($args['draggable'] == 'false') ? 'false' : 'true'; // default = true
+        $draggable = (isset($args['draggable']) && ($args['draggable'] !== 'false')) ? 'true' : 'false'; // default = false
         $triggerSource = isset($args['triggerSource']) ? $args['triggerSource'] : '';
         $triggerEvent = isset($args['triggerEvent']) ? $args['triggerEvent'] : '';
-        $showCloseButton = isset($args['showCloseButton']) && ($args['showCloseButton'] == 'false') ? 'false' : 'true'; // default = true
-        $closeOnBgClick = isset($args['closeOnBgClick']) && ($args['closeOnBgClick'] != 'false') ? 'true' : 'false'; // default = false
-        //$closeOnBgClick = isset($args['closeOnBgClick']) ? $args['closeOnBgClick'] : 'true';
+        $showCloseButton = (isset($args['showCloseButton']) && ($args['showCloseButton'] === 'false')) ? 'false' : 'true'; // default = true
+        $closeOnBgClick = (isset($args['closeOnBgClick']) && ($args['closeOnBgClick'] !== 'false')) ? 'true' : 'false'; // default = false
         $lightbox = isset($args['lightbox']) ? $args['lightbox'] : 'false';
         $delay = isset($args['delay']) ? $args['delay'] : '0';
 
@@ -98,26 +96,26 @@ EOT;
 
         $jq = <<<EOT
 
-        $('.lzy-popup').lzyPopup({
-            'index': '$index',
-            'id': '$id',
-            'class': '$class',
-            'header': '$header',
-            'text': '$text',
-            'contentFrom': '$contentFrom',
-            'anker': '$anker',
-            'width': '$width',
-            'height': '$height',
-            'offsetX': '$offsetX',
-            'offsetY': '$offsetY',
-            'draggable': $draggable,
-            'triggerSource': '$triggerSource',
-            'triggerEvent': '$triggerEvent',
-            'showCloseButton': $showCloseButton,
-            'closeOnBgClick': $closeOnBgClick,
-            'lightbox': $lightbox,
-            'delay': $delay,
-        });
+            $('#$id.lzy-popup').lzyPopup({
+                'index': '$index',
+                'id': '$id',
+                'class': '$class',
+                'header': '$header',
+                'text': '$text',
+                'contentFrom': '$contentFrom',
+                'anker': '$anker',
+                'width': '$width',
+                'height': '$height',
+                'offsetX': '$offsetX',
+                'offsetY': '$offsetY',
+                'draggable': $draggable,
+                'triggerSource': '$triggerSource',
+                'triggerEvent': '$triggerEvent',
+                'showCloseButton': $showCloseButton,
+                'closeOnBgClick': $closeOnBgClick,
+                'lightbox': $lightbox,
+                'delay': $delay,
+            });
 
 EOT;
         $this->page->addJQ( $jq);
