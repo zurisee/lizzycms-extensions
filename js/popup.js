@@ -75,7 +75,8 @@ function setSpecialOptions(id, options)
 {
     var $popup = $(id + ' .lzy-popup-wrapper');
     if (options.draggable) {
-        $popup.panzoom();
+        $('.lzy-popup-header', $popup).panzoom({ $set: $popup }); // -> only draggable by header, not content
+        // note: this is it avoid conflicts with forms in popup-body
     }
 
     $('.lzy-popup-close-button', $popup).click(function() {
@@ -88,7 +89,7 @@ function setSpecialOptions(id, options)
 
 function openPopup(id, options) {
     positionPopup(id, options);
-    if (options.delay != '0') {
+    if ((typeof options.delay != 'undefined') && (options.delay != '0')) {
         setTimeout(function() { $(id).show(); }, parseInt(options.delay));
     } else {
         $(id).show();
@@ -118,7 +119,7 @@ function positionPopup(id, options) {
 
 
 function setupTrigger(id, options) {
-    if (options.triggerSource && $(options.triggerSource).length) {
+    if (options.triggerSource) {
         switch (options.triggerEvent) {
             case 'double-click':
                 $(options.triggerSource).dblclick(function () {
@@ -145,10 +146,12 @@ function setupTrigger(id, options) {
                 break;
 
             case 'click':
-            default:
                 $(options.triggerSource).click(function (e) {
                     openPopup(id, options);
                 });
+                break;
+            default:
+                // do nothing
         }
 
 
@@ -185,4 +188,10 @@ function initEsc()
             $('.lzy-popup-widget').hide();
         }
     });
+}
+
+
+function popupClose()
+{
+    $('.lzy-popup-widget').hide();
 }
