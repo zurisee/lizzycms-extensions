@@ -46,8 +46,12 @@ class DataStorage
 	private $sid;
 
  	//---------------------------------------------------------------------------
-   public function __construct($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120)
+   public function __construct($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120, $secure = false)
     {
+        if ($secure && (strpos($dbFile, 'config/') !== false)) {
+            return null;
+        }
+
         if (file_exists($dbFile)) {
 	        $this->dataFile = $dbFile;
 
@@ -127,8 +131,15 @@ class DataStorage
 
         } else {
             if (strpos($key, '/') === false) {      // regular value
-                $data[$key] = $value;
+                if (is_array($value)) {
+                    foreach ($value as $k => $v) {
+                        $data[$key][$k] = $v;
+                    }
+                } else {
+                    $data[$key] = $value;
+                }
                 $data[LIZZY_META][$key][LIZZY_MODIF_TIME] = time();
+
             } else {                                // meta-value
                 $expr = "\$data['" . str_replace('/', "']['", $key) . "'] = \$value;";
                 eval("$expr");
