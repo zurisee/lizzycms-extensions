@@ -63,6 +63,7 @@ function populatePopupContainer(id, options)
     }
     if (options.contentFrom) {   // text to be retrieved
         text = text +  $( options.contentFrom ).html();
+        $( options.contentFrom ).remove();
     }
 
     $('.lzy-popup-body', $popup).html(text);
@@ -119,7 +120,9 @@ function positionPopup(id, options) {
 
 
 function setupTrigger(id, options) {
-    if (options.triggerSource) {
+    if (!options.triggerEvent || options.triggerEvent == 'none') {
+        // do nothing
+    } else if (options.triggerSource) {
         switch (options.triggerEvent) {
             case 'double-click':
                 $(options.triggerSource).dblclick(function () {
