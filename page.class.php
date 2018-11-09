@@ -277,6 +277,20 @@ class Page
     }
 
 
+
+    public function registerPopupContent($id, $popupForm)
+    {
+        if (!$this->popup) {
+            require_once SYSTEM_PATH.'popup.class.php';
+            $this->popup = new PopupWidget($this);
+            $this->popup->createPopupTemplate();
+        }
+
+        $this->popup->registerPopupContent($id, $popupForm);
+    }
+
+
+
     //-----------------------------------------------------------------------
     public function substitutePage($str)
     {

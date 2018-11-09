@@ -94,6 +94,15 @@ EOT;
             $this->page->addJq("\$('#$id .lzy-popup-wrapper').panzoom();");
         }
 
+        if (!$contentFrom && (strlen($text) > 512)) {
+            $contentFrom = "#$id-body";
+            $this->registerPopupContent($contentFrom, $text);
+            $text = '';
+        }
+        if ($text) {
+            $text = str_replace("'", "\\'", $text);
+        }
+
         $jq = <<<EOT
 
             $('#$id.lzy-popup').lzyPopup({
@@ -123,6 +132,24 @@ EOT;
         return '';
 
     } // addPopup
+
+
+
+
+    public function registerPopupContent($id, $popupBody)
+    {
+        if ($id{0} == '#') {
+            $id = substr($id, 1);
+        }
+        $html = <<<EOT
+
+    <div id="$id" style="display: none">
+$popupBody
+    </div>
+EOT;
+
+        $this->page->addBody_end_injections($html);
+    }
 
 
 
