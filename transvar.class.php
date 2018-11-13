@@ -158,7 +158,8 @@ class Transvar
 
                     $var = str_replace("\n", '', $var);    // remove newlines
                     if (preg_match('/^([\w\-]+)\((.*)\)/', $var, $m)) {    // macro
-                        $macro = str_replace(['-','_'], '', $m[1]);
+//                        $macro = str_replace(['-','_'], '', $m[1]);
+                        $macro = $m[1];
 
                         $argStr = $m[2];
                         $this->macroArgs[$macro] = parseArgumentStr($argStr);
