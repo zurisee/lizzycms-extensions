@@ -157,7 +157,16 @@ class DataStorage
         if (!is_array($data)) {
             return false;
         }
+        if (!isset($newData[0])) {
+            foreach ($newData as $k => $rec) {
+                while (isset($data[$k])) { // just in case of multiple concurrent actions
+                    $k = (is_int($k)) ? $k+1 : $k.'1';
+                }
+                $data[$k] = $rec;
+            }
+        } else {
             $data = array_merge($data, $newData);
+        }
         return $this->lowLevelWrite();
     } // append
 
@@ -204,6 +213,10 @@ class DataStorage
     //---------------------------------------------------------------------------
     public function delete($key)
     {
+        if (isset($this->data[LIZZY_META][$key])) {
+            unset($this->data[LIZZY_META][$key]);
+        }
+
         if (isset($this->data[$key])) {
             unset($this->data[$key]);
             return $this->lowLevelWrite();
