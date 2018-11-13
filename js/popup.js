@@ -67,7 +67,7 @@ function populatePopupContainer(id, options)
     }
 
     $('.lzy-popup-body', $popup).html(text);
-    $('.lzy-popup-header', $popup).text( options.header );
+    $('.lzy-popup-header', $popup).html( options.header );
 }
 
 
