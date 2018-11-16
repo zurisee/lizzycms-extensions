@@ -474,7 +474,11 @@ class Lizzy
         if (isset($_GET['lzy'])) {
             $requestedPath = $_GET['lzy'];
         }
-        $pagePath       = substr($requestedPath, strlen($appRoot));
+        if (strpos($requestedPath, $appRoot) === 0) {
+            $pagePath = substr($requestedPath, strlen($appRoot));
+        } else {
+            $pagePath = $requestedPath;
+        }
 
         $pagePath0      = $pagePath;
         $pagePath       = strtolower($pagePath);
