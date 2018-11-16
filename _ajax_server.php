@@ -41,12 +41,12 @@ getfile
 */
 
 date_default_timezone_set('CET');		// modify as appropriate
+define('SYSTEM_PATH', 		'');		        // same directory
 define('DATA_PATH', 		'../data/');		// modify if necessary
 define('SERVICE_LOG', 		'../.#logs/log.txt');	// modify if necessary
 define('ERROR_LOG', 		'../.#logs/errlog.txt');	// modify if necessary
 define('LOCK_TIMEOUT', 		120);	// max time till field is automatically unlocked
 define('MAX_URL_ARG_SIZE', 255);
-define('SYSTEM_PATH','_lizzy/');
 define('MKDIR_MASK',            0700); // remember to modify _lizzy/_install/install.sh as well
 
 require_once 'vendor/autoload.php';
