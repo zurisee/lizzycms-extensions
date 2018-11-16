@@ -277,6 +277,20 @@ class Page
     }
 
 
+
+    public function registerPopupContent($id, $popupForm)
+    {
+        if (!$this->popup) {
+            require_once SYSTEM_PATH.'popup.class.php';
+            $this->popup = new PopupWidget($this);
+            $this->popup->createPopupTemplate();
+        }
+
+        $this->popup->registerPopupContent($id, $popupForm);
+    }
+
+
+
     //-----------------------------------------------------------------------
     public function substitutePage($str)
     {
@@ -583,7 +597,7 @@ class Page
             $js = "\t\t$js\n";
         }
         if ($this->get('jq')) {
-            $bodyEndInjections .= "\t<script>\n\t\t\$( document ).ready(function() {\n".$this->get('jq')."\t\t});\n\t</script>\n";
+            $bodyEndInjections .= "\t<script>\n\t\t\$( document ).ready(function() {\n".$this->get('jq')."\t\t}); // document.ready\n\t</script>\n";
         }
 
         if ($this->get('lightbox')) {
@@ -592,10 +606,10 @@ class Page
 
         $screenSizeBreakpoint = $this->config->feature_screenSizeBreakpoint;
         $pathToRoot = $globalParams['pathToRoot'];
-        $rootJs  = "var appRoot = '$pathToRoot';\n";
-        $rootJs .= "var systemPath = '$pathToRoot{$this->config->systemPath}';\n";
-        $rootJs .= "var screenSizeBreakpoint = $screenSizeBreakpoint;\n";
-        $rootJs .= "var pagePath = '{$globalParams['pagePath']}';";
+        $rootJs  = "\t\tvar appRoot = '$pathToRoot';\n";
+        $rootJs .= "\t\tvar systemPath = '$pathToRoot{$this->config->systemPath}';\n";
+        $rootJs .= "\t\tvar screenSizeBreakpoint = $screenSizeBreakpoint;\n";
+        $rootJs .= "\t\tvar pagePath = '{$globalParams['pagePath']}';";
 
         if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->admin_hideWhileEditing) {  // for online-editing: add admin_hideWhileEditing
             $selectors = '';
@@ -607,7 +621,7 @@ class Page
             $rootJs .= "\n\t\tvar admin_hideWhileEditing = [$selectors];";
         }
 
-        $bodyEndInjections = "\t<script>\n\t\t$rootJs\n$js\t</script>\n".$bodyEndInjections;
+        $bodyEndInjections = "\t<script>\n$rootJs\n$js\t</script>\n".$bodyEndInjections;
         if ($tmp = $this->get('body_end_injections')) {
             $bodyEndInjections .= $tmp;
             $this->set('body_end_injections', '');

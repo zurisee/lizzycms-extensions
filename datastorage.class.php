@@ -35,6 +35,8 @@ define('LIZZY_LOCK_TIME', 'time');
 define('LIZZY_SID', 'sid');
 define('LIZZY_MODIF_TIME', 'modif');
 
+require_once SYSTEM_PATH.'vendor/autoload.php';
+
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -44,8 +46,12 @@ class DataStorage
 	private $sid;
 
  	//---------------------------------------------------------------------------
-   public function __construct($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120)
+   public function __construct($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120, $secure = false)
     {
+        if ($secure && (strpos($dbFile, 'config/') !== false)) {
+            return null;
+        }
+
         if (file_exists($dbFile)) {
 	        $this->dataFile = $dbFile;
 
@@ -55,7 +61,11 @@ class DataStorage
 	            touch($this->dataFile);
 
             } else {
-                fatalError("DataStorage: unable to create file '$dbFile'", 'File: '.__FILE__.' Line: '.__LINE__);
+			    if (function_exists(fatalError)) {
+                    fatalError("DataStorage: unable to create file '$dbFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+                } else {
+			        die("DataStorage: unable to create file '$dbFile'");
+                }
 			}
         }
         $this->sid = $sid;
@@ -121,8 +131,15 @@ class DataStorage
 
         } else {
             if (strpos($key, '/') === false) {      // regular value
-                $data[$key] = $value;
+                if (is_array($value)) {
+                    foreach ($value as $k => $v) {
+                        $data[$key][$k] = $v;
+                    }
+                } else {
+                    $data[$key] = $value;
+                }
                 $data[LIZZY_META][$key][LIZZY_MODIF_TIME] = time();
+
             } else {                                // meta-value
                 $expr = "\$data['" . str_replace('/', "']['", $key) . "'] = \$value;";
                 eval("$expr");
@@ -130,6 +147,28 @@ class DataStorage
         }
         return $this->lowLevelWrite();
     } // write
+
+
+
+	//---------------------------------------------------------------------------
+    public function append($newData)
+    {
+        $data = &$this->data;
+        if (!is_array($data)) {
+            return false;
+        }
+        if (!isset($newData[0])) {
+            foreach ($newData as $k => $rec) {
+                while (isset($data[$k])) { // just in case of multiple concurrent actions
+                    $k = (is_int($k)) ? $k+1 : $k.'1';
+                }
+                $data[$k] = $rec;
+            }
+        } else {
+            $data = array_merge($data, $newData);
+        }
+        return $this->lowLevelWrite();
+    } // append
 
 
 
@@ -171,8 +210,21 @@ class DataStorage
 
 
 
-
     //---------------------------------------------------------------------------
+    public function delete($key)
+    {
+        if (isset($this->data[LIZZY_META][$key])) {
+            unset($this->data[LIZZY_META][$key]);
+        }
+
+        if (isset($this->data[$key])) {
+            unset($this->data[$key]);
+            return $this->lowLevelWrite();
+        }
+    } // delete
+
+
+        //---------------------------------------------------------------------------
     public function initRecs($ids)
     {
         $data = &$this->data;
@@ -407,7 +459,7 @@ class DataStorage
             $data = json_decode($rawData, true);
 
         } elseif ($this->format == 'yaml') {
-            $data = convertYaml($rawData);
+            $data = $this->convertYaml($rawData);
 
         } elseif (($this->format == 'csv') || ($this->format == 'txt')) {
             $data = parseCsv($rawData);
@@ -431,12 +483,39 @@ class DataStorage
         if ($format == 'json') {
             $encodedData = json_encode($data);
         } elseif ($format == 'yaml') {
-            $encodedData = convertToYaml($data);
+            $encodedData = $this->convertToYaml($data);
         } elseif ($format == 'csv') {
             $encodedData = arrayToCsv($data);
         }
         return $encodedData;
     } // encode
+
+
+
+    //--------------------------------------------------------------
+    private function convertYaml($str)
+    {
+        $data = null;
+        if ($str) {
+            $str = str_replace("\t", '    ', $str);
+            try {
+                $data = Yaml::parse($str);
+            } catch(Exception $e) {
+                die("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
+            }
+        }
+        return $data;
+    } // convertYaml
+
+
+
+
+//--------------------------------------------------------------
+    private function convertToYaml($data, $level = 3)
+    {
+        return Yaml::dump($data, $level);
+    } // convertToYaml
+
 
 } // DataStorage
 
