@@ -6,7 +6,7 @@ $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');
-    $files = $this->getArg($macroName, 'files', 'Files that will be checked to determine the newest. Use "glob syntax", e.g. "~/data/*". Separate multiple elements by comma.', '~page/*');
+    $files = $this->getArg($macroName, 'files', 'Files that will be checked to determine the newest. Use "glob syntax", e.g. "&#126;/data/*". Separate multiple elements by comma.', '~page/*');
     $format = $this->getArg($macroName, 'format', 'Format in which the output will be rendered (see http://php.net/manual/en/function.date.php)', 'Y-m-d');
 
     if (preg_match('/^\[(.*)\]$/', $files, $m)) {
