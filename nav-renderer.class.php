@@ -194,7 +194,7 @@ EOT;
             $stop = true;
         }
         $showHidden = false;
-        if (strpos($navOptions,'hidden') !== false) {
+        if ((strpos($navOptions,'hidden') !== false) || (stripos($navOptions,'showall') !== false)) {
             $showHidden = true;
         }
         $currBranch = false;
@@ -307,10 +307,7 @@ EOT;
             $btn = "$indent\t  <label for='$btnId'>{$this->arrow}<span>{{ lzy-nav-elem-button }}</span></label>\n".
                    "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
-            if (!isset($elem['hide!'])) {
-                $elem['hide!'] = false;
-            }
-            if (((!$elem['hide']) || $showHidden) && !$elem['hide!']) {
+            if ((!$elem['hide!']) || $showHidden) {
                 if (!$stop && isset($elem[0])) {	// does it have children?
                     $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
                     $liClass = trim($liClass);
