@@ -174,7 +174,7 @@ class Transvar
                             $this->optionAddNoComment = false;
                             $val = $this->macros[$macro]($this);                    // execute the macro
 
-                            if (($this->config->isLocalhost || $this->config->isPrivileged) && !$this->optionAddNoComment) {
+                            if (($val !== null) && ($this->config->isLocalhost || $this->config->isPrivileged) && !$this->optionAddNoComment) {
                                 $val = "\n\n<!-- Lizzy Macro: $macro() -->\n$val\n<!-- /$macro() -->\n\n\n";   // mark its output
                             }
 
