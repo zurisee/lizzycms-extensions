@@ -66,6 +66,8 @@ class SCssCompiler
     private function getFile($file)
     {
         $out = getFile($file);
+        $out = zapFileEND($out);
+        $out = removeCStyleComments($out);
         if ($this->localCall && $this->config->debug_compileScssWithLineNumbers) {
             $lines = explode(PHP_EOL, $out);
             $out = '';
