@@ -363,7 +363,7 @@ lzy-email-change-mail-up3:
     de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nSollten nicht Sie die Änderung Ihrer E-Mail Adresse beantragt haben, ignorieren Sie diese Mail.\n\nBeste Grüsse, Ihre Lizzy"
     en: "\n\nPlease note that this link and this code only works once within the next 15 minutes. In case it wasn't you who requested this modification, you may ignore this e-mail.\n\nCheers, \nLizzy\n "
 
-
+/*
 lzy-sign-up-link sent:
     de: "<h1>Registrierungs-Link versendet</h1>
     <p>Wir haben Ihnen eine E-Mail gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
@@ -383,7 +383,7 @@ lzy-sign-up-link sent3:
         Sie benötigen keinen Benutzernamen, aber Sie können einen festlegen, falls Sie möchten."
     en: "<br />After registration is completed you can use your e-mail address to log into our website.<br />
         You don't need a user-name, but you can define one if you like."
-
+*/
 
 lzy-change-mail-link sent :
     de: "<h1>Bestätigungs-Link versendet</h1>
