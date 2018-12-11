@@ -90,15 +90,17 @@ class NavRenderer
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
         }
 
-        return $this->renderSitemap($options);
+        $this->options = $options;
+        return $this->renderSitemap();
     } // render
 
 
 
 
     //....................................................
-    public function renderSitemap($options)
+    public function renderSitemap()
     {
+        $options = $this->options;
         $type = isset($options[0]) ? $options[0] :  (isset($options['type']) ? $options['type'] : '');
         $navClass = (isset($options['navClass'])) ? $options['navClass']: '';
         $navClass = str_replace('.', ' ', $navClass);
@@ -335,7 +337,11 @@ EOT;
 
         if ($modif) {
             $ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
-            if ($level > 1) {
+            $navClass = $this->options['navClass'];
+
+            // apply top-margin for exanding variants: lzy-nav-accordion and lzy-nav-top-horizontal:
+            if (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') !== false) &&
+                    (strpos($navClass, 'lzy-nav-accordion') !== false))) {
                 $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
             } else {
                 $out = "$indent<{$this->listTag}$ulClass>\n".$out;
