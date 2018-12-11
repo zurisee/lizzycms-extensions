@@ -871,6 +871,13 @@ class Lizzy
 			$mdStr = $this->extractFrontmatter($mdStr, $newPage);
 
             if ($ext == 'md') {             // it's an MD file, convert it
+
+                $eop = strpos($mdStr, '__EOP__');           // check for 'end of page' marker, if found exclude all following (also following mdFiles)
+                if (($eop !== false) && ($mdStr{$eop-1} != '\\')) {
+                    $mdStr = preg_replace('/__EOP__.*/sm', '', $mdStr);
+                    $eop = true;
+                }
+
                 $md->parse($mdStr, $newPage);
             } elseif ($mdStr && $this->config->feature_renderTxtFiles) {   // it's a TXT file, wrap it in <pre>
                 $newPage->addContent("<pre>$mdStr\n</pre>\n");
@@ -900,6 +907,10 @@ class Lizzy
 			$str = "\n\t\t    <$wrapperTag id='{$wrapperTag}_$id' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
 			$newPage->addContent($str, true);
 			$this->page->merge($newPage);
+
+			if ($eop) {
+			    break;
+            }
 		}
 
 		$html = $page->get('content');
