@@ -235,9 +235,7 @@ function getFile($pat, $removeComments = false)
         return false;
     }
 
-    if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
-        $file = substr($file, 0, $p+1);
-    }
+    $file = zapFileEND($file);
     if ($removeComments === true) {
         $file = removeCStyleComments($file);
     } elseif ($removeComments) {
@@ -249,6 +247,16 @@ function getFile($pat, $removeComments = false)
     return $file;
 } // getFile
 
+
+
+
+function zapFileEND($file)
+{
+    if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
+        $file = substr($file, 0, $p+1);
+    }
+    return $file;
+}
 
 
 //--------------------------------------------------------------
