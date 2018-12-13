@@ -417,6 +417,7 @@ EOT;
           #lzy .lzy-nav li label { display: none; }
         </style>
     </noscript>
+
 EOT;
 
         $GLOBALS['globalParams']['noScriptAdded'] = true;
