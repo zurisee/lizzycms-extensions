@@ -35,8 +35,8 @@ define('ONETIME_PASSCODE_FILE', CACHE_PATH.'_onetime-passcodes.yaml');
 define('HACKING_THRESHOLD',     10);
 define('HOUSEKEEPING_FILE',     CACHE_PATH.'_housekeeping.txt');
 define('MIN_SITEMAP_INDENTATION', 4);
-define('SUBSTITUTE_UNDEFINED',  1); // -> '{|{'     => delayed substitution within trans->render()
-define('SUBSTITUTE_ALL',        2); // -> '{||{'    => variables translated after cache-retrieval
+//define('SUBSTITUTE_UNDEFINED',  1); // -> '{|{'     => delayed substitution within trans->render()
+//define('SUBSTITUTE_ALL',        2); // -> '{||{'    => variables translated after cache-retrieval
 
 define('MKDIR_MASK',            0700); // remember to modify _lizzy/_install/install.sh as well
 define('MKDIR_MASK2',           0700); // ??? test whether higher priv is necessary
@@ -78,8 +78,9 @@ class Lizzy
 	private $httpSystemPath;
 	private $pathToRoot;
 	private $reqPagePath;
-	public $siteStructure;
-	public $page;
+	public  $siteStructure;
+	public  $trans;
+	public  $page;
 	private $editingMode = false;
 	private $timer = false;
 
@@ -140,7 +141,7 @@ class Lizzy
 
 		$this->selectLanguage();
 
-		$page = &$this->page;
+//		$page = &$this->page;
 
 		$accessGranted = $this->checkAdmissionToCurrentPage();   // override page with login-form if required
 
@@ -177,26 +178,26 @@ class Lizzy
 
         $this->sendAccessLinkMail();
 
-        // now, compile the page from all its components:
-        $html = $this->trans->render($page, $this->config->lang);
+        $this->page->resolveVarsAndMacros();
 
+		$this->prepareImages();
 
-		$this->prepareImages($html);
-
-		$html = $this->applyForcedBrowserCacheUpdate($html);
-
-        $html = resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+        $this->applyForcedBrowserCacheUpdate();
 
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
+
+
+        // now, compile the page from all its components:
+        $html = $this->page->render();
 
         // Future: enable caching of compiled MD pages:
         //        if ($accessGranted) {
         //             writeCache();
         //        }
+        //        translate non-cached vars and macros
 
-
-        $html = $this->trans->render($html, $this->config->lang, SUBSTITUTE_ALL);
+        $html = $this->resolveAllPaths($html);
 
         if ($this->timer) {
             $timerMsg = 'Page rendering time: '.readTimer();
@@ -209,12 +210,33 @@ class Lizzy
 
 
 
+    private function resolveAllPaths($html)
+    {
+        return resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+    } // resolveAllPaths
+//    private function resolveAllPaths()
+//    {
+//        $html = $this->page->get('template');
+//        $html = resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+//        $this->page->set('template', $html);
+//
+//        $html = $this->page->get('content');
+//        $html = resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+//        $this->page->set('content', $html);
+//    } // resolveAllPaths
+
+
+
+
     //....................................................
-    private function applyForcedBrowserCacheUpdate($html)
+//    private function applyForcedBrowserCacheUpdate($html)
+    private function applyForcedBrowserCacheUpdate()
     {
         // forceUpdate adds some url-arg to css and js files to force browsers to reload them
         // Config-param 'debug_forceBrowserCacheUpdate' forces this for every request
         // 'debug_autoForceBrowserCache' only forces reload when Lizzy detected changes in those files
+
+        $html = $this->page->get('template');
 
         if (isset($_SESSION['lizzy']['reset']) && $_SESSION['lizzy']['reset']) {  // Lizzy has been reset, now force browser to update as well
             $forceUpdate = getVersionCode( true );
@@ -226,7 +248,8 @@ class Lizzy
         } elseif ($this->config->debug_autoForceBrowserCache) {
             $forceUpdate = getVersionCode();
         } else {
-            return $html;
+            return;
+//            return $html;
         }
         if ($forceUpdate) {
             $html = preg_replace('/(\<link\s+href=(["])[^"]+)"/m', "$1$forceUpdate\"", $html);
@@ -234,8 +257,9 @@ class Lizzy
 
             $html = preg_replace('/(\<script\s+src=(["])[^"]+)"/m', "$1$forceUpdate\"", $html);
             $html = preg_replace("/(\<script\s+src=(['])[^']+)'/m", "$1$forceUpdate'", $html);
+            $this->page->set('template', $html);
         }
-        return $html;
+//        return $html;
     } // applyForcedBrowserCacheUpdate
 
 
@@ -268,8 +292,9 @@ class Lizzy
         $GLOBALS['globalParams']['activityLoggin'] = $this->config->admin_activityLogging;
         $GLOBALS['globalParams']['errorLogging'] = $this->config->debug_errorLogging;
 
-        $this->page = new Page($this);
         $this->trans = new Transvar($this);
+        $this->page = new Page($this);
+//        $this->trans = new Transvar($this);
         $this->trans->readTransvarsFromFiles([ SYSTEM_PATH.'config/sys_vars.yaml', CONFIG_PATH.'user_variables.yaml' ]);
 
         $this->auth = new Authentication($this);
@@ -583,7 +608,11 @@ class Lizzy
     //....................................................
     private function loadTemplate()
     {
-        $this->page->addBody($this->getTemplate(), true);
+        $template = $this->getTemplate();
+        $template = $this->page->shieldVariable($template, 'head_injections');
+        $template = $this->page->shieldVariable($template, 'content');
+        $template = $this->page->shieldVariable($template, 'body_end_injections');
+        $this->page->addTemplate($template);
     } // loadTemplate
 
 
@@ -987,9 +1016,14 @@ EOT;
 
 
 	//....................................................
-    private function prepareImages($html)
+//    private function prepareImages($html)
+    private function prepareImages()
 	{
         $resizer = new ImageResizer($this->config->feature_ImgDefaultMaxDim);
+        $html = $this->page->get('template');
+        $resizer->provideImages($html);
+
+        $html = $this->page->get('content');
         $resizer->provideImages($html);
     } // prepareImages
 
