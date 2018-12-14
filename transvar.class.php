@@ -24,8 +24,7 @@ class Transvar
 	private $macroInfo = array();
 	private $invocationCounter = array();
 	private $sysVariables = ['head_injections', 'content', 'body_end_injections'];
-//    private $shieldedStrings = [];
-    private $page;
+    public $page;
 
 
 	//....................................................
@@ -39,183 +38,17 @@ class Transvar
 
 
 
-
-//	//....................................................
-//	public function resolveVarsAndMacros($page)
-//    {
-//        $this->page = $page;
-//        $this->shieldedStrings = [];
-//        // shield special variables 'head_injections', 'content' and 'body_end_injections'
-//
-//        // translate template
-//        $template = $this->page->get('template');
-//        $template = $this->translate($template);
-//        $this->page->set('template', $template);
-//
-//        // translate content
-//        $content = $this->page->get('content');
-//        $content = $this->translate($content);
-//        $this->page->set('content', $content);
-//    } // resolveVarsAndMacros
-
-
-
-
     //....................................................
     public function translate($html)
     {
-//        $html = str_replace(['{|{','}|}'], ['{{', '}}'], $html);
         $pp = findNextPattern($html, '{{');
         while ($pp !== false) {
-//            $html = $this->excludeShieldedStrings($html);
             $html = $this->translateMacros($html);
-            $html = $this->translateVars($html, 'app', false);
+            $html = $this->translateVars($html);
             $pp = findNextPattern($html, '{{');
         }
-//        $this->lzy->page->merge($this->page);
         return $html;
     } // translate
-
-
-
-//	//....................................................
-//	public function render($page)
-//    {
-////        $this->shieldedStrings = [];
-//        // shield special variables 'head_injections', 'content' and 'body_end_injections'
-//
-//
-////	    if (is_string($page)) {
-////            $html = $page;
-////        } else {
-////            $this->page = $page;
-////
-////            // handle pageReplacement?, override, overlay, message, debugMsg:
-////            $this->handlePageModifications();
-////
-////            $html = $page->get('body');
-////            $html = $this->shieldSpecialVars($html);
-////
-////            $this->addVariable('content', $page->get('content'), false);
-////        }
-//
-//        if ($html = $this->page->get('pageSubstitution')) {
-//            return $html;
-//        }
-//
-//        $this->page->applyBodyTopInjection();
-//
-//        $html = $this->page->get('template');
-//        $html = $this->adaptBraces($html);
-//
-//        $head = $this->page->get('head');
-//        $html = $this->translateVariable($html, 'head_injections', $head);
-//
-//
-//        if ($this->page->get('override')) {
-//            $content = $this->page->get('override');
-//        } else {
-//            if ($this->page->get('overlay')) {
-//                $this->page->applyOverride();
-//            }
-//            $content = $this->page->get('content');
-//        }
-//        $html = $this->translateVariable($html, 'content', $content);
-//
-//        $body_end_injections = $this->page->get('body_end_injections');
-//        if ($msg = $this->page->get('debugMsg')) {
-//            $body_end_injections .= $msg;
-//        }
-//        $html = $this->translateVariable($html, 'body_end_injections', $body_end_injections);
-//
-//
-//        return $html;
-//    } // render
-
-//        $html = $this->adaptBraces($html, $substitutionMode);
-//
-//        $pp = findNextPattern($html, '{{');
-//        while ($pp !== false) {
-//            $html = $this->excludeShieldedStrings($html);
-//			$html = $this->translateMacros($html);
-//			$html = $this->translateVars($html, 'app', $substitutionMode);
-//            $pp = findNextPattern($html, '{{');
-//		}
-//
-//		$html = $this->translateSpecialVars($html);
-//        $html = $this->adaptBraces($html, SUBSTITUTE_UNDEFINED);
-//        $html = $this->translateVars($html, 'app', SUBSTITUTE_UNDEFINED);
-//        $this->handleLatePageSubstitution();
-//
-//        if (!isset($this->firstRun)) {  // avoid indefinite loop
-//            // in case a macro has raised a request for override etc, we need to re-run rendering routine:
-//            if ($this->page->get('override') ||
-//                $this->page->get('overlay') ||
-//                $this->page->get('pageSubstitution') ||
-//                $this->page->get('debugMsg') ||
-//                $this->page->get('message')) {
-//                $this->firstRun = true;
-//                return $this->render($page, $lang, $substitutionMode);
-//            }
-//        }
-//        $html = $this->replaceShieldedStrings($html);
-//		return $html;
-//	} // render
-
-
-
-
-//	//....................................................
-//	public function render($page, $lang = false, $substitutionMode = false)
-//	{
-//        $this->shieldedStrings = [];
-//	    if (is_string($page)) {
-//            $html = $page;
-//        } else {
-//            $this->page = $page;
-//
-//            // handle pageReplacement?, override, overlay, message, debugMsg:
-//            $this->handlePageModifications();
-//
-//            $html = $page->get('body');
-//            $html = $this->shieldSpecialVars($html);
-//
-//            $this->addVariable('content', $page->get('content'), false);
-//        }
-//
-//        $html = $this->adaptBraces($html, $substitutionMode);
-//
-//        $pp = findNextPattern($html, '{{');
-//        while ($pp !== false) {
-//            $html = $this->excludeShieldedStrings($html);
-//			$html = $this->translateMacros($html);
-//			$html = $this->translateVars($html, 'app', $substitutionMode);
-//            $pp = findNextPattern($html, '{{');
-//		}
-//
-//		$html = $this->translateSpecialVars($html);
-//        $html = $this->adaptBraces($html, SUBSTITUTE_UNDEFINED);
-//        $html = $this->translateVars($html, 'app', SUBSTITUTE_UNDEFINED);
-//        $this->handleLatePageSubstitution();
-//
-//        if (!isset($this->firstRun)) {  // avoid indefinite loop
-//            // in case a macro has raised a request for override etc, we need to re-run rendering routine:
-//            if ($this->page->get('override') ||
-//                $this->page->get('overlay') ||
-//                $this->page->get('pageSubstitution') ||
-//                $this->page->get('debugMsg') ||
-//                $this->page->get('message')) {
-//                $this->firstRun = true;
-//                return $this->render($page, $lang, $substitutionMode);
-//            }
-//        }
-//        $html = $this->replaceShieldedStrings($html);
-//		return $html;
-//	} // render
-//
-//
-//
-//
 
 
 
@@ -232,38 +65,7 @@ class Transvar
 
 
 
-
-
-//    private function excludeShieldedStrings($str) {
-//        $p1 = findNextPattern($str, '{[{[');
-//        $i  = sizeof($this->shieldedStrings);
-//        while ($p1) {
-//            $p2 = findNextPattern($str, ']}]}', $p1);
-//            if ($p2) {
-//                $this->shieldedStrings[$i] = substr($str, $p1+4, $p2-$p1-4);
-//                $str = substr($str, 0, $p1+4) . $i . substr($str, $p2);
-//                $p1 += strlen("{[{[$i]}]}");
-//                $p1 = findNextPattern($str, '{[{[', $p1);
-//                $i++;
-//            }
-//        }
-//        return $str;
-//    }
-
-
-
-//    private function replaceShieldedStrings($str) {
-//	    foreach ($this->shieldedStrings as $i => $s) {
-//	        $pat = "{[{[".$i."]}]}";
-//	        $str = str_replace($pat, $s, $str);
-//        }
-//        return $str;
-//    }
-
-
-
 	//....................................................
-//	private function translateMacros($str, $namespace = 'app')
 	private function translateMacros($str)
 	{
         list($p1, $p2) = strPosMatching($str);
@@ -299,13 +101,11 @@ class Transvar
             } else {
                 if (!$commmented) {
                     if (strpos($var, '{{') !== false) {     // nested transvar/macros
-//                        $var = $this->translateMacros($var, $namespace);
                         $var = $this->translateMacros($var);
                     }
 
                     $var = str_replace("\n", '', $var);    // remove newlines
                     if (preg_match('/^([\w\-]+)\((.*)\)/', $var, $m)) {    // macro
-//                        $macro = str_replace(['-','_'], '', $m[1]);
                         $macro = $m[1];
 
                         $argStr = $m[2];
@@ -340,7 +140,11 @@ class Transvar
                         } else {                            // macro not defined, raise error
                             $msg ="Error: undefined macro: '$macro()'";
                             logError($msg);
-                            $val = '';
+                            if ($this->config->localCall || $this->config->isPrivileged) {
+                                $val = "<div class='error-msg'>$msg</div>";
+                            } else {
+                                $val = '';
+                            }
                         }
 
                     } else {                                        // variable
@@ -371,7 +175,6 @@ class Transvar
 
 
 	//....................................................
-//	public function translateVars($str, $namespace = 'app', $substitutionMode = false)
 	public function translateVars($str)
 	{
 
@@ -422,7 +225,6 @@ class Transvar
 
                     } else {                                        // variable
                         $val = $this->getVariable($var);
-//                        $val = $this->getVariable($var, '', $namespace, $substitutionMode);
                         if ($val === false) {
                             $val = $this->doUserCode($var, $this->config->custom_permitUserCode);
                             if (is_array($val)) {
@@ -442,12 +244,7 @@ class Transvar
                     $str = substr($str, 0, $p1) . "{||{ $var }||}" . substr($str, $p2 + 2);
 
                 } elseif (!$optional && ($val === false)) {
-//                    if ($substitutionMode == SUBSTITUTE_UNDEFINED) {     // undefined are substituted only in the last round
                         $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2); // replace with itself (minus {{}})
-//                    } else {
-//                        $str = substr($str, 0, $p1) . "{|{ $var }|}" . substr($str, $p2 + 2);
-//                        $p1 += 4;
-//                    }
 
                 } else {
                     $str = substr($str, 0, $p1) . $val . substr($str, $p2 + 2);   // replace with value
@@ -574,53 +371,8 @@ class Transvar
     //....................................................
     public function adaptBraces($str)
     {
-//        if ($substitutionMode & SUBSTITUTE_UNDEFINED) {
-//            $str = str_replace(['{|{','}|}'], ['{{', '}}'], $str);
-//        }
-//        if ($substitutionMode & SUBSTITUTE_ALL) {
-            $str = str_replace(['{||{','}||}'], ['{{', '}}'], $str);
-//        }
-
-        return $str;
+        return str_replace(['{||{','}||}'], ['{{', '}}'], $str);
     } // adaptBraces
-
-//    //....................................................
-//    private function adaptBraces($str, $substitutionMode = false)
-//    {
-//        if ($substitutionMode & SUBSTITUTE_UNDEFINED) {
-//            $str = str_replace(['{|{','}|}'], ['{{', '}}'], $str);
-//        }
-//        if ($substitutionMode & SUBSTITUTE_ALL) {
-//            $str = str_replace(['{||{','}||}'], ['{{', '}}'], $str);
-//        }
-//
-//        return $str;
-//    } // adaptBraces
-
-
-
-//    //....................................................
-//    private function handlePageModifications()
-//    {
-//        if ($this->page->applyPageSubstitution()) {
-//            return;
-//        }
-//        $this->page->applyOverlay();
-//        $this->page->applyOverride();
-//        $this->page->applyMessage();
-//        $this->page->applyDebugMsg();
-//    } // handlePageModifications
-//
-//
-//
-//
-//    //....................................................
-//    private function handleLatePageSubstitution()
-//    {
-//        if ($str = $this->page->get('pageSubstitution')) {
-//            exit($str);
-//        }
-//    } // handleLatePageSubstitution
 
 
 
@@ -661,59 +413,30 @@ class Transvar
         if (file_exists($file)) {	// filename == macroname
             require_once($file);
 
-            // -> vars to be loaded by macros!!
-//            // load associated vars
-//            $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
-//            if (file_exists($transvarFile)) {
-//                $this->readTransvarsFromFile($transvarFile);
-//            }
-
-//            foreach($page as $key => $elem) {
-//                if ($elem && ($key != 'config')) {
-//                    $page->$key = $elem;
-//                }
-//            }
-//$page = $page;
-
         } else {
             $file = $this->config->extensionsPath."$macroName/code/".$macroName.'.php';
             if (file_exists($file)) {    // filename == macroname
                 require_once($file);
-//                foreach($page as $key => $elem) {
-//                    if ($elem && ($key != 'config')) {
-//                        $page->$key = $elem;
-//                    }
-//                }
+
             } else {
                 // check user-code: if macro.php is in code/ folder:
                 if ($this->config->custom_permitUserCode) {
                     $file = $this->config->path_userCodePath . $macroName . '.php';
                     if (file_exists($file)) {
                         $this->doUserCode($file);
-//                        foreach ($page as $key => $elem) {
-//                            if ($elem && ($key != 'config')) {
-//                                $page->$key = $elem;
-//                            }
-//                        }
                     }
                 } else {
                     logError("Error: Macro '$macroName' not found");
                 }
             }
         }
-//        $transvarFile = $this->config->macrosPath.'transvars/'.$macroName.'.yaml';
-//        if (file_exists($transvarFile)) {
-//            $this->readTransvarsFromFile($transvarFile);
-//        }
     } // loadMacro
 
 
 
 
-    /**
-     * @param $file
-     */
     public function readTransvarsFromFiles($file, $markSource = false)
+        // read from multiple files
     {
         if (is_array($file)) {
             $a = $file;
@@ -737,7 +460,7 @@ class Transvar
         } else {
             $this->readTransvarsFromFile($file, $markSource);
         }
-    }
+    } // readTransvarsFromFiles
 
 
 
@@ -774,7 +497,7 @@ class Transvar
             }
             $this->transvars = array_merge($this->transvars, $newVars);
         }
-    } // readFile
+    } // readTransvarsFromFile
 
 
 
@@ -821,7 +544,6 @@ class Transvar
 
 
     //....................................................
-//    public function getVariable($key, $lang = '', $namespace = '', $substitutionMode = false)
     public function getVariable($key, $lang = '')
     {
         $lang = ($lang) ? $lang : $this->config->lang;
@@ -831,7 +553,6 @@ class Transvar
             $entry = $this->transvars[$key];
 
             if (($key{0} != '_') && (!in_array($key, $this->sysVariables))) {
-//                $this->usedVars[$namespace.'@:'.$key] = $entry;
                 $this->usedVars['@:'.$key] = $entry;
             }
             if ($this->config->debug_monitorUnusedVariables && is_array($entry)) {
@@ -842,7 +563,6 @@ class Transvar
             if (!is_array($entry)) {
                 $out = $entry;
 
-//            } elseif (isset($entry['dontCache']) && $entry['dontCache'] && ($substitutionMode != SUBSTITUTE_ALL)) {
             } elseif (isset($entry['dontCache']) && $entry['dontCache']) {
                 $out = "{||{ $key }||}";
 
@@ -889,49 +609,7 @@ class Transvar
 
 
 
-//    //....................................................
-//    public function shieldVariable($str, $varName)
-//    {
-//        $str = preg_replace("/\{\{\^?\s*$varName\s*\}\}/", "@@$varName@@", $str);
-//        return $str;
-//    } // shieldVariable
-//
-//
-//
-//
-//    //....................................................
-//    public function unShieldVariable($str, $varName)
-//    {
-//        $str = preg_replace("@@$varName@@", "{{ $varName }}", $str);
-//        return $str;
-//    } // shieldVariable
 
-
-
-
-//    //....................................................
-//    private function shieldSpecialVars($str)
-//    {
-//        $str = preg_replace('/\{\{\^?\s*head_injections\s*\}\}/', '@@head_injections@@', $str);
-//        $str = preg_replace('/\{\{\^?\s*body_end_injections\s*\}\}/', '@@body_end_injections@@', $str);
-//        return $str;
-//    } // shieldSpecialVars
-//
-//
-//
-//    //....................................................
-//    private function translateSpecialVars($str)
-//    {
-//        if ($this->config->feature_autoLoadClassBasedModules) {
-//            $this->page->autoInvokeClassBasedModules($str);
-//        }
-//        $str = str_replace('@@head_injections@@', $this->page->headInjections(), $str);
-//        $str = str_replace('@@body_end_injections@@', $this->page->bodyEndInjections(), $str);
-//
-//        return $str;
-//    } // translateSpecialVars
-//
-//
     //....................................................
     public function doUserComputedVariables()
     {
@@ -940,6 +618,8 @@ class Transvar
             $this->doUserCode( basename($code, '.php'), $this->config->custom_permitUserVarDefs );
         }
     } // doUserComputedVariable
+
+
 
 
     //....................................................
@@ -1120,9 +800,6 @@ EOT;
 
 
 
-    /**
-     * @param $file
-     */
     private function resetFile($file)
     {
         copy($file, $file.'.0');

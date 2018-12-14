@@ -141,8 +141,6 @@ class Lizzy
 
 		$this->selectLanguage();
 
-//		$page = &$this->page;
-
 		$accessGranted = $this->checkAdmissionToCurrentPage();   // override page with login-form if required
 
         $this->setTransvars1();
@@ -197,6 +195,8 @@ class Lizzy
         //        }
         //        translate non-cached vars and macros
 
+        $html = $this->trans->translateVars($html);
+
         $html = $this->resolveAllPaths($html);
 
         if ($this->timer) {
@@ -214,22 +214,11 @@ class Lizzy
     {
         return resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
     } // resolveAllPaths
-//    private function resolveAllPaths()
-//    {
-//        $html = $this->page->get('template');
-//        $html = resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
-//        $this->page->set('template', $html);
-//
-//        $html = $this->page->get('content');
-//        $html = resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
-//        $this->page->set('content', $html);
-//    } // resolveAllPaths
 
 
 
 
     //....................................................
-//    private function applyForcedBrowserCacheUpdate($html)
     private function applyForcedBrowserCacheUpdate()
     {
         // forceUpdate adds some url-arg to css and js files to force browsers to reload them
@@ -249,7 +238,6 @@ class Lizzy
             $forceUpdate = getVersionCode();
         } else {
             return;
-//            return $html;
         }
         if ($forceUpdate) {
             $html = preg_replace('/(\<link\s+href=(["])[^"]+)"/m', "$1$forceUpdate\"", $html);
@@ -259,7 +247,6 @@ class Lizzy
             $html = preg_replace("/(\<script\s+src=(['])[^']+)'/m", "$1$forceUpdate'", $html);
             $this->page->set('template', $html);
         }
-//        return $html;
     } // applyForcedBrowserCacheUpdate
 
 
@@ -294,7 +281,7 @@ class Lizzy
 
         $this->trans = new Transvar($this);
         $this->page = new Page($this);
-//        $this->trans = new Transvar($this);
+
         $this->trans->readTransvarsFromFiles([ SYSTEM_PATH.'config/sys_vars.yaml', CONFIG_PATH.'user_variables.yaml' ]);
 
         $this->auth = new Authentication($this);
@@ -381,7 +368,7 @@ class Lizzy
         if ($old === false) {
             fatalError("Error setting up error handling... (no kidding)", 'File: '.__FILE__.' Line: '.__LINE__);
         }
-//??? not working:
+//??? not working properly:
         if ($this->config->debug_errorLogging && !file_exists(ERROR_LOG_ARCHIVE)) {
             $errorLogPath = dirname(ERROR_LOG_ARCHIVE).'/';
             $errorLogFile = ERROR_LOG_ARCHIVE;
@@ -1016,7 +1003,6 @@ EOT;
 
 
 	//....................................................
-//    private function prepareImages($html)
     private function prepareImages()
 	{
         $resizer = new ImageResizer($this->config->feature_ImgDefaultMaxDim);

@@ -772,6 +772,13 @@ class Page
 
         // now, feed page elements gathered from macros back to main page object:
         $this->merge($this->trans->getPageObject());
+
+        // translate bodyTopInjections
+        $this->bodyTopInjections = $this->trans->translate($this->bodyTopInjections);
+
+        // translate bodyEndInjections
+        $this->bodyEndInjections = $this->trans->translate($this->bodyEndInjections);
+
     } // resolveVarsAndMacros
 
 
@@ -795,9 +802,6 @@ class Page
 
         $html = $this->trans->adaptBraces($html);
 
-        // inject head elements into template:
-        $head = $this->getHeadInjections();
-        $html = $this->translateVariable($html, 'head_injections', $head);
 
         // get and inject content, taking into account override and overlay:
         if ($this->override) {
@@ -809,6 +813,15 @@ class Page
             $content = $this->content;
         }
         $html = $this->translateVariable($html, 'content', $content);
+
+        // check, whether we need to auto-invoke modules based on classes:
+        if ($this->config->feature_autoLoadClassBasedModules) {
+            $this->autoInvokeClassBasedModules($html);
+        }
+
+        // inject head elements into template:
+        $head = $this->getHeadInjections();
+        $html = $this->translateVariable($html, 'head_injections', $head);
 
         // get and inject body-end elements, compile them first:
         $bodyEndInjections = $this->getBodyEndInjections();
@@ -874,5 +887,31 @@ class Page
         $debugInfo = str_replace('{', '&#123;', $debugInfo);
         return $debugInfo;
     } // renderDebugInfo
+
+
+
+    //....................................................
+    public function lateApplyDebugMsg($html, $msg)
+    {
+        if ((($p = strpos($html, '<div id="log">')) !== false) ||
+            (($p = strpos($html, "<div id='log'>")) !== false)) {
+            $p += strlen('<div id="log">');
+            $before = substr($html, 0, $p);
+            $after = substr($html, $p);
+            $msg = "<p>$msg</p>";
+            $html = $before . $msg . $after;
+        } else {
+            $p = strpos($html, '</body>');
+            if ($p !== false) {
+                $before = substr($html, 0, $p);
+                $after = substr($html, $p);
+                $html = $before . "<div id=\"log\"><p>$msg</p></div>" . $after;
+            }
+        }
+        return $html;
+    } // lateApplyDebugMsg
+
+
+
 
 } // Page
