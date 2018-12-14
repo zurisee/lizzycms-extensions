@@ -25,7 +25,7 @@ class PopupWidget
 
 EOT;
 
-        $this->page->addBody_end_injections($str);
+        $this->page->addBodyEndInjections($str);
 
         $this->page->addJqFiles('POPUPS');
 
@@ -148,7 +148,7 @@ $popupBody
     </div>
 EOT;
 
-        $this->page->addBody_end_injections($html);
+        $this->page->addBodyEndInjections($html);
     }
 
 

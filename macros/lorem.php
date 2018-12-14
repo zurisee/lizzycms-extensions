@@ -11,7 +11,7 @@
 **		$page->addJs('')
 **		$page->addJqFiles('')
 **		$page->addJq('')
-**		$page->addBody_end_injections('')
+**		$page->addBodyEndInjections('')
 **		$page->addMessage('')
 **		$page->addPageReplacement('')
 **		$page->addOverride('')

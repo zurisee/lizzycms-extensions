@@ -25,4 +25,4 @@ $str = <<<EOT
     </div>
 
 EOT;
-$this->page->addBody_end_injections($str);
+$this->page->addBodyEndInjections($str);

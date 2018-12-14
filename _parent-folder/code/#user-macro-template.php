@@ -28,7 +28,7 @@ $macroName = basename(__FILE__, '.php');    // macro name normally the same as t
     $this->page->addJs('');
     $this->page->addJqFiles('');
     $this->page->addJq('');
-    $this->page->addBody_end_injections('');
+    $this->page->addBodyEndInjections('');
     $this->page->addMessage('');
     $this->page->addPageReplacement('');
     $this->page->addOverride('');
