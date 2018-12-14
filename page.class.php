@@ -522,13 +522,15 @@ class Page
     //....................................................
     public function autoInvokeClassBasedModules($content)
     {
+        $modified = false;
         foreach ($this->config->classBasedModules as $class => $modules) {
             $varname = 'class_'.$class;
             if (isset($this->config->$varname) && ($class != $this->config->$varname)) {
-                $class = $this->config->$varname;
+                $class1 = $this->config->$varname;
             }
-            if (preg_match("/class\=.*['\"\s] $class ['\"\s]/x", $content, $m)) {
+            if (preg_match("/class\=.*['\"\s] $class1 ['\"\s]/x", $content, $m)) {
                 foreach ($modules as $module => $rsc) {
+                    $modified = true;
                     if ($module == 'cssFiles') {
                         $this->addCssFiles($rsc);
 
@@ -548,8 +550,10 @@ class Page
                         $this->addJq($rsc);
                     }
                 }
+                unset($this->config->classBasedModules[$class]); // avoid loading module multiple times
             }
         }
+        return $modified;
     } // autoInvokeClassBasedModules
 
 
@@ -573,7 +577,7 @@ class Page
             $this->description = '';
         }
         $headInjections .= $keywords.$description;
-//??? load only once
+
         if ($this->config->feature_loadFontAwesome) {   // Font-Awesome support needs to go into head:
             $this->addJQFiles('FONTAWESOME');
         }
@@ -594,7 +598,7 @@ class Page
 
     //....................................................
     public function prepareBodyEndInjections()
-        // interatively collects snippets for js, jq, bodyTopInjection, bodyEndInjection (text)
+    // interatively collects snippets for js, jq, bodyTopInjection, bodyEndInjection (text)
     {
         $modified = false;
 
@@ -616,8 +620,6 @@ class Page
             $modified = true;
         }
 
-//        $this->preparedBodyEndInjections .= $this->bodyEndInjections;
-
         return $modified;
     } // prepareBodyEndInjections
 
@@ -626,7 +628,6 @@ class Page
 
     public function getBodyEndInjections()
     {
-//        global $globalParams;
         $bodyEndInjections = $this->bodyEndInjections;
 
         if ($this->config->feature_touchDeviceSupport) {
@@ -646,7 +647,6 @@ class Page
         if ($this->jq && !$this->jqFiles) {
             $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
         }
-//        if ($this->get('jqFiles') || $this->get('jq')) {
         if ($this->jqFiles) {
             $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
         }
@@ -656,13 +656,11 @@ class Page
         }
 
         $screenSizeBreakpoint = $this->config->feature_screenSizeBreakpoint;
-//        $pathToRoot = $globalParams['pathToRoot'];//???
         $pathToRoot = $this->lzy->pathToRoot;
         $rootJs  = "\t\tvar appRoot = '$pathToRoot';\n";
         $rootJs .= "\t\tvar systemPath = '$pathToRoot{$this->config->systemPath}';\n";
         $rootJs .= "\t\tvar screenSizeBreakpoint = $screenSizeBreakpoint;\n";
         $rootJs .= "\t\tvar pagePath = '{$this->lzy->pagePath}';\n";
-//        $rootJs .= "\t\tvar pagePath = '{$globalParams['pagePath']}';\n";
 
         if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->admin_hideWhileEditing) {  // for online-editing: add admin_hideWhileEditing
             $selectors = '';
@@ -707,31 +705,6 @@ EOT;
 
         return $bodyEndInjections;
     } // getBodyEndInjections
-
-
-
-//    private function getBodyEndInjections()
-//    {
-//        $bodyEndInjections = "\t<script>\n{$this->preparedJs}\t</script>\n";
-//        if ($this->jsFiles) {
-//            $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
-//        }
-//
-//        if ($this->jq && !$this->jqFiles) {
-//            $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
-//            $this->jsFilesLoaded .= $this->config->feature_jQueryModule.',';
-//        }
-//
-//        if ($this->jqFiles || $this->jq) {
-//            $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
-//            $this->jsFilesLoaded .= $this->jqFiles.',';
-//        }
-//
-//        $bodyEndInjections .= $this->preparedBodyEndInjections;
-//        $bodyEndInjections = "<!-- body_end_injections -->\n$bodyEndInjections\n<!-- /body_end_injections -->";
-//        return $bodyEndInjections;
-//    }
-
 
 
 
@@ -890,7 +863,6 @@ EOT;
 
             // inject html just after <body> tag:
             $modified |= $this->applyDebugMsg();
-//            $modified |= $this->applyBodyTopInjection();
 
             // get and inject content, taking into account override and overlay:
             if ($this->override) {
@@ -904,6 +876,12 @@ EOT;
                 }
             }
 
+            // check, whether we need to auto-invoke modules based on classes:
+            if ($this->config->feature_autoLoadClassBasedModules) {
+                $modified |= $this->autoInvokeClassBasedModules($this->content);
+                $modified |= $this->autoInvokeClassBasedModules($this->template);
+            }
+
             // get and inject body-end elements, compile them first:
             $modified |= $this->prepareBodyEndInjections();
 
@@ -913,70 +891,15 @@ EOT;
         $html = $this->template;
         $html = $this->trans->adaptBraces($html);
 
-        // check, whether we need to auto-invoke modules based on classes:
-        if ($this->config->feature_autoLoadClassBasedModules) {
-            $this->autoInvokeClassBasedModules($this->content);
-            $this->autoInvokeClassBasedModules($html);
-        }
-
         $head = $this->getHeadInjections();
-//        $head = "\t<!-- head injections -->\n{$head}\t<!-- /head injections -->\n";
         $html = $this->translateVariable($html, 'head_injections', $head);
         $html = $this->translateVariable($html, 'content', $this->content);
         $bodyEndInjections = $this->getBodyEndInjections();
         $html = $this->translateVariable($html, 'body_end_injections', $bodyEndInjections);
-//        $html = $this->translateVariable($html, 'body_end_injections', $this->getBodyEndInjections());
 
         return $html;
     } // render
 
-
-//    //....................................................
-//    public function render()
-//    {
-//        // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
-//        if ($html = $this->pageSubstitution) {
-//            return $html;
-//        }
-//
-//        // inject html just after <body> tag:
-//        $this->applyDebugMsg();
-//        $this->applyBodyTopInjection();
-//
-//        // get template:
-//        $html = $this->template;
-//
-//        $html = $this->trans->adaptBraces($html);
-//
-//
-//        // get and inject content, taking into account override and overlay:
-//        if ($this->override) {
-//            $content = $this->override;
-//        } else {
-//            if ($this->overlay) {
-//                $this->applyOverlay();
-//            }
-//            $content = $this->content;
-//        }
-//        $html = $this->translateVariable($html, 'content', $content);
-//
-//        // check, whether we need to auto-invoke modules based on classes:
-//        if ($this->config->feature_autoLoadClassBasedModules) {
-//            $this->autoInvokeClassBasedModules($html);
-//        }
-//
-//        // inject head elements into template:
-//        $head = $this->getHeadInjections();
-//        $html = $this->translateVariable($html, 'head_injections', $head);
-//
-//        // get and inject body-end elements, compile them first:
-//        $bodyEndInjections = $this->getBodyEndInjections();
-//        $html = $this->translateVariable($html, 'body_end_injections', $bodyEndInjections);
-//
-//        return $html;
-//    } // render
-//
-//
 
 
     private function translateVariable($html, $varName, $varValue)
@@ -994,8 +917,7 @@ EOT;
         return $str;
     } // shieldVariable
 
-
-
+    
 
     //....................................................
     public function renderDebugInfo()
