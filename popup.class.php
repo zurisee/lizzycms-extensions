@@ -27,6 +27,7 @@ EOT;
 
         $this->page->addBodyEndInjections($str);
 
+        $this->page->addCssFiles('POPUPS_CSS');
         $this->page->addJqFiles('POPUPS');
 
     }
@@ -199,10 +200,10 @@ EOT;
 		<dd>(optional) [click|double-click|right-click|hover] Specifies the type of event that shall trigger the popup</dd>
 		
 	<dt>closeOnBgClick:</dt>
-		<dd>(optional) [true|false] If true, clicking on the background closes the popup. (Default is true)</dd>
+		<dd>(optional) [true|false] If true, clicking on the background closes the popup. (Default is false)</dd>
 		
 	<dt>showCloseButton:</dt>
-		<dd>(optional) [true|false] If true, a close button will be displayed in the upper right corner (Default is true)</dd>
+		<dd>(optional) [true|false] If true, a close button will be displayed in the upper right corner (Default is false)</dd>
 		
 	<dt>lightbox:</dt>
 		<dd>(optional) [true|false] If true, the background will be grayed out <br />&rarr; essentially turns the widget into a modal window (Default is false)</dd>

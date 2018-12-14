@@ -77,7 +77,7 @@ function setSpecialOptions(id, options)
     var $popup = $(id + ' .lzy-popup-wrapper');
     if (options.draggable) {
         $('.lzy-popup-header', $popup).panzoom({ $set: $popup }); // -> only draggable by header, not content
-        // note: this is it avoid conflicts with forms in popup-body
+        // note: this is to avoid conflicts with forms in popup-body
     }
 
     $('.lzy-popup-close-button', $popup).click(function() {

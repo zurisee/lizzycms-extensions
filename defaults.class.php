@@ -134,6 +134,7 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 92);
 
         $this->loadModules['POPUPS']                = array('module' => 'js/popup.js', 'weight' => 85);
+        $this->loadModules['POPUPS_CSS']            = array('module' => 'css/popup.css', 'weight' => 85);
 
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 
