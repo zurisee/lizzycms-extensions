@@ -90,8 +90,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $block = [
             'divBlock',
             'content' => [],
+            'tag' => 'div',
+            'style' => '',
             'class' => '',
             'id' => '',
+            'attr' => '',
+            'shield' => false
         ];
         $line = rtrim($lines[$current]);
     
