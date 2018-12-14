@@ -505,6 +505,8 @@ class Lizzy
         $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;
 
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
+        $this->pathToRoot = $pathToRoot;
+        $this->config->pathToRoot = $pathToRoot;
         $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
         $globalParams['host'] = $requestScheme.$_SERVER['HTTP_HOST'].'/';
         $this->pageUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestedPath;
