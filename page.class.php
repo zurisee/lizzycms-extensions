@@ -364,9 +364,9 @@ class Page
     //-----------------------------------------------------------------------
     protected function addToProperty($key, $var, $replace = false)
     {
-        if (strpos(',jq,js,css,', ",$key,") !== false) {
-            $var = "\t\t\t$var\n";
-        }
+//        if (strpos(',jq,js,css,', ",$key,") !== false) {
+//            $var = "\t\t\t$var\n";
+//        }
         if ($replace) {
             $this->$key = $var;
         } else {
