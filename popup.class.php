@@ -49,7 +49,7 @@ EOT;
         $offsetY = isset($args['offsetY']) ? $args['offsetY'] : '0';
         $draggable = (isset($args['draggable']) && ($args['draggable'] !== 'false')) ? 'true' : 'false'; // default = false
         $triggerSource = isset($args['triggerSource']) ? $args['triggerSource'] : '';
-        $triggerEvent = isset($args['triggerEvent']) ? $args['triggerEvent'] : '';
+        $triggerEvent = isset($args['triggerEvent']) ? $args['triggerEvent'] : 'click';
         $showCloseButton = (isset($args['showCloseButton']) && ($args['showCloseButton'] === 'false')) ? 'false' : 'true'; // default = true
         $closeOnBgClick = (isset($args['closeOnBgClick']) && ($args['closeOnBgClick'] !== 'false')) ? 'true' : 'false'; // default = false
         $lightbox = isset($args['lightbox']) ? $args['lightbox'] : 'false';
