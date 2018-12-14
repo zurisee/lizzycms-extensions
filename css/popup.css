@@ -1,0 +1,101 @@
+/* === popup / lightbox =================== */
+.lzy-popup-widget {
+    position: fixed;
+    top:  0;
+    left:  0;
+}
+
+.lzy-popup-background {
+    position: fixed;
+    top: 0; 
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 49;
+    display: block;
+    background: rgba(0,0,0,0);
+}
+.lzy-lightbox .lzy-popup-background {
+    background: rgba(50,50,50,0.7);
+}
+.lzy-popup-widget {
+    overflow: visible !important;
+}
+
+.lzy-popup-wrapper {
+    width: 15em;
+    min-height: 1.5em;
+    background: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    box-shadow: 0 0 15px 2px #88888880;
+    border: 1px solid gray;
+    border-radius: 4px;
+}
+.lzy-lightbox .lzy-popup-wrapper {
+    transform: translate(-50%, -50%); 
+    top: 50%;
+    left: 50%;
+}
+.lzy-popup-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    border-bottom: 1px solid #ccc;
+    padding: 5px 18px;
+    background: #444;
+    color: white;
+}
+.lzy-popup-header ~ .lzy-popup-close-button {
+    border-radius: 50%;
+    border: 1px solid #bbb;
+    color: #bbb;
+    background: white;
+    width: 1.7em;
+    height: 1.7em;
+    text-align: center;
+    line-height: 1.7em;
+}
+.lzy-popup-header:empty {
+    display: none;
+}
+.lzy-popup-close-button {
+    position: absolute;
+    top: -1.1em;
+    right: -1.3em;
+    border: none;
+    z-index:  52;
+    background:  white;
+    color: #444;
+}
+.lzy-popup-body {
+    position: relative;
+    padding: 20px;
+    margin: 0;
+    overflow:  auto;
+    cursor: auto;
+    background: white;
+    border-radius: 4px;
+}
+.lzy-lightbox .lzy-popup-wrapper {
+    z-index: 50;
+    box-shadow: 0 0 15px 2px #525252;
+}
+.lzy-popup-header ~ .lzy-popup-body {
+    padding: 10px 20px;
+}
+.lzy-lightbox .lzy-popup-close-button {
+    color: #aaa;
+}
+
+.lzy-popup-widget.lzy-tooltip .lzy-popup-background {
+    display: none;
+}
+
+.lzy-tooltip {
+    height: 1.2em;
+    padding: 4px 10px;
+}
+
