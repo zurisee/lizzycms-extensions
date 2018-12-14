@@ -76,7 +76,8 @@ class Lizzy
 	private $systemPath = SYSTEM_PATH;
 	private $autoAttrDef = [];
 	private $httpSystemPath;
-	private $pathToRoot;
+	public  $pathToRoot;
+	public  $pagePath;
 	private $reqPagePath;
 	public  $siteStructure;
 	public  $trans;

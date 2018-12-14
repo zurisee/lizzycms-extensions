@@ -52,6 +52,29 @@ class Transvar
 
 
 
+    //....................................................
+    public function supervisedTranslate($page, &$html)
+    {
+        $html1 = $this->translate($html);
+        if ($html != $html1) {
+            $html = $html1;
+            $page->merge($this->page);
+            $this->resetPageObj();
+            return true;
+        }
+        return false;
+    } // supervisedTranslate
+
+
+
+
+    private function resetPageObj()
+    {
+        $this->page = new Page;
+    }
+
+
+
     public function translateVariable($str, $varName, $value = null)
     {
         if ($value === null) {

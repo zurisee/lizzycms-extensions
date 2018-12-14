@@ -34,6 +34,12 @@ class Page
     private $wrapperTag = 'section';
     private $jQloaded = false;
 
+    private $assembledBodyEndInjections = '';
+    private $assembledCss = '';
+    private $assembledJs = '';
+    private $assembledJq = '';
+
+
 
 
     public function __construct($lzy = false)
@@ -257,6 +263,19 @@ class Page
 
 
     //-----------------------------------------------------------------------
+    public function removeModule($module, $str)
+    {
+        $mod = $this->$module;
+        $mod = str_replace($str, '', $mod);
+        $mod = str_replace(',,', ',', $mod);
+        $this->$module = $mod;
+    } // removeModule
+
+
+
+
+
+    //-----------------------------------------------------------------------
     public function addPopup($inx, $args)
     {
         if (!$this->popup) {
@@ -276,18 +295,6 @@ class Page
 
 
     //-----------------------------------------------------------------------
-    public function removeModule($module, $str)
-    {
-        $mod = $this->$module;
-        $mod = str_replace($str, '', $mod);
-        $mod = str_replace(',,', ',', $mod);
-        $this->$module = $mod;
-    } // removeModule
-
-
-
-
-
     public function registerPopupContent($id, $popupForm)
     {
         if (!$this->popup) {
@@ -398,19 +405,20 @@ class Page
     public function applyBodyTopInjection()
     {
         if (!$this->bodyTopInjections) {
-            return; // nothing to do
+            return false; // nothing to do
         }
 
-        $p = strpos($this->template, '<body>');
+        $p = strpos($this->template, '<body');
         if ($p) {
             $p = strpos($this->template, '>', $p);
             if (!$p) {  // syntax error, body tag not closed
-                return;
+                return false;
             }
             $p++;
-            $injectStr = "\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
+            $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
             $this->template = substr($this->template, 0, $p).$injectStr.substr($this->template, $p);
         }
+        return true;
     } // applyBodyTopInjection
 
 
@@ -441,7 +449,7 @@ class Page
     //....................................................
     public function applyOverlay()
     {
-        $overlay = $this->get('overlay', true);
+        $overlay = $this->overlay;
 
         if ($overlay) {
             if ($this->mdCompileOverlay) {
@@ -449,14 +457,14 @@ class Page
             }
 
             if ($this->overlayClosable) {
-                $overlay = "\n<button id='close-overlay' class='close-overlay'>✕</button>\n".$overlay;
+                $overlay = "<button id='close-overlay' class='close-overlay'>✕</button>\n".$overlay;
                 // set ESC to close overlay:
-                $this->addJq("$( 'body' ).keydown( function (e) {if (e.which == 27) { $('.overlay').hide(); } });".
+                $this->addJq("\n$('body').keydown( function (e) { if (e.which == 27) { $('.overlay').hide(); } });\n".
                 "$('#close-overlay').click(function() { $('.overlay').hide(); });");
             }
             $this->addBody("<div class='overlay'>$overlay</div>\n");
-            $this->set('overlay', '');
             $this->removeModule('jqFiles', 'PAGE_SWITCHER');
+            $this->overlay = false;
             return true;
         }
         return false;
@@ -468,10 +476,11 @@ class Page
     //....................................................
     public function applyDebugMsg()
     {
-        if ($debugMsg = $this->get('debugMsg', true)) {
+        if ($debugMsg = $this->debugMsg) {
             $debugMsg = compileMarkdownStr($debugMsg);
             $debugMsg = createDebugOutput($debugMsg);
             $this->addBody($debugMsg);
+            $this->debugMsg = false;
             return true;
         }
         return false;
@@ -483,10 +492,11 @@ class Page
     //....................................................
     public function applyMessage()
     {
-        if ($msg = $this->get('message', true)) {
+        if ($msg = $this->message) {
             $msg = compileMarkdownStr($msg);
             $msg = createWarning($msg);
             $this->addBody($msg);
+            $this->message = false;
             return true;
         }
         return false;
@@ -548,30 +558,34 @@ class Page
     //....................................................
     private function getHeadInjections()
     {
-        $headInjections = $this->get('head');
+        $headInjections = $this->head;
+        $this->head = '';
 
-        $keywords = $this->get('keywords');
+        $keywords = $this->keywords;
         if ($keywords) {
             $keywords = "\t<meta name='keywords' content='$keywords'>\n";
+            $this->keywords = '';
         }
 
-        $description = $this->get('description');
+        $description = $this->description;
         if ($description) {
             $description = "\t<meta name='description' content='$description'>\n";
+            $this->description = '';
         }
         $headInjections .= $keywords.$description;
-
+//??? load only once
         if ($this->config->feature_loadFontAwesome) {   // Font-Awesome support needs to go into head:
             $this->addJQFiles('FONTAWESOME');
         }
 
-        $headInjections .= $this->getModules('css', $this->get('cssFiles'));
-        if ($this->get('css')) {
-            $headInjections .= "\t<style>\n".$this->get('css')."\n\t</style>\n";
-        }
-        $this->css = '';
+        $headInjections .= $this->getModules('css', $this->cssFiles);
         $this->cssFiles = '';
-        $this->head = '';
+
+        if ($this->assembledCss) {
+            $assembledCss = "\t\t".preg_replace("/\n/", "\n\t\t", $this->assembledCss);
+            $headInjections .= "\t<style>\n{$assembledCss}\n\t</style>\n";
+        }
+
         $headInjections = "\t<!-- head injections -->\n$headInjections\t<!-- /head injections -->";
         return $headInjections;
     } // getHeadInjections
@@ -579,9 +593,40 @@ class Page
 
 
     //....................................................
+    public function prepareBodyEndInjections()
+        // interatively collects snippets for js, jq, bodyTopInjection, bodyEndInjection (text)
+    {
+        $modified = false;
+
+        if ($this->css) {
+            $this->assembledCss .= $this->css;
+            $this->css = '';
+            $modified = true;
+        }
+
+        if ($this->js) {
+            $this->assembledJs .= $this->js;
+            $this->js = '';
+            $modified = true;
+        }
+
+        if ($this->jq) {
+            $this->assembledJq .= $this->jq;
+            $this->jq = '';
+            $modified = true;
+        }
+
+//        $this->preparedBodyEndInjections .= $this->bodyEndInjections;
+
+        return $modified;
+    } // prepareBodyEndInjections
+
+
+
+
     public function getBodyEndInjections()
     {
-        global $globalParams;
+//        global $globalParams;
         $bodyEndInjections = $this->bodyEndInjections;
 
         if ($this->config->feature_touchDeviceSupport) {
@@ -593,33 +638,31 @@ class Page
         if ($this->config->feature_autoLoadJQuery) {
             $this->addJqFiles($this->config->feature_jQueryModule);
         }
-        if ($this->get('jsFiles')) {
-            $bodyEndInjections .= $this->getModules('js', $this->get('jsFiles'));
+        if ($this->jsFiles) {
+            $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
         }
-        if ($this->get('jq') && !$this->get('jqFiles')) {
+
+        // jQuery needs to be loaded if any jq code is present:
+        if ($this->jq && !$this->jqFiles) {
             $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
         }
-        if ($this->get('jqFiles') || $this->get('jq')) {
-            $bodyEndInjections .= $this->getModules('js', $this->get('jqFiles'));
-        }
-        $js = $this->get('js');
-        if ($js) {
-            $js = "\t\t$js\n";
-        }
-        if ($this->get('jq')) {
-            $bodyEndInjections .= "\t<script>\n\t\t\$( document ).ready(function() {\n".$this->get('jq')."\t\t}); // document.ready\n\t</script>\n";
+//        if ($this->get('jqFiles') || $this->get('jq')) {
+        if ($this->jqFiles) {
+            $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
         }
 
         if ($this->get('lightbox')) {
-            $bodyEndInjections .= $this->get('lightbox');
+            $bodyEndInjections .= $this->lightbox;
         }
 
         $screenSizeBreakpoint = $this->config->feature_screenSizeBreakpoint;
-        $pathToRoot = $globalParams['pathToRoot'];
+//        $pathToRoot = $globalParams['pathToRoot'];//???
+        $pathToRoot = $this->lzy->pathToRoot;
         $rootJs  = "\t\tvar appRoot = '$pathToRoot';\n";
         $rootJs .= "\t\tvar systemPath = '$pathToRoot{$this->config->systemPath}';\n";
         $rootJs .= "\t\tvar screenSizeBreakpoint = $screenSizeBreakpoint;\n";
-        $rootJs .= "\t\tvar pagePath = '{$globalParams['pagePath']}';";
+        $rootJs .= "\t\tvar pagePath = '{$this->lzy->pagePath}';\n";
+//        $rootJs .= "\t\tvar pagePath = '{$globalParams['pagePath']}';\n";
 
         if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->admin_hideWhileEditing) {  // for online-editing: add admin_hideWhileEditing
             $selectors = '';
@@ -631,13 +674,6 @@ class Page
             $rootJs .= "\n\t\tvar admin_hideWhileEditing = [$selectors];";
         }
 
-        $bodyEndInjections = "\t<script>\n$rootJs\n$js\t</script>\n".$bodyEndInjections;
-        if ($tmp = $this->get('bodyEndInjections')) {
-            $bodyEndInjections .= $tmp;
-            $this->set('bodyEndInjections', '');
-        }
-
-
         if (($this->config->debug_allowDebugInfo) &&
             (($this->config->debug_showDebugInfo)) || getUrlArgStatic('debug')) {
             if ($this->config->isPrivileged) {
@@ -645,10 +681,57 @@ class Page
             }
         }
 
+        if ($rootJs.$this->assembledJs) {
+            $assembledJs = "\t\t".preg_replace("/\n/", "\n\t\t", $this->assembledJs);
+            $bodyEndInjections = <<<EOT
+    <script>
+$rootJs$assembledJs
+    </script>
+$bodyEndInjections
+EOT;
+        }
+
+        if ($this->assembledJq) {
+            $assembledJq = "\t\t\t".preg_replace("/\n/", "\n\t\t\t", $this->assembledJq);
+            $bodyEndInjections .= <<<EOT
+    <script>
+        $( document ).ready(function() {
+$assembledJq
+        });        
+    </script>
+EOT;
+        }
+
+
         $bodyEndInjections = "<!-- body_end_injections -->\n$bodyEndInjections\n<!-- /body_end_injections -->";
 
         return $bodyEndInjections;
-    } // bodyEndInjections
+    } // getBodyEndInjections
+
+
+
+//    private function getBodyEndInjections()
+//    {
+//        $bodyEndInjections = "\t<script>\n{$this->preparedJs}\t</script>\n";
+//        if ($this->jsFiles) {
+//            $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
+//        }
+//
+//        if ($this->jq && !$this->jqFiles) {
+//            $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
+//            $this->jsFilesLoaded .= $this->config->feature_jQueryModule.',';
+//        }
+//
+//        if ($this->jqFiles || $this->jq) {
+//            $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
+//            $this->jsFilesLoaded .= $this->jqFiles.',';
+//        }
+//
+//        $bodyEndInjections .= $this->preparedBodyEndInjections;
+//        $bodyEndInjections = "<!-- body_end_injections -->\n$bodyEndInjections\n<!-- /body_end_injections -->";
+//        return $bodyEndInjections;
+//    }
+
 
 
 
@@ -764,6 +847,7 @@ class Page
     //....................................................
     public function resolveVarsAndMacros()
     {
+        return;
         // translate template
         $this->template = $this->trans->translate($this->template);
 
@@ -788,49 +872,111 @@ class Page
     //....................................................
     public function render()
     {
-        // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
-        if ($html = $this->pageSubstitution) {
-            return $html;
-        }
+        do {
+            $modified = false;
 
-        // inject html just after <body> tag:
-        $this->applyDebugMsg();
-        $this->applyBodyTopInjection();
+            $modified |= $this->trans->supervisedTranslate($this, $this->template);
+            $modified |= $this->trans->supervisedTranslate($this, $this->content);
 
-        // get template:
-        $html = $this->template;
+            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJs);
+            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJq);
+            $modified |= $this->trans->supervisedTranslate($this, $this->bodyTopInjections);
+            $modified |= $this->trans->supervisedTranslate($this, $this->bodyEndInjections);
 
-        $html = $this->trans->adaptBraces($html);
-
-
-        // get and inject content, taking into account override and overlay:
-        if ($this->override) {
-            $content = $this->override;
-        } else {
-            if ($this->overlay) {
-                $this->applyOverlay();
+            // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
+            if ($substHtml = $this->pageSubstitution) {
+                return $substHtml;
             }
-            $content = $this->content;
-        }
-        $html = $this->translateVariable($html, 'content', $content);
+
+            // inject html just after <body> tag:
+            $modified |= $this->applyDebugMsg();
+//            $modified |= $this->applyBodyTopInjection();
+
+            // get and inject content, taking into account override and overlay:
+            if ($this->override) {
+                $content = $this->override;
+                $this->override = false;
+                $modified = true;
+            } else {
+                if ($this->overlay) {
+                    $this->applyOverlay();
+                    $modified = true;
+                }
+            }
+
+            // get and inject body-end elements, compile them first:
+            $modified |= $this->prepareBodyEndInjections();
+
+        } while ($modified);
+
+        $this->applyBodyTopInjection();
+        $html = $this->template;
+        $html = $this->trans->adaptBraces($html);
 
         // check, whether we need to auto-invoke modules based on classes:
         if ($this->config->feature_autoLoadClassBasedModules) {
+            $this->autoInvokeClassBasedModules($this->content);
             $this->autoInvokeClassBasedModules($html);
         }
 
-        // inject head elements into template:
         $head = $this->getHeadInjections();
+//        $head = "\t<!-- head injections -->\n{$head}\t<!-- /head injections -->\n";
         $html = $this->translateVariable($html, 'head_injections', $head);
-
-        // get and inject body-end elements, compile them first:
+        $html = $this->translateVariable($html, 'content', $this->content);
         $bodyEndInjections = $this->getBodyEndInjections();
         $html = $this->translateVariable($html, 'body_end_injections', $bodyEndInjections);
+//        $html = $this->translateVariable($html, 'body_end_injections', $this->getBodyEndInjections());
 
         return $html;
     } // render
 
 
+//    //....................................................
+//    public function render()
+//    {
+//        // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
+//        if ($html = $this->pageSubstitution) {
+//            return $html;
+//        }
+//
+//        // inject html just after <body> tag:
+//        $this->applyDebugMsg();
+//        $this->applyBodyTopInjection();
+//
+//        // get template:
+//        $html = $this->template;
+//
+//        $html = $this->trans->adaptBraces($html);
+//
+//
+//        // get and inject content, taking into account override and overlay:
+//        if ($this->override) {
+//            $content = $this->override;
+//        } else {
+//            if ($this->overlay) {
+//                $this->applyOverlay();
+//            }
+//            $content = $this->content;
+//        }
+//        $html = $this->translateVariable($html, 'content', $content);
+//
+//        // check, whether we need to auto-invoke modules based on classes:
+//        if ($this->config->feature_autoLoadClassBasedModules) {
+//            $this->autoInvokeClassBasedModules($html);
+//        }
+//
+//        // inject head elements into template:
+//        $head = $this->getHeadInjections();
+//        $html = $this->translateVariable($html, 'head_injections', $head);
+//
+//        // get and inject body-end elements, compile them first:
+//        $bodyEndInjections = $this->getBodyEndInjections();
+//        $html = $this->translateVariable($html, 'body_end_injections', $bodyEndInjections);
+//
+//        return $html;
+//    } // render
+//
+//
 
 
     private function translateVariable($html, $varName, $varValue)
