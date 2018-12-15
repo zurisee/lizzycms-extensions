@@ -6,6 +6,9 @@
  *
 */
 
+define('MAX_ITERATION_DEPTH', 10);
+
+
 class Page
 {
     private $template = '';
@@ -845,8 +848,10 @@ EOT;
     //....................................................
     public function render()
     {
+        $n = 0;
         do {
             $modified = false;
+            $n++;
 
             $modified |= $this->trans->supervisedTranslate($this, $this->template);
             $modified |= $this->trans->supervisedTranslate($this, $this->content);
@@ -885,7 +890,11 @@ EOT;
             // get and inject body-end elements, compile them first:
             $modified |= $this->prepareBodyEndInjections();
 
-        } while ($modified);
+        } while ($modified && ($n < MAX_ITERATION_DEPTH));
+
+        if ($n >= MAX_ITERATION_DEPTH) {
+            fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+        }
 
         $this->applyBodyTopInjection();
         $html = $this->template;
@@ -917,7 +926,7 @@ EOT;
         return $str;
     } // shieldVariable
 
-    
+
 
     //....................................................
     public function renderDebugInfo()

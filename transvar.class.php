@@ -14,6 +14,9 @@
 
 use Symfony\Component\Yaml\Yaml;
 
+define('MAX_TRANSVAR_ITERATION_DEPTH', 100);
+
+
 
 class Transvar
 {
@@ -41,11 +44,16 @@ class Transvar
     //....................................................
     public function translate($html)
     {
+        $n = 0;
         $pp = findNextPattern($html, '{{');
         while ($pp !== false) {
             $html = $this->translateMacros($html);
             $html = $this->translateVars($html);
             $pp = findNextPattern($html, '{{');
+
+            if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
+                fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+            }
         }
         return $html;
     } // translate
@@ -92,6 +100,7 @@ class Transvar
 	private function translateMacros($str)
 	{
         list($p1, $p2) = strPosMatching($str);
+        $n = 0;
 		while (($p1 !== false)) {
 			$commmented = false;
 			$optional = false;
@@ -191,6 +200,10 @@ class Transvar
                 }
             }
             list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+
+            if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
+                fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+            }
 		}
 		return $str;
 	} // translateMacros
@@ -202,6 +215,7 @@ class Transvar
 	{
 
         list($p1, $p2) = strPosMatching($str);
+        $n = 0;
 		while (($p1 !== false)) {
 			$commmented = false;
 			$optional = false;
@@ -274,6 +288,10 @@ class Transvar
                 }
             }
 			list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
+
+            if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
+                fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+            }
 		}
 		return $str;
 	} // translateVars
