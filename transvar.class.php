@@ -97,8 +97,12 @@ class Transvar
 
 
 	//....................................................
-	private function translateMacros($str)
+	private function translateMacros($str, $iterationDepth = 0)
 	{
+        if ($iterationDepth >= MAX_TRANSVAR_ITERATION_DEPTH) {
+            fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+        }
+
         list($p1, $p2) = strPosMatching($str);
         $n = 0;
 		while (($p1 !== false)) {
@@ -133,7 +137,7 @@ class Transvar
             } else {
                 if (!$commmented) {
                     if (strpos($var, '{{') !== false) {     // nested transvar/macros
-                        $var = $this->translateMacros($var);
+                        $var = $this->translateMacros($var, $iterationDepth+1);
                     }
 
                     $var = str_replace("\n", '', $var);    // remove newlines
@@ -461,13 +465,14 @@ class Transvar
 
             } else {
                 // check user-code: if macro.php is in code/ folder:
-                if ($this->config->custom_permitUserCode) {
-                    $file = $this->config->path_userCodePath . $macroName . '.php';
-                    if (file_exists($file)) {
+                $file = $this->config->path_userCodePath . $macroName . '.php';
+                if (file_exists($file)) {
+                    if ($this->config->custom_permitUserCode) {
                         $this->doUserCode($file);
+                    } else {
+                        fatalError("Execution of user macro '<strong>$macroName()</strong>' blocked.<br>".
+                        "You need to modify permission in <strong>config/config.yaml</strong> (&rarr; <code>custom_permitUserCode: true</code>)");
                     }
-                } else {
-                    logError("Error: Macro '$macroName' not found");
                 }
             }
         }
