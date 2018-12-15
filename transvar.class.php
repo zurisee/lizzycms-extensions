@@ -52,7 +52,7 @@ class Transvar
             $pp = findNextPattern($html, '{{');
 
             if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
-                fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+                fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
             }
         }
         return $html;
@@ -100,7 +100,7 @@ class Transvar
 	private function translateMacros($str, $iterationDepth = 0)
 	{
         if ($iterationDepth >= MAX_TRANSVAR_ITERATION_DEPTH) {
-            fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+            fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
         }
 
         list($p1, $p2) = strPosMatching($str);
@@ -206,7 +206,7 @@ class Transvar
             list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
 
             if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
-                fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+                fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
             }
 		}
 		return $str;
@@ -294,7 +294,7 @@ class Transvar
 			list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
 
             if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
-                fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+                fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
             }
 		}
 		return $str;

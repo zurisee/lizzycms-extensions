@@ -319,14 +319,6 @@ class Page
 
 
 
-//    //-----------------------------------------------------------------------
-//    public function substitutePage($str)
-//    {
-//        $this->pageSubstitution = $str;
-//    } // substitutePage
-//
-//
-//
     //-----------------------------------------------------------------------
     public function setOverrideMdCompile($mdCompile)
     {
@@ -375,9 +367,6 @@ class Page
     //-----------------------------------------------------------------------
     protected function addToProperty($key, $var, $replace = false)
     {
-//        if (strpos(',jq,js,css,', ",$key,") !== false) {
-//            $var = "\t\t\t$var\n";
-//        }
         if ($replace) {
             $this->$key = $var;
         } else {
@@ -493,7 +482,6 @@ class Page
             $debugMsg = createDebugOutput($debugMsg);
             $debugMsg = "<div id='log-placeholder'></div>\n".$debugMsg;
             $this->addBodyEndInjections($debugMsg);
-//            $this->addBody($debugMsg);
             $this->debugMsg = false;
             return true;
         }
@@ -890,7 +878,7 @@ EOT;
         } while ($modified && ($n < MAX_ITERATION_DEPTH));
 
         if ($n >= MAX_ITERATION_DEPTH) {
-            fatalError("Max. iteration depth exeeded.<br>Most likely cuase: a recursive invokation of a macro or variable.");
+            fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
         }
 
         $this->applyBodyTopInjection();
