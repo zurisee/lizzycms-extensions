@@ -18,18 +18,17 @@ class MyMarkdown
 	private $variable;
 	
 	private $replaces = array(
-		'\-\>' => '&rarr;',
-		'\-&rarr;' => '-->',	// in case it was an HTML comment '-->'
-		'\=\>' => '&rArr;',
-		' \-\- ' => ' &ndash; ',
+		'(?<![\-\\\])\-\>'  => '&rarr;', // unless it's '-->'
+		'\=\>'              => '&rArr;',
+		' \-\- '            => ' &ndash; ',
 		'(?<!\.)\.\.\.(?!\.)' => '&hellip;',
-		'\bEURO\b' => '&euro;',
-		'\bBR\b' => '<br>',
-		'\bNL\b' => '<br>&nbsp;',
-		'\bSPACE\b' => '&nbsp;',
-		'sS' => 'ß',
-		'\[_\]' => '&nbsp;&nbsp;&nbsp;&nbsp;',
-		'CLEAR' => '<div style="clear:both;"></div>',
+		'\bEURO\b'          => '&euro;',
+		'\bBR\b'            => '<br>',
+		'\bNL\b'            => '<br>&nbsp;',
+		'\bSPACE\b'         => '&nbsp;&nbsp;&nbsp;&nbsp;',
+		'(?<![\-\\\])sS'    => 'ß',
+//		'\[_\]'             => '&nbsp;&nbsp;&nbsp;&nbsp;',
+		'CLEAR'             => '<div style="clear:both;"></div>',
 	);
 
     private $cssAttrNames =
@@ -160,8 +159,22 @@ class MyMarkdown
 	//....................................................
 	private function doReplaces($str)
 	{
+	    // prepare modified patterns if it contains look-behind:
+	    if (!isset($this->replaces2)) {
+            foreach ($this->replaces as $key => $value) {
+                if ($key{0} == '(') {
+                    $k = str_replace('\\', '', substr($key, strpos($key, ')')+1));
+                    $this->replaces2[$key] = $k;
+                }
+            }
+        }
 		foreach ($this->replaces as $key => $value) {
 			$str = preg_replace("/$key/", $value, $str);
+
+			if (isset($this->replaces2[$key])) {    // modified pattern exists:
+			    $k = $this->replaces2[$key];
+                $str = preg_replace("/\\\\$k/", $k, $str);  // remove shielding '\'
+            }
 		}
 		return $str;
 	} //doReplaces
