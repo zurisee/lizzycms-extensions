@@ -25,7 +25,7 @@ function mylog(txt)
 	if ($('body').hasClass('debug')) {
         var $log = $('#log');
         if (!$log.length) {
-            $('body').append("<div id='log'></div>");
+            $('body').append("<div id='log-placeholder'></div><div id='log'></div>");
             $log = $('#log');
         }
         text = String(txt).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

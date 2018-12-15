@@ -346,29 +346,40 @@ footer a {
     animation-duration:5s;
 }
 .Warning:hover, .WarningBox:hover {
-    -webkit-animation:none;
+    /*-webkit-animation:none;*/
+	animation-play-state: paused;
 }
 .MsgBox, .WarningBox {
 	position: absolute!important;
 	top: 5px;
-	left: 10%;
-	width: 80%;
-	line-height: 2em;
-	padding:0 10px;
+	right: -80%;
+	max-width: 80%;
+	padding:0.5em 1em 0;
 	background: #fbfb77;
+	border-radius: 5px;
 	opacity: 0.8;
 	color: black;
     box-shadow: 0 0 5px grey;
 	z-index: 99;
+	animation: slide 5s forwards;
 }
+@keyframes slide {
+  10% { right: 5%; }
+  90% { right: 5%; }
+  100% { right: -80%; }
+}
+
 #log {
-	height: 10em;
+	height: 10vh;
 	background: #edd;
-	margin: 20px 0 10px 0;
-	padding-bottom: 1em;
+	margin: 20px 0 0 0;
+	/*padding-bottom: 1em;*/
 	padding: 10px 20px;
 	overflow: auto;
 	border: 1px solid red;
+	position: fixed;
+	width: calc(100vw - 42px);
+	bottom: 0;
 }
 #log h1 {
 	font-size: 11pt;
@@ -377,6 +388,12 @@ footer a {
 #log p {
 	font-size: 8pt;
 	margin: 0 0 0.5em 0;
+}
+#log-placeholder {
+	content: " ";
+	position: relative;
+	height: 11vh;
+	margin: 30px 0 0 0;
 }
 
 .overlay {

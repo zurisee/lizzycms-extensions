@@ -266,6 +266,14 @@ class Page
 
 
     //-----------------------------------------------------------------------
+    public function addPageSubstitution($str, $replace = false)
+    {
+        $this->addToProperty('pageSubstitution', $str, $replace);
+    } // addMessage
+
+
+
+    //-----------------------------------------------------------------------
     public function removeModule($module, $str)
     {
         $mod = $this->$module;
@@ -311,14 +319,14 @@ class Page
 
 
 
-    //-----------------------------------------------------------------------
-    public function substitutePage($str)
-    {
-        $this->pageSubstitution = $str;
-    } // substitutePage
-
-
-
+//    //-----------------------------------------------------------------------
+//    public function substitutePage($str)
+//    {
+//        $this->pageSubstitution = $str;
+//    } // substitutePage
+//
+//
+//
     //-----------------------------------------------------------------------
     public function setOverrideMdCompile($mdCompile)
     {
@@ -433,6 +441,7 @@ class Page
         if ($o = $this->get('override', true)) {
             if ($this->mdCompileOverride) {
                 $o = compileMarkdownStr($o);
+                $this->mdCompileOverride = false;
             }
             $this->addContent($o, true);
             return true;
@@ -482,7 +491,9 @@ class Page
         if ($debugMsg = $this->debugMsg) {
             $debugMsg = compileMarkdownStr($debugMsg);
             $debugMsg = createDebugOutput($debugMsg);
-            $this->addBody($debugMsg);
+            $debugMsg = "<div id='log-placeholder'></div>\n".$debugMsg;
+            $this->addBodyEndInjections($debugMsg);
+//            $this->addBody($debugMsg);
             $this->debugMsg = false;
             return true;
         }
@@ -504,20 +515,6 @@ class Page
         }
         return false;
     } // applyMessage
-
-
-
-
-    //....................................................
-    public function applyPageSubstitution()
-    {
-        $pageSubstitution = $this->get('pageSubstitution', true);
-        if ($pageSubstitution) {
-            $this->substitutePage('');
-            return true;
-        }
-        return false;
-    } // applayPageSubstitution
 
 
 
@@ -570,13 +567,13 @@ class Page
 
         $keywords = $this->keywords;
         if ($keywords) {
-            $keywords = "\t<meta name='keywords' content='$keywords'>\n";
+            $keywords = "\t<meta name='keywords' content='$keywords' />\n";
             $this->keywords = '';
         }
 
         $description = $this->description;
         if ($description) {
-            $description = "\t<meta name='description' content='$description'>\n";
+            $description = "\t<meta name='description' content='$description' />\n";
             $this->description = '';
         }
         $headInjections .= $keywords.$description;
@@ -862,17 +859,17 @@ EOT;
             $modified |= $this->trans->supervisedTranslate($this, $this->bodyEndInjections);
 
             // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
-            if ($substHtml = $this->pageSubstitution) {
-                return $substHtml;
+            if ($this->pageSubstitution) {
+                return $this->pageSubstitution;
             }
 
             // inject html just after <body> tag:
             $modified |= $this->applyDebugMsg();
+            $modified |= $this->applyMessage();
 
             // get and inject content, taking into account override and overlay:
             if ($this->override) {
-                $content = $this->override;
-                $this->override = false;
+                $this->applyOverride();
                 $modified = true;
             } else {
                 if ($this->overlay) {
