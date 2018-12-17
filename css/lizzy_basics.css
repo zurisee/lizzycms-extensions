@@ -379,6 +379,7 @@ footer a {
 	border: 1px solid red;
 	position: fixed;
 	width: calc(100vw - 42px);
+	left: 0;
 	bottom: 0;
 }
 #log h1 {
