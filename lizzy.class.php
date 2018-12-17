@@ -16,6 +16,7 @@ define('LOGS_PATH',             '.#logs/');
 define('MACROS_PATH',           SYSTEM_PATH.'macros/');
 define('EXTENSIONS_PATH',       SYSTEM_PATH.'extensions/');
 define('USER_INIT_CODE_FILE',   USER_CODE_PATH.'user-init-code.php');
+define('CACHE_DEPENDENCY_FILE', '.#page-cache.dependency.txt');
 define('CACHE_FILENAME',        '.#page-cache.dat');
 
 define('SYSTEM_RECYCLE_BIN_PATH','~/.#recycleBin/');
@@ -148,11 +149,16 @@ class Lizzy
 
         if ($accessGranted) {
 
-        // Future: enable caching of compiled MD pages:
-        //		if ($html = getCache()) {
-        //            $html = $this->trans->render($html, $this->config->lang, SUBSTITUTE_ALL);
-        //            return $html;
-        //        }
+            // enable caching of compiled MD pages:
+            if ($this->config->cachingActive && $this->page->readFromCache()) {
+                $html = $this->page->render(true);
+                $this->resolveAllPaths($html);
+                if ($this->timer) {
+                    $timerMsg = 'Page rendering time: '.readTimer();
+                    $html = $this->page->lateApplyMessag($html, $timerMsg);
+                }
+                return $html;
+            }
 
             $this->loadFile();        // get content file
         }
@@ -177,32 +183,32 @@ class Lizzy
 
         $this->sendAccessLinkMail();
 
-        $this->page->resolveVarsAndMacros();
-
-		$this->prepareImages();
-
-        $this->applyForcedBrowserCacheUpdate();
-
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
+
+        if ($this->config->feature_touchDeviceSupport) {
+            $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
+        } else {
+            $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
+        }
+
+        if ($this->config->feature_autoLoadJQuery) {
+            $this->page->addJqFiles($this->config->feature_jQueryModule);
+        }
 
 
         // now, compile the page from all its components:
         $html = $this->page->render();
 
-        // Future: enable caching of compiled MD pages:
-        //        if ($accessGranted) {
-        //             writeCache();
-        //        }
-        //        translate non-cached vars and macros
+        $this->prepareImages($html);
 
-        $html = $this->trans->translateVars($html);
+        $this->applyForcedBrowserCacheUpdate($html);
 
-        $html = $this->resolveAllPaths($html);
+        $this->resolveAllPaths($html);
 
         if ($this->timer) {
             $timerMsg = 'Page rendering time: '.readTimer();
-			$html = $this->page->lateApplyDebugMsg($html, $timerMsg);
+            $html = $this->page->lateApplyMessag($html, $timerMsg);
 		}
 
         return $html;
@@ -211,22 +217,20 @@ class Lizzy
 
 
 
-    private function resolveAllPaths($html)
+    private function resolveAllPaths( &$html )
     {
-        return resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+        resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
     } // resolveAllPaths
 
 
 
 
     //....................................................
-    private function applyForcedBrowserCacheUpdate()
+    private function applyForcedBrowserCacheUpdate( &$html )
     {
         // forceUpdate adds some url-arg to css and js files to force browsers to reload them
         // Config-param 'debug_forceBrowserCacheUpdate' forces this for every request
         // 'debug_autoForceBrowserCache' only forces reload when Lizzy detected changes in those files
-
-        $html = $this->page->get('template');
 
         if (isset($_SESSION['lizzy']['reset']) && $_SESSION['lizzy']['reset']) {  // Lizzy has been reset, now force browser to update as well
             $forceUpdate = getVersionCode( true );
@@ -246,7 +250,6 @@ class Lizzy
 
             $html = preg_replace('/(\<script\s+src=(["])[^"]+)"/m', "$1$forceUpdate\"", $html);
             $html = preg_replace("/(\<script\s+src=(['])[^']+)'/m", "$1$forceUpdate'", $html);
-            $this->page->set('template', $html);
         }
     } // applyForcedBrowserCacheUpdate
 
@@ -349,6 +352,15 @@ class Lizzy
         // Future: optionally enable Auto-Attribute mechanism
         //        $this->loadAutoAttrDefinition();
 
+        $urlArgs = ['config', 'list', 'help', 'admin', 'reset', 'login', 'unused', 'reset-unused', 'remove-unused', 'log', 'info', 'touch'];
+        foreach ($urlArgs as $arg) {
+            if (isset($_GET[$arg])) {
+                $this->config->site_enableCaching = false;
+                break;
+            }
+        }
+        $this->config->cachingActive = $this->config->site_enableCaching;
+        $GLOBALS['globalParams']['cachingActive'] = $this->config->site_enableCaching;
     } // init
 
 
@@ -841,6 +853,7 @@ class Lizzy
 			$folder = $currRec['folder'];
 		}
 		if (isset($currRec['file'])) {
+            registerFileDateDependencies($currRec['file']);
 			return $this->loadHtmlFile($folder, $currRec['file']);
 		}
 
@@ -848,19 +861,16 @@ class Lizzy
 		$this->handleMissingFolder($folder);
 
 		$mdFiles = getDir($folder.'*.{md,txt}');
+        registerFileDateDependencies($mdFiles);
 
 		// Case: no .md file available, but page has sub-pages -> show first sub-page instead
 		if (!$mdFiles && isset($currRec[0])) {
 			$folder = $currRec[0]['folder'];
 			$this->siteStructure->currPageRec['folder'] = $folder;
 			$mdFiles = getDir($this->config->path_pagesPath.$folder.'*.{md,txt}');
+            registerFileDateDependencies($mdFiles);
 		}
 		
-		if ($pg = $this->readCache($mdFiles)) {
-			$this->page = $pg;
-			return $pg;
-		}
-
         $handleEditions = false;
         if (getUrlArg('ed', true) && $this->auth->checkGroupMembership('editors')) {
             require_once SYSTEM_PATH.'page-source.class.php';
@@ -939,7 +949,6 @@ class Lizzy
 			$html = $this->extractHtmlBody($html);
 		}
 		$page->addContent($html, true);
-		$this->writeCache();
         return $page;
 	} // loadFile
 
@@ -1006,13 +1015,9 @@ EOT;
 
 
 	//....................................................
-    private function prepareImages()
+    private function prepareImages($html)
 	{
         $resizer = new ImageResizer($this->config->feature_ImgDefaultMaxDim);
-        $html = $this->page->get('template');
-        $resizer->provideImages($html);
-
-        $html = $this->page->get('content');
         $resizer->provideImages($html);
     } // prepareImages
 
@@ -1081,53 +1086,6 @@ EOT;
 
 
 	//....................................................
-    private function writeCache()
-    {
-		if ($this->page->get('overlay') || $this->page->get('override')) {
-			return false;
-		}
-		if ($this->config->site_enableCaching) {
-			$cache = $this->page->getEncoded(); //json_encode($this->page);
-            $cacheFile = $this->pathToPage.$this->config->cacheFileName;
-
-			file_put_contents($cacheFile, $cache);
-		}
-	} // writeCache
-
-
-
-	//....................................................
-    private function readCache($mdFiles)
-    {
-		$this->isCached = false;
-		if ($this->page->get('overlay') || $this->page->get('override')) {
-			return false;
-		}
-		if ($this->config->site_enableCaching) {
-            $cacheFile = $this->pathToPage.$this->config->cacheFileName;
-            if (!file_exists($cacheFile)) {
-				return false;
-			}
-			$fTime = filemtime($cacheFile);
-			$clean = true;
-			foreach($mdFiles as $f) {
-				if ($fTime < filemtime($f)) {
-					$clean = false;
-					break;
-				}
-			}
-			if ($clean) {
-				$pg = unserialize(file_get_contents($cacheFile));
-				$this->isCached = true;
-				return $pg;
-			}
-		}
-		return false;
-	} // readCache
-
-
-
-	//....................................................
     private function clearCache()
     {
 		$dir = glob($this->config->cachePath.'*');
@@ -1139,6 +1097,10 @@ EOT;
 		$dir = getDirDeep($this->config->path_pagesPath, true);
 		foreach ($dir as $folder) {
 		    $filename = $folder.$this->config->cacheFileName;
+		    if (file_exists($filename)) {
+		        unlink($filename);
+            }
+		    $filename = $folder.CACHE_DEPENDENCY_FILE;
 		    if (file_exists($filename)) {
 		        unlink($filename);
             }
@@ -1168,10 +1130,21 @@ EOT;
 
 
 
+    private function disableCaching()
+    {
+        $this->config->site_enableCaching = false;
+        $this->config->cachingActive = false;
+        $GLOBALS['globalParams']['cachingActive'] = false;
+    } // disableCaching
+
+
+
+
     //....................................................
 	private function handleUrlArgs()
 	{
         if (getUrlArg('reset')) {			            // reset (cache)
+            $this->disableCaching();
             $this->clearCaches();
         }
 
@@ -1184,7 +1157,9 @@ EOT;
 
 
         if ($nc = getStaticVariable('nc')) {		// nc
-            $this->config->site_enableCaching = !$nc;
+            if ($nc) {
+                $this->disableCaching();
+            }
         }
 
         $this->timer = getUrlArgStatic('timer');				// timer
@@ -1201,7 +1176,7 @@ EOT;
             if ($editingMode) {
                 $this->editingMode = true;
                 $this->config->feature_pageSwitcher = false;
-                $this->config->site_enableCaching = false;
+                $this->disableCaching();
                 setStaticVariable('nc', true);
             }
 
@@ -1210,13 +1185,14 @@ EOT;
                 reloadAgent();
             }
 
-            if (getUrlArg('lang', true) == 'none') {                        // empty recycleBins
+            if (getUrlArg('lang', true) == 'none') {                  // force language
                 $this->config->debug_showVariablesUnreplaced = true;
                 unset($_GET['lang']);
             }
 
         } else {                    // no privileged permission: reset modes:
             if (getUrlArg('edit')) {
+                $this->disableCaching();
                 $this->page->addMessage('{{ need to login to edit }}');
             }
             setStaticVariable('editingMode', false);
@@ -1307,7 +1283,7 @@ EOT;
 
 
         if (getUrlArg('list')) {    // list
-			$str = $this->trans->renderAllTranslationObjects();
+            $str = $this->trans->renderAllTranslationObjects();
             $this->page->addOverlay($str, false, false);
             $this->page->addCssFiles('~sys/css/admin.css');
 		}
@@ -1315,14 +1291,14 @@ EOT;
 
 
         if (getUrlArg('config')) {                              // config
-			$str = $this->renderConfigHelp();
+            $str = $this->renderConfigHelp();
             $this->page->addOverlay($str);
         }
 
 
 
         if (getUrlArg('help')) {                              // help
-			$overlay = <<<EOT
+            $overlay = <<<EOT
 <h1>Lizzy Help</h1>
 <pre>
 Available URL-commands:

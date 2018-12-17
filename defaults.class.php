@@ -69,7 +69,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'path_userCodePath'                 => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
 
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
-            'site_enableCaching'                => [false, '[true|false] whether caching should be active.' ],
+            'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
             'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
@@ -89,6 +89,7 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->userInitCodeFile         = USER_INIT_CODE_FILE;
         $this->cachePath                = CACHE_PATH;
         $this->cacheFileName            = CACHE_FILENAME;
+        $this->cachingActive            = false;
         $this->siteIdententation        = MIN_SITEMAP_INDENTATION;
 
 

@@ -9,10 +9,10 @@
 define('MAX_ITERATION_DEPTH', 10);
 
 
+
 class Page
 {
     private $template = '';
-    private $bodyTopInjections = '';
     private $content = '';
     private $head = '';
     private $description = '';
@@ -24,23 +24,31 @@ class Page
     private $jqFiles = '';
     private $jq = '';
     private $autoAttrFiles = '';
+    private $bodyTopInjections = '';
     private $bodyEndInjections = '';
     private $message = '';
     private $popup = false;
     private $pageSubstitution = false;
     private $override = false;   // if set, will replace the page content
+    private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
+    private $debugMsg = false;
+
     private $mdCompileOverride = false;
     private $mdCompileOverlay = false;
     private $overlayClosable = true;
-    private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
-    private $debugMsg = false;
     private $wrapperTag = 'section';
-    private $jQloaded = false;
 
     private $assembledBodyEndInjections = '';
     private $assembledCss = '';
     private $assembledJs = '';
     private $assembledJq = '';
+
+    private $pageElements = [
+        'template', 'content', 'head', 'description', 'keywords',
+        'cssFiles', 'css', 'jsFiles', 'js', 'jqFiles', 'jq',
+        'bodyTopInjections', 'bodyEndInjections',
+        'pageSubstitution', 'override','overlay','debugMsg', 'message', 'popup',
+    ];
 
 
 
@@ -117,7 +125,9 @@ class Page
             return;
         }
         foreach ($page as $key => $value) {
-            if (is_object($value)) { continue; } // skip aux objects
+            if (!in_array($key, $this->pageElements)) { // skip properties that are not page-elements
+                continue;
+            }
 
             if (($key == 'wrapperTag') || (strpos($propertiesToReplace, $key) !== false)) {
                 $this->appendValue($key, $value, true);
@@ -402,23 +412,23 @@ class Page
 
 
 
-    public function applyBodyTopInjection()
+    public function applyBodyTopInjection( $html )
     {
         if (!$this->bodyTopInjections) {
-            return false; // nothing to do
+            return $html; // nothing to do
         }
 
-        $p = strpos($this->template, '<body');
+        $p = strpos($html, '<body');
         if ($p) {
-            $p = strpos($this->template, '>', $p);
+            $p = strpos($html, '>', $p);
             if (!$p) {  // syntax error, body tag not closed
-                return false;
+                return $html;
             }
             $p++;
             $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
-            $this->template = substr($this->template, 0, $p).$injectStr.substr($this->template, $p);
+            $html = substr($html, 0, $p).$injectStr.substr($html, $p);
         }
-        return true;
+        return $html;
     } // applyBodyTopInjection
 
 
@@ -551,18 +561,15 @@ class Page
     private function getHeadInjections()
     {
         $headInjections = $this->head;
-        $this->head = '';
 
         $keywords = $this->keywords;
         if ($keywords) {
             $keywords = "\t<meta name='keywords' content='$keywords' />\n";
-            $this->keywords = '';
         }
 
         $description = $this->description;
         if ($description) {
             $description = "\t<meta name='description' content='$description' />\n";
-            $this->description = '';
         }
         $headInjections .= $keywords.$description;
 
@@ -571,7 +578,6 @@ class Page
         }
 
         $headInjections .= $this->getModules('css', $this->cssFiles);
-        $this->cssFiles = '';
 
         if ($this->assembledCss) {
             $assembledCss = "\t\t".preg_replace("/\n/", "\n\t\t", $this->assembledCss);
@@ -586,7 +592,7 @@ class Page
 
     //....................................................
     public function prepareBodyEndInjections()
-    // interatively collects snippets for js, jq, bodyTopInjection, bodyEndInjection (text)
+    // interatively collects snippets for js, jq, bodyTopInjections, bodyEndInjection (text)
     {
         $modified = false;
 
@@ -618,15 +624,6 @@ class Page
     {
         $bodyEndInjections = $this->bodyEndInjections;
 
-        if ($this->config->feature_touchDeviceSupport) {
-            $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
-        } else {
-            $this->addJqFiles("AUXILIARY,MAC_KEYS");
-        }
-
-        if ($this->config->feature_autoLoadJQuery) {
-            $this->addJqFiles($this->config->feature_jQueryModule);
-        }
         if ($this->jsFiles) {
             $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
         }
@@ -701,6 +698,8 @@ EOT;
     {
         global $globalParams;
 
+        $jQloaded = false;
+
         // makes sure that explicit version of JQUERY gets precedence over unspecific one
         $key = str_replace(',', "\n", $key);
         $lines = explode("\n", $key);
@@ -718,9 +717,9 @@ EOT;
             if (in_array($mod, array_keys($this->config->loadModules))) {
                 if (empty($modules[$this->config->loadModules[$mod]['weight']])) {
                     if (($mod == 'JQUERY') || preg_match('/^JQUERY\d/', $mod)) {	// call for jQuery (but not jQueryUI etc)
-                        if ($this->jQloaded == false) {
+                        if ($jQloaded == false) {
                             $modules[$this->config->loadModules[$mod]['weight']] = $mod;
-                            $this->jQloaded = true;
+                            $jQloaded = true;
                         }
                     } else {
                         $name = $sys.$this->config->loadModules[$mod]['module'];
@@ -770,14 +769,14 @@ EOT;
 
 
         if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[$jQweight])) {	// automatically prepend jQuery if missing
-            if ($this->jQloaded == false) {
+            if ($jQloaded == false) {
                 if ($globalParams['legacyBrowser']) {
                     writeLog("Legacy-Browser -> jQuery1 loaded.");
                     $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
                 } else {
                     $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY']['module'];
                 }
-                $this->jQloaded = true;
+                $jQloaded = true;
             }
         }
         ksort($modules);
@@ -831,20 +830,24 @@ EOT;
 
 
     //....................................................
-    public function render()
+    public function render($processShieldedElements = false)
     {
         $n = 0;
+        $writeToCache = $this->config->cachingActive;
+        if (!$processShieldedElements) {
+            $processShieldedElements = !$writeToCache;
+        }
+
         do {
             $modified = false;
-            $n++;
 
-            $modified |= $this->trans->supervisedTranslate($this, $this->template);
-            $modified |= $this->trans->supervisedTranslate($this, $this->content);
+            $modified |= $this->trans->supervisedTranslate($this, $this->template, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->content, $processShieldedElements);
 
-            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJs);
-            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJq);
-            $modified |= $this->trans->supervisedTranslate($this, $this->bodyTopInjections);
-            $modified |= $this->trans->supervisedTranslate($this, $this->bodyEndInjections);
+            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJs, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJq, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->bodyTopInjections, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->bodyEndInjections, $processShieldedElements);
 
             // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
             if ($this->pageSubstitution) {
@@ -875,32 +878,48 @@ EOT;
             // get and inject body-end elements, compile them first:
             $modified |= $this->prepareBodyEndInjections();
 
-        } while ($modified && ($n < MAX_ITERATION_DEPTH));
+            if ($n++ >= MAX_ITERATION_DEPTH) {
+                fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
+            }
+        } while ($modified);
 
-        if ($n >= MAX_ITERATION_DEPTH) {
-            fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
+        if ($writeToCache) {
+            $this->writeToCache();
         }
+        $html = $this->assembleHtml();
 
-        $this->applyBodyTopInjection();
-        $html = $this->template;
-        $html = $this->trans->adaptBraces($html);
-
-        $head = $this->getHeadInjections();
-        $html = $this->translateVariable($html, 'head_injections', $head);
-        $html = $this->translateVariable($html, 'content', $this->content);
-        $bodyEndInjections = $this->getBodyEndInjections();
-        $html = $this->translateVariable($html, 'body_end_injections', $bodyEndInjections);
+        if ($this->trans->shieldedVariablePresent($html)) {
+            $html = $this->render(true);
+        }
 
         return $html;
     } // render
 
 
 
-    private function translateVariable($html, $varName, $varValue)
+
+    private function assembleHtml()
     {
-        $html = str_replace("@@$varName@@", $varValue, $html);
+        $html = $this->template;
+
+        $html = $this->applyBodyTopInjection($html, $this->bodyTopInjections);
+        $html = $this->trans->adaptBraces($html);
+
+
+        $html = $this->injectValue($html, 'head_injections', $this->getHeadInjections());
+        $html = $this->injectValue($html, 'content', $this->content);
+        $html = $this->injectValue($html, 'body_end_injections', $this->getBodyEndInjections());
+
         return $html;
-    } // translateVariable
+    } // assembleHtml
+
+
+
+    //....................................................
+    private function injectValue( $html, $varName, $varValue)
+    {
+        return str_replace("@@$varName@@", $varValue, $html);
+    } // injectValue
 
 
 
@@ -953,6 +972,24 @@ EOT;
 
 
     //....................................................
+    public function lateApplyMessag($html, $msg)
+    {
+        $msg = createWarning($msg);
+        $p = strpos($html, '<body');
+        if ($p) {
+            $p = strpos($html, '>', $p);
+            if (!$p) {  // syntax error, body tag not closed
+                return $html;
+            }
+            $p++;
+            $html = substr($html, 0, $p).$msg.substr($html, $p);
+        }
+        return $html;
+    }
+
+
+
+    //....................................................
     public function lateApplyDebugMsg($html, $msg)
     {
         if ((($p = strpos($html, '<div id="log">')) !== false) ||
@@ -975,5 +1012,25 @@ EOT;
 
 
 
+    private function writeToCache()
+    {
+        $pg2 = clone $this;
+        foreach ($pg2 as $key => $value) {
+            if (!in_array($key, $this->pageElements)) {
+                unset( $pg2->$key );
+            }
+        }
+        writeToCache($pg2);
+    } // writeToCache
 
+
+    public function readFromCache()
+    {
+        $pg = readFromCache();
+        if (!$pg) {
+            return false;
+        }
+        $this->merge($pg);
+        return true;
+    }
 } // Page

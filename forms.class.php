@@ -4,7 +4,6 @@
 */
 
 define('CSV_SEPARATOR', ',');
-//define('CSV_SEPARATOR', ';');
 define('CSV_QUOTE', 	'"');
 define('DATA_EXPIRATION_TIME', false);
 

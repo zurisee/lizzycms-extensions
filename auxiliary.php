@@ -555,6 +555,8 @@ function convertFsToHttpPath($path)
     return $path;
 } //convertFsToHttpPath
 
+
+
 //------------------------------------------------------------
 function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 {
@@ -626,32 +628,30 @@ function makePathRelativeToPage($path, $forImgRessources = false)
 
 
 //------------------------------------------------------------
-function resolveAllPaths($html, $requestRewriteActive = true)
+function resolveAllPaths( &$html, $requestRewriteActive = true)
 {
 	global $globalParams;
 	$pathToRoot = $globalParams['pathToRoot'];
 
     if (!$requestRewriteActive) {
-        $html = resolveHrefs($html);
+        resolveHrefs($html);
     }
 
     $html = preg_replace('|~/|', $pathToRoot, $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
 	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
 	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
-	return $html;
 } // resolveAllPaths
 
 
 
-function resolveHrefs($html)
+function resolveHrefs( &$html )
 {
     $appRoot = $GLOBALS["globalParams"]["appRoot"];
     $prefix = $appRoot.'?lzy=';
     $p = strpos($html, '~/');
     while ($p !== false) {
         if (substr($html, $p-6, 5) == 'href=') {
-            $s = substr($html, $p + 2, 30);
             if (preg_match('|^([\w-/\.]*)|', substr($html, $p + 2, 30), $m)) {
                 $s = $m[1];
                 if (!file_exists($s)) {
@@ -661,7 +661,6 @@ function resolveHrefs($html)
         }
         $p = strpos($html, '~/', $p + 2);
     }
-    return $html;
 } // resolveHrefs
 
 
@@ -1131,19 +1130,6 @@ function logError($str)
 } // logError
 
 
-//------------------------------------------------------------------------------
-function show_msg($msg, $title = '')
-{
-	if (!$title) {
-		$title = basename(__FILE__, '.php');
-	}
-	$msg = shield_str($msg);
-	echo shell_exec("whoami");
-
-//	shell_exec("/usr/local/bin/terminal-notifier -message \"$msg\" -title \"$title\"");
-} // show_msg
-
-
 
 //------------------------------------------------------------------------------
 function shield_str($s)
@@ -1272,10 +1258,10 @@ function stripNewlinesWithinTransvars($str)
 //-----------------------------------------------------------------------------
 function checkBracesBalance($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 {
-    $shieldedOpening = substr_count($str, '\\'.$pat1);
-    $opening = substr_count($str, $pat1) - $shieldedOpening;
-    $shieldedClosing = substr_count($str, '\\'.$pat2);
-    $closing = substr_count($str, $pat2) - $shieldedClosing;
+    $shieldedOpening = substr_count($str, '\\' . $pat1, $p0);
+    $opening = substr_count($str, $pat1, $p0) - $shieldedOpening;
+    $shieldedClosing = substr_count($str, '\\' . $pat2, $p0);
+    $closing = substr_count($str, $pat2, $p0) - $shieldedClosing;
     if ($opening > $closing) {
         fatalError("Error in source: unbalanced number of &#123;&#123; resp }}");
     }
@@ -1287,6 +1273,9 @@ function checkBracesBalance($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 function strPosMatching($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 {	// returns positions of opening and closing patterns, ignoring shielded patters (e.g. \{{ )
 
+    if (!$str) {
+        return [false, false];
+    }
     checkBracesBalance($str, $pat1, $pat2, $p0);
 
 	$d = strlen($pat2);
@@ -1624,3 +1613,74 @@ function parseFileName($filename)
     $path = convertFsToHttpPath($path);
     return [$filename, $path, $basename, $ext, $w, $h, $aspectRatio, $dimFound];
 } // parseFileName
+
+
+
+
+function registerFileDateDependencies($list)
+{
+    if (!$GLOBALS['globalParams']['cachingActive']) {
+        return;
+    }
+
+    $depFileName = $GLOBALS['globalParams']['pathToPage'].CACHE_DEPENDENCY_FILE;
+    if (file_exists($depFileName)) {
+        $dependencies = file($depFileName, FILE_IGNORE_NEW_LINES);
+        if (is_array($list)) {
+            foreach ($list as $item) {
+                if (!in_array($item, $dependencies)) {
+                    $dependencies[] = $item;
+                }
+            }
+
+        } else {
+            if (!in_array($list, $dependencies)) {
+                $dependencies[] = $list;
+            }
+        }
+    } else {
+        if (is_array($list)) {
+            $dependencies = $list;
+        } else {
+            $dependencies = [$list];
+        }
+    }
+    file_put_contents($depFileName, implode("\n", $dependencies));
+} // registerFileDateDependencies
+
+
+
+
+function writeToCache($obj, $cacheFileName = CACHE_FILENAME)
+{
+    global $globalParams;
+
+    $cacheFile = $globalParams['pathToPage'].$cacheFileName;
+    file_put_contents($cacheFile, serialize($obj));
+} // writeToCache
+
+
+
+function readFromCache($cacheFileName = CACHE_FILENAME)
+{
+    global $globalParams;
+
+    $cacheFile = $globalParams['pathToPage'].$cacheFileName;
+    if (!file_exists($cacheFile)) {
+        return false;
+    }
+    $pageCacheDependencies = $globalParams['pathToPage'].CACHE_DEPENDENCY_FILE;
+    if (!file_exists($pageCacheDependencies)) {
+        return false;
+    }
+    $srcFiles = file($pageCacheDependencies, FILE_IGNORE_NEW_LINES);
+
+    $fTime = filemtime($cacheFile);
+    foreach($srcFiles as $f) {
+        if (file_exists($f) && ($fTime < filemtime($f))) {
+            return false;
+        }
+    }
+
+    return unserialize(file_get_contents($cacheFile));
+} // readFromCache
