@@ -1632,32 +1632,69 @@ function parseFileName($filename)
 
 
 
+
+function registerFileDateDependencies($list)
+{
+    $depFileName = $GLOBALS['globalParams']['pathToPage'].CACHE_DEPENDENCY_FILE;
+    if (file_exists($depFileName)) {
+        $dependencies = file($depFileName, FILE_IGNORE_NEW_LINES);
+        if (is_array($list)) {
+            foreach ($list as $item) {
+                if (!in_array($item, $dependencies)) {
+                    $dependencies[] = $item;
+                }
+            }
+
+        } else {
+            if (!in_array($list, $dependencies)) {
+                $dependencies[] = $list;
+            }
+        }
+    } else {
+        if (is_array($list)) {
+            $dependencies = $list;
+        } else {
+            $dependencies = [$list];
+        }
+    }
+    file_put_contents($depFileName, implode("\n", $dependencies));
+} // registerFileDateDependencies
+
+
+
+
 function writeToCache($obj, $cacheFileName = CACHE_FILENAME)
 {
     global $globalParams;
 
-    $cacheFile = $globalParams['pathToPage'].CACHE_PATH.$cacheFileName;
-    preparePath($cacheFile);
+    $cacheFile = $globalParams['pathToPage'].$cacheFileName;
+//    preparePath($cacheFile);
     file_put_contents($cacheFile, serialize($obj));
 } // writeToCache
 
 
 
-function readFromCache($srcFiles, $cacheFileName = CACHE_FILENAME)
+function readFromCache($cacheFileName = CACHE_FILENAME)
 {
     global $globalParams;
 
-    $cacheFile = $globalParams['pathToPage'].CACHE_PATH.$cacheFileName;
+    $cacheFile = $globalParams['pathToPage'].$cacheFileName;
     if (!file_exists($cacheFile)) {
         return false;
     }
+    $pageCacheDependencies = $globalParams['pathToPage'].CACHE_DEPENDENCY_FILE;
+    if (!file_exists($pageCacheDependencies)) {
+        return false;
+    }
+    $srcFiles = file($pageCacheDependencies, FILE_IGNORE_NEW_LINES);
 
     $fTime = filemtime($cacheFile);
     foreach($srcFiles as $f) {
-        if ($fTime < filemtime($f)) {
+        if (file_exists($f) && ($fTime < filemtime($f))) {
             return false;
         }
     }
+
 
     return unserialize(file_get_contents($cacheFile));
 } // readFromCache

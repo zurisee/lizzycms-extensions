@@ -149,12 +149,16 @@ class Lizzy
 
         if ($accessGranted) {
 
-            // Future: enable caching of compiled MD pages:
-//            if ($this->config->cachingActive) {
-//                $this->page->readFromCache();
-//                $html = $this->page->render();
-//                return $html;
-//            }
+            // enable caching of compiled MD pages:
+            if ($this->config->cachingActive && $this->page->readFromCache()) {
+                $html = $this->page->render(true);
+                $this->resolveAllPaths($html);
+                if ($this->timer) {
+                    $timerMsg = 'Page rendering time: '.readTimer();
+                    $html = $this->page->lateApplyMessag($html, $timerMsg);
+                }
+                return $html;
+            }
 
             $this->loadFile();        // get content file
         }
@@ -187,6 +191,16 @@ class Lizzy
 
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
+
+        if ($this->config->feature_touchDeviceSupport) {
+            $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
+        } else {
+            $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
+        }
+
+        if ($this->config->feature_autoLoadJQuery) {
+            $this->page->addJqFiles($this->config->feature_jQueryModule);
+        }
 
 
         // now, compile the page from all its components:
@@ -227,7 +241,7 @@ class Lizzy
 
         if ($this->timer) {
             $timerMsg = 'Page rendering time: '.readTimer();
-			$html = $this->page->lateApplyDebugMsg($html, $timerMsg);
+            $html = $this->page->lateApplyMessag($html, $timerMsg);
 		}
 
         return $html;
@@ -868,7 +882,7 @@ class Lizzy
 			$folder = $currRec['folder'];
 		}
 		if (isset($currRec['file'])) {
-		    file_put_contents($this->pathToPage.CACHE_DEPENDENCY_FILE, $currRec['file']);
+            registerFileDateDependencies($currRec['file']);
 			return $this->loadHtmlFile($folder, $currRec['file']);
 		}
 
@@ -876,21 +890,16 @@ class Lizzy
 		$this->handleMissingFolder($folder);
 
 		$mdFiles = getDir($folder.'*.{md,txt}');
-//        file_put_contents($this->pathToPage.CACHE_DEPENDENCY_FILE, implode(',', $mdFiles));
+        registerFileDateDependencies($mdFiles);
 
 		// Case: no .md file available, but page has sub-pages -> show first sub-page instead
 		if (!$mdFiles && isset($currRec[0])) {
 			$folder = $currRec[0]['folder'];
 			$this->siteStructure->currPageRec['folder'] = $folder;
 			$mdFiles = getDir($this->config->path_pagesPath.$folder.'*.{md,txt}');
-//            file_put_contents($this->pathToPage.CACHE_DEPENDENCY_FILE, implode(',', $mdFiles));
+            registerFileDateDependencies($mdFiles);
 		}
 		
-//		if ($pg = $this->readCache($mdFiles)) {
-//			$this->page = $pg;
-//			return $pg;
-//		}
-
         $handleEditions = false;
         if (getUrlArg('ed', true) && $this->auth->checkGroupMembership('editors')) {
             require_once SYSTEM_PATH.'page-source.class.php';
@@ -969,7 +978,6 @@ class Lizzy
 			$html = $this->extractHtmlBody($html);
 		}
 		$page->addContent($html, true);
-//		$this->writeCache();
         return $page;
 	} // loadFile
 

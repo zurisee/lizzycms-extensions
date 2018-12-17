@@ -430,7 +430,8 @@ class Page
             }
             $p++;
             $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
-            $this->template = substr($html, 0, $p).$injectStr.substr($html, $p);
+            $html = substr($html, 0, $p).$injectStr.substr($html, $p);
+//            $this->template = substr($html, 0, $p).$injectStr.substr($html, $p);
         }
         return $html;
     } // applyBodyTopInjection
@@ -565,18 +566,18 @@ class Page
     private function getHeadInjections()
     {
         $headInjections = $this->head;
-        $this->head = '';
+//        $this->head = '';
 
         $keywords = $this->keywords;
         if ($keywords) {
             $keywords = "\t<meta name='keywords' content='$keywords' />\n";
-            $this->keywords = '';
+//            $this->keywords = '';
         }
 
         $description = $this->description;
         if ($description) {
             $description = "\t<meta name='description' content='$description' />\n";
-            $this->description = '';
+//            $this->description = '';
         }
         $headInjections .= $keywords.$description;
 
@@ -585,7 +586,7 @@ class Page
         }
 
         $headInjections .= $this->getModules('css', $this->cssFiles);
-        $this->cssFiles = '';
+//        $this->cssFiles = '';
 
         if ($this->assembledCss) {
             $assembledCss = "\t\t".preg_replace("/\n/", "\n\t\t", $this->assembledCss);
@@ -632,15 +633,15 @@ class Page
     {
         $bodyEndInjections = $this->bodyEndInjections;
 
-        if ($this->config->feature_touchDeviceSupport) {
-            $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
-        } else {
-            $this->addJqFiles("AUXILIARY,MAC_KEYS");
-        }
-
-        if ($this->config->feature_autoLoadJQuery) {
-            $this->addJqFiles($this->config->feature_jQueryModule);
-        }
+//        if ($this->config->feature_touchDeviceSupport) {
+//            $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
+//        } else {
+//            $this->addJqFiles("AUXILIARY,MAC_KEYS");
+//        }
+//
+//        if ($this->config->feature_autoLoadJQuery) {
+//            $this->addJqFiles($this->config->feature_jQueryModule);
+//        }
         if ($this->jsFiles) {
             $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
         }
@@ -715,6 +716,8 @@ EOT;
     {
         global $globalParams;
 
+        $jQloaded = false;
+
         // makes sure that explicit version of JQUERY gets precedence over unspecific one
         $key = str_replace(',', "\n", $key);
         $lines = explode("\n", $key);
@@ -732,9 +735,9 @@ EOT;
             if (in_array($mod, array_keys($this->config->loadModules))) {
                 if (empty($modules[$this->config->loadModules[$mod]['weight']])) {
                     if (($mod == 'JQUERY') || preg_match('/^JQUERY\d/', $mod)) {	// call for jQuery (but not jQueryUI etc)
-                        if ($this->jQloaded == false) {
+                        if ($jQloaded == false) {
                             $modules[$this->config->loadModules[$mod]['weight']] = $mod;
-                            $this->jQloaded = true;
+                            $jQloaded = true;
                         }
                     } else {
                         $name = $sys.$this->config->loadModules[$mod]['module'];
@@ -784,14 +787,14 @@ EOT;
 
 
         if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[$jQweight])) {	// automatically prepend jQuery if missing
-            if ($this->jQloaded == false) {
+            if ($jQloaded == false) {
                 if ($globalParams['legacyBrowser']) {
                     writeLog("Legacy-Browser -> jQuery1 loaded.");
                     $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
                 } else {
                     $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY']['module'];
                 }
-                $this->jQloaded = true;
+                $jQloaded = true;
             }
         }
         ksort($modules);
@@ -850,8 +853,8 @@ EOT;
     public function render($processShieldedElements = false)
     {
         $n = 0;
+        $writeToCache = $this->config->cachingActive;
         if (!$processShieldedElements) {
-            $writeToCache = $this->config->cachingActive;
             $processShieldedElements = !$writeToCache;
         }
 
@@ -900,11 +903,9 @@ EOT;
             }
         } while ($modified);
 
-        if ($this->config->site_enableCaching) {
-            // write to cache
-
+        if ($writeToCache) {
+            $this->writeToCache();
         }
-
         $html = $this->assembleHtml();
 
         if ($this->trans->shieldedVariablePresent($html)) {
@@ -932,11 +933,6 @@ EOT;
         return $html;
     } // assembleHtml
 
-
-    private function writeToCache()
-    {
-
-    }
 
 
     //....................................................
@@ -996,6 +992,24 @@ EOT;
 
 
     //....................................................
+    public function lateApplyMessag($html, $msg)
+    {
+        $msg = createWarning($msg);
+        $p = strpos($html, '<body');
+        if ($p) {
+            $p = strpos($html, '>', $p);
+            if (!$p) {  // syntax error, body tag not closed
+                return $html;
+            }
+            $p++;
+            $html = substr($html, 0, $p).$msg.substr($html, $p);
+        }
+        return $html;
+    }
+
+
+
+    //....................................................
     public function lateApplyDebugMsg($html, $msg)
     {
         if ((($p = strpos($html, '<div id="log">')) !== false) ||
@@ -1030,4 +1044,27 @@ EOT;
 //        $this->content = '';
     }
 
+
+
+    private function writeToCache()
+    {
+        $pg2 = clone $this;
+        foreach ($pg2 as $key => $value) {
+            if (!in_array($key, $this->pageElements)) {
+                unset( $pg2->$key );
+            }
+        }
+        writeToCache($pg2);
+    } // writeToCache
+
+
+    public function readFromCache()
+    {
+        $pg = readFromCache();
+        if (!$pg) {
+            return false;
+        }
+        $this->merge($pg);
+        return true;
+    }
 } // Page
