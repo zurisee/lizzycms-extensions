@@ -10,7 +10,6 @@ class SCssCompiler
 {
     private $cssDestPath;
 
-//    public function __construct($fromFiles, $toPath, $localCall = false)
     public function __construct( $lzy )
     {
         // $this->config->path_stylesPath.'scss/*.scss', $this->config->path_stylesPath, $this->localCall
@@ -49,7 +48,7 @@ class SCssCompiler
                 file_put_contents($targetFile, $cssStr);
                 touchFile($targetFile, $t0);
                 $compiled .= basename($file) . ", ";
-            } elseif ($t0 < $t1) {
+//            } elseif ($t0 < $t1) {
 //                fatalError("Warning: compiled stylesheet newer than source: '$targetFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
             }
         }

@@ -153,6 +153,21 @@ class Transvar
 
 
     //....................................................
+    private function translateVariable($varName)
+    {
+        $val = $this->getVariable($varName);
+        if ($val === false) {
+            $val = $this->doUserCode($varName, $this->config->custom_permitUserCode);
+            if (is_array($val)) {
+                fatalError($val[1]);
+            }
+        }
+        return $val;
+    } // translateVariable
+
+
+
+    //....................................................
     private function translateMacro($macro, $argStr)
     {
         $this->macroArgs[$macro] = parseArgumentStr($argStr);
@@ -195,126 +210,6 @@ class Transvar
         return $val;
 
     } // translateMacro
-
-
-
-
-//    //....................................................
-//    public function translateVariable($str, $varName, $value = null)
-//    {
-//        if ($value === null) {
-//            $value = $this->getVariable($varName);
-//        }
-//        if (preg_match("/^(.*){{\s*$varName\s*}}(.*)$/", $str, $m)) {
-//            $str = $m[1].$value.$m[2];
-//        }
-//        return $str;
-//    } // translateVariable
-
-
-
-
-    //....................................................
-    private function translateVariable($varName)
-    {
-        $val = $this->getVariable($varName);
-        if ($val === false) {
-            $val = $this->doUserCode($varName, $this->config->custom_permitUserCode);
-            if (is_array($val)) {
-                fatalError($val[1]);
-            }
-        }
-        return $val;
-    } // translateVariable
-
-
-//    //....................................................
-//	public function translateVars($str)
-//	{
-//
-//        list($p1, $p2) = strPosMatching($str);
-//        $n = 0;
-//		while (($p1 !== false)) {
-//			$commmented = false;
-//			$optional = false;
-//            $dontCache = false;
-//            $compileMd = false;
-//			$var = trim(substr($str, $p1+2, $p2-$p1-2));
-//            if (!$var) {
-//                $str = substr($str,0,$p1).substr($str, $p2+2);
-//                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-//                continue;
-//            }
-//
-//            if (preg_match('/^ [\#^\!\&]? \s* [\w\-]+ \( /x', $var)) { // skip macros()
-//                list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-//                continue;
-//            }
-//
-//            // handle var-modifiers, e.g. {{^ }}
-//            $c1 = $var{0};
-//			if (strpos('#^!&',$c1) !== false) {
-//				$var = trim(substr($var, 1));
-//				if ($c1 == '#') {
-//					$commmented = true;
-//				} elseif ($c1 == '!') {
-//					$dontCache = true;
-//                } elseif ($c1 == '&') {
-//                    $compileMd = true;
-//                } else {
-//					$optional = true;
-//				}
-//			}
-//            if ($dontCache) {
-//                $str = $this->shieldVariableInstance($str, $p1, $var, $p2);
-//
-//            } else {
-//                if (!$commmented) {
-//                    if (strpos($var, '{{') !== false) {
-//                        $var = $this->translateVars($var);
-//                    }
-//                    $var = str_replace("\n", '', $var);    // remove newlines
-//                    if (preg_match('/^(\w+)\((.*)\)/', $var, $m)) {    // macro
-//                        list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1 + 1);
-//                        continue;
-//
-//                    } else {                                        // variable
-//                        $val = $this->getVariable($var);
-//                        if ($val === false) {
-//                            $val = $this->doUserCode($var, $this->config->custom_permitUserCode);
-//                            if (is_array($val)) {
-//                                fatalError($val[1]);
-//                            }
-//                        }
-//                        if ($compileMd) {
-//                            $val = compileMarkdownStr($val);
-//                        }
-//                    }
-//                }
-//
-//                if ($commmented) {
-//                    $str = substr($str, 0, $p1) . substr($str, $p2 + 2);
-//
-//                } elseif ($dontCache) {
-//                    $str = $this->shieldVariableInstance($str, $p1, $var, $p2);
-//
-//                } elseif (!$optional && ($val === false)) {
-//                        $str = substr($str, 0, $p1) . $var . substr($str, $p2 + 2); // replace with itself (minus {{}})
-//
-//                } else {
-//                    $str = substr($str, 0, $p1) . $val . substr($str, $p2 + 2);   // replace with value
-//                }
-//            }
-//			list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
-//
-//            if ($n++ >= MAX_TRANSVAR_ITERATION_DEPTH) {
-//                fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
-//            }
-//		}
-//		return $str;
-//	} // translateVars
-
-
 
 
 

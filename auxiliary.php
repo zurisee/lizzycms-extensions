@@ -555,6 +555,8 @@ function convertFsToHttpPath($path)
     return $path;
 } //convertFsToHttpPath
 
+
+
 //------------------------------------------------------------
 function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 {
@@ -633,19 +635,16 @@ function resolveAllPaths( &$html, $requestRewriteActive = true)
 
     if (!$requestRewriteActive) {
         resolveHrefs($html);
-//        $html = resolveHrefs($html);
     }
 
     $html = preg_replace('|~/|', $pathToRoot, $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
 	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
 	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
-//	return $html;
 } // resolveAllPaths
 
 
 
-//function resolveHrefs($html)
 function resolveHrefs( &$html )
 {
     $appRoot = $GLOBALS["globalParams"]["appRoot"];
@@ -653,7 +652,6 @@ function resolveHrefs( &$html )
     $p = strpos($html, '~/');
     while ($p !== false) {
         if (substr($html, $p-6, 5) == 'href=') {
-//            $s = substr($html, $p + 2, 30);
             if (preg_match('|^([\w-/\.]*)|', substr($html, $p + 2, 30), $m)) {
                 $s = $m[1];
                 if (!file_exists($s)) {
@@ -663,7 +661,6 @@ function resolveHrefs( &$html )
         }
         $p = strpos($html, '~/', $p + 2);
     }
-//    return $html;
 } // resolveHrefs
 
 
@@ -1131,19 +1128,6 @@ function logError($str)
 {
     writeLog($str, 'errlog');
 } // logError
-
-
-//------------------------------------------------------------------------------
-function show_msg($msg, $title = '')
-{
-	if (!$title) {
-		$title = basename(__FILE__, '.php');
-	}
-	$msg = shield_str($msg);
-	echo shell_exec("whoami");
-
-//	shell_exec("/usr/local/bin/terminal-notifier -message \"$msg\" -title \"$title\"");
-} // show_msg
 
 
 
@@ -1672,7 +1656,6 @@ function writeToCache($obj, $cacheFileName = CACHE_FILENAME)
     global $globalParams;
 
     $cacheFile = $globalParams['pathToPage'].$cacheFileName;
-//    preparePath($cacheFile);
     file_put_contents($cacheFile, serialize($obj));
 } // writeToCache
 
@@ -1698,7 +1681,6 @@ function readFromCache($cacheFileName = CACHE_FILENAME)
             return false;
         }
     }
-
 
     return unserialize(file_get_contents($cacheFile));
 } // readFromCache

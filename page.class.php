@@ -37,7 +37,6 @@ class Page
     private $mdCompileOverlay = false;
     private $overlayClosable = true;
     private $wrapperTag = 'section';
-    private $jQloaded = false;
 
     private $assembledBodyEndInjections = '';
     private $assembledCss = '';
@@ -49,9 +48,6 @@ class Page
         'cssFiles', 'css', 'jsFiles', 'js', 'jqFiles', 'jq',
         'bodyTopInjections', 'bodyEndInjections',
         'pageSubstitution', 'override','overlay','debugMsg', 'message', 'popup',
-//        'assembledBodyEndInjections', 'assembledCss', 'assembledJs', 'assembledJq',
-//        'wrapperTag', 'jQloaded', 'mdCompileOverride', 'mdCompileOverlay', 'overlayClosable',
-//        'autoAttrFiles'
     ];
 
 
@@ -431,7 +427,6 @@ class Page
             $p++;
             $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
             $html = substr($html, 0, $p).$injectStr.substr($html, $p);
-//            $this->template = substr($html, 0, $p).$injectStr.substr($html, $p);
         }
         return $html;
     } // applyBodyTopInjection
@@ -566,18 +561,15 @@ class Page
     private function getHeadInjections()
     {
         $headInjections = $this->head;
-//        $this->head = '';
 
         $keywords = $this->keywords;
         if ($keywords) {
             $keywords = "\t<meta name='keywords' content='$keywords' />\n";
-//            $this->keywords = '';
         }
 
         $description = $this->description;
         if ($description) {
             $description = "\t<meta name='description' content='$description' />\n";
-//            $this->description = '';
         }
         $headInjections .= $keywords.$description;
 
@@ -586,7 +578,6 @@ class Page
         }
 
         $headInjections .= $this->getModules('css', $this->cssFiles);
-//        $this->cssFiles = '';
 
         if ($this->assembledCss) {
             $assembledCss = "\t\t".preg_replace("/\n/", "\n\t\t", $this->assembledCss);
@@ -633,15 +624,6 @@ class Page
     {
         $bodyEndInjections = $this->bodyEndInjections;
 
-//        if ($this->config->feature_touchDeviceSupport) {
-//            $this->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
-//        } else {
-//            $this->addJqFiles("AUXILIARY,MAC_KEYS");
-//        }
-//
-//        if ($this->config->feature_autoLoadJQuery) {
-//            $this->addJqFiles($this->config->feature_jQueryModule);
-//        }
         if ($this->jsFiles) {
             $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
         }
@@ -848,8 +830,6 @@ EOT;
 
 
     //....................................................
-//    public function render($html = false)
-//    public function render($processShieldedElements = true, $writeToCache = false)
     public function render($processShieldedElements = false)
     {
         $n = 0;
@@ -1029,20 +1009,6 @@ EOT;
         }
         return $html;
     } // lateApplyDebugMsg
-
-
-
-    private function reset()
-    {
-        $this->bodyTopInjections = '';
-        $this->content = '';
-        $this->head = '';
-        $this->description = '';
-        $this->keywords = '';
-//        $this->content = '';
-//        $this->content = '';
-//        $this->content = '';
-    }
 
 
 

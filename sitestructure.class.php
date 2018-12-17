@@ -140,7 +140,6 @@ class SiteStructure
                 $rec['inx'] = $i;
                 $rec['urlExt'] = '';
                 $rec['active'] = false;
-//                $rec['hide'] = false;
                 $rec['hide!'] = false;
 
                 $i++;
@@ -297,7 +296,6 @@ class SiteStructure
 					$list[$i]['folder'] = (strlen($list[$i]['folder']) > 2) ? substr($list[$i]['folder'], 2) : '';
 				}
 				$list[$i]['parent'] = $parent;
-//				if (!(isset($list[$i]['hide']) && $list[$i]['hide'] || isset($list[$i]['hide!']) && $list[$i]['hide!'])) {
 				if (isset($list[$i]['hide!']) && $list[$i]['hide!']) {
 					$hasVisibleChildren = true;
 				}
@@ -363,21 +361,11 @@ class SiteStructure
 
 
 
-
-//    private function walkTree($tree)
-//    {
-//
-//    }
-
-
-
 	//....................................................
 	public function findSiteElem($str, $returnRec = false)
 	{
-//	    if ($str == '/') {
 	    if (($str == '/') || ($str == './')) {
             $str = '';
-//            $str = './';
         } elseif ((strlen($str) > 0) && ($str{0} == '/')) {
 	        $str = substr($str, 1);
         } elseif ((strlen($str) > 0) && (substr($str,0,2) == '~/')) {
