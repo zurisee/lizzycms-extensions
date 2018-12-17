@@ -389,7 +389,15 @@ class Lizzy
         // Future: optionally enable Auto-Attribute mechanism
         //        $this->loadAutoAttrDefinition();
 
+        $urlArgs = ['config', 'list', 'help', 'admin', 'reset', 'login', 'unused', 'reset-unused', 'remove-unused', 'log', 'info', 'touch'];
+        foreach ($urlArgs as $arg) {
+            if (isset($_GET[$arg])) {
+                $this->config->site_enableCaching = false;
+                break;
+            }
+        }
         $this->config->cachingActive = $this->config->site_enableCaching;
+        $GLOBALS['globalParams']['cachingActive'] = $this->config->site_enableCaching;
     } // init
 
 
@@ -1183,6 +1191,10 @@ EOT;
 		    if (file_exists($filename)) {
 		        unlink($filename);
             }
+		    $filename = $folder.CACHE_DEPENDENCY_FILE;
+		    if (file_exists($filename)) {
+		        unlink($filename);
+            }
         }
 	} // clearCache
 
@@ -1209,10 +1221,21 @@ EOT;
 
 
 
+    private function disableCaching()
+    {
+        $this->config->site_enableCaching = false;
+        $this->config->cachingActive = false;
+        $GLOBALS['globalParams']['cachingActive'] = false;
+    } // disableCaching
+
+
+
+
     //....................................................
 	private function handleUrlArgs()
 	{
         if (getUrlArg('reset')) {			            // reset (cache)
+            $this->disableCaching();
             $this->clearCaches();
         }
 
@@ -1225,7 +1248,10 @@ EOT;
 
 
         if ($nc = getStaticVariable('nc')) {		// nc
-            $this->config->cachingActive = !$nc;
+            if ($nc) {
+                $this->disableCaching();
+            }
+//            $this->config->cachingActive = !$nc;
 //            $this->config->site_enableCaching = !$nc;
         }
 
@@ -1243,8 +1269,7 @@ EOT;
             if ($editingMode) {
                 $this->editingMode = true;
                 $this->config->feature_pageSwitcher = false;
-                $this->config->cachingActive = false;
-                $this->config->site_enableCaching = false;
+                $this->disableCaching();
                 setStaticVariable('nc', true);
             }
 
@@ -1253,13 +1278,14 @@ EOT;
                 reloadAgent();
             }
 
-            if (getUrlArg('lang', true) == 'none') {                        // empty recycleBins
+            if (getUrlArg('lang', true) == 'none') {                  // force language
                 $this->config->debug_showVariablesUnreplaced = true;
                 unset($_GET['lang']);
             }
 
         } else {                    // no privileged permission: reset modes:
             if (getUrlArg('edit')) {
+                $this->disableCaching();
                 $this->page->addMessage('{{ need to login to edit }}');
             }
             setStaticVariable('editingMode', false);
@@ -1350,7 +1376,7 @@ EOT;
 
 
         if (getUrlArg('list')) {    // list
-			$str = $this->trans->renderAllTranslationObjects();
+            $str = $this->trans->renderAllTranslationObjects();
             $this->page->addOverlay($str, false, false);
             $this->page->addCssFiles('~sys/css/admin.css');
 		}
@@ -1358,14 +1384,14 @@ EOT;
 
 
         if (getUrlArg('config')) {                              // config
-			$str = $this->renderConfigHelp();
+            $str = $this->renderConfigHelp();
             $this->page->addOverlay($str);
         }
 
 
 
         if (getUrlArg('help')) {                              // help
-			$overlay = <<<EOT
+            $overlay = <<<EOT
 <h1>Lizzy Help</h1>
 <pre>
 Available URL-commands:

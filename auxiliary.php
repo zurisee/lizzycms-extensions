@@ -1635,6 +1635,10 @@ function parseFileName($filename)
 
 function registerFileDateDependencies($list)
 {
+    if (!$GLOBALS['globalParams']['cachingActive']) {
+        return;
+    }
+
     $depFileName = $GLOBALS['globalParams']['pathToPage'].CACHE_DEPENDENCY_FILE;
     if (file_exists($depFileName)) {
         $dependencies = file($depFileName, FILE_IGNORE_NEW_LINES);
