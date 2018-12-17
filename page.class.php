@@ -24,6 +24,7 @@ class Page
     private $jqFiles = '';
     private $jq = '';
     private $autoAttrFiles = '';
+    private $bodyTopInjection = '';
     private $bodyEndInjections = '';
     private $message = '';
     private $popup = false;
@@ -402,23 +403,23 @@ class Page
 
 
 
-    public function applyBodyTopInjection()
+    public function applyBodyTopInjection( $html )
     {
         if (!$this->bodyTopInjections) {
-            return false; // nothing to do
+            return $html; // nothing to do
         }
 
-        $p = strpos($this->template, '<body');
+        $p = strpos($html, '<body');
         if ($p) {
-            $p = strpos($this->template, '>', $p);
+            $p = strpos($html, '>', $p);
             if (!$p) {  // syntax error, body tag not closed
-                return false;
+                return $html;
             }
             $p++;
             $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
-            $this->template = substr($this->template, 0, $p).$injectStr.substr($this->template, $p);
+            $this->template = substr($html, 0, $p).$injectStr.substr($html, $p);
         }
-        return true;
+        return $html;
     } // applyBodyTopInjection
 
 
@@ -831,20 +832,26 @@ EOT;
 
 
     //....................................................
-    public function render()
+//    public function render($html = false)
+//    public function render($processShieldedElements = true, $writeToCache = false)
+    public function render($processShieldedElements = false)
     {
         $n = 0;
+        if (!$processShieldedElements) {
+            $writeToCache = $this->config->cachingActive;
+            $processShieldedElements = !$writeToCache;
+        }
+
         do {
             $modified = false;
-            $n++;
 
-            $modified |= $this->trans->supervisedTranslate($this, $this->template);
-            $modified |= $this->trans->supervisedTranslate($this, $this->content);
+            $modified |= $this->trans->supervisedTranslate($this, $this->template, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->content, $processShieldedElements);
 
-            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJs);
-            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJq);
-            $modified |= $this->trans->supervisedTranslate($this, $this->bodyTopInjections);
-            $modified |= $this->trans->supervisedTranslate($this, $this->bodyEndInjections);
+            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJs, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->assembledJq, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->bodyTopInjections, $processShieldedElements);
+            $modified |= $this->trans->supervisedTranslate($this, $this->bodyEndInjections, $processShieldedElements);
 
             // pageSubstitution replaces everything, including template. I.e. no elements of original page shall remain
             if ($this->pageSubstitution) {
@@ -875,32 +882,55 @@ EOT;
             // get and inject body-end elements, compile them first:
             $modified |= $this->prepareBodyEndInjections();
 
-        } while ($modified && ($n < MAX_ITERATION_DEPTH));
+            if ($n++ >= MAX_ITERATION_DEPTH) {
+                fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
+            }
+        } while ($modified);
 
-        if ($n >= MAX_ITERATION_DEPTH) {
-            fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
+        if ($this->config->site_enableCaching) {
+            // write to cache
+
         }
 
-        $this->applyBodyTopInjection();
-        $html = $this->template;
-        $html = $this->trans->adaptBraces($html);
+        $html = $this->assembleHtml();
 
-        $head = $this->getHeadInjections();
-        $html = $this->translateVariable($html, 'head_injections', $head);
-        $html = $this->translateVariable($html, 'content', $this->content);
-        $bodyEndInjections = $this->getBodyEndInjections();
-        $html = $this->translateVariable($html, 'body_end_injections', $bodyEndInjections);
+        if ($this->trans->shieldedVariablePresent($html)) {
+            $html = $this->render(true);
+        }
 
         return $html;
     } // render
 
 
 
-    private function translateVariable($html, $varName, $varValue)
+
+    private function assembleHtml()
     {
-        $html = str_replace("@@$varName@@", $varValue, $html);
+        $html = $this->template;
+
+        $html = $this->applyBodyTopInjection($html, $this->bodyTopInjection);
+        $html = $this->trans->adaptBraces($html);
+
+
+        $html = $this->injectValue($html, 'head_injections', $this->getHeadInjections());
+        $html = $this->injectValue($html, 'content', $this->content);
+        $html = $this->injectValue($html, 'body_end_injections', $this->getBodyEndInjections());
+
         return $html;
-    } // translateVariable
+    } // assembleHtml
+
+
+    private function writeToCache()
+    {
+
+    }
+
+
+    //....................................................
+    private function injectValue( $html, $varName, $varValue)
+    {
+        return str_replace("@@$varName@@", $varValue, $html);
+    } // injectValue
 
 
 
@@ -975,5 +1005,16 @@ EOT;
 
 
 
+    private function reset()
+    {
+        $this->bodyTopInjections = '';
+        $this->content = '';
+        $this->head = '';
+        $this->description = '';
+        $this->keywords = '';
+//        $this->content = '';
+//        $this->content = '';
+//        $this->content = '';
+    }
 
 } // Page
