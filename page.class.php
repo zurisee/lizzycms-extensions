@@ -9,10 +9,10 @@
 define('MAX_ITERATION_DEPTH', 10);
 
 
+
 class Page
 {
     private $template = '';
-    private $bodyTopInjections = '';
     private $content = '';
     private $head = '';
     private $description = '';
@@ -24,17 +24,18 @@ class Page
     private $jqFiles = '';
     private $jq = '';
     private $autoAttrFiles = '';
-    private $bodyTopInjection = '';
+    private $bodyTopInjections = '';
     private $bodyEndInjections = '';
     private $message = '';
     private $popup = false;
     private $pageSubstitution = false;
     private $override = false;   // if set, will replace the page content
+    private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
+    private $debugMsg = false;
+
     private $mdCompileOverride = false;
     private $mdCompileOverlay = false;
     private $overlayClosable = true;
-    private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
-    private $debugMsg = false;
     private $wrapperTag = 'section';
     private $jQloaded = false;
 
@@ -42,6 +43,16 @@ class Page
     private $assembledCss = '';
     private $assembledJs = '';
     private $assembledJq = '';
+
+    private $pageElements = [
+        'template', 'content', 'head', 'description', 'keywords',
+        'cssFiles', 'css', 'jsFiles', 'js', 'jqFiles', 'jq',
+        'bodyTopInjections', 'bodyEndInjections',
+        'pageSubstitution', 'override','overlay','debugMsg', 'message', 'popup',
+//        'assembledBodyEndInjections', 'assembledCss', 'assembledJs', 'assembledJq',
+//        'wrapperTag', 'jQloaded', 'mdCompileOverride', 'mdCompileOverlay', 'overlayClosable',
+//        'autoAttrFiles'
+    ];
 
 
 
@@ -118,7 +129,9 @@ class Page
             return;
         }
         foreach ($page as $key => $value) {
-            if (is_object($value)) { continue; } // skip aux objects
+            if (!in_array($key, $this->pageElements)) { // skip properties that are not page-elements
+                continue;
+            }
 
             if (($key == 'wrapperTag') || (strpos($propertiesToReplace, $key) !== false)) {
                 $this->appendValue($key, $value, true);
@@ -587,7 +600,7 @@ class Page
 
     //....................................................
     public function prepareBodyEndInjections()
-    // interatively collects snippets for js, jq, bodyTopInjection, bodyEndInjection (text)
+    // interatively collects snippets for js, jq, bodyTopInjections, bodyEndInjection (text)
     {
         $modified = false;
 
@@ -908,7 +921,7 @@ EOT;
     {
         $html = $this->template;
 
-        $html = $this->applyBodyTopInjection($html, $this->bodyTopInjection);
+        $html = $this->applyBodyTopInjection($html, $this->bodyTopInjections);
         $html = $this->trans->adaptBraces($html);
 
 
