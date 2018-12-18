@@ -225,13 +225,39 @@ class Lizzy
             return;
         }
 
+        $all = $class = false;
+        $selector = $this->config->site_extractSelector;
+        if ($_GET['extract']) {
+            $selector = $_GET['extract'];
+            $selector = str_replace('_', ' ', $_GET['extract']);
+        }
+        if (strpos($selector, '*') !== false) {
+            $all = true;
+            $selector = str_replace('*', '', $selector);
+        } elseif (($p=strpos($selector, '.')) !== false) {
+            $all = true;
+            $class = substr($selector, $p+1);
+            $selector = substr($selector, 0, $p);
+        }
+
         $crawler = new Crawler($html0);
 
-        $crawler = $crawler->filter('body');
-
+        $crawler = $crawler->filter($selector);
+        $html = '';
         foreach ($crawler as $domElement) {
-            $html = $domElement->ownerDocument->saveHTML($domElement);
-            break;
+            $h = $domElement->ownerDocument->saveHTML($domElement);
+            if ($class) {
+                if (preg_match("/^[^\>]*$class/", $h)) {
+                    $html .= $h."\n\n";
+                    continue;
+                }
+            } else {
+                $html .= $h."\n\n";
+            }
+            if (!$all) {
+                break;
+            }
+//            $html .= "\n<!-- ---- -->\n";
         }
         $html0 = str_replace('<body', '<div', $html);
     } // doExtract
