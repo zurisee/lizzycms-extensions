@@ -46,6 +46,8 @@ $files = ['config/user_variables.yaml', '_lizzy/config/*', '_lizzy/macros/transv
 
 
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\DomCrawler\Crawler;
+
 
 require_once SYSTEM_PATH.'auxiliary.php';
 require_once SYSTEM_PATH.'vendor/autoload.php';
@@ -211,9 +213,28 @@ class Lizzy
             $html = $this->page->lateApplyMessag($html, $timerMsg);
 		}
 
+		$this->doExtract($html);
         return $html;
     } // render
 
+
+
+    private function doExtract( &$html0 )
+    {
+        if (!$this->config->feature_enableAllowOrigin || !isset($_GET['extract'])) {
+            return;
+        }
+
+        $crawler = new Crawler($html0);
+
+        $crawler = $crawler->filter('body');
+
+        foreach ($crawler as $domElement) {
+            $html = $domElement->ownerDocument->saveHTML($domElement);
+            break;
+        }
+        $html0 = str_replace('<body', '<div', $html);
+    } // doExtract
 
 
 

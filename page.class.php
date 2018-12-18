@@ -915,13 +915,22 @@ EOT;
 
     private function injectAllowOrigin()
     {
-        $_SERVER['HTTP_ORIGIN'] = 'https://usility.ch';
-        if (!$this->allowOrigin || !isset($_SERVER['HTTP_ORIGIN'])) {
+//$_SERVER['HTTP_ORIGIN'] = 'https://usility.ch';
+        if ($this->config->feature_enableAllowOrigin == false) {
+            return;
+
+        } elseif (is_string($this->config->feature_enableAllowOrigin)) {
+            $allowOrigin = $this->config->feature_enableAllowOrigin;
+        } else {
+            $allowOrigin = $this->allowOrigin;
+        }
+
+        if (!$allowOrigin || !isset($_SERVER['HTTP_ORIGIN'])) {
             return;
         }
 
-        $allowedOrigins = str_replace(' ', '', ",{$this->allowOrigin},");
-        $currRequestOrigin = ','.$_SERVER['HTTP_ORIGIN'].',';
+        $allowedOrigins = str_replace(' ', '', ",{$allowOrigin},");
+        $currRequestOrigin = ',' . $_SERVER['HTTP_ORIGIN'] . ',';
         if (strpos($allowedOrigins, $currRequestOrigin)) {
             header('Access-Control-Allow-Origin: ' . $currRequestOrigin);
         }
