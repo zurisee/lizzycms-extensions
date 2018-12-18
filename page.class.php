@@ -43,12 +43,12 @@ class Page
     private $assembledJs = '';
     private $assembledJq = '';
 
-    private $pageElements = [
-        'template', 'content', 'head', 'description', 'keywords',
-        'cssFiles', 'css', 'jsFiles', 'js', 'jqFiles', 'jq',
-        'bodyTopInjections', 'bodyEndInjections',
-        'pageSubstitution', 'override','overlay','debugMsg', 'message', 'popup',
-    ];
+//    private $pageElements = [
+//        'template', 'content', 'head', 'description', 'keywords',
+//        'cssFiles', 'css', 'jsFiles', 'js', 'jqFiles', 'jq',
+//        'bodyTopInjections', 'bodyEndInjections',
+//        'pageSubstitution', 'override','overlay','debugMsg', 'message', 'popup',
+//    ];
 
 
 
@@ -125,7 +125,8 @@ class Page
             return;
         }
         foreach ($page as $key => $value) {
-            if (!in_array($key, $this->pageElements)) { // skip properties that are not page-elements
+            if (is_object($value)) { // skip properties that are not page-elements
+//            if (!in_array($key, $this->pageElements)) { // skip properties that are not page-elements
                 continue;
             }
 
@@ -341,7 +342,10 @@ class Page
     public function addOverride($str, $replace = false, $mdCompile = true)
     {
         $this->addToProperty('override', $str, $replace);
-        $this->mdCompileOverride = $mdCompile;
+//        $this->mdCompileOverride = $mdCompile;
+        if ($mdCompile !== null) {  // only override, if explicitly mentioned
+            $this->mdCompileOverride = $mdCompile;
+        }
     } // addOverride
 
 
@@ -440,7 +444,7 @@ class Page
         if ($o = $this->get('override', true)) {
             if ($this->mdCompileOverride) {
                 $o = compileMarkdownStr($o);
-                $this->mdCompileOverride = false;
+//                $this->mdCompileOverride = false;
             }
             $this->addContent($o, true);
             return true;
@@ -1016,7 +1020,8 @@ EOT;
     {
         $pg2 = clone $this;
         foreach ($pg2 as $key => $value) {
-            if (!in_array($key, $this->pageElements)) {
+            if (is_object($value)) {
+//            if (!in_array($key, $this->pageElements)) {
                 unset( $pg2->$key );
             }
         }
