@@ -33,6 +33,8 @@ class Page
     private $overlay = false;    // if set, will add an overlay while the original page gets fully rendered
     private $debugMsg = false;
 
+    private $allowOrigin = false;
+
     private $mdCompileOverride = false;
     private $mdCompileOverlay = false;
     private $overlayClosable = true;
@@ -903,8 +905,27 @@ EOT;
         $html = $this->injectValue($html, 'content', $this->content);
         $html = $this->injectValue($html, 'body_end_injections', $this->getBodyEndInjections());
 
+        $this->injectAllowOrigin();
+
         return $html;
     } // assembleHtml
+
+
+
+
+    private function injectAllowOrigin()
+    {
+        $_SERVER['HTTP_ORIGIN'] = 'https://usility.ch';
+        if (!$this->allowOrigin || !isset($_SERVER['HTTP_ORIGIN'])) {
+            return;
+        }
+
+        $allowedOrigins = str_replace(' ', '', ",{$this->allowOrigin},");
+        $currRequestOrigin = ','.$_SERVER['HTTP_ORIGIN'].',';
+        if (strpos($allowedOrigins, $currRequestOrigin)) {
+            header('Access-Control-Allow-Origin: ' . $currRequestOrigin);
+        }
+    } // injectAllowOrigin
 
 
 
