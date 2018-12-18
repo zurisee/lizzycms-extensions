@@ -331,24 +331,6 @@ footer a {
 @-webkit-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
 @-moz-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
 @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
-.Warning, .WarningBox {
-    opacity:1;  /* make things visible upon start */
-    -webkit-animation:fadeOut ease-out;
-    -moz-animation:fadeOut ease-out;
-    animation:fadeOut ease-out;
-    
-    -webkit-animation-fill-mode:forwards; 
-    -moz-animation-fill-mode:forwards;
-    animation-fill-mode:forwards;
- 
-    -webkit-animation-duration:5s;
-    -moz-animation-duration:5s;
-    animation-duration:5s;
-}
-.Warning:hover, .WarningBox:hover {
-    /*-webkit-animation:none;*/
-	animation-play-state: paused;
-}
 .MsgBox, .WarningBox {
 	position: absolute!important;
 	top: 5px;
