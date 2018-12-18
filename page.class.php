@@ -43,14 +43,6 @@ class Page
     private $assembledJs = '';
     private $assembledJq = '';
 
-//    private $pageElements = [
-//        'template', 'content', 'head', 'description', 'keywords',
-//        'cssFiles', 'css', 'jsFiles', 'js', 'jqFiles', 'jq',
-//        'bodyTopInjections', 'bodyEndInjections',
-//        'pageSubstitution', 'override','overlay','debugMsg', 'message', 'popup',
-//    ];
-
-
 
 
     public function __construct($lzy = false)
@@ -126,7 +118,6 @@ class Page
         }
         foreach ($page as $key => $value) {
             if (is_object($value)) { // skip properties that are not page-elements
-//            if (!in_array($key, $this->pageElements)) { // skip properties that are not page-elements
                 continue;
             }
 
@@ -342,7 +333,6 @@ class Page
     public function addOverride($str, $replace = false, $mdCompile = true)
     {
         $this->addToProperty('override', $str, $replace);
-//        $this->mdCompileOverride = $mdCompile;
         if ($mdCompile !== null) {  // only override, if explicitly mentioned
             $this->mdCompileOverride = $mdCompile;
         }
@@ -444,7 +434,6 @@ class Page
         if ($o = $this->get('override', true)) {
             if ($this->mdCompileOverride) {
                 $o = compileMarkdownStr($o);
-//                $this->mdCompileOverride = false;
             }
             $this->addContent($o, true);
             return true;
