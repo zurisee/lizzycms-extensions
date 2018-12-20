@@ -905,7 +905,7 @@ EOT;
         $html = $this->injectValue($html, 'content', $this->content);
         $html = $this->injectValue($html, 'body_end_injections', $this->getBodyEndInjections());
 
-        $this->injectAllowOrigin();
+        $this->injectAllowOrigin(); // send 'Access-Control-Allow-Origin' in header
 
         return $html;
     } // assembleHtml
@@ -913,6 +913,7 @@ EOT;
 
 
 
+    //....................................................
     private function injectAllowOrigin()
     {
 //$_SERVER['HTTP_ORIGIN'] = 'https://usility.ch';
@@ -929,7 +930,7 @@ EOT;
             return;
         }
 
-        $allowedOrigins = str_replace(' ', '', ",{$allowOrigin},");
+        $allowedOrigins = str_replace(' ', '', ",$allowOrigin,");
         $currRequestOrigin = ',' . $_SERVER['HTTP_ORIGIN'] . ',';
         if (strpos($allowedOrigins, $currRequestOrigin)) {
             header('Access-Control-Allow-Origin: ' . $currRequestOrigin);

@@ -213,12 +213,12 @@ class Lizzy
             $html = $this->page->lateApplyMessag($html, $timerMsg);
 		}
 
-		$this->doExtract($html);
+//		$this->doExtract($html);
         return $html;
     } // render
 
 
-
+/*
     private function doExtract( &$html0 )
     {
         if (!$this->config->feature_enableAllowOrigin || !isset($_GET['extract'])) {
@@ -261,7 +261,7 @@ class Lizzy
         }
         $html0 = str_replace('<body', '<div', $html);
     } // doExtract
-
+*/
 
 
     private function resolveAllPaths( &$html )
