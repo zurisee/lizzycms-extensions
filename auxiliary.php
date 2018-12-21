@@ -994,10 +994,10 @@ function safeStr($str, $permitNL = false)
 	}
 	$str = substr($str, 0, MAX_URL_ARG_SIZE);	// restrict size to safe value
     if ($permitNL) {
-        $str = preg_replace("/[^[:print:]À-ž\n\t]/m", '#', $str);
+        $str = preg_replace("/[^[:print:]À-ž\n\t]/m", ' ', $str);
 
     } else {
-        $str = preg_replace('/[^[:print:]À-ž]/m', '#', $str);
+        $str = preg_replace('/[^[:print:]À-ž]/m', ' ', $str);
     }
 	return $str;
 } // safeStr
