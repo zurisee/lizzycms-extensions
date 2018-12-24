@@ -18,7 +18,13 @@ $this->addMacro($macroName, function () {
     $res = false;
     $state = strtolower($state);
 
-    if ($state == 'islocalhost') {
+    if ($state == 'true') {
+        $res = true;
+
+    } elseif ($state == 'false') {
+        $res = false;
+
+    } elseif ($state == 'islocalhost') {
         $res = isLocalCall();
 
     } elseif ($state == 'isprivileged') {
@@ -55,11 +61,69 @@ $this->addMacro($macroName, function () {
     $this->optionAddNoComment = true;
 
     if ($res) {
+        $then =  evalResult($this, $then);
         return $then;
     } else {
+        $else =  evalResult($this, $else);
         return $else;
     }
 });
+
+
+
+function evalResult($trans, $code)
+{
+    $out = $code;
+    if (preg_match('/^\%(\w+):(.*)/', $code, $m)) {
+        $code = $m[1];
+        $arg = trim($m[2]);
+        $out = '';
+        switch ($code) {
+            case 'redirect' :
+                $trans->page->addRedirect($arg);
+                break;
+
+            case 'message' :
+                $trans->page->addMessage($arg);
+                break;
+
+            case 'debugMsg' :
+                $trans->page->addDebugMsg($arg);
+                break;
+
+            case 'overlay' :
+                $trans->page->addOverlay($arg);
+                $trans->page->setOverlayMdCompile(true);
+                break;
+
+            case 'override' :
+                $trans->page->addOverride($arg);
+                $trans->page->setOverrideMdCompile(true);
+                break;
+
+            case 'pageSubstitution' :
+                $trans->page->addPageSubstitution($arg);
+                break;
+
+            case 'description' :
+                $trans->page->addDescription($arg);
+                break;
+
+            case 'keywords' :
+                $trans->page->addKeywords($arg);
+                break;
+
+            case 'popup' :
+                $trans->page->addPopup($arg);
+                break;
+
+            default:
+                $out = $code;
+        }
+    }
+    return $out;
+}
+
 
 
 function evalOp($arg, $op, $val) {
