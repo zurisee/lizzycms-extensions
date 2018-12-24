@@ -114,7 +114,8 @@ class Transvar
 
                 } else { // not commented
                     if (strpos($var, '{{') !== false) {     // nested transvar/macros
-                        $var = $this->doTranslate($var, $iterationDepth + 1);
+                        $modified |= $this->doTranslate($var, $iterationDepth + 1);
+//                        $var = $this->doTranslate($var, $iterationDepth + 1);
                     }
 
                     $var = str_replace("\n", '', $var);    // remove newlines

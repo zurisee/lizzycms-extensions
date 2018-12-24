@@ -136,6 +136,9 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js', 'weight' => 92);
         $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 92);
 
+        $this->loadModules['JCONFIRM']                = array('module' => 'third-party/jconfirm/jquery-confirm.min.js', 'weight' => 86);
+        $this->loadModules['JCONFIRM_CSS']            = array('module' => 'third-party/jconfirm/jquery-confirm.min.css', 'weight' => 86);
+
         $this->loadModules['POPUPS']                = array('module' => 'js/popup.js', 'weight' => 85);
         $this->loadModules['POPUPS_CSS']            = array('module' => 'css/popup.css', 'weight' => 85);
 
