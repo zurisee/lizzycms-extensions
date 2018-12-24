@@ -46,6 +46,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_autoLoadClassBasedModules' => [true, '[false|true] If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
             'feature_autoLoadJQuery'            => [false, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
             'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
+            'feature_enableAllowOrigin'         => [false, '[true|false] If true, Lizzy allows to produce a "allow origin" header' ],
             'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
             'feature_filterRequestString'       => [false, '[true|false] If true, permits only regular text in requests. Special characters and anything enclosed by them will be discarded.' ],
             'feature_jQueryModule'              => ['JQUERY', 'One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
@@ -70,6 +71,7 @@ private $userConfigurableSettingsAndDefaults      = [
 
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
             'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
+            'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
             'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],

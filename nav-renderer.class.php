@@ -340,7 +340,7 @@ EOT;
             $navClass = $this->options['navClass'];
 
             // apply top-margin for exanding variants: lzy-nav-accordion and lzy-nav-top-horizontal:
-            if (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') !== false) &&
+            if (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') !== false) ||
                     (strpos($navClass, 'lzy-nav-accordion') !== false))) {
                 $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
             } else {
