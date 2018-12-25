@@ -7,8 +7,12 @@ $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');
+    $this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
+    $inx = $this->invocationCounter[$macroName] + 1;
 
     $file = $this->getArg($macroName, 'file', 'Identifies the file to be included', '');
+    $contentFrom = $this->getArg($macroName, 'contentFrom', "If set, Lizzy attempts to retrieve content from that source. '#id' -> from within page: 'url' -> from other webpage", '');
+    $id = $this->getArg($macroName, 'id', 'ID to be used for the target element', '');
     $folder = $this->getArg($macroName, 'folder', 'Identifies the folder to be included', '');
     $reverseOrder = $this->getArg($macroName, 'reverseOrder', '[true,false] If true, renders included objects in reverse order.', false);
     $wrapperTag = $this->getArg($macroName, 'wrapperTag', '(optional) HTML-tag in which to wrap the content of each included file', false);
@@ -32,6 +36,19 @@ $this->addMacro($macroName, function () {
         if ($wrapperTag) {
             $str = "\n@@1@@\n$str\n@@2@@\n\n";
         }
+    }
+
+    if ($contentFrom) {
+        $id = $id ? $id : "include$inx";
+        $jq = '';
+        // . or # -> jq, else .load
+        if (($contentFrom{0} == '.') || ($contentFrom{0} == '#')) {
+            $jq = "$('#$id').html( $('$contentFrom').html() );";
+        } else {
+            $jq = "$('#$id').load( '$contentFrom' );";
+        }
+        $this->page->addJq($jq);
+        $str = "<div id='$id'></div>\n";
     }
 
     if ($folder) {
