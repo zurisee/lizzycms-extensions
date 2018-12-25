@@ -36,8 +36,8 @@ class Page
     private $redirect = false;
 
     private $mdCompileOverride = false;
-    private $mdCompileOverlay = false;
-    private $overlayClosable = true;
+//    private $mdCompileOverlay = false;
+//    private $overlayClosable = true;
     private $wrapperTag = 'section';
 
 //    private $assembledBodyEndInjections = '';
@@ -45,6 +45,7 @@ class Page
     private $assembledJs = '';
     private $assembledJq = '';
 
+    private $metaElements = ['lzy', 'trans', 'config', 'metaElements']; // items that shall not be merged
 
 
     public function __construct($lzy = false)
@@ -120,7 +121,8 @@ class Page
             return;
         }
         foreach ($page as $key => $value) {
-            if (is_object($value) || is_array($value)) { // skip properties that are not page-elements
+//            if ((is_object($value) || is_array($value)) && !in_array($key, $this->metaElements)) { // skip properties that are not page-elements
+            if (in_array($key, $this->metaElements)) { // skip properties that are not page-elements
                 continue;
             }
 
@@ -292,7 +294,7 @@ class Page
 
 
     //-----------------------------------------------------------------------
-    public function addPopup($inx, $args)
+    public function addPopup($args)
     {
         if (isset($args[0]) && ($args[0] == 'help')) {
             return $this->renderPopupHelp();
@@ -303,43 +305,30 @@ class Page
 
 
 
-    //-----------------------------------------------------------------------
-    private function parsePopupRequests()
-    {
-        if (!$this->popup) {
-            return;
-        }
-        $str = trim($this->popup);
-        if (strpos($str, '{') === 0) {
-            $entries = preg_split('/(?<!\})\}(?!\})/x', $str);
-        } else {
-            $entries[] = $str;
-        }
-
-        foreach ($entries as $str) {
-            if (!$str) {continue;}
-            $str = preg_replace('/^\s*\{/', '', $str);
-            $this->popups[] = parseArgumentStr($str);
-        }
-
-    } // parsePopupRequests
-
 
     //-----------------------------------------------------------------------
     public function applyPopup()
     {
-        if (!$this->popupInx) {
-            $this->parsePopupRequests();
+        if ($this->popup) {
+            $this->popups[] = $this->popup;
+            $this->popup = false;
+        }
+        if (!$this->popups) {
+            return;
+        }
+        if (!isset($this->popups[0])) {
+            $this->popups[0] = $this->popups;
         }
 
         foreach ($this->popups as $args) {
-
-
             $header = isset($args['header']) ? $args['header'] : '';
+            $header .= isset($args['title']) ? $args['title'] : '';
             $text = isset($args['text']) ? "'".$args['text']."'" : "''";
             $contentFrom = isset($args['contentFrom']) ? $args['contentFrom'] : '';
             $class = isset($args['class']) ? $args['class'] : '';
             $type = isset($args['type']) ? $args['type'] : 'alert';
+            $flavor = isset($args['flavor']) ? $args['flavor'] : '';
+            $columnClass = isset($args['columnClass']) ? $args['columnClass'] : '';
             $confirmCallback = isset($args['confirmCallback']) ? $args['confirmCallback'] : '';
 
             $width = isset($args['width']) ? $args['width'] : '';
@@ -400,6 +389,13 @@ EOT;
             if ($class) {
                 $class = "onOpenBefore: function() { $('.jconfirm').addClass('$class');},\n";
             }
+            if (strpos(',alert,dialog,confirm,', ",$type,") === false) {
+                $flavor = $type;
+                $type = 'alert';
+            }
+            $flavor = $flavor? "type: '$flavor',\n" : '';
+
+            $columnClass = $columnClass? "columnClass: '$columnClass'," : '';
 
             $aux = '';
             $auxOptions = '';
@@ -412,8 +408,6 @@ EOT;
                 if (($triggerEvent == 'right-click') || ($triggerEvent == 'contextmenu')) {
                     $triggerEvent = 'contextmenu';
                     $aux = "$('$triggerSource').css('user-select', 'none');";
-//                } elseif ($triggerEvent == 'mouseover') {
-//                    $aux = "$('$triggerSource').bind('mouseout', function() { \$popup.close();});";
                 }
 
                 $jq = <<<EOT
@@ -424,7 +418,7 @@ $('$triggerSource').bind("$triggerEvent",function(e) {
         title: '$header',
         content: $content,
         buttons: {  $buttonOption $confirmCallback},
-        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class
+        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class$flavor$columnClass
     });
 });
 $aux
@@ -494,13 +488,17 @@ EOT;
 
 
     //-----------------------------------------------------------------------
-    public function addOverlay($str, $replace = false, $mdCompile = null, $closable = true)
+    public function addOverlay($args, $replace = false, $mdCompile = null, $closable = true)
     {
-        $this->addToProperty('overlay', $str, $replace);
-        if ($mdCompile !== null) {  // only override, if explicitly mentioned
-            $this->mdCompileOverlay = $mdCompile;
+        if (is_string($args)) {
+            $args = ['text' => $args, 'mdCompile' => $mdCompile, 'closable' => $closable];
+//            $this->addToProperty('overlay', $str, $replace);
+//            if ($mdCompile !== null) {  // only override, if explicitly mentioned
+//                $this->mdCompileOverlay = $mdCompile;
+//            }
         }
-        $this->overlayClosable = $closable;
+        $this->overlay = $args;
+//        $this->overlayClosable = $closable;
     } // addOverlay
 
 
@@ -598,7 +596,7 @@ EOT;
     //....................................................
     public function setOverlayClosable($on = true)
     {
-        $this->overlayClosable = $on;
+        $this->overlay['closable'] = $on;
     }
 
 
@@ -606,56 +604,92 @@ EOT;
     //....................................................
     public function applyOverlay()
     {
-        $overlay = $this->overlay;
-
-        if ($overlay) {
-            if (!$this->popupInx) {
-                $this->popupInx = 1;
-                $this->addCssFiles('JCONFIRM_CSS');
-                $this->addJQFiles('JCONFIRM');
-
-                $jq = <<<EOT
-    jconfirm.defaults = {
-        backgroundDismiss: true,
-        closeIcon: true,
-        useBootstrap: false,
-    };
-
-EOT;
-                $this->addJQ($jq);
-            } else {
-                $this->popupInx++;
-            }
-
-            if ($this->mdCompileOverlay) {
-                $overlay = compileMarkdownStr($overlay);
-            }
-
-            $header = 'Header';
-            $closable = ($this->overlayClosable) ? 'true': 'false';
-            $jq = <<<EOT
-$.dialog({
-    title: function() { return $("#lzy-overlay h1").text(); },    
-    content: function() { return $('#lzy-overlay').html(); },
-    onOpenBefore: function() { $('.jconfirm').addClass('lzy-overlay'); },
-    onOpen: function() { $('.jconfirm-content h1').remove(); },
-    backgroundDismiss: $closable,
-    closeIcon: true,
-    useBootstrap: false,
-    boxWidth: '92vw',
-    animation: 'none',
-});
-
-EOT;
-
-            $this->addJQ($jq);
-            $this->addBody("<div id='lzy-overlay' class='lzy-overlay dispno'>$overlay</div>\n");
-            $this->removeModule('jqFiles', 'PAGE_SWITCHER');
-            $this->overlay = false;
-            return true;
+        if (!$this->overlay) {
+            return false;
         }
-        return false;
+
+        $text = $jq = '';
+        $overlay = $this->overlay;
+        if (is_string($overlay)) {
+            $overlay = ['text' => $overlay, 'mdCompile' => true, 'closable' => true];
+        }
+
+        if (isset($overlay['contentFrom'])) {
+            $jq = "$('#lzy-overlay').html( $( '{$overlay['contentFrom']}' ).html() )\n";
+        } elseif (isset($overlay['text'])) {
+            $text = $overlay['text'];
+
+            if (!isset($overlay['mdCompile']) || $overlay['mdCompile']) {
+                $text = compileMarkdownStr($text);
+            }
+        }
+
+        if (!isset($overlay['closable']) || $overlay['closable']) {
+            $text = "<button id='lzy-close-overlay' class='lzy-close-overlay'>✕</button>\n".$text;
+            // set ESC to close overlay:
+            $jq .="\n$('body').keydown( function (e) { if (e.which == 27) { $('.lzy-overlay').hide(); } });\n".
+                "$('#lzy-close-overlay').click(function() { $('.lzy-overlay').hide(); });\n";
+        }
+        $this->addJq($jq);
+        $this->addBody("<div id='lzy-overlay' class='lzy-overlay'>$text</div>\n");
+        $this->removeModule('jqFiles', 'PAGE_SWITCHER');
+        $this->overlay = false;
+        return true;
     } // applyOverlay
+
+//    //....................................................
+//    public function applyOverlay()
+//    {
+//        $overlay = $this->overlay;
+//
+//        if ($overlay) {
+//            if (!$this->popupInx) {
+//                $this->popupInx = 1;
+//                $this->addCssFiles('JCONFIRM_CSS');
+//                $this->addJQFiles('JCONFIRM');
+//
+//                $jq = <<<EOT
+//    jconfirm.defaults = {
+//        backgroundDismiss: true,
+//        closeIcon: true,
+//        useBootstrap: false,
+//    };
+//
+//EOT;
+//                $this->addJQ($jq);
+//            } else {
+//                $this->popupInx++;
+//            }
+//
+//            if ($this->mdCompileOverlay) {
+//                $overlay = compileMarkdownStr($overlay);
+//            }
+//
+//            $header = 'Header';
+//            $closable = ($this->overlayClosable) ? 'true': 'false';
+//            $jq = <<<EOT
+//$.dialog({
+//    title: function() { return $("#lzy-overlay h1").text(); },
+//    content: function() { return $('#lzy-overlay').html(); },
+//    onOpenBefore: function() { $('.jconfirm').addClass('lzy-overlay'); },
+//    onOpen: function() { $('.jconfirm-content h1').remove(); },
+//    backgroundDismiss: $closable,
+//    closeIcon: true,
+//    useBootstrap: false,
+//    boxWidth: '92vw',
+//    animation: 'none',
+//});
+//
+//EOT;
+//
+//            $this->addJQ($jq);
+//            $this->addBody("<div id='lzy-overlay' class='lzy-overlay dispno'>$overlay</div>\n");
+//            $this->removeModule('jqFiles', 'PAGE_SWITCHER');
+//            $this->overlay = false;
+//            return true;
+//        }
+//        return false;
+//    } // applyOverlay
 
 
 

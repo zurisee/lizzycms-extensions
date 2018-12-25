@@ -379,6 +379,7 @@ footer a {
 	margin: 30px 0 0 0;
 }
 
+/*
 .lzy-overlay .jconfirm-content > div {
     width: 100%;
 }
@@ -389,8 +390,8 @@ footer a {
 .jconfirm.jconfirm-white .jconfirm-box .jconfirm-buttons button, .jconfirm.jconfirm-light .jconfirm-box .jconfirm-buttons button {
     text-transform: none;
 }
+*/
 
-/*
 .lzy-overlay {
 	position: fixed;
 	top: 0;
@@ -415,8 +416,8 @@ footer a {
     font-size: 16pt;
     width: 2em;
     height: 2em;
-  }
-*/
+}
+
 .able div {
 	box-sizing: content-box;
 }
