@@ -40,8 +40,22 @@ Submit:
     en: Submit
     
 submit:
-    de: Absenden
-    en: Send
+    de: absenden
+    en: send
+
+Confirm:
+    de: Bestätigen
+    en: Confirm
+confirm:
+    de: bestätigen
+    en: confirm
+
+Continue:
+    de: Weiter
+    en: Continue
+Continue_:
+    de: Weiter...
+    en: Continue...
 
 File to upload:
     de: Datei(en) hochladen

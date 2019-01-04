@@ -45,7 +45,7 @@ class Page
     private $assembledJs = '';
     private $assembledJq = '';
 
-    private $metaElements = ['lzy', 'trans', 'config', 'metaElements']; // items that shall not be merged
+    private $metaElements = ['lzy', 'trans', 'config', 'metaElements', 'popupInstance']; // items that shall not be merged
 
 
     public function __construct($lzy = false)
@@ -59,6 +59,7 @@ class Page
             $this->trans = null;
             $this->config = false;
         }
+        $this->popupInstance = new PopupWidget($this);
     }
 
 
@@ -293,172 +294,171 @@ class Page
 
 
 
-    //-----------------------------------------------------------------------
-    public function addPopup($args)
-    {
-        if (isset($args[0]) && ($args[0] == 'help')) {
-            return $this->renderPopupHelp();
-        }
-        $this->popups[] = $args;
-        return "\t<!-- lzy-popup invoked -->\n";
-    } // addPopup
-
-
-
-
-    //-----------------------------------------------------------------------
-    public function applyPopup()
-    {
-        if ($this->popup) {
-            $this->popups[] = $this->popup;
-            $this->popup = false;
-        }
-        if (!$this->popups) {
-            return;
-        }
-        if (!isset($this->popups[0])) {
-            $this->popups[0] = $this->popups;
-        }
-
-        foreach ($this->popups as $args) {
-            $header = isset($args['header']) ? $args['header'] : '';
-            $header .= isset($args['title']) ? $args['title'] : '';
-            $text = isset($args['text']) ? "'".$args['text']."'" : "''";
-            $contentFrom = isset($args['contentFrom']) ? $args['contentFrom'] : '';
-            $class = isset($args['class']) ? $args['class'] : '';
-            $type = isset($args['type']) ? $args['type'] : 'alert';
-            $flavor = isset($args['flavor']) ? $args['flavor'] : '';
-            $columnClass = isset($args['columnClass']) ? $args['columnClass'] : '';
-            $confirmCallback = isset($args['confirmCallback']) ? $args['confirmCallback'] : '';
-
-            $width = isset($args['width']) ? $args['width'] : '';
-            $triggerSource = isset($args['triggerSource']) ? $args['triggerSource'] : '';
-            $triggerEvent = isset($args['triggerEvent']) ? $args['triggerEvent'] : 'click';
-            $showCloseButton = (isset($args['showCloseButton']) && ($args['showCloseButton'] === 'false')) ? 'false' : '';
-            $closeOnBgClick = (isset($args['closeOnBgClick']) && ($args['closeOnBgClick'] === 'false')) ? 'false' : '';
-            $buttons = isset($args['buttons']) ? $args['buttons'] : '';
-            $theme = isset($args['theme']) ? $args['theme'] : '';
-            $delay = isset($args['delay']) ? $args['delay'] : '0';
-
-
-            if (!$this->popupInx) {
-                $this->popupInx = 1;
-                $this->addCssFiles('JCONFIRM_CSS');
-                $this->addJQFiles('JCONFIRM');
-
-                $jq = <<<EOT
-    jconfirm.defaults = {
-        backgroundDismiss: true,
-        closeIcon: true,
-        useBootstrap: false,
-    };
-
-EOT;
-                $this->addJQ($jq);
-            } else {
-                $this->popupInx++;
-            }
-
-            $content = $text;
-            if ($contentFrom) {
-                $content = "function() { return $('$contentFrom').html(); }";
-            }
-
-            if ($width) {
-                $width = "boxWidth: '$width',\n";
-            }
-
-            $buttonOption = '';
-            if ($buttons) {
-                $buttons = explode('|', $buttons);
-                foreach ($buttons as $button) {
-                    list($buttonName, $function) = explode(':', $button);
-                    $buttonOption .= "$buttonName: function() { $function },";
-                }
-            }
-            if ($closeOnBgClick) {
-                $closeOnBgClick = "backgroundDismiss: $closeOnBgClick,\n";
-            }
-            if ($showCloseButton) {
-                $showCloseButton = "closeIcon: $showCloseButton,\n";
-            }
-
-            if ($theme) {
-                $theme = "theme: '$theme',\n";
-            }
-            if ($class) {
-                $class = "onOpenBefore: function() { $('.jconfirm').addClass('$class');},\n";
-            }
-            if (strpos(',alert,dialog,confirm,', ",$type,") === false) {
-                $flavor = $type;
-                $type = 'alert';
-            }
-            $flavor = $flavor? "type: '$flavor',\n" : '';
-
-            $columnClass = $columnClass? "columnClass: '$columnClass'," : '';
-
-            $aux = '';
-            $auxOptions = '';
-            if ($confirmCallback) {
-                $confirmCallback = "confirm: function() { $confirmCallback }";
-            } else {
-                $confirmCallback = '';
-            }
-            if ($triggerSource) {
-                if (($triggerEvent == 'right-click') || ($triggerEvent == 'contextmenu')) {
-                    $triggerEvent = 'contextmenu';
-                    $aux = "$('$triggerSource').css('user-select', 'none');";
-                }
-
-                $jq = <<<EOT
-
-$('$triggerSource').bind("$triggerEvent",function(e) {
-    e.preventDefault();
-    \$popup = $.$type({
-        title: '$header',
-        content: $content,
-        buttons: {  $buttonOption $confirmCallback},
-        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class$flavor$columnClass
-    });
-});
-$aux
-
-EOT;
-
-            } else {
-
-                $jq = <<<EOT
-$.$type({
-    title: '$header',
-    content: $content,
-    $closeOnBgClick$showCloseButton$theme$auxOptions$confirmCallback$width$class
-});
-
-EOT;
-            }
-            if ($delay) {
-                $jq = "setTimeout(function() {\n$jq}, $delay);\n";
-            }
-            $this->addJQ($jq);
-        }
-        $this->popups = [];
-    } // applyPopup
-
-
-
-    //-----------------------------------------------------------------------
-    public function registerPopupContent($id, $popupForm)
-    {
-        if (!$this->popup) {
-            require_once SYSTEM_PATH.'popup.class.php';
-            $this->popup = new PopupWidget($this);
-            $this->popup->createPopupTemplate();
-        }
-
-        $this->popup->registerPopupContent($id, $popupForm);
-    } // registerPopupContent
-
-
+//    //-----------------------------------------------------------------------
+//    public function addPopup($args)
+//    {
+//        if (isset($args[0]) && ($args[0] == 'help')) {
+//            return $this->renderPopupHelp();
+//        }
+//        $this->popups[] = $args;
+//        return "\t<!-- lzy-popup invoked -->\n";
+//    } // addPopup
+//
+//
+//
+//
+//    //-----------------------------------------------------------------------
+//    public function applyPopup()
+//    {
+//        if ($this->popup) { // in frontmatter it's possible to to use popup (singular)
+//            $this->popups[] = $this->popup;
+//            $this->popup = false;
+//        }
+//        if (!$this->popups) {
+//            return;
+//        }
+//
+//        if (!isset($this->popups[0])) {
+//            $this->popups[0] = $this->popups;
+//        }
+//
+//        foreach ($this->popups as $args) {
+//            $header = isset($args['header']) ? $args['header'] : '';
+//            $header .= isset($args['title']) ? $args['title'] : '';
+//            $text = isset($args['text']) ? "'".$args['text']."'" : "''";
+//            $contentFrom = isset($args['contentFrom']) ? $args['contentFrom'] : '';
+//            $class = isset($args['class']) ? $args['class'] : '';
+//            $type = isset($args['type']) ? $args['type'] : 'alert';
+//            $flavor = isset($args['flavor']) ? $args['flavor'] : '';
+//            $theme = isset($args['theme']) ? $args['theme'] : '';
+//            $delay = isset($args['delay']) ? $args['delay'] : '0';
+//            $width = isset($args['width']) ? $args['width'] : '';
+//            $draggable = isset($args['draggable']) ? $args['draggable'] : '';
+//            $triggerSource = isset($args['triggerSource']) ? $args['triggerSource'] : '';
+//            $triggerEvent = isset($args['triggerEvent']) ? $args['triggerEvent'] : 'click';
+//            $showCloseButton = (isset($args['showCloseButton']) && ($args['showCloseButton'] === 'false')) ? 'false' : '';
+//            $closeOnBgClick = (isset($args['closeOnBgClick']) && ($args['closeOnBgClick'] === 'false')) ? 'false' : '';
+//            $buttons = isset($args['buttons']) ? $args['buttons'] : '';
+//
+//
+//            if (!$this->popupInx) {
+//                $this->popupInx = 1;
+//                $this->addCssFiles('JCONFIRM_CSS');
+//                $this->addJQFiles('JCONFIRM');
+//
+//                $jq = <<<EOT
+//    jconfirm.defaults = {
+//        backgroundDismiss: true,
+//        closeIcon: true,
+//        useBootstrap: false,
+//    };
+//
+//EOT;
+//                $this->addJQ($jq);
+//            } else {
+//                $this->popupInx++;
+//            }
+//
+//            $content = $text;
+//            if ($contentFrom) {
+//                $content = "function() { return $('$contentFrom').html(); }";
+//            }
+//
+//            if ($width) {
+//                $width = "boxWidth: '$width',\n";
+//            }
+//
+//            $buttonOption = '';
+//            if ($buttons) {
+//                $buttons = explode('|', $buttons);
+//                foreach ($buttons as $button) {
+//                    list($buttonName, $function) = explode(':', $button);
+//                    $buttonOption .= "$buttonName: function() { $function },";
+//                }
+//            }
+//            if ($closeOnBgClick) {
+//                $closeOnBgClick = "backgroundDismiss: $closeOnBgClick,\n";
+//            }
+//            if ($showCloseButton) {
+//                $showCloseButton = "closeIcon: $showCloseButton,\n";
+//            }
+//
+//            if ($theme) {
+//                $theme = "theme: '$theme',\n";
+//            }
+//            if ($draggable != 'false') {
+//                $class = $class ? "$class draggable " : 'draggable';
+//            }
+//            if ($class) {
+//                $class = "onOpenBefore: function() { $('.jconfirm').addClass('$class');},\n";
+//            }
+//            if (strpos(',alert,dialog,confirm,', ",$type,") === false) {
+//                $flavor = $type;
+//                $type = 'alert';
+//            }
+//            $flavor = $flavor? "type: '$flavor',\n" : '';
+//
+//            $draggable = $draggable ? "draggable: $draggable,\n" : '';
+//
+//
+//            $aux = '';
+//            $auxOptions = '';
+//            if ($triggerSource && ($triggerEvent != 'none')) {
+//                if (($triggerEvent == 'right-click') || ($triggerEvent == 'contextmenu')) {
+//                    $triggerEvent = 'contextmenu';
+//                    $aux = "$('$triggerSource').css('user-select', 'none');";
+//                }
+//
+//                $jq = <<<EOT
+//
+//$('$triggerSource').bind("$triggerEvent",function(e) {
+//    e.preventDefault();
+//    \$popup{$this->popupInx} = $.$type({
+//        title: '$header',
+//        content: $content,
+//        buttons: {  $buttonOption},
+//        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class$flavor$draggable
+//    });
+//});
+//$aux
+//
+//EOT;
+//            } else {
+//                if ($triggerEvent == 'none') {
+//                    $auxOptions = "lazyOpen: true,\n";
+//                }
+//                $jq = <<<EOT
+//\$popup{$this->popupInx} = $.$type({
+//    title: '$header',
+//    content: $content,
+//        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class$flavor$draggable
+//});
+//
+//EOT;
+//            }
+//            if ($delay) {
+//                $jq = "setTimeout(function() {\n$jq}, $delay);\n";
+//            }
+//            $this->addJQ($jq);
+//        }
+//        $this->popups = [];
+//    } // applyPopup
+//
+//
+//
+//    //-----------------------------------------------------------------------
+//    public function registerPopupContent($id, $popupForm)
+//    {
+//        if (!$this->popup) {
+//            require_once SYSTEM_PATH.'popup.class.php';
+//            $this->popup = new PopupWidget($this);
+//            $this->popup->createPopupTemplate();
+//        }
+//
+//        $this->popup->registerPopupContent($id, $popupForm);
+//    } // registerPopupContent
+//
+//
 
     //-----------------------------------------------------------------------
     public function setOverrideMdCompile($mdCompile)
@@ -492,13 +492,8 @@ EOT;
     {
         if (is_string($args)) {
             $args = ['text' => $args, 'mdCompile' => $mdCompile, 'closable' => $closable];
-//            $this->addToProperty('overlay', $str, $replace);
-//            if ($mdCompile !== null) {  // only override, if explicitly mentioned
-//                $this->mdCompileOverlay = $mdCompile;
-//            }
         }
         $this->overlay = $args;
-//        $this->overlayClosable = $closable;
     } // addOverlay
 
 
@@ -636,61 +631,6 @@ EOT;
         $this->overlay = false;
         return true;
     } // applyOverlay
-
-//    //....................................................
-//    public function applyOverlay()
-//    {
-//        $overlay = $this->overlay;
-//
-//        if ($overlay) {
-//            if (!$this->popupInx) {
-//                $this->popupInx = 1;
-//                $this->addCssFiles('JCONFIRM_CSS');
-//                $this->addJQFiles('JCONFIRM');
-//
-//                $jq = <<<EOT
-//    jconfirm.defaults = {
-//        backgroundDismiss: true,
-//        closeIcon: true,
-//        useBootstrap: false,
-//    };
-//
-//EOT;
-//                $this->addJQ($jq);
-//            } else {
-//                $this->popupInx++;
-//            }
-//
-//            if ($this->mdCompileOverlay) {
-//                $overlay = compileMarkdownStr($overlay);
-//            }
-//
-//            $header = 'Header';
-//            $closable = ($this->overlayClosable) ? 'true': 'false';
-//            $jq = <<<EOT
-//$.dialog({
-//    title: function() { return $("#lzy-overlay h1").text(); },
-//    content: function() { return $('#lzy-overlay').html(); },
-//    onOpenBefore: function() { $('.jconfirm').addClass('lzy-overlay'); },
-//    onOpen: function() { $('.jconfirm-content h1').remove(); },
-//    backgroundDismiss: $closable,
-//    closeIcon: true,
-//    useBootstrap: false,
-//    boxWidth: '92vw',
-//    animation: 'none',
-//});
-//
-//EOT;
-//
-//            $this->addJQ($jq);
-//            $this->addBody("<div id='lzy-overlay' class='lzy-overlay dispno'>$overlay</div>\n");
-//            $this->removeModule('jqFiles', 'PAGE_SWITCHER');
-//            $this->overlay = false;
-//            return true;
-//        }
-//        return false;
-//    } // applyOverlay
-
 
 
 
@@ -1119,7 +1059,7 @@ EOT;
                 }
             }
 
-            $modified |= $this->applyPopup();
+            $modified |= $this->popupInstance->applyPopup();
 
             // check, whether we need to auto-invoke modules based on classes:
             if ($this->config->feature_autoLoadClassBasedModules) {
@@ -1318,49 +1258,58 @@ EOT;
     }
 
 
-    private function renderPopupHelp()
-    {
-        $str = <<<EOT
-<h2>Options for macro <em>popup()</em></h2>
-<dl>
-	<dt>header:</dt>
-		<dd>(optional text) If set, a header will be included in the popup box </dd>
-		
-	<dt>text:</dt>
-		<dd>(optional text) If set, it will be displayed as the popup content</dd>
-		
-	<dt>contentFrom:</dt>
-		<dd>(optional CSS-selector) If set, content of the corresponding element will be retrieved and displayed in the popup</dd>
-		
-	<dt>width:</dt>
-		<dd>(optional length) Will set the popup's width</dd>
-		
-	<dt>draggable:</dt>
-		<dd>(optional) [true|false] Permits the popup to be moved around on screen (Default is true)</dd>
-		
-	<dt>triggerSource:</dt>
-		<dd>(optional CSS-selector) Specifies the element that shall trigger opening the popup &ndash; if omitted the popup will appear immediately after loading</dd>
-		
-	<dt>triggerEvent:</dt>
-		<dd>(optional) [click|dblclick|right-click|focus|blur] Specifies the type of event that shall trigger the popup</dd>
-		
-	<dt>closeOnBgClick:</dt>
-		<dd>(optional) [true|false] If true, clicking on the background closes the popup. (Default is false)</dd>
-		
-	<dt>showCloseButton:</dt>
-		<dd>(optional) [true|false] If true, a close button will be displayed in the upper right corner (Default is false)</dd>
-
-	<dt>there:</dt>
-		<dd>(optional) [light|dark|material|bootstrap] Color theme for the dialog (Default is light)</dd>
-
-	<dt>delay:</dt>
-		<dd>(optional) [time in ms] If present, will delay opeing the popup by the specified delay in milliseconds</dd>
-
-</dl>
-
-EOT;
-
-        return $str;
-    }
+//    private function renderPopupHelp()
+//    {
+//        $str = <<<EOT
+//<h2>Options for macro <em>popup()</em></h2>
+//<dl>
+//	<dt>header:</dt>
+//		<dd>(optional text) If set, a header will be included in the popup box </dd>
+//
+//	<dt>text:</dt>
+//		<dd>(optional text) If set, it will be displayed as the popup content</dd>
+//
+//	<dt>contentFrom:</dt>
+//		<dd>(optional CSS-selector) If set, content of the corresponding element will be retrieved and displayed in the popup</dd>
+//
+//	<dt>class:</dt>
+//		<dd>(optional) Will class be applied to the popup structure (i.e. outermost .jconfirm div)</dd>
+//
+//	<dt>type:</dt>
+//		<dd>[alert|dialog|confirm] Defines the type of the popup (see jconfirm for details)</dd>
+//
+//	<dt>flavor:</dt>
+//		<dd>[blue|green|red|orange|purple|dark] Defines the color scheme of the popup (see jconfirm for details, there it's called 'type')</dd>
+//
+//	<dt>theme:</dt>
+//		<dd>[light|dark|material|bootstrap|supervan] Defines the theme of the popup (see jconfirm for details)</dd>
+//
+//	<dt>delay:</dt>
+//		<dd>[ms] Defines a delay before opening the popup (if it's not triggered by a click)</dd>
+//
+//	<dt>width:</dt>
+//		<dd>(optional length) Will set the popup's width</dd>
+//
+//	<dt>draggable:</dt>
+//		<dd>(optional) [true|false] Permits the popup to be moved around on screen (Default is true)</dd>
+//
+//	<dt>triggerSource:</dt>
+//		<dd>(optional CSS-selector) Specifies the element that shall trigger opening the popup &ndash; if omitted the popup will appear immediately after loading</dd>
+//
+//	<dt>triggerEvent:</dt>
+//		<dd>(optional) [click|dblclick|right-click|focus|blur|none] Specifies the type of event that shall trigger the popup (Default is click)</dd>
+//
+//	<dt>closeOnBgClick:</dt>
+//		<dd>(optional) [true|false] If true, clicking on the background closes the popup. (Default is true)</dd>
+//
+//	<dt>showCloseButton:</dt>
+//		<dd>(optional) [true|false] If true, a close button will be displayed in the upper right corner (Default is true)</dd>
+//
+//</dl>
+//
+//EOT;
+//
+//        return $str;
+//    }
 
 } // Page
