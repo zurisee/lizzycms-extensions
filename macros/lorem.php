@@ -2,21 +2,6 @@
 
 // @info: Adds pseudo text to the page.
 
-/*
-** For manipulating the embedding page, use $page:
-**		$page->addHead('')
-**		$page->addCssFiles('')
-**		$page->addCss('')
-**		$page->addJsFiles('')
-**		$page->addJs('')
-**		$page->addJqFiles('')
-**		$page->addJq('')
-**		$page->addBodyEndInjections('')
-**		$page->addMessage('')
-**		$page->addPageReplacement('')
-**		$page->addOverride('')
-**		$page->addOverlay('')
-*/
 
 $macroName = basename(__FILE__, '.php');
 
@@ -27,16 +12,19 @@ $this->addMacro($macroName, function () {
     $min = $this->getArg($macroName, 'min', '(optional) defines the minimum of a randomly chosen number of words out of "lorem ipsum"', '');
     $max = $this->getArg($macroName, 'max', '(optional) defines the minimum of a randomly chosen number of words out of "lorem ipsum"', '');
     $dot = $this->getArg($macroName, 'dot', '[true,false] specifies whether generated text shall be terminated by a dot "."', true);
+    $class = $this->getArg($macroName, 'class', '(optional) If set, wraps the string in a div and applies the class', '');
 
-    $words = explode(' ', 'Lörem üpsüm dolor sit ämet, consectetur adipisici elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ');
-	$nWords = sizeof($words) - 1;
-	$min = intval($min);
-	
+    $lorem = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.';
+
+
 	if (!$min) {
-		$str = implode(' ', $words);
+		$str = $lorem;
 		
 	} else {
-		if (!intval($max)) {
+        $words = explode(' ', $lorem);
+        $nWords = sizeof($words) - 1;
+        $min = intval($min);
+        if (!intval($max)) {
 			$n = $min;
 		} else {
 			$n = rand($min, min($nWords, $max));
@@ -51,5 +39,8 @@ $this->addMacro($macroName, function () {
 			$str .= '.';
 		}
 	}
+	if ($class) {
+	    $str = "<div class='$class'>$str</div>";
+    }
 	return ucfirst( $str );
 });
