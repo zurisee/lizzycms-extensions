@@ -35,13 +35,16 @@ function setupEventHandlers()
     });
 
 
-    $('.lzy-editor-btn').click(function() {
+    // content edit button:
+    // $('.lzy-editor-btn').click(function() {
+    $('.lzy-src-wrapper:not(.lzy-edit-sitemap) .lzy-editor-btn').click(function() {
         $editBtn = $(this);
         startEditor( $editBtn );
     });
 
 
-    $('.lzy-editor-wrapper').click(function() {
+    // $('.lzy-editor-wrapper').click(function() {
+    $('.lzy-editor-wrapper:not(.lzy-edit-sitemap)').click(function() {
         if (simplemde === null) {   // avoid starting editor if already started
             var $wrapper = $(this).parent();
             $editBtn = $('.lzy-editor-btn', $wrapper);
@@ -51,6 +54,7 @@ function setupEventHandlers()
 
 
 
+    // sitemap edit button:
     $('.lzy-edit-sitemap .lzy-editor-btn').click(function() {
         startSitemapEditor();
     });
@@ -93,6 +97,7 @@ function setupKeyHandlers()
 
             if (keyCode == 27) {	// ESC -> end editing mode
                 abortEditor();
+                lzyReload();
                 return false;
             }
         }
@@ -109,7 +114,6 @@ function setupKeyHandlers()
             if (simplemde === null) {
                 startEditor( $editBtn );
             } else {
-                hideElements(false);
                 $editBtn.show();
                 simplemde.toTextArea();
                 simplemde = null;
@@ -127,14 +131,17 @@ function setupKeyHandlers()
 
 function startEditor( $editBtn ) {
     $editBtn.hide();
-    hideElements(true);
+    // hideElements(true);
     $('body').addClass('lzy-editing');
     var $section = $editBtn.parent();
-    $edWrapper = $('div', $section);
-    origText = $edWrapper.html();
-    $edWrapper.html('');
+    var $edWrapper0 = $('#lzy-editor-dock-wrapper');
+    $edWrapper0.show();
+    $edWrapper0.draggable({ handle: ".editor-toolbar" }).resizable();    // using jQueryIU
+
     $section.addClass('lzy-editing');
     filename = $section.attr('data-lzy-filename');
+    $edWrapper = $('#lzy-editor-dock');
+    $edWrapper.html('');
 
     $.ajax({
         type: "POST",
@@ -189,8 +196,14 @@ function startEditor( $editBtn ) {
 
 function startSitemapEditor() {
     $('body').addClass('lzy-editing');
-    $edWrapper = $('.lzy-src-wrapper.lzy-nav-wrapper');
-    origText = $edWrapper.html();
+    // $edWrapper = $('.lzy-src-wrapper.lzy-nav-wrapper');
+    // origText = $edWrapper.html();
+    var $edWrapper0 = $('#lzy-editor-dock-wrapper');
+    $edWrapper0.show();
+    $edWrapper0.draggable({ handle: ".editor-toolbar" }).resizable();    // using jQueryIU
+
+    $edWrapper = $('#lzy-editor-dock');
+    $edWrapper.html('').addClass('lzy-edit-sitemap');
 
     filename = 'sitemap';
     $.ajax({
@@ -207,7 +220,8 @@ function startSitemapEditor() {
                 placeholder: 'Hier schreiben...',
                 autofocus: true,
                 allowAtxHeaderWithoutSpace: true,
-                toolbar: false,
+                // toolbar: false,
+                toolbar: ['fullscreen'],
                 tabSize: 8,
             });
             $('.lzy-cancel-btn').click(function() {
@@ -232,7 +246,6 @@ function startSitemapEditor() {
 
 function abortEditor()
 {
-	hideElements(false);
 	$editBtn.show();
 	simplemde.toTextArea();
 	simplemde = null;
@@ -266,9 +279,6 @@ function showFiles( that )
 
 function saveSitemapData( leaveEditor )
 {
-	if (leaveEditor) {
-		hideElements(false);
-	}
 	var sitemap = simplemde.value();
     sitemap = encodeURI(sitemap);   // -> php urldecode() to decode
 	$.ajax({
@@ -297,10 +307,10 @@ function saveData( obj, leaveEditor )
         return saveSitemapData( leaveEditor );
     }
 
-	if (leaveEditor) {
-		hideElements(false);
-		$editBtn.show();
-	}
+	// if (leaveEditor) {
+	// 	hideElements(false);
+	// 	$editBtn.show();
+	// }
 	var mdStr = simplemde.value();
     mdStr = encodeURI(mdStr);   // -> php urldecode() to decode
 	$.ajax({
@@ -341,21 +351,3 @@ function customMarkdownParser(mdStr, preview)
 
 
 
-
-
-function hideElements( state ) {
-    if (typeof admin_hideWhileEditing == 'object') {
-        admin_hideWhileEditing.forEach(function (elem) {
-            if (state || (typeof state == 'unknown')) {
-                $(elem).hide();
-            } else {
-                $(elem).show();
-            }
-        });
-    }
-    if (state || (typeof state == 'unknown')) {
-        $('.lzy-admin-hideWhileEditing').hide();
-    } else {
-        $('.lzy-admin-hideWhileEditing').show();
-    }
-} // hideElements

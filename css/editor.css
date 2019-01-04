@@ -2,6 +2,26 @@
 ** Styles for editing
 */
 
+#lzy-editor-dock-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: calc(100vw - 30px);
+	height: calc(100vh - 20px);
+	margin: 10px;
+	background: #eee;
+	border: 1px solid red;
+	box-shadow: 0 0 15px 5px #444;
+	box-sizing: border-box;
+	z-index: 99999;
+}
+#lzy-editor-dock {
+	overflow: auto;
+	height: 100%;
+	width:  100%;
+}
+
+
 .lzy-src-wrapper {
 	padding: 0;
     position: relative;

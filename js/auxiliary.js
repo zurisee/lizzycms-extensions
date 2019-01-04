@@ -53,7 +53,10 @@ function serverLog(text)
 //--------------------------------------------------------------
 function lzyReload()
 {
-    location.reload();
+    console.log('initiating page reload');
+    // location.reload(true);
+    var call = window.location.pathname.replace(/\?.*/, '');
+    window.location.assign(call);
 }
 
 
