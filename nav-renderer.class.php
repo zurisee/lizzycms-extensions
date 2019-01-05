@@ -123,8 +123,18 @@ class NavRenderer
         $this->horizTop = (strpos($navClass, 'lzy-nav-top-horizontal') !== false);
         $this->openCurr = (strpos($navClass, 'lzy-nav-open-current') !== false);
         $this->collapse = (strpos($navClass, 'lzy-nav-collapsed') !== false);
+        $this->currBranch = (strpos($navOptions, 'curr-branch') !== false);
+        $this->currBranchEmpty = true;
+//        $currBranch = false;
+//        if (strpos($navOptions,'curr-branch') !== false) {
+//            $currBranch = true;
+//        }
 
         $nav = $this->_renderSitemap(false, $type, 0, "\t\t", $navOptions);
+
+        if ($this->currBranch && $this->currBranchEmpty) {
+            return null;
+        }
 
         $navClass = trim('lzy-nav '.$navClass);
         $navClass = " class='$navClass'";
@@ -296,6 +306,9 @@ EOT;
             if ($currBranch && !$activeAncestor) {
                 continue;
             }
+            if ($level > 1) {
+                $this->currBranchEmpty = false;
+            }
 
             if ($this->listWrapper) {
                 $listWrapper = "$indent\t  <{$this->listWrapper} $aria>\n";
@@ -324,6 +337,8 @@ EOT;
                         $out .= "$_listWrapper$indent\t  </$li>\n";
                         $modif = true;
                         $hasChildren = true;
+                    } else {
+                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n\t</$li>";
                     }
 
                 } else {
@@ -347,8 +362,8 @@ EOT;
                 $out = "$indent<{$this->listTag}$ulClass>\n".$out;
             }
             $out .= "$indent</{$this->listTag}>\n";
-        } else {
-            $out = '';
+//        } else {
+//            $out = '';
         }
         return $out;
     } // _renderSitemap
