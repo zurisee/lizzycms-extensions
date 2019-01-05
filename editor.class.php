@@ -42,7 +42,7 @@ class ContentEditor
         }
         $this->html .= $this->injectUploader($filePath);
         $this->page->addContent($this->html, true);
-        $this->addEditorDock();
+        $this->addEditorDock($filePath);
         $this->page->addJQFiles('~sys/third-party/jqueryui/drag-resize/jquery-ui.min.js');
         $this->page->addCssFiles('~sys/third-party/jqueryui/drag-resize/jquery-ui.min.css');
 
@@ -52,7 +52,8 @@ class ContentEditor
 
     private function addEditorDock()
     {
-        $html = "\t<div id='lzy-editor-dock-wrapper' style='display: none;'><div id='lzy-editor-dock'></div></div>\n";
+        $file = "<div class='lzy-editing-filename'></div>";
+        $html = "\t<div id='lzy-editor-dock-wrapper' style='display: none;'>$file<div id='lzy-editor-dock'></div></div>\n";
         $this->page->addBody($html);
     } // addEditorDock
 

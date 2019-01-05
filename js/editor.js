@@ -142,6 +142,7 @@ function startEditor( $editBtn ) {
     filename = $section.attr('data-lzy-filename');
     $edWrapper = $('#lzy-editor-dock');
     $edWrapper.html('');
+    $('.lzy-editing-filename').text(filename);
 
     $.ajax({
         type: "POST",
@@ -206,6 +207,7 @@ function startSitemapEditor() {
     $edWrapper.html('').addClass('lzy-edit-sitemap');
 
     filename = 'sitemap';
+    $('.lzy-editing-filename').text('config/sitemap.txt');
     $.ajax({
         type: "POST",
         url: systemPath + '_ajax_server.php?getfile',

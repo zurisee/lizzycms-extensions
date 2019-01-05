@@ -17,10 +17,18 @@
 }
 #lzy-editor-dock {
 	overflow: auto;
-	height: 100%;
-	width:  100%;
+	width: 100%;
+	height:  calc(100% - 2em);
+	margin-top: 2em;
+	/*width:  100%;*/
 }
 
+.lzy-editing-filename {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 3px 0 0 5px;
+}
 
 .lzy-src-wrapper {
 	padding: 0;
@@ -52,9 +60,7 @@ main > .lzy-src-wrapper, .lzy-file-uploader {
 }
 .lzy-file-uploader.container {
 	margin-top: 10px;
-	padding-top: 10px;
-	padding-right: 0;
-    padding-left: 0;
+    padding: 0;
 	width: inherit;
 	clear: both;
 }
@@ -63,13 +69,13 @@ main > .lzy-src-wrapper, .lzy-file-uploader {
 }
 .lzy-editing div.lzy-edit-btns {
 	position: absolute;
-	top: 0;
+	top: 2em;
 	right: 0;
 	z-index: 99;
 }
 .lzy-editing div.lzy-edit-btns button {
-	width: 51px;
-	height: 51px;
+	width: 50px;
+	height: 50px;
 }
 .CodeMirror, 
 .CodeMirror-scroll {
@@ -118,11 +124,12 @@ main > .lzy-src-wrapper, .lzy-file-uploader {
 }
 
 div.lzy-ed-selector {
-    float: right;
-    border: 1px solid olive;
-    display:  inline-block;
-    padding:  3px 11px;
-    margin: 0 0 10px;
+	border: 1px dotted #c9e139;
+	padding: 3px 11px;
+	margin: 0 0 10px -1px;
+	position: absolute;
+	width: calc(100% + 2px);
+	text-align: right;
 }
 .lzy-ed-selector > span.lzy-ed-selector,
 .lzy-ed-selector-save,
@@ -178,4 +185,8 @@ span.lzy-ed-dropdown select {
 
 .editor-statusbar {
     height: 30px;
+}
+
+.lzy-edit-sitemap .editor-toolbar a {
+	margin-left: -40px;
 }

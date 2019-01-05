@@ -28,7 +28,7 @@ class FileUpload
         $html = <<<EOT
 
 <div class="lzy-file-uploader container">
-    <button id='lzy-show-files-btn'>Show Files</button>
+    <button id='lzy-show-files-btn' class="lzy-button">Show Files</button>
     <!-- The file upload form used as target for the file upload widget -->
     <form id="lzy-fileupload" action="" method="POST" enctype="multipart/form-data" data-upload-path="$filePath">
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
