@@ -17,7 +17,7 @@ class FileUpload
     {
         $this->page->addCssFiles([
             //	<!-- Bootstrap styles -->
-            '//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css',
+            //'//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css',
             //	<!-- Generic page styles -->
             '~sys/third-party/jquery-upload/css/style.css',
             //'~sys/third-party/jquery-upload/css/blueimp-gallery.min.css',
