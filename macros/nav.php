@@ -3,8 +3,7 @@
 // @info: Renders a navigation menu.
 require_once SYSTEM_PATH.'nav-renderer.class.php';
 
-$this->page->addJqFiles('NAV');
-$this->page->addCssFiles('NAV_CSS');
+$this->page->addModules('NAV');
 
 
 $macroName = basename(__FILE__, '.php');

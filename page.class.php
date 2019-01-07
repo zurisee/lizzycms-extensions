@@ -4,6 +4,12 @@
  *
  *	Page and its Components
  *
+ *  Modules-Array: $file => $rank
+ *      -> derived from file-ext
+ *      -> rank: counter / from defaults
+ *          -> same rank -> replace previous entry
+// *  Modules-Array: $file => [$rank, $type ]
+// * $type: css, js
 */
 
 define('MAX_ITERATION_DEPTH', 10);
@@ -17,6 +23,10 @@ class Page
     private $head = '';
     private $description = '';
     private $keywords = '';
+    private $modulesInitialized = false;
+    private $cssModules = false;
+    private $jsModules = false;
+    private $modules = '';
     private $cssFiles = '';
     private $css = '';
     private $jsFiles = '';
@@ -111,7 +121,7 @@ class Page
             $this->$key = $value;
             return false;
         }
-    }
+    } // appendValue
 
 
 
@@ -122,9 +132,12 @@ class Page
             return;
         }
         foreach ($page as $key => $value) {
-//            if ((is_object($value) || is_array($value)) && !in_array($key, $this->metaElements)) { // skip properties that are not page-elements
             if (in_array($key, $this->metaElements)) { // skip properties that are not page-elements
                 continue;
+            }
+
+            if ($key == 'modules') {
+                $value = ','.$value;
             }
 
             if (($key == 'wrapperTag') || (strpos($propertiesToReplace, $key) !== false)) {
@@ -133,10 +146,11 @@ class Page
                 $this->appendValue($key, $value);
             }
         }
-    }
+    } // merge
 
 
 
+    //-----------------------------------------------------------------------
     public function getEncoded()
     {
         $encoded = serialize($this);
@@ -196,7 +210,8 @@ class Page
     //-----------------------------------------------------------------------
     public function addCssFiles($str, $replace = false)
     {
-        $this->addToListProperty($this->cssFiles, $str, $replace);
+//        $this->addToListProperty($this->cssFiles, $str, $replace);
+        $this->addModules($str, $replace);
     } // cssFiles
 
 
@@ -210,9 +225,32 @@ class Page
 
 
     //-----------------------------------------------------------------------
+    public function addModules($modules, $replace = false)
+    {
+        if ($replace) {
+            $this->modules = '';
+        }
+
+        if (is_string($modules)) {
+            $this->modules .= ','.$modules;
+
+        } elseif (is_array($modules)) {
+            foreach ($modules as $item) {
+                if (is_string($item)) {
+                    $this->modules .= ','.$item;
+                }
+            }
+        }
+    } // addModules
+
+
+
+
+    //-----------------------------------------------------------------------
     public function addJsFiles($str, $replace = false, $persisent = false)
     {
-        $this->addToListProperty($this->jsFiles, $str, $replace);
+//        $this->addToListProperty($this->jsFiles, $str, $replace);
+        $this->addModules($str, $replace);
 		if ($persisent) {
 			$_SESSION['lizzy']["lizzyPersistentJsFiles"] .= $str;
 		}
@@ -239,7 +277,8 @@ class Page
     //-----------------------------------------------------------------------
     public function addJQFiles($str, $replace = false)
     {
-        $this->addToListProperty($this->jqFiles, $str, $replace);
+//        $this->addToListProperty($this->jqFiles, $str, $replace);
+        $this->addModules($str, $replace);
     } // addJQFiles
 
 
@@ -814,21 +853,23 @@ EOT;
     {
         $bodyEndInjections = $this->bodyEndInjections;
 
-        if ($this->jsFiles) {
-            $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
-        }
+        $bodyEndInjections .= $this->getModules('js');
 
-        // jQuery needs to be loaded if any jq code is present:
-        if ($this->jq && !$this->jqFiles) {
-            $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
-        }
-        if ($this->jqFiles) {
-            $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
-        }
+//        if ($this->jsFiles) {
+//            $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
+//        }
+//
+//        // jQuery needs to be loaded if any jq code is present:
+//        if ($this->jq && !$this->jqFiles) {
+//            $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
+//        }
+//        if ($this->jqFiles) {
+//            $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
+//        }
 
-        if ($this->get('lightbox')) {
-            $bodyEndInjections .= $this->lightbox;
-        }
+//        if ($this->get('lightbox')) {
+//            $bodyEndInjections .= $this->lightbox;
+//        }
 
         $screenSizeBreakpoint = $this->config->feature_screenSizeBreakpoint;
         $pathToRoot = $this->lzy->pathToRoot;
@@ -884,113 +925,105 @@ EOT;
 
 
     //....................................................
-    private function getModules($type, $key)
+    private function getModules($type)
     {
-        global $globalParams;
-
-        $jQloaded = false;
-
-        // makes sure that explicit version of JQUERY gets precedence over unspecific one
-        $key = str_replace(',', "\n", $key);
-        $lines = explode("\n", $key);
-        $modules = array(0 => '');
-        $sys = '~/'.SYSTEM_PATH; //$this->config->systemHttpPath;
         $out = '';
-        $jQweight = $this->config->jQueryWeight;
-        foreach($lines as $mod) {
-            $mod = trim($mod);
-            $urlArg = '';
-            if (preg_match('/(.*)(\?.*)/', $mod, $m)) {
-                $mod = $m[1];
-                $urlArg = $m[2];
-            }
-            if (in_array($mod, array_keys($this->config->loadModules))) {
-                if (empty($modules[$this->config->loadModules[$mod]['weight']])) {
-                    if (($mod == 'JQUERY') || preg_match('/^JQUERY\d/', $mod)) {	// call for jQuery (but not jQueryUI etc)
-                        if ($jQloaded == false) {
-                            $modules[$this->config->loadModules[$mod]['weight']] = $mod;
-                            $jQloaded = true;
-                        }
-                    } else {
-                        $name = $sys.$this->config->loadModules[$mod]['module'];
-                        if (strpos($name, ',') !== false) {     // case multiple files sep by comma:
-                            foreach (explode(',', $name) as $i => $item) {
-                                $modules[$this->config->loadModules[$mod]['weight']+$i] = $item . $urlArg;
-                            }
-                        } else {
-                            $modules[$this->config->loadModules[$mod]['weight']] = $name . $urlArg;
-                        }
-                    }
-                } else {
-                    $prevMod = $modules[$this->config->loadModules[$mod]['weight']];
-                    if (strcmp($mod, $prevMod) > 0) {
-                        $modules[$this->config->loadModules[$mod]['weight']] = $mod.$urlArg;
-                    }
-                }
-            } else {
-                if (!$mod || strpos($modules[0], $mod) !== false) {
-                    continue;
-                }
-                if ($type == 'js') {
-                    if (strpos($mod, "<script") !== false) {
-                        $modules[0] .= $mod.$urlArg;
-                    } else {
-                        $modules[0] .= "<script src='$mod'></script>\n";
-                    }
-                } else  {
-                    if (strpos($mod, "<link") !== false) {
-                        $modules[0] .= $mod.$urlArg;
-                    } else {
-                        $modules[0] .= "<link   href='$mod' rel='stylesheet'>\n";
-                    }
-                }
-            }
+        if (!$this->modulesInitialized) {
+            $this->prepareModuleLists();
         }
 
-
-        if (isset($modules[$jQweight]) && (strpos($modules[$jQweight], 'JQUERY') === 0)) {
-            if ($globalParams['legacyBrowser']) {
-                writeLog("Legacy-Browser -> jQuery1 loaded.");
-                $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
-            } else {
-                $modules[$jQweight] = $sys . $this->config->loadModules[$modules[$jQweight]]['module'];
+        if ($type == 'css') {
+            foreach ($this->cssModules as $item) {
+                $item = resolvePath($item);
+                $out .= "\t<link href='$item' rel='stylesheet' />\n";
             }
+
+        } else {
+            foreach ($this->jsModules as $item) {
+                $item = resolvePath($item);
+                $out .= "\t<script src='$item'></script>\n";
+            }
+
         }
 
-
-        if (($type == 'js') && (sizeof($modules) > 1) && !isset($modules[$jQweight])) {	// automatically prepend jQuery if missing
-            if ($jQloaded == false) {
-                if ($globalParams['legacyBrowser']) {
-                    writeLog("Legacy-Browser -> jQuery1 loaded.");
-                    $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY1']['module'];
-                } else {
-                    $modules[$jQweight] = $sys . $this->config->loadModules['JQUERY']['module'];
-                }
-                $jQloaded = true;
-            }
-        }
-        ksort($modules);
-        while (isset($modules[0]) && !$modules[0]) {
-            array_shift($modules);
-        }
-        while ($mod = array_pop($modules)) {
-            if ($type == 'js') {
-                if (strpos($mod, "<script") !== false) {
-                    $out .= "\t$mod\n";
-                } else {
-                    $out .= "\t<script src='$mod'></script>\n";
-                }
-            } else  {
-                if (strpos($mod, "<link") !== false) {
-                    $out .= "\t$mod\n";
-                } else {
-                    $out .= "\t<link   href='$mod' rel='stylesheet'>\n";
-                }
-            }
-        }
         return $out;
     } // getModules
 
+
+
+
+    //-----------------------------------------------------------------------
+    public function prepareModuleLists()
+    {
+        $str = ','.$this->modules.','.$this->cssFiles.','.$this->jsFiles.','.$this->jqFiles;
+//        $str = str_replace('|', ',', $str);
+
+        if (preg_match_all('/,(JQUERY\s?),/', $str, $m)) {
+            if (sizeof($m) == 1) {
+                $str = str_replace('JQUERY,', '', $str);
+            }
+
+        } elseif ($this->config->feature_autoLoadJQuery != false) {
+            $str = ','.$this->config->feature_jQueryModule . ','.$str;
+        }
+
+        // Invoke jQuery version 1 if support for legacy browsers is required:
+        if ($this->config->isLegacyBrowser) {
+            $str = str_replace(',JQUERY,',',JQUERY1,', $str);
+        }
+
+        $str = str_replace(',,', ',', trim($str, ', '));
+        $rawModules = preg_split('/\s*,+\s*/', $str);
+
+        $modules = [];
+        $primaryModules = [];
+        foreach ($rawModules as $i => $module) {
+            if (!$module) {
+                continue;
+            }
+            if (isset($this->config->loadModules[$module])) {
+                $str = $this->config->loadModules[$module]['module'];
+                $rank = $this->config->loadModules[$module]['weight'];
+                if (strpos($str, ',') !== false) {
+                    $mods = preg_split('/\s*,+\s*/', $str);
+                    foreach ($mods as $j => $mod) {
+                        if (($mod{0} != '~') && (strpos($mod, '//') === false)) {
+                            $mod = '~sys/'.$mod;
+                        }
+                        $primaryModules[] = [$mod, $rank];
+                    }
+                } else {
+                    if (($str{0} != '~') && (strpos($str, '//') === false)) {
+                        $str = '~sys/'.$str;
+                    }
+                    $primaryModules[] = [$str, $rank];
+                }
+            } else {
+                $modules[] = $module;
+            }
+        }
+
+        usort($primaryModules, function($a, $b) { return ($a[1] < $b[1]); });
+        $primaryModules = array_column($primaryModules, 0);
+        $modules = array_merge($primaryModules,$modules);
+        $cssModules = [];
+        $jsModules = [];
+        foreach ($modules as $mod) {
+            if (preg_match('/\.css$/i', $mod)) {    // split between css and js files
+                if (!in_array($mod, $cssModules)) {         // avoid doublets
+                    $cssModules[] = $mod;
+                }
+            } else {
+                if (!in_array($mod, $jsModules)) {         // avoid doublets
+                    $jsModules[] = $mod;
+                }
+            }
+        }
+        $this->cssModules = $cssModules;
+        $this->jsModules = $jsModules;
+        $this->modulesInitialized = true;
+
+    } // prepareModuleLists
 
 
 

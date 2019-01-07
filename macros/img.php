@@ -38,8 +38,8 @@ $this->addMacro($macroName, function () {
     if ($this->config->feature_quickview || $quickview || (strpos($class, 'lzy-quickview') !== false)) {
         $class .= ' lzy-quickview';
         if (!isset($this->page->quickviewLoaded)) {
-            $this->page->addCssFiles('QUICKVIEW_CSS');
-            $this->page->addJqFiles('QUICKVIEW');
+//            $this->page->addCssFiles('QUICKVIEW_CSS');
+            $this->page->addModules('QUICKVIEW');
             $this->page->addJq("\t$('img.lzy-quickview').quickview();");
             $this->page->quickviewLoaded = true;
         }

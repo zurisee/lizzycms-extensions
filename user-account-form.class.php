@@ -11,7 +11,7 @@ class UserAccountForm
     {
         global $lizzyAccountCounter;
         $this->infoIcon = $infoIcon;
-        if ($GLOBALS['globalParams']['legacyBrowser']) {
+        if (!isset($GLOBALS['globalParams']['legacyBrowser']) || $GLOBALS['globalParams']['legacyBrowser']) {
             $this->infoIcon = '(i)';
         }
         if ($lzy) {
@@ -25,7 +25,8 @@ class UserAccountForm
             $adminTransvars = resolvePath('~sys/config/admin.yaml');
             $this->trans->readTransvarsFromFile($adminTransvars);
             $this->checkInsecureConnection();
-            $this->page->addCssFiles('USER_ADMIN_CSS');
+            $this->page->addModules('USER_ADMIN');
+//            $this->page->addCssFiles('USER_ADMIN_CSS');
         } else {
             $this->config = null;
             $this->page = null;
@@ -218,8 +219,9 @@ $delete
 
 EOT;
 
-        $this->page->addJQFiles('USER_ADMIN');
-        $this->page->addCssFiles('USER_ADMIN_CSS,~/css/user_admin.css' );
+        $this->page->addModules('USER_ADMIN, ~/css/user_admin.css' );
+//        $this->page->addJQFiles('USER_ADMIN');
+//        $this->page->addCssFiles('USER_ADMIN_CSS,~/css/user_admin.css' );
 
 
         return $html;

@@ -6,8 +6,8 @@ $this->readTransvarsFromFile('~sys/config/useradmin.yaml');
 
 $macroName = basename(__FILE__, '.php');
 
-$page->addJqFiles('USER_ADMIN');
-$page->addCssFiles('USER_ADMIN_CSS');
+$page->addModules('USER_ADMIN');
+//$page->addCssFiles('USER_ADMIN_CSS');
 
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');

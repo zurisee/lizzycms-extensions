@@ -195,9 +195,9 @@ class Lizzy
             $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
         }
 
-        if ($this->config->feature_autoLoadJQuery) {
-            $this->page->addJqFiles($this->config->feature_jQueryModule);
-        }
+//        if ($this->config->feature_autoLoadJQuery) {
+//            $this->page->addJqFiles($this->config->feature_jQueryModule);
+//        }
 
 
         // now, compile the page from all its components:
@@ -487,8 +487,8 @@ class Lizzy
     {
         $accForm = new UserAccountForm($this);
         $authPage = $accForm->renderLoginForm($this->auth->message, '{{ page requires login }}');
-        $this->page->addCssFiles('USER_ADMIN_CSS' );
-        $this->page->addjQFiles('USER_ADMIN' );
+//        $this->page->addCssFiles('USER_ADMIN_CSS' );
+        $this->page->addModules('USER_ADMIN' );
         $this->page->addOverride($authPage->get('override'), true, false);   // override page with login form
         $this->page->setOverrideMdCompile(false);
     }
@@ -599,21 +599,20 @@ class Lizzy
         list($ua, $isLegacyBrowser) = $this->getBrowser();
         $globalParams['userAgent'] = $ua;
         $_SESSION['lizzy']['userAgent'] = $ua;
-        $globalParams['legacyBrowser'] = ($isLegacyBrowser) ? 'yes' : 'no';
         $globalParams['HTTP_USER_AGENT'] = $_SERVER['HTTP_USER_AGENT'];
 
         // check whether to support legacy browsers -> load jQ version 1
         if ($this->config->feature_supportLegacyBrowsers) {
-            $this->legacyBrowser = true;
+            $this->config->isLegacyBrowser = true;
             $globalParams['legacyBrowser'] = true;
             writeLog("Legacy-Browser Support activated.");
 
         } else {
             $overrideLegacy = getUrlArgStatic('legacy');
             if ($overrideLegacy === null) {
-                $this->legacyBrowser = $isLegacyBrowser;
+                $this->config->isLegacyBrowser = $isLegacyBrowser;
             } else {
-                $this->legacyBrowser = $overrideLegacy;
+                $this->config->isLegacyBrowser = $overrideLegacy;
             }
         }
 
@@ -622,7 +621,6 @@ class Lizzy
         $globalParams['appRoot'] = $appRoot;  // path from docRoot to base folder of app, e.g. 'on/'
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
-        $globalParams['legacyBrowser'] = $this->legacyBrowser;
         $globalParams['localCall'] = $this->localCall;
 
         $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php
@@ -632,7 +630,7 @@ class Lizzy
         $_SESSION['lizzy']['absAppRoot'] = $absAppRoot;
 
         if ($this->config->debug_logClientAccesses) {
-            writeLog('[' . getClientIP(true) . "] $ua" . (($this->legacyBrowser) ? " (Legacy browser!)" : ''));
+            writeLog('[' . getClientIP(true) . "] $ua" . (($this->config->isLegacyBrowser) ? " (Legacy browser!)" : ''));
         }
     } // analyzeHttpRequest
 
@@ -754,7 +752,7 @@ class Lizzy
         	$this->trans->addVariable('debug_class', ' debug');
 		}
 
-		if ($this->legacyBrowser) {
+		if ($this->config->isLegacyBrowser) {
             $this->trans->addVariable('debug_class', ' legacy');
         }
 

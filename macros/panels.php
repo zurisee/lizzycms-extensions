@@ -23,18 +23,18 @@ $this->addMacro($macroName, function () {
     $oneOpenOnly = $this->getArg($macroName, 'oneOpenOnly', 'If true, makes sure that only one panel is open at the time (in accordion mode)', '');
     $tilted = $this->getArg($macroName, 'tilted', 'Activates tilted sides on tabs, providing an improved visual effect', false);
     $applyGlobally = $this->getArg($macroName, 'applyGlobally', 'If true, the above options are applied to all widgets within the page', false);
-    $threshold = $this->getArg($macroName, 'threshold', 'defines the width threshold used for switching between tabs- and accordion-mode (default is 480px)', '');
-
+//    $threshold = $this->getArg($macroName, 'threshold', 'defines the width threshold used for switching between tabs- and accordion-mode (default is 480px)', '');
+//??? TBD
     // Threshold for switching modes:
-    if ($threshold) {
-        $threshold = preg_replace('/\D/', '', $threshold);
-
-        $this->page->addCssFiles("PANELS_CSS?threshold={$threshold}px");
-        $this->page->addJs("window.widthThreshold = '$threshold';");
-
-    } else {
-        $this->page->addCssFiles('PANELS_CSS');
-    }
+//    if ($threshold) {
+//        fatalError('panels/threshold not implemented yet - tbd!');
+//        $threshold = preg_replace('/\D/', '', $threshold);
+//
+//        $this->page->addCssFiles("PANELS_CSS?threshold={$threshold}px");
+//        $this->page->addJs("window.widthThreshold = '$threshold';");
+//    } else {
+//        $this->page->addCssFiles('PANELS_CSS');
+//    }
 
 
     // Where to apply these settings - to this or to all widgets:

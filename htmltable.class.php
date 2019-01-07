@@ -82,8 +82,8 @@ class HtmlTable
         }
 
         if (strpos($this->tableclass, 'datatables') !== false) {
-            $page->addCssFiles('DATATABLES_CSS');
-            $page->addJqFiles('DATATABLES');
+//            $page->addCssFiles('DATATABLES_CSS');
+            $page->addModules('DATATABLES');
             $order = '';
             if ($this->sort) {
                 $sortCols = csv_to_array($this->sort);

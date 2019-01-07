@@ -44,7 +44,7 @@ private $userConfigurableSettingsAndDefaults      = [
 
             //'feature_autoAttrFile'              => [false, 'Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.' ],
             'feature_autoLoadClassBasedModules' => [true, '[false|true] If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
-            'feature_autoLoadJQuery'            => [false, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
+            'feature_autoLoadJQuery'            => [true, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
             'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
             'feature_enableAllowOrigin'         => [false, '[true|false] If true, Lizzy allows to produce a "allow origin" header' ],
             'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
@@ -112,8 +112,10 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['JQUERY2']               = array('module' => 'third-party/jquery/jquery-2.2.4.min.js', 'weight' => $this->jQueryWeight);
         $this->loadModules['JQUERY1']               = array('module' => 'third-party/jquery/jquery-1.12.4.min.js', 'weight' => $this->jQueryWeight);
 
-        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js', 'weight' => 140);
-        $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
+        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js, '.
+                                                            'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
+//        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js', 'weight' => 140);
+//        $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
 
         $this->loadModules['MOMENT']                = array('module' => 'third-party/moment/moment.min.js', 'weight' => $this->jQueryWeight + 9);
 
@@ -124,20 +126,17 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['AUXILIARY']             = array('module' => 'js/auxiliary.js', 'weight' => 130);
 
         $this->loadModules['TABBABLE']              = array('module' => 'third-party/tabbable/jquery.tabbable.min.js', 'weight' => 126);
-        $this->loadModules['NAV']                   = array('module' => 'js/nav.js', 'weight' => 125);
-        $this->loadModules['NAV_CSS']               = array('module' => 'css/_nav.css', 'weight' => 125);
+        $this->loadModules['NAV']                   = array('module' => 'js/nav.js, css/_nav.css', 'weight' => 125);
 
-        $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js', 'weight' => 120);
-        $this->loadModules['EDITABLE_CSS']          = array('module' => 'extensions/editable/css/editable.css', 'weight' => 120);
+        $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js,'.
+                                                            'extensions/editable/css/editable.css', 'weight' => 120);
 
-        $this->loadModules['PANELS']                = array('module' => 'js/panels.js', 'weight' => 110);
-        $this->loadModules['PANELS_CSS']            = array('module' => 'css/panels.css', 'weight' => 110);
+        $this->loadModules['PANELS']                = array('module' => 'js/panels.js, css/panels.css', 'weight' => 110);
 
-        $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js', 'weight' => 92);
-        $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 92);
+        $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js, css/quickview.css', 'weight' => 92);
 
-        $this->loadModules['POPUPS']                = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js', 'weight' => 85);
-        $this->loadModules['POPUPS_CSS']            = array('module' => 'css/popup.css', 'weight' => 85);
+        $this->loadModules['POPUPS']                = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
+                                                                        'css/popup.css', 'weight' => 85);
 
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 
@@ -145,27 +144,29 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['HAMMERJQ']              = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 70);
         $this->loadModules['PANZOOM']               = array('module' => 'third-party/panzoom/jquery.panzoom.min.js', 'weight' => 60);
 
-        $this->loadModules['DATATABLES_CSS']        = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 50);
-        $this->loadModules['DATATABLES']            = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 50);
+        $this->loadModules['DATATABLES']            = array('module' => 'third-party/datatables/datatables.min.js,'.
+                                                                        'third-party/datatables/datatables.min.css', 'weight' => 50);
 
         $this->loadModules['ZOOM_TARGET']           = array('module' => 'third-party/zoomooz/jquery.zoomooz.min.js', 'weight' => 45);
         $this->loadModules['TOUCH_DETECTOR']        = array('module' => 'js/touch_detector.js', 'weight' => 40);
-        $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js', 'weight' => 32);
-        $this->loadModules['SLIDESHOW_SUPPORT_CSS'] = array('module' => 'css/slideshow_support.css', 'weight' => 32);
+        $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js, css/slideshow_support.css', 'weight' => 32);
+//        $this->loadModules['SLIDESHOW_SUPPORT_CSS'] = array('module' => 'css/slideshow_support.css', 'weight' => 32);
         $this->loadModules['PAGE_SWITCHER']         = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']                = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
 
 
-        $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js', 'weight' => 5);
-        $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css', 'weight' => 5);
+        $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js, css/user_admin.css', 'weight' => 5);
+//        $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css', 'weight' => 5);
 
 
 
         // elementes that shall be loaded when corresponding classes are found anywhere in the page:
         //   elements: can be any of cssFiles, css, js, jq etc.
         $this->classBasedModules = [
-            'editable' => ['cssFiles' => 'EDITABLE_CSS', 'jqFiles' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
-            'panels_widget' => ['cssFiles' => 'PANELS_CSS', 'jqFiles' => 'PANELS'],
+            'editable' => ['modules' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
+//            'editable' => ['cssFiles' => 'EDITABLE_CSS', 'jqFiles' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
+            'panels_widget' => ['modules' => 'PANELS'],
+//            'panels_widget' => ['cssFiles' => 'PANELS_CSS', 'jqFiles' => 'PANELS'],
             'zoomTarget' => ['jsFiles' => 'ZOOM_TARGET'],
         ];
 

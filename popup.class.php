@@ -43,8 +43,8 @@ class PopupWidget
         if (!$popupInx) {
             $popupInx = 1;
             $this->page->set('popupInx', 1);
-            $this->page->addCssFiles('POPUPS_CSS');
-            $this->page->addJQFiles('POPUPS');
+//            $this->page->addCssFiles('POPUPS_CSS');
+            $this->page->addModules('POPUPS');
 
         } else {
             $popupInx++;

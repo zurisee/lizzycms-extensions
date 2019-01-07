@@ -6,9 +6,8 @@
 */
 
 if (!$GLOBALS['globalParams']['legacyBrowser']) {
-    $this->page->addJsFiles("HAMMERJS");
-    $this->page->addJqFiles(["HAMMERJQ", "TOUCH_DETECTOR", "SLIDESHOW_SUPPORT", "JQUERY"]);
-    $this->page->addCssFiles('SLIDESHOW_SUPPORT_CSS');
+//    $this->page->addJsFiles("HAMMERJS");
+    $this->page->addModules("HAMMERJS, HAMMERJQ, TOUCH_DETECTOR, SLIDESHOW_SUPPORT, JQUERY");
     if (getUrlArg('revealall')) {
         $this->trans->addVariable('page_name_class', ' slideshow-support reveal-all ');
 
