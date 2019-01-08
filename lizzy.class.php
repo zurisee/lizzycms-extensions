@@ -36,8 +36,6 @@ define('ONETIME_PASSCODE_FILE', CACHE_PATH.'_onetime-passcodes.yaml');
 define('HACKING_THRESHOLD',     10);
 define('HOUSEKEEPING_FILE',     CACHE_PATH.'_housekeeping.txt');
 define('MIN_SITEMAP_INDENTATION', 4);
-//define('SUBSTITUTE_UNDEFINED',  1); // -> '{|{'     => delayed substitution within trans->render()
-//define('SUBSTITUTE_ALL',        2); // -> '{||{'    => variables translated after cache-retrieval
 
 define('MKDIR_MASK',            0700); // remember to modify _lizzy/_install/install.sh as well
 define('MKDIR_MASK2',           0700); // ??? test whether higher priv is necessary
@@ -195,10 +193,6 @@ class Lizzy
             $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
         }
 
-//        if ($this->config->feature_autoLoadJQuery) {
-//            $this->page->addJqFiles($this->config->feature_jQueryModule);
-//        }
-
 
         // now, compile the page from all its components:
         $html = $this->page->render();
@@ -214,55 +208,10 @@ class Lizzy
             $html = $this->page->lateApplyMessag($html, $timerMsg);
 		}
 
-//		$this->doExtract($html);
         return $html;
     } // render
 
 
-/*
-    private function doExtract( &$html0 )
-    {
-        if (!$this->config->feature_enableAllowOrigin || !isset($_GET['extract'])) {
-            return;
-        }
-
-        $all = $class = false;
-        $selector = $this->config->site_extractSelector;
-        if ($_GET['extract']) {
-            $selector = $_GET['extract'];
-            $selector = str_replace('_', ' ', $_GET['extract']);
-        }
-        if (strpos($selector, '*') !== false) {
-            $all = true;
-            $selector = str_replace('*', '', $selector);
-        } elseif (($p=strpos($selector, '.')) !== false) {
-            $all = true;
-            $class = substr($selector, $p+1);
-            $selector = substr($selector, 0, $p);
-        }
-
-        $crawler = new Crawler($html0);
-
-        $crawler = $crawler->filter($selector);
-        $html = '';
-        foreach ($crawler as $domElement) {
-            $h = $domElement->ownerDocument->saveHTML($domElement);
-            if ($class) {
-                if (preg_match("/^[^\>]*$class/", $h)) {
-                    $html .= $h."\n\n";
-                    continue;
-                }
-            } else {
-                $html .= $h."\n\n";
-            }
-            if (!$all) {
-                break;
-            }
-//            $html .= "\n<!-- ---- -->\n";
-        }
-        $html0 = str_replace('<body', '<div', $html);
-    } // doExtract
-*/
 
 
     private function resolveAllPaths( &$html )
@@ -429,7 +378,7 @@ class Lizzy
         if ($old === false) {
             fatalError("Error setting up error handling... (no kidding)", 'File: '.__FILE__.' Line: '.__LINE__);
         }
-//??? not working properly:
+
         if ($this->config->debug_errorLogging && !file_exists(ERROR_LOG_ARCHIVE)) {
             $errorLogPath = dirname(ERROR_LOG_ARCHIVE).'/';
             $errorLogFile = ERROR_LOG_ARCHIVE;
@@ -487,7 +436,6 @@ class Lizzy
     {
         $accForm = new UserAccountForm($this);
         $authPage = $accForm->renderLoginForm($this->auth->message, '{{ page requires login }}');
-//        $this->page->addCssFiles('USER_ADMIN_CSS' );
         $this->page->addModules('USER_ADMIN' );
         $this->page->addOverride($authPage->get('override'), true, false);   // override page with login form
         $this->page->setOverrideMdCompile(false);
@@ -797,6 +745,7 @@ class Lizzy
             $pagePathClass = ' path_'.str_replace('/', '--', $this->pagePath);
             $pagePathClass = rtrim($pagePathClass, '--');
             $this->trans->addVariable('page_name_class', 'page_'.$pageName.$pagePathClass);
+            $this->trans->addVariable('page_name_id', 'page_'.$pageName);
 		}
         setStaticVariable('pageName', $pageName);
 
@@ -1004,57 +953,14 @@ class Lizzy
 
 	//....................................................
     private function handleMissingFolder($folder)
-    // if a folder is missing when rendering a page, Lizzy tries to guess whether the folder may have been moved from another location
 	{
 	    if ($this->loggedInUser || $this->localCall) {
-
             if (!file_exists($folder)) {
-                $f = basename($folder);
-                $folders = getDirDeep('pages/', true, true);
-                $pagesPath = $this->config->path_pagesPath;
-                if (isset($folders[$f])) { // folder exists somewhere else, moved?
-                    if (($mf=getUrlArg('mvfolder')) == 'true') {
-                        $oldPath = $folders[$f];
-                        rename($oldPath, $folder);
-
-                    } elseif ($mf == 'false') { // create new folder
-                        $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
-                        mkdir($folder, MKDIR_MASK, true);
-                        $name = $this->siteStructure->currPageRec['name'];
-                        file_put_contents($mdFile, "# $name\n");
-
-                    } else {        // ask admin whether to move folder
-                        $out = <<<EOT
-
-::: style:'border: 1px solid red; background: #800;  padding: 2em;'
-
-# Page moved?
-The requested page folder "$folder/" does not exist.
-
-However it appears to exist in a different location within the sitemap. Has it been moved?
-
-Previously: {{ tab(7em) }} ``$pagesPath$f/``  
-New: {{tab}} ``$folder``
-
-{{ vgap }}
-
-Would you like to move the folder?
-
-[yes](?mvfolder=true) {{ space }} [no, prepare a new one](?mvfolder=false)
-
-:::
-
-EOT;
-                        $this->page->addOverride($out);
-                    }
-                } else {
-                    $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
-                    mkdir($folder, MKDIR_MASK, true);
-                    $name = $this->siteStructure->currPageRec['name'];
-                    file_put_contents($mdFile, "# $name\n");
-                }
+                $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
+                mkdir($folder, MKDIR_MASK, true);
+                $name = $this->siteStructure->currPageRec['name'];
+                file_put_contents($mdFile, "# $name\n");
             }
-
         }
     } // handleMissingFolder
 

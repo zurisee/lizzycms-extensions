@@ -45,7 +45,8 @@ class HtmlTable
             if (strpos($this->dataSource, '~') !== 0) {
                 $this->dataSource = '~page/'.$this->dataSource;
             }
-            $this->dataSource = resolvePath($options['dataSource'], true);
+            $this->dataSource = resolvePath($this->dataSource, true);
+//            $this->dataSource = resolvePath($options['dataSource'], true);
         } else {
             $this->dataSource = false;
         }

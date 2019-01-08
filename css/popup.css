@@ -38,12 +38,16 @@
 }
 .popup_content {
     background: #eee;
-    padding: 1em 1em 0 1em;
+    padding: 1em 1em 0em 1em;
+    /*padding: 1em 1em 0 1em;*/
     border: none;
     border-radius: 4px;
     box-shadow: 0 0 15px black;
     min-width: 12em;
     transform: scale(0.5);
+}
+.lzy-popup-confirm .popup_content {
+    padding: 2em 2em 1em 2em;
 }
 .popup_content[aria-hidden="false"] {
     transform: scale(1);

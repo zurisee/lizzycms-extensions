@@ -245,9 +245,10 @@ class Forms
     {
         $input = "\t\t\t<input type='password' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} aria-invalid='false' aria-describedby='password-hint' value='{$this->currRec->value}' />\n";
         $hint = <<<EOT
-            <div id="password-hint">{{password-hint}}</div>
+            <div class="password-hint">{{password-hint}}</div>
             <label class='pw-toggle' for="showPassword"><input type="checkbox" id="showPassword"> {{ show password }}</label>
 EOT;
+//            <div id="password-hint" class="password-hint">{{password-hint}}</div>
         $out = $this->getLabel();
         $out .= $input . $hint;
         return $out;

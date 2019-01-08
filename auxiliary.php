@@ -25,6 +25,7 @@ function parseArgumentStr($str, $delim = ',')
     while ($str || $assoc) {
         $str = trim($str, '↵ ');
         $c = (isset($str[0])) ? $str[0] : '';
+        $val = '';
 
         // grab next value, can be bare or enclosed in ' or "
         if ($c == '"') {    // -> "
@@ -58,6 +59,7 @@ function parseArgumentStr($str, $delim = ',')
             }
             $str = $rest;
         }
+        $val = str_replace(['"', "'"], ['&#34;', '&#39;'], $val);
 
         // now, check whether it's a single value or a key:value pair
         if ($str && ($str[0] == ':')) {         // -> key:value pair
@@ -567,6 +569,7 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
     } elseif (preg_match('|^https?\://|i', $path)) {
         return $path;
     }
+    $path = trim($path);
 	if ($relativeToCurrPage) {		// for HTTP Requests
         $path = makePathRelativeToPage($path);
 

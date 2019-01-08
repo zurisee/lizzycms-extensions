@@ -45,12 +45,9 @@ class Page
     private $debugMsg = false;
     private $redirect = false;
 
-    private $mdCompileOverride = false;
-//    private $mdCompileOverlay = false;
-//    private $overlayClosable = true;
+    private $mdCompileModifiedContent = false;
     private $wrapperTag = 'section';
 
-//    private $assembledBodyEndInjections = '';
     private $assembledCss = '';
     private $assembledJs = '';
     private $assembledJq = '';
@@ -210,7 +207,6 @@ class Page
     //-----------------------------------------------------------------------
     public function addCssFiles($str, $replace = false)
     {
-//        $this->addToListProperty($this->cssFiles, $str, $replace);
         $this->addModules($str, $replace);
     } // cssFiles
 
@@ -249,7 +245,6 @@ class Page
     //-----------------------------------------------------------------------
     public function addJsFiles($str, $replace = false, $persisent = false)
     {
-//        $this->addToListProperty($this->jsFiles, $str, $replace);
         $this->addModules($str, $replace);
 		if ($persisent) {
 			$_SESSION['lizzy']["lizzyPersistentJsFiles"] .= $str;
@@ -277,7 +272,6 @@ class Page
     //-----------------------------------------------------------------------
     public function addJQFiles($str, $replace = false)
     {
-//        $this->addToListProperty($this->jqFiles, $str, $replace);
         $this->addModules($str, $replace);
     } // addJQFiles
 
@@ -313,9 +307,17 @@ class Page
 
 
     //-----------------------------------------------------------------------
-    public function addPageSubstitution($str, $replace = false)
+    public function addPopup($args)
     {
-        $this->addToProperty('pageSubstitution', $str, $replace);
+        $this->popupInstance->addPopup($args);
+    } // addPopup
+
+
+
+    //-----------------------------------------------------------------------
+    public function addPageSubstitution($str)
+    {
+        $this->pageSubstitution = $str;
     } // addMessage
 
 
@@ -332,188 +334,26 @@ class Page
 
 
 
-
-//    //-----------------------------------------------------------------------
-//    public function addPopup($args)
-//    {
-//        if (isset($args[0]) && ($args[0] == 'help')) {
-//            return $this->renderPopupHelp();
-//        }
-//        $this->popups[] = $args;
-//        return "\t<!-- lzy-popup invoked -->\n";
-//    } // addPopup
-//
-//
-//
-//
-//    //-----------------------------------------------------------------------
-//    public function applyPopup()
-//    {
-//        if ($this->popup) { // in frontmatter it's possible to to use popup (singular)
-//            $this->popups[] = $this->popup;
-//            $this->popup = false;
-//        }
-//        if (!$this->popups) {
-//            return;
-//        }
-//
-//        if (!isset($this->popups[0])) {
-//            $this->popups[0] = $this->popups;
-//        }
-//
-//        foreach ($this->popups as $args) {
-//            $header = isset($args['header']) ? $args['header'] : '';
-//            $header .= isset($args['title']) ? $args['title'] : '';
-//            $text = isset($args['text']) ? "'".$args['text']."'" : "''";
-//            $contentFrom = isset($args['contentFrom']) ? $args['contentFrom'] : '';
-//            $class = isset($args['class']) ? $args['class'] : '';
-//            $type = isset($args['type']) ? $args['type'] : 'alert';
-//            $flavor = isset($args['flavor']) ? $args['flavor'] : '';
-//            $theme = isset($args['theme']) ? $args['theme'] : '';
-//            $delay = isset($args['delay']) ? $args['delay'] : '0';
-//            $width = isset($args['width']) ? $args['width'] : '';
-//            $draggable = isset($args['draggable']) ? $args['draggable'] : '';
-//            $triggerSource = isset($args['triggerSource']) ? $args['triggerSource'] : '';
-//            $triggerEvent = isset($args['triggerEvent']) ? $args['triggerEvent'] : 'click';
-//            $showCloseButton = (isset($args['showCloseButton']) && ($args['showCloseButton'] === 'false')) ? 'false' : '';
-//            $closeOnBgClick = (isset($args['closeOnBgClick']) && ($args['closeOnBgClick'] === 'false')) ? 'false' : '';
-//            $buttons = isset($args['buttons']) ? $args['buttons'] : '';
-//
-//
-//            if (!$this->popupInx) {
-//                $this->popupInx = 1;
-//                $this->addCssFiles('JCONFIRM_CSS');
-//                $this->addJQFiles('JCONFIRM');
-//
-//                $jq = <<<EOT
-//    jconfirm.defaults = {
-//        backgroundDismiss: true,
-//        closeIcon: true,
-//        useBootstrap: false,
-//    };
-//
-//EOT;
-//                $this->addJQ($jq);
-//            } else {
-//                $this->popupInx++;
-//            }
-//
-//            $content = $text;
-//            if ($contentFrom) {
-//                $content = "function() { return $('$contentFrom').html(); }";
-//            }
-//
-//            if ($width) {
-//                $width = "boxWidth: '$width',\n";
-//            }
-//
-//            $buttonOption = '';
-//            if ($buttons) {
-//                $buttons = explode('|', $buttons);
-//                foreach ($buttons as $button) {
-//                    list($buttonName, $function) = explode(':', $button);
-//                    $buttonOption .= "$buttonName: function() { $function },";
-//                }
-//            }
-//            if ($closeOnBgClick) {
-//                $closeOnBgClick = "backgroundDismiss: $closeOnBgClick,\n";
-//            }
-//            if ($showCloseButton) {
-//                $showCloseButton = "closeIcon: $showCloseButton,\n";
-//            }
-//
-//            if ($theme) {
-//                $theme = "theme: '$theme',\n";
-//            }
-//            if ($draggable != 'false') {
-//                $class = $class ? "$class draggable " : 'draggable';
-//            }
-//            if ($class) {
-//                $class = "onOpenBefore: function() { $('.jconfirm').addClass('$class');},\n";
-//            }
-//            if (strpos(',alert,dialog,confirm,', ",$type,") === false) {
-//                $flavor = $type;
-//                $type = 'alert';
-//            }
-//            $flavor = $flavor? "type: '$flavor',\n" : '';
-//
-//            $draggable = $draggable ? "draggable: $draggable,\n" : '';
-//
-//
-//            $aux = '';
-//            $auxOptions = '';
-//            if ($triggerSource && ($triggerEvent != 'none')) {
-//                if (($triggerEvent == 'right-click') || ($triggerEvent == 'contextmenu')) {
-//                    $triggerEvent = 'contextmenu';
-//                    $aux = "$('$triggerSource').css('user-select', 'none');";
-//                }
-//
-//                $jq = <<<EOT
-//
-//$('$triggerSource').bind("$triggerEvent",function(e) {
-//    e.preventDefault();
-//    \$popup{$this->popupInx} = $.$type({
-//        title: '$header',
-//        content: $content,
-//        buttons: {  $buttonOption},
-//        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class$flavor$draggable
-//    });
-//});
-//$aux
-//
-//EOT;
-//            } else {
-//                if ($triggerEvent == 'none') {
-//                    $auxOptions = "lazyOpen: true,\n";
-//                }
-//                $jq = <<<EOT
-//\$popup{$this->popupInx} = $.$type({
-//    title: '$header',
-//    content: $content,
-//        $closeOnBgClick$showCloseButton$theme$auxOptions$width$class$flavor$draggable
-//});
-//
-//EOT;
-//            }
-//            if ($delay) {
-//                $jq = "setTimeout(function() {\n$jq}, $delay);\n";
-//            }
-//            $this->addJQ($jq);
-//        }
-//        $this->popups = [];
-//    } // applyPopup
-//
-//
-//
-//    //-----------------------------------------------------------------------
-//    public function registerPopupContent($id, $popupForm)
-//    {
-//        if (!$this->popup) {
-//            require_once SYSTEM_PATH.'popup.class.php';
-//            $this->popup = new PopupWidget($this);
-//            $this->popup->createPopupTemplate();
-//        }
-//
-//        $this->popup->registerPopupContent($id, $popupForm);
-//    } // registerPopupContent
-//
-//
-
     //-----------------------------------------------------------------------
     public function setOverrideMdCompile($mdCompile)
     {
-        $this->mdCompileOverride = $mdCompile;
+        $this->mdCompileModifiedContent = $mdCompile;
     }
 
 
 
     //-----------------------------------------------------------------------
-    public function addOverride($str, $replace = false, $mdCompile = true)
+    public function addOverride($args, $replace = false, $mdCompile = null)
     {
-        $this->addToProperty('override', $str, $replace);
-        if ($mdCompile !== null) {  // only override, if explicitly mentioned
-            $this->mdCompileOverride = $mdCompile;
+        if (is_string($args)) {
+            if (preg_match('/^fromFile\((.*)\)/', $args, $m)) {
+                $args = ['fromFile' => $m[1], 'mdCompile' => $mdCompile];
+            } else {
+                $args = ['text' => $args, 'mdCompile' => $mdCompile];
+            }
         }
+        $this->override = $args;
+
     } // addOverride
 
 
@@ -521,7 +361,7 @@ class Page
     //-----------------------------------------------------------------------
     public function setOverlayMdCompile($mdCompile)
     {
-        $this->mdCompileOverlay = $mdCompile;
+        $this->mdCompileModifiedContent = $mdCompile;
     }
 
 
@@ -530,7 +370,13 @@ class Page
     public function addOverlay($args, $replace = false, $mdCompile = null, $closable = true)
     {
         if (is_string($args)) {
-            $args = ['text' => $args, 'mdCompile' => $mdCompile, 'closable' => $closable];
+            if (preg_match('/^contentFrom\((.*)\)/', $args, $m)) {
+                $args = ['contentFrom' => $m[1], 'mdCompile' => $mdCompile, 'closable' => $closable];
+            } elseif (preg_match('/^fromFile\((.*)\)/', $args, $m)) {
+                $args = ['fromFile' => $m[1], 'mdCompile' => $mdCompile, 'closable' => $closable];
+            } else {
+                $args = ['text' => $args, 'mdCompile' => $mdCompile, 'closable' => $closable];
+            }
         }
         $this->overlay = $args;
     } // addOverlay
@@ -616,11 +462,34 @@ class Page
     //....................................................
     public function applyOverride()
     {
-        if ($o = $this->get('override', true)) {
-            if ($this->mdCompileOverride) {
-                $o = compileMarkdownStr($o);
+        $override = $this->override;
+        $this->override = false;
+        if (is_string($override)) {
+            if (isset($this->mdCompileModifiedContent) && ($this->mdCompileModifiedContent || ($this->mdCompileModifiedContent === null) )) {
+                $override = compileMarkdownStr($override);
             }
-            $this->addContent($o, true);
+            $this->addContent($override, true);
+            return true;
+
+        } else {
+            if (isset($this->mdCompileModifiedContent) && ($this->mdCompileModifiedContent || ($this->mdCompileModifiedContent === null) )) {
+                $override['mdCompile'] = true;
+            }
+            $text = '';
+
+            if (isset($override['text']) && $override['text']) {
+                $text = $override['text']."\n";
+            }
+            if (isset($override['fromFile']) && $override['fromFile']) {
+                $file = resolvePath($override['fromFile'], true);
+                if (file_exists($file)) {
+                    $text .= getFile($file);
+                }
+            }
+            if (!isset($override['mdCompile']) || $override['mdCompile'] || $this->mdCompileModifiedContent) {
+                $text = compileMarkdownStr($text);
+            }
+            $this->addContent($text, true);
             return true;
         }
         return false;
@@ -648,12 +517,22 @@ class Page
             $overlay = ['text' => $overlay, 'mdCompile' => true, 'closable' => true];
         }
 
-        if (isset($overlay['contentFrom'])) {
-            $jq = "$('#lzy-overlay').html( $( '{$overlay['contentFrom']}' ).html() )\n";
+        if (isset($overlay['contentFrom']) && $overlay['contentFrom']) {
+            $jq = "$('#lzy-overlay').append( $( '{$overlay['contentFrom']}' ).html() )\n";
+
+        } elseif (isset($overlay['fromFile']) && $overlay['fromFile']) {
+            $file = resolvePath($overlay['fromFile'], true);
+            if (file_exists($file)) {
+                $text = getFile($file);
+                if (!isset($overlay['mdCompile']) || $overlay['mdCompile'] || $this->mdCompileModifiedContent) {
+                    $text = compileMarkdownStr($text);
+                }
+            }
+
         } elseif (isset($overlay['text'])) {
             $text = $overlay['text'];
 
-            if (!isset($overlay['mdCompile']) || $overlay['mdCompile']) {
+            if (!isset($overlay['mdCompile']) || $overlay['mdCompile'] || $this->mdCompileModifiedContent) {
                 $text = compileMarkdownStr($text);
             }
         }
@@ -678,8 +557,13 @@ class Page
     public function applySubstitution()
     {
         $str = $this->pageSubstitution;
+        $this->pageSubstitution = false;
+
+        if (preg_match('/^fromFile\((.*)\)/', $str, $m)) {
+            $str = "file: {$m[1]}";
+        }
         if (preg_match('/^file:(.*)/', $str, $m)) {
-            $file = resolvePath(trim($m[1]));
+            $file = resolvePath(trim($m[1]), true);
             if (file_exists($file)) {
                 $str = getFile($file, true);
                 if (fileExt($file) == 'md') {
@@ -739,7 +623,7 @@ EOT;
     public function applyRedirect()
     {
         if ($this->redirect) {
-            $url = resolvePath($this->redirect);
+            $url = resolvePath($this->redirect, false, true);
             header('Location: ' . $url);
             exit;
         }
@@ -855,22 +739,6 @@ EOT;
 
         $bodyEndInjections .= $this->getModules('js');
 
-//        if ($this->jsFiles) {
-//            $bodyEndInjections .= $this->getModules('js', $this->jsFiles);
-//        }
-//
-//        // jQuery needs to be loaded if any jq code is present:
-//        if ($this->jq && !$this->jqFiles) {
-//            $bodyEndInjections .= $this->getModules('js', $this->config->feature_jQueryModule);
-//        }
-//        if ($this->jqFiles) {
-//            $bodyEndInjections .= $this->getModules('js', $this->jqFiles);
-//        }
-
-//        if ($this->get('lightbox')) {
-//            $bodyEndInjections .= $this->lightbox;
-//        }
-
         $screenSizeBreakpoint = $this->config->feature_screenSizeBreakpoint;
         $pathToRoot = $this->lzy->pathToRoot;
         $rootJs  = "\t\tvar appRoot = '$pathToRoot';\n";
@@ -934,13 +802,13 @@ EOT;
 
         if ($type == 'css') {
             foreach ($this->cssModules as $item) {
-                $item = resolvePath($item);
+                $item = resolvePath($item, false, true);
                 $out .= "\t<link href='$item' rel='stylesheet' />\n";
             }
 
         } else {
             foreach ($this->jsModules as $item) {
-                $item = resolvePath($item);
+                $item = resolvePath($item, false, true);
                 $out .= "\t<script src='$item'></script>\n";
             }
 
@@ -956,7 +824,6 @@ EOT;
     public function prepareModuleLists()
     {
         $str = ','.$this->modules.','.$this->cssFiles.','.$this->jsFiles.','.$this->jqFiles;
-//        $str = str_replace('|', ',', $str);
 
         if (preg_match_all('/,(JQUERY\s?),/', $str, $m)) {
             if (sizeof($m) == 1) {
@@ -1148,7 +1015,6 @@ EOT;
     //....................................................
     private function injectAllowOrigin()
     {
-//$_SERVER['HTTP_ORIGIN'] = 'https://usility.ch';
         if ($this->config->feature_enableAllowOrigin == false) {
             return;
 
@@ -1289,60 +1155,5 @@ EOT;
         $this->merge($pg);
         return true;
     }
-
-
-//    private function renderPopupHelp()
-//    {
-//        $str = <<<EOT
-//<h2>Options for macro <em>popup()</em></h2>
-//<dl>
-//	<dt>header:</dt>
-//		<dd>(optional text) If set, a header will be included in the popup box </dd>
-//
-//	<dt>text:</dt>
-//		<dd>(optional text) If set, it will be displayed as the popup content</dd>
-//
-//	<dt>contentFrom:</dt>
-//		<dd>(optional CSS-selector) If set, content of the corresponding element will be retrieved and displayed in the popup</dd>
-//
-//	<dt>class:</dt>
-//		<dd>(optional) Will class be applied to the popup structure (i.e. outermost .jconfirm div)</dd>
-//
-//	<dt>type:</dt>
-//		<dd>[alert|dialog|confirm] Defines the type of the popup (see jconfirm for details)</dd>
-//
-//	<dt>flavor:</dt>
-//		<dd>[blue|green|red|orange|purple|dark] Defines the color scheme of the popup (see jconfirm for details, there it's called 'type')</dd>
-//
-//	<dt>theme:</dt>
-//		<dd>[light|dark|material|bootstrap|supervan] Defines the theme of the popup (see jconfirm for details)</dd>
-//
-//	<dt>delay:</dt>
-//		<dd>[ms] Defines a delay before opening the popup (if it's not triggered by a click)</dd>
-//
-//	<dt>width:</dt>
-//		<dd>(optional length) Will set the popup's width</dd>
-//
-//	<dt>draggable:</dt>
-//		<dd>(optional) [true|false] Permits the popup to be moved around on screen (Default is true)</dd>
-//
-//	<dt>triggerSource:</dt>
-//		<dd>(optional CSS-selector) Specifies the element that shall trigger opening the popup &ndash; if omitted the popup will appear immediately after loading</dd>
-//
-//	<dt>triggerEvent:</dt>
-//		<dd>(optional) [click|dblclick|right-click|focus|blur|none] Specifies the type of event that shall trigger the popup (Default is click)</dd>
-//
-//	<dt>closeOnBgClick:</dt>
-//		<dd>(optional) [true|false] If true, clicking on the background closes the popup. (Default is true)</dd>
-//
-//	<dt>showCloseButton:</dt>
-//		<dd>(optional) [true|false] If true, a close button will be displayed in the upper right corner (Default is true)</dd>
-//
-//</dl>
-//
-//EOT;
-//
-//        return $str;
-//    }
 
 } // Page

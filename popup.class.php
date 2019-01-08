@@ -17,9 +17,6 @@ class PopupWidget
     //-----------------------------------------------------------------------
     public function addPopup($args)
     {
-        if (isset($args[0]) && ($args[0] == 'help')) {
-            return $this->renderPopupHelp();
-        }
         $this->popups[] = $args;
         return "\t<!-- lzy-popup invoked -->\n";
     } // addPopup
@@ -36,19 +33,14 @@ class PopupWidget
             $this->page->set('popup', false);
         }
         if (!$this->popups) {
-            return;
+            return false;
         }
 
         $popupInx = $this->page->get('popupInx');
         if (!$popupInx) {
-            $popupInx = 1;
-            $this->page->set('popupInx', 1);
-//            $this->page->addCssFiles('POPUPS_CSS');
+            $popupInx = 0;
+            $this->page->set('popupInx', 0);
             $this->page->addModules('POPUPS');
-
-        } else {
-            $popupInx++;
-            $this->page->set('popupInx', $popupInx);
         }
 
         if (!isset($this->popups[0])) {
@@ -57,15 +49,42 @@ class PopupWidget
         $jq = '';
 
         foreach ($this->popups as $args) {
+            $popupInx++;
+            $this->page->set('popupInx', $popupInx);
             $this->args = $args;
             $this->argStr = '';
 
+            if (is_string($args)) {
+                if ($args == 'help') {
+                    $this->popups = [];
+                    $this->page->addContent( $this->renderPopupHelp() );
+                    $this->page->addJQ($jq);
+                    return true;
+                }
+                $args1['text'] = $args;
+                $this->args = $args = $args1;
+            }
+
+            $defaultConfirmBtn = $defaultCancelBtn = '';
             $this->getArg('text');
+            $this->getArg('type', 'info'); // [info, confirm, dialog]
+            switch ($this->type) {
+                case 'confirm' :
+                    $defaultConfirmBtn = '{{ Confirm }}';
+                    $defaultCancelBtn = '{{ Cancel }}';
+                    break;
+                case 'dialog' :
+                    $defaultConfirmBtn = '{{ Save }}';
+                    $defaultCancelBtn = '{{ Cancel }}';
+                    break;
+            }
             $this->getArg('contentFrom');
+            $this->getArg('class', "lzy-popup lzy-popup$popupInx");
+            $class = $this->class;
             $this->getArg('triggerSource');
             $this->getArg('triggerEvent', 'click');
-            $this->getArg('confirmButton', '{{ Confirm }}');
-            $this->getArg('cancelButton', '{{ Cancel }}');
+            $this->getArg('confirmButton', $defaultConfirmBtn);
+            $this->getArg('cancelButton', $defaultCancelBtn);
             $this->getArg('onConfirm');
             $this->getArg('onConfirmFrom');
             $this->getArg('onCancel');
@@ -80,15 +99,22 @@ class PopupWidget
             $this->getArg('bgColor', '#000', 'color');
 
             if (isset($args[0])) {
+                if ($args[0] == 'help') {
+                    $this->popups = [];
+                    $this->page->addContent( $this->renderPopupHelp() );
+                    $this->page->addJQ($jq);
+                    return true;
+                }
                 $this->text = $args[0];
             }
 
+            $popupId = $this->contentFrom ? $this->contentFrom : "lzy-popup$popupInx";
+            $popupId = str_replace('#', '', $popupId);
+
             // case text but no contentFrom:
             if ($this->text && !$this->contentFrom) {
-                $this->contentFrom = "#lzy-popup$popupInx";
-                $jq .= "$('body').append('<div id=\"lzy-popup$popupInx\">{$this->text}</div>');\n";
-                $this->cancelButton = false;
-                $this->confirmButton = false;
+                $this->contentFrom = "#$popupId";
+                $jq .= "$('body').append('<div class=\"dispno\"><div id=\"$popupId\">{$this->text}</div></div>');\n";
             }
 
             // transition:
@@ -99,9 +125,9 @@ class PopupWidget
             // invocation:
             if ($this->triggerSource) {
                 if ($this->triggerEvent == "right-click") {
-                    $jq .= "$('{$this->triggerSource}').contextmenu(function() { $('{$this->contentFrom}').popup('show'); return false; }).css('user-select', 'none');\n";
+                    $jq .= "$('{$this->triggerSource}').contextmenu(function() { $('#$popupId').popup('show'); return false; }).css('user-select', 'none');\n";
                 } else {
-                    $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function() { $('{$this->contentFrom}').popup('show'); });\n";
+                    $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function() { $('#$popupId').popup('show'); });\n";
                 }
                 $this->getArg('triggerEvent', 'click');
                 $jq .= "$('{$this->triggerSource}').attr('aria-expanded', false);\n";
@@ -113,7 +139,9 @@ class PopupWidget
 
             // confirmButton:
             $confirmButton = '';
-            $onConfirm = $this->onConfirm;
+            $onConfirm = str_replace(['&#34;', '&#39;'], ['"', "'"], $this->onConfirm);
+            $onConfirm = str_replace(["\'", '\"'], ['&#39;','&#34;'], $onConfirm);
+
             if ($this->confirmButton) {
                 $confirmButton = "<button class='lzy-popup-confirm lzy-popup-button'>{$this->confirmButton}</button> ";
                 if ($this->onConfirmFrom) {
@@ -125,7 +153,7 @@ class PopupWidget
                     }
                 }
                 $onConfirm = <<<EOT
-$('.lzy-popup-confirm').click(function(e) {
+$('#$popupId .lzy-popup-confirm').click(function(e) {
     var \$popup = $(e.target).closest('.popup_content');
     {$onConfirm}
     \$popup.popup('hide');
@@ -136,7 +164,8 @@ EOT;
 
             // cancelButton:
             $cancelButton = '';
-            $onCancel = $this->onCancel;
+            $onCancel = str_replace(['&#34;', '&#39;'], ['"', "'"], $this->onCancel);
+            $onCancel = str_replace(["\'", '\"'], ['&#39;','&#34;'], $onCancel);
             if ($this->cancelButton) {
                 $cancelButton = "<button class='lzy-popup-cancel lzy-popup-button'>{$this->cancelButton}</button> ";
                 if ($this->onCancelFrom) {
@@ -148,7 +177,7 @@ EOT;
                     }
                 }
                 $onCancel = <<<EOT
-$('.lzy-popup-cancel').click(function(e) {
+$('#$popupId .lzy-popup-cancel').click(function(e) {
     var \$popup = $(e.target).closest('.popup_content');
     {$onCancel}
     \$popup.popup('hide');
@@ -158,28 +187,37 @@ EOT;
 
             $buttons =  "\t.append(\"<div class='lzy-popup-buttons'>$cancelButton$confirmButton</div>\")";
 
+            // class:
+            $addClass = '';
+            if ($class) {
+                if ($this->type != 'info') {
+                    $class .=  ' lzy-popup-'.$this->type;
+                }
+                $addClass = "\t.addClass('$class')\n";
+            }
 
             // offset vertical / horizontal:
             if ($this->horizontal && $this->vertical) {
-                $offset = "$('#popup1').css('transform', 'translate({$this->horizontal}, {$this->vertical})');";
+                $offset = "\t.css('transform', 'translate({$this->horizontal}, {$this->vertical})')\n";
             } elseif ($this->horizontal) {
-                $offset = "$('#popup1').css('transform', 'translateX({$this->horizontal}')";
+                $offset = "\t.css('transform', 'translateX({$this->horizontal}')\n";
             } elseif ($this->vertical) {
-                $offset = "$('#popup1').css('transform', 'translateY({$this->vertical}')";
+                $offset = "\t.css('transform', 'translateY({$this->vertical}')\n";
             } else {
                 $offset = '';
             }
 
             $jq .= <<<EOT
-$('{$this->contentFrom}')
-$buttons
+$('#$popupId')
+$addClass$buttons
     .popup({
 {$this->argStr}
-});
+})
+$offset;
 
 $onConfirm
 $onCancel
-$offset
+
 
 EOT;
         } // loop popup instances
@@ -291,8 +329,5 @@ EOT;
 
         return $str;
     } // renderPopupHelp
-
-
-
 
 } // Popup

@@ -114,8 +114,7 @@ private $userConfigurableSettingsAndDefaults      = [
 
         $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js, '.
                                                             'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
-//        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js', 'weight' => 140);
-//        $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
+        $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
 
         $this->loadModules['MOMENT']                = array('module' => 'third-party/moment/moment.min.js', 'weight' => $this->jQueryWeight + 9);
 
@@ -150,13 +149,11 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['ZOOM_TARGET']           = array('module' => 'third-party/zoomooz/jquery.zoomooz.min.js', 'weight' => 45);
         $this->loadModules['TOUCH_DETECTOR']        = array('module' => 'js/touch_detector.js', 'weight' => 40);
         $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js, css/slideshow_support.css', 'weight' => 32);
-//        $this->loadModules['SLIDESHOW_SUPPORT_CSS'] = array('module' => 'css/slideshow_support.css', 'weight' => 32);
         $this->loadModules['PAGE_SWITCHER']         = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']                = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
 
 
         $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js, css/user_admin.css', 'weight' => 5);
-//        $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css', 'weight' => 5);
 
 
 
@@ -164,9 +161,7 @@ private $userConfigurableSettingsAndDefaults      = [
         //   elements: can be any of cssFiles, css, js, jq etc.
         $this->classBasedModules = [
             'editable' => ['modules' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
-//            'editable' => ['cssFiles' => 'EDITABLE_CSS', 'jqFiles' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
             'panels_widget' => ['modules' => 'PANELS'],
-//            'panels_widget' => ['cssFiles' => 'PANELS_CSS', 'jqFiles' => 'PANELS'],
             'zoomTarget' => ['jsFiles' => 'ZOOM_TARGET'],
         ];
 

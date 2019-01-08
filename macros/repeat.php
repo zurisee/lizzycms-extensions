@@ -19,7 +19,17 @@ $this->addMacro($macroName, function ($args) {
     $prefixText = $this->getArg($macroName, 'prefixText', 'Text that will be prepended to output');
     $postfixVar = $this->getArg($macroName, 'postfixVar', 'Variable-value that will be appended to output');
     $postfixText = $this->getArg($macroName, 'postfixText', 'Text that will be appended to output');
+    $mdCompile = $this->getArg($macroName, 'mdCompile', 'Runs the output through the MD-compiler', true);
     $execMacros = $this->getArg($macroName, 'execMacros', 'Runs the output through Variable/Macro translation');
+
+    if ($count == 'help') {
+        return '';
+    }
+
+    $c = $wrapperClass{0};
+    if (($c != '.') && ($c != '#')) {
+        $wrapperClass = '.'.$wrapperClass;
+    }
 
     if ($variable) {
         $text0 .= $this->getVariable($variable);
@@ -42,6 +52,7 @@ $this->addMacro($macroName, function ($args) {
     }
 
     $str = '';
+    $count = intval($count);
     for ($i=0; $i < $count; $i++) {
         if ($indexPlaceholder) {
             $text = str_replace($indexPlaceholder, $i+1, $text0);
@@ -49,7 +60,7 @@ $this->addMacro($macroName, function ($args) {
             $text = $text0;
         }
         if (!$bare) {
-            $str .= ":::::::.$wrapperClass\n$text\n:::::::\n\n";
+            $str .= "::::::: $wrapperClass\n$text\n:::::::\n\n";
         } else {
             $str .= $text."\n";
         }
@@ -58,7 +69,11 @@ $this->addMacro($macroName, function ($args) {
         $str .= "\n";
     }
     if ($execMacros) {
-        $str = $this->translateMacros($str);
+        $str = $this->translate($str);
+    }
+
+    if ($mdCompile) {
+        $str = compileMarkdownStr($str);
     }
 
     return $prefixText.$str.$postfixText;

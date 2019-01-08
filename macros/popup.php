@@ -12,6 +12,7 @@ $this->addMacro($macroName, function () {
 //    $inx = $this->invocationCounter[$macroName] + 1;
     $args = $this->getArgsArray($macroName);
 
-    return $this->page->popupInstance->addPopup($args);
+    return $this->page->addPopup($args);
+//    return $this->page->popupInstance->addPopup($args);
 });
 
