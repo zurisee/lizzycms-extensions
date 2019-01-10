@@ -14,12 +14,15 @@ class SCssCompiler
     {
         // $this->config->path_stylesPath.'scss/*.scss', $this->config->path_stylesPath, $this->localCall
         $this->config = $lzy->config;
-        $fromFiles = $lzy->config->path_stylesPath.'scss/*.scss';
-        $toPath = $lzy->config->path_stylesPath;
-        $localCall = $lzy->localCall;
-        $this->fromFiles = $fromFiles;
-        $this->toPath = $toPath;
-        $this->localCall = $localCall;
+        $this->fromFiles = $lzy->config->path_stylesPath;
+        $this->sysCssFiles = $lzy->config->systemPath.'css/';
+//        $this->fromFiles = $lzy->config->path_stylesPath.'scss/*.scss';
+//        $this->fromFiles = $lzy->config->systemPath.'css/scss/*.scss';
+//        $this->toPath = $lzy->config->path_stylesPath;
+        $this->isPrivileged = $lzy->config->isPrivileged;
+        $this->localCall = $lzy->localCall;
+        $this->compiledStylesFilename = $lzy->config->site_compiledStylesFilename;
+
         if (isset($_GET['reset'])) {
             $this->deleteCache();
         }
@@ -30,28 +33,33 @@ class SCssCompiler
 
     public function compile($forceUpdate = false)
     {
-        $compiled = false;
-        $scss = new Compiler;
-        $files = getDir($this->fromFiles);
-        foreach ($files as $file) {
-            $targetFile = $this->toPath . '_' . basename($file, '.scss') . '.css';
-            $t0 = filemtime($file);
-            $t1 = (file_exists($targetFile)) ? filemtime($targetFile) : 0;
-            if ($t0 > $t1) {
-                $scssStr = $this->getFile($file);
-                $cssStr = "/**** auto-created from '$file' - do not modify! ****/\n\n";
-                try {
-                    $cssStr .= $scss->compile($scssStr);
-                } catch (Exception $e) {
-                    fatalError("Error in SCSS-File '$file': " . $e->getMessage(), 'File: ' . __FILE__ . ' Line: ' . __LINE__);
-                }
-                file_put_contents($targetFile, $cssStr);
-                touchFile($targetFile, $t0);
-                $compiled .= basename($file) . ", ";
-//            } elseif ($t0 < $t1) {
-//                fatalError("Warning: compiled stylesheet newer than source: '$targetFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
-            }
+        if (!file_exists($this->fromFiles.$this->compiledStylesFilename) ||
+            !file_exists($this->sysCssFiles.'_lizzy.css')) {
+            $forceUpdate = true;
         }
+        $this->forceUpdate = $forceUpdate;
+        $compiled = false;
+        $compiledCode = '';
+        $this->scss = new Compiler;
+        $files = getDir($this->fromFiles.'scss/*.scss');
+        foreach ($files as $file) {
+            $compiled = $this->doCompile($this->fromFiles, $file, $compiled, $compiledCode);
+        }
+        if ((sizeof($files) > 1) && $compiledCode) {
+            $compiledCode = preg_replace("|\s*/\* .* \*/\n|m", '', $compiledCode);
+            file_put_contents($this->fromFiles.'_compiled-styles.css', $compiledCode);
+        }
+
+        $compiledCode = '';
+        $files = getDir($this->sysCssFiles.'scss/*.scss');
+        foreach ($files as $file) {
+            $compiled = $this->doCompile($this->sysCssFiles, $file, $compiled, $compiledCode);
+        }
+        if ($compiledCode) {
+            $compiledCode = preg_replace("|\s+/\* .* \*/|m", '', $compiledCode);
+            file_put_contents($this->sysCssFiles.'_lizzy.css', $compiledCode);
+        }
+
         if ($compiled || $forceUpdate) {
             $compiled = preg_replace('/,\s$/', '', $compiled);
             generateNewVersionCode();
@@ -80,6 +88,8 @@ class SCssCompiler
         return $out . "\n";
     } // getFile
 
+
+
     private function deleteCache()
     {
         $files = getDir($this->cssDestPath . "*.css");
@@ -88,5 +98,28 @@ class SCssCompiler
                 unlink($file);
             }
         }
+    }
+
+
+
+    private function doCompile($toPath, $file, $compiled, &$compiledCode)
+    {
+        $targetFile = $toPath . '_' . basename($file, '.scss') . '.css';
+        $t0 = filemtime($file);
+        $t1 = (file_exists($targetFile)) ? filemtime($targetFile) : 0;
+        if ($this->forceUpdate || ($t0 > $t1)) {
+            $scssStr = $this->getFile($file);
+            $cssStr = "/**** auto-created from '$file' - do not modify! ****/\n\n";
+            try {
+                $cssStr .= $this->scss->compile($scssStr);
+            } catch (Exception $e) {
+                fatalError("Error in SCSS-File '$file': " . $e->getMessage(), 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+            }
+            file_put_contents($targetFile, $cssStr);
+            $compiledCode .= $cssStr."\n\n\n";
+            touchFile($targetFile, $t0);
+            $compiled .= basename($file) . ", ";
+        }
+        return $compiled;
     } // deleteCache
 }

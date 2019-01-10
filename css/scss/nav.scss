@@ -320,7 +320,7 @@ body:not(lzy-small-screen) {
 
 }
 
-body.large-screen #lzy {
+#lzy.large-screen {
     .lzy-nav-top-horizontal {
         a {
             line-height: var(--lzy-nav-line-height);
