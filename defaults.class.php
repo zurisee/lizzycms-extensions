@@ -69,6 +69,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'path_stylesPath'                   => ['css/', 'Name of folder in which style sheets reside' ],
             'path_userCodePath'                 => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
 
+            'site_compiledStylesFilename'       => ['_compiled-styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
             'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
@@ -125,7 +126,8 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['AUXILIARY']             = array('module' => 'js/auxiliary.js', 'weight' => 130);
 
         $this->loadModules['TABBABLE']              = array('module' => 'third-party/tabbable/jquery.tabbable.min.js', 'weight' => 126);
-        $this->loadModules['NAV']                   = array('module' => 'js/nav.js, css/_nav.css', 'weight' => 125);
+        $this->loadModules['NAV']                   = array('module' => 'js/nav.js', 'weight' => 125);
+//        $this->loadModules['NAV']                   = array('module' => 'js/nav.js, css/_nav.css', 'weight' => 125);
 
         $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js,'.
                                                             'extensions/editable/css/editable.css', 'weight' => 120);
