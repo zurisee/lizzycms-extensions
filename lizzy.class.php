@@ -128,7 +128,7 @@ class Lizzy
             $this->pageRelativePath = '';
             $this->pagePath = '';
         }
-        $this->trans->addVariable('debug_class', '');
+        $this->trans->addVariable('debug_class', '');   // just for compatibility
         $this->dailyHousekeeping(2);
     } // __construct
 
@@ -606,6 +606,8 @@ class Lizzy
     {
         $template = $this->getTemplate();
         $template = $this->page->shieldVariable($template, 'head_injections');
+        $template = $this->page->shieldVariable($template, 'body_tag_injections');
+        $template = $this->page->shieldVariable($template, 'body_top_injections');
         $template = $this->page->shieldVariable($template, 'content');
         $template = $this->page->shieldVariable($template, 'body_end_injections');
         $this->page->addTemplate($template);
@@ -697,11 +699,13 @@ class Lizzy
             if  (!$this->localCall) {   // log only on non-local host
                 writeLog('starting debug mode');
             }
-        	$this->trans->addVariable('debug_class', ' debug');
+//        	$this->trans->addVariable('debug_class', ' debug');
+        	$this->page->addBodyClasses('debug');
 		}
 
 		if ($this->config->isLegacyBrowser) {
             $this->trans->addVariable('debug_class', ' legacy');
+            $this->page->addBodyClasses('legacy');
         }
 
 		if ($this->config->site_multiLanguageSupport) {
@@ -742,10 +746,10 @@ class Lizzy
 
 		if ($this->siteStructure) {                                 // page_name_class
             $page->pageName = $pageName = translateToIdentifier($this->siteStructure->currPageRec['name']);
-            $pagePathClass = ' path_'.str_replace('/', '--', $this->pagePath);
-            $pagePathClass = rtrim($pagePathClass, '--');
-            $this->trans->addVariable('page_name_class', 'page_'.$pageName.$pagePathClass);
-            $this->trans->addVariable('page_name_id', 'page_'.$pageName);
+            $pagePathClass = rtrim(str_replace('/', '--', $this->pagePath), '--');
+            $this->trans->addVariable('page_name_class', 'page_'.$pageName);        // just for compatibility
+            $this->trans->addVariable('page_path_class', 'path_'.$pagePathClass);   // just for compatibility
+            $this->page->addBodyClasses("page_$pageName path_$pagePathClass");
 		}
         setStaticVariable('pageName', $pageName);
 
@@ -1301,11 +1305,14 @@ EOT;
 		
 		if (getUrlArgStatic('mobile')) {			                    // mobile
 			$this->trans->addVariable('debug_class', ' mobile');
+            $this->page->addBodyClasses('mobile');
 		}
 		if (getUrlArgStatic('touch')) {			                        // touch
 			$this->trans->addVariable('debug_class', ' touch');
+            $this->page->addBodyClasses('touch');
 		} elseif (getUrlArgStatic('notouch')) {		                    // notouch
             $this->trans->addVariable('debug_class', ' notouch');
+            $this->page->addBodyClasses('notouch');
         }
 
         // This feature requires LiveReload (http://livereload.com/) to be running in the background
@@ -1557,10 +1564,10 @@ EOT;
             }
 
             // purge rollback files:
-            $dir = glob($item.'#RolledBack*');
-            foreach ($dir as $item) {
-                unlink($item);
-            }
+//            $dir = glob($item.'#RolledBack*');
+//            foreach ($dir as $item) {
+//                unlink($item);
+//            }
         }
 
         // purge global recycle bin:
