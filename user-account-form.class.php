@@ -26,7 +26,6 @@ class UserAccountForm
             $this->trans->readTransvarsFromFile($adminTransvars);
             $this->checkInsecureConnection();
             $this->page->addModules('USER_ADMIN');
-//            $this->page->addCssFiles('USER_ADMIN_CSS');
         } else {
             $this->config = null;
             $this->page = null;
@@ -50,6 +49,8 @@ class UserAccountForm
         }
 
         $this->page->addOverride($str);
+        $this->page->addModules('PANELS');
+        $this->page->setOverrideMdCompile(false);
 
         return $this->page;
     } // authForm
@@ -220,9 +221,6 @@ $delete
 EOT;
 
         $this->page->addModules('USER_ADMIN, ~/css/user_admin.css' );
-//        $this->page->addJQFiles('USER_ADMIN');
-//        $this->page->addCssFiles('USER_ADMIN_CSS,~/css/user_admin.css' );
-
 
         return $html;
     }
@@ -268,7 +266,7 @@ EOT;
 
 
 
-        $html = preg_replace("/\n\s*/m", "\n", $html);  // make sure the MD-compiler doesn't get in the way
+        $html = preg_replace("/\n\s*/m", "\n", trim($html));  // make sure the MD-compiler doesn't get in the way
         $html = preg_replace("/\n\s*\n/m", "\n", $html);  // make sure the MD-compiler doesn't get in the way
         return $html;
     } // createMultimodeLoginForm

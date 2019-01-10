@@ -1,7 +1,12 @@
 
 /* --- Authentication ----- */
 
-
+.lzy-onetime-code-sent-overlay {
+    border: 1px dashed red;
+    margin: 50px 10px 10px 10px;
+    padding: 10px;
+    background: #fee;
+}
 
 .lzy-login-form,
 .lzy-signup-form {

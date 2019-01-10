@@ -7,7 +7,8 @@ class AdminTasks
     public function __construct($that = null)
     {
 //        $className = get_class($that);
-        if (get_class($that) == 'Lizzy') {
+//        if (get_class($that) == 'Lizzy') {
+        if ($that && get_class($that) == 'Lizzy') {
             $this->auth = $that->auth;
             $this->page = $that->page;
             $this->trans = $that->trans;
@@ -395,8 +396,8 @@ class AdminTasks
 
             $headers = "From: {$pM['from']}\r\n" .
                 'X-Mailer: PHP/' . phpversion();
-            $subject = $this->trans->translateVars( $pM['subject'] );
-            $message = $this->trans->translateVars( $pM['message'] );
+            $subject = $this->trans->translate( $pM['subject'] );
+            $message = $this->trans->translate( $pM['message'] );
 
             if ($this->localCall) {
                 $this->page->addOverlay("<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre>");

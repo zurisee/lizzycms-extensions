@@ -57,7 +57,7 @@ class Authentication
 
         } elseif (isset($_POST['lzy-login-username']) && isset($_POST['lzy-login-password-password'])) {    // user sent un & pw
             $credentials = array('username' => $_POST['lzy-login-username'], 'password' => $_POST['lzy-login-password-password']);
-            if (!$this->validateCredentials($credentials)) {
+            if (!($res = $this->validateCredentials($credentials))) {
                 return null;
             }
 
@@ -169,7 +169,7 @@ class Authentication
             if (password_verify($providedPW, $correctPW)) {  // login succeeded
                 writeLog("logged in: $requestingUser [{$rec['group']}] (" . getClientIP(true) . ')', LOGIN_LOG_FILENAME);
                 $this->setUserAsLoggedIn($requestingUser, $rec);
-                return true;
+                return $requestingUser;
 
             } else {                                        // login failed: pw wrong
                 $rep = '';

@@ -396,7 +396,15 @@ class Page
                 $args = ['text' => $args, 'mdCompile' => $mdCompile, 'closable' => $closable];
             }
         }
-        $this->overlay = $args;
+        if (!$this->overlay) {
+            $this->overlay = $args;
+
+        } else {
+            $this->overlay['text'] .= $args['text'];
+            $this->overlay['mdCompile'] |= $args['mdCompile'];
+            $this->overlay['closable'] |= $args['closable'];
+
+        }
     } // addOverlay
 
 
