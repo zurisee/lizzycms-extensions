@@ -6,7 +6,7 @@ class AdminTasks
 
     public function __construct($that = null)
     {
-        $className = get_class($that);
+//        $className = get_class($that);
         if (get_class($that) == 'Lizzy') {
             $this->auth = $that->auth;
             $this->page = $that->page;
