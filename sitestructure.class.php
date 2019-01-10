@@ -4,7 +4,6 @@
  *
  *  SiteStructure
 */
-use Symfony\Component\Yaml\Yaml;
 
 class SiteStructure
 {
@@ -196,7 +195,7 @@ class SiteStructure
 
 				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
 				if ($args) {
-					$args = convertYaml($args, true, $this->site_sitemapFile);
+					$args = parseArgumentStr($args);
 					if (is_array($args)) {
 						foreach($args as $key => $value) {
 							if (($key == 'folder') || ($key == 'showthis') || ($key == 'goto')) {
