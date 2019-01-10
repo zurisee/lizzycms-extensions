@@ -5,14 +5,14 @@
 	<title>{{ page_title }}</title>
 	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
 	<link href="~sys/css/normalize.min.css" rel="stylesheet" />
-	<link href="~sys/css/lizzy_basics.css" rel="stylesheet" />
-	<link href="~sys/css/_lizzy_progressive.css" rel="stylesheet" />
-	<link href="~/css/_styles.css" rel="stylesheet" />
+	<link href="~sys/css/_lizzy.css" rel="stylesheet" />
+	<link href="~/css/_compiled-styles.css" rel="stylesheet" />
 {{^head_injections }}
 </head>
 
-<body class='{{ page_name_class }}{{^debug_class }}'>
-  <div id='lzy' class='page'>
+<body id='lzy'{{^ body_tag_injections }}>
+{{^body_top_injections }}
+  <div class='page'>
 
 		<header class='header'>
 {{^ header }}

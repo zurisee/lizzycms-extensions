@@ -34,6 +34,8 @@ class Page
     private $jqFiles = '';
     private $jq = '';
     private $autoAttrFiles = '';
+    private $bodyTagClasses = '';
+    private $bodyTagInjections = '';
     private $bodyTopInjections = '';
     private $bodyEndInjections = '';
     private $message = '';
@@ -161,6 +163,22 @@ class Page
     {
         $this->addToProperty('bodyTopInjections', $str, $replace);
     } // addBody
+
+
+
+    //-----------------------------------------------------------------------
+    public function addBodyClasses($str, $replace = false)
+    {
+        $this->addToProperty('bodyTagClasses', ' '.$str, $replace);
+    } // addBodyClasses
+
+
+
+    //-----------------------------------------------------------------------
+    public function addBodyTagAttributes($str, $replace = false)
+    {
+        $this->addToProperty('bodyTagInjections', $str, $replace);
+    } // addBodyTagAttributes
 
 
 
@@ -437,24 +455,24 @@ class Page
 
 
 
-    public function applyBodyTopInjection( $html )
-    {
-        if (!$this->bodyTopInjections) {
-            return $html; // nothing to do
-        }
-
-        $p = strpos($html, '<body');
-        if ($p) {
-            $p = strpos($html, '>', $p);
-            if (!$p) {  // syntax error, body tag not closed
-                return $html;
-            }
-            $p++;
-            $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
-            $html = substr($html, 0, $p).$injectStr.substr($html, $p);
-        }
-        return $html;
-    } // applyBodyTopInjection
+//    public function applyBodyTopInjection( $html )
+//    {
+//        if (!$this->bodyTopInjections) {
+//            return $html; // nothing to do
+//        }
+//
+//        $p = strpos($html, '<body');
+//        if ($p) {
+//            $p = strpos($html, '>', $p);
+//            if (!$p) {  // syntax error, body tag not closed
+//                return $html;
+//            }
+//            $p++;
+//            $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
+//            $html = substr($html, 0, $p).$injectStr.substr($html, $p);
+//        }
+//        return $html;
+//    } // applyBodyTopInjection
 
 
 
@@ -705,7 +723,7 @@ EOT;
 
     //....................................................
     public function prepareBodyEndInjections()
-    // interatively collects snippets for js, jq, bodyTopInjections, bodyEndInjection (text)
+    // interatively collects snippets for css, js, jq
     {
         $modified = false;
 
@@ -894,26 +912,26 @@ EOT;
 
 
 
-    //....................................................
-    public function resolveVarsAndMacros()
-    {
-        return;
-        // translate template
-        $this->template = $this->trans->translate($this->template);
-
-        // translate content
-        $this->content = $this->trans->translate($this->content);
-
-        // now, feed page elements gathered from macros back to main page object:
-        $this->merge($this->trans->getPageObject());
-
-        // translate bodyTopInjections
-        $this->bodyTopInjections = $this->trans->translate($this->bodyTopInjections);
-
-        // translate bodyEndInjections
-        $this->bodyEndInjections = $this->trans->translate($this->bodyEndInjections);
-
-    } // resolveVarsAndMacros
+//    //....................................................
+//    public function resolveVarsAndMacros()
+//    {
+//        return; // TODO
+//        // translate template
+//        $this->template = $this->trans->translate($this->template);
+//
+//        // translate content
+//        $this->content = $this->trans->translate($this->content);
+//
+//        // now, feed page elements gathered from macros back to main page object:
+//        $this->merge($this->trans->getPageObject());
+//
+//        // translate bodyTopInjections
+//        $this->bodyTopInjections = $this->trans->translate($this->bodyTopInjections);
+//
+//        // translate bodyEndInjections
+//        $this->bodyEndInjections = $this->trans->translate($this->bodyEndInjections);
+//
+//    } // resolveVarsAndMacros
 
 
 
@@ -996,13 +1014,23 @@ EOT;
     {
         $html = $this->template;
 
-        $html = $this->applyBodyTopInjection($html, $this->bodyTopInjections);
         $html = $this->trans->adaptBraces($html);
 
+        $bodyTagInjections = $this->bodyTagInjections;
+        if ($this->bodyTagClasses) {
+            $bodyTagInjections = rtrim(" class='".trim($this->bodyTagClasses)."' ".$bodyTagInjections);
+        }
 
-        $html = $this->injectValue($html, 'head_injections', $this->getHeadInjections());
-        $html = $this->injectValue($html, 'content', $this->content);
-        $html = $this->injectValue($html, 'body_end_injections', $this->getBodyEndInjections());
+        $html = $this->injectValue($html, 'head_injections',        $this->getHeadInjections());
+        $html = $this->injectValue($html, 'body_tag_injections',    $bodyTagInjections);
+        if ($this->bodyTopInjections) {
+            $bodyTopInjections = "<!-- body_top_injections -->\n{$this->bodyTopInjections}<!-- /body_top_injections -->\n\n";
+        } else {
+            $bodyTopInjections = '';
+        }
+        $html = $this->injectValue($html, 'body_top_injections', $bodyTopInjections);
+        $html = $this->injectValue($html, 'content',                $this->content);
+        $html = $this->injectValue($html, 'body_end_injections',    $this->getBodyEndInjections());
 
         $this->injectAllowOrigin(); // send 'Access-Control-Allow-Origin' in header
 
