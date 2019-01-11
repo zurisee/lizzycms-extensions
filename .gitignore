@@ -7,3 +7,5 @@
 # ignore extensions:
 extensions/*
 
+# ignore compiled SCSS files:
+css/[_]*.css
