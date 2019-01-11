@@ -137,9 +137,10 @@ class PageSource
     {
         // first save offending file locally to rollback name:
         $rolledBackName = RECYCLE_BIN_PATH.'#RolledBack '.basename( PageSource::composeRecycleFilename($fileName) );
-//        $rolledBackName = '#RolledBack '.basename( PageSource::composeRecycleFilename($fileName) );
         preparePath($rolledBackName);
-        copy($fileName, dir_name($fileName).$rolledBackName);
+        $rolledBackName = resolvePath($rolledBackName);
+        preparePath($rolledBackName);
+        copy($fileName, $rolledBackName);
 
         // second copy latest backup from recycle bin:
         if ($rollBackSrc = PageSource::getRecycledFilename($fileName)) {
