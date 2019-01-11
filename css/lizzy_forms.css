@@ -12,7 +12,7 @@
     display: inline-block;
 }
 .lzy-form-field-wrapper input {
-    width: calc(100% - var(--label-width) + -10px);
+    width: calc(100% - var(--label-width) + -14px);
     display: inline-block;
 }
 .lzy-form-field-wrapper.lzy-form-field-type-password input {
