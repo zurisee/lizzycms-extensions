@@ -30,6 +30,34 @@ class Forms
 		$this->transvar = $transvar;
 		$this->page = $page;
 		$this->inx = -1;
+		$jq = <<<'EOT'
+		
+	$('input[type=reset]').click(function(e) {  // reset: clear all entries
+		var $form = $(this).closest('form');
+		$('.lizzy_time',  $form ).val(0);
+		$form[0].submit();
+	});
+	
+	$('input[type=button]').click(function(e) { // cancel: reload page (or goto 'next' if provided
+		var $form = $(this).closest('form');
+		var next = $('.lizzy_next', $form ).val();
+		window.location.href = next;
+	});
+    $('.lzy-form-pw-toggle').click(function(e) {
+        e.preventDefault();
+		var $form = $(this).closest('form');
+		var $pw = $('.lzy-form-password', $form);
+        if ($pw.attr('type') == 'text') {
+            $pw.attr('type', 'password');
+            $('.lzy-form-login-form-icon', $form).attr('src', systemPath+'rsc/show.png');
+        } else {
+            $pw.attr('type', 'text');
+            $('.lzy-form-login-form-icon', $form).attr('src', systemPath+'rsc/hide.png');
+        }
+    });
+
+EOT;
+        $this->page->addJq($jq);
 	} // __construct
 
     
@@ -121,9 +149,9 @@ class Forms
         }
 
 		if (isset($this->currRec->wrapperclass) && ($this->currRec->wrapperclass)) {
-	        $class = " class='field-wrapper field-type-{$this->currRec->type} {$this->currRec->wrapperclass}'";
+	        $class = " class='lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}'";
 		} else {
-	        $class = $this->getClass('field-wrapper field-type-'.$this->currRec->type);
+	        $class = $this->classAttr('lzy-form-field-wrapper lzy-form-field-type-'.$this->currRec->type);
 		}
 		$out = "\t\t<div $class>\n$elem\t\t</div><!-- /field-wrapper -->\n\n";
         return $out;
@@ -194,13 +222,13 @@ class Forms
         $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
         $groupName = translateToIdentifier($this->currRec->label);
 		$checkedElem = (isset($this->userSuppliedData[$groupName])) ? $this->userSuppliedData[$groupName] : false;
-        $out = "\t\t\t<fieldset class='label radio-label'><legend>{$this->currRec->label}</legend>\n";
+        $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-radio-label'><legend>{$this->currRec->label}</legend>\n";
         foreach($values as $value) {
             $val = translateToIdentifier($value);
             $id = "fld_$val";
             
 			$checked = ($checkedElem && ($val == $checkedElem)) ? ' checked' : '';
-            $out .= "\t\t\t<div class='$id radio-elem choice-elem'>\n";
+            $out .= "\t\t\t<div class='$id lzy-form-radio-elem lzy-form-choice-elem'>\n";
             $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$val'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
@@ -214,7 +242,7 @@ class Forms
     {
         $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
         $groupName = translateToIdentifier($this->currRec->label);
-        $out = "\t\t\t<fieldset class='label checkbox-label'><legend>{$this->currRec->label}</legend>\n";
+        $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-checkbox-label'><legend>{$this->currRec->label}</legend>\n";
 		
 		$data = isset($this->userSuppliedData[$groupName]) ? $this->userSuppliedData[$groupName] : [];
         foreach($values as $value) {
@@ -222,7 +250,7 @@ class Forms
             $id = "fld_{$groupName}_$val";
 			
 			$checked = ($data && in_array($value, $data)) ? ' checked' : '';
-            $out .= "\t\t\t<div class='$id checkbox-elem choice-elem'>\n";
+            $out .= "\t\t\t<div class='$id lzy-form-checkbox-elem lzy-form-choice-elem'>\n";
             $out .= "\t\t\t\t<input id='$id' type='checkbox' name='{$groupName}[]' value='$value'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
@@ -243,10 +271,9 @@ class Forms
 //-------------------------------------------------------------
     private function renderPassword()
     {
-        $input = "\t\t\t<input type='password' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} aria-invalid='false' aria-describedby='password-hint' value='{$this->currRec->value}' />\n";
+        $input = "\t\t\t<input type='password' class='lzy-form-password' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} aria-invalid='false' aria-describedby='password-hint' value='{$this->currRec->value}' />\n";
         $hint = <<<EOT
-            <div class="password-hint">{{password-hint}}</div>
-            <label class='pw-toggle' for="showPassword"><input type="checkbox" id="showPassword"> {{ show password }}</label>
+            <label class='lzy-form-pw-toggle' for="showPassword"><input type="checkbox" id="lzy-form-showPassword{$this->inx}" class="lzy-form-showPassword"><img src="~sys/rsc/show.png" class="lzy-form-login-form-icon" alt="{{ show password }}" title="{{ show password }}" /></label>
 EOT;
 //            <div id="password-hint" class="password-hint">{{password-hint}}</div>
         $out = $this->getLabel();
@@ -347,9 +374,10 @@ EOT;
         $autoClass = ($this->currRec->legend) ? translateToIdentifier($this->currRec->legend).' ' : '';
 
         if ($autoClass || $this->currRec->class) {
-            $class = " class='$autoClass{$this->currRec->class}'";
+            $class = " class='$autoClass{$this->currRec->class} lzy-form-fieldset'";
         } else {
-            $class = "$autoClass";
+//            $class = "$autoClass lzy-form-fieldset";
+            $class = " class='$autoClass lzy-form-fieldset'";
         }
         $out = "\t\t\t<fieldset$class>\n$legend";
         return $out;
@@ -404,17 +432,21 @@ EOT;
             <input type="hidden" name="form-upload-path" value="$targetPath1" />
             <label class="$id lzy-form-file-upload-label lzy-button" for="$id">$label<input id="$id" class="lzy-form-file-upload" type="file" name="files[]" data-url="$server" multiple /></label>
 
-			<div class='progress-indicator progress-indicator$inx' style="display: none;">
-				<progress id="progressBar$inx" class="progressBar" max='100' value='0'>
+			<!--<div class='progress-indicator progress-indicator$inx' style="display: none;">-->
+			<div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
+				<!--<progress id="progressBar$inx" class="progressBar" max='100' value='0'>-->
+				<progress id="progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
 					<!-- Fallback -->
-					<div id="progressBarFallback1-$inx"><span id="progressBarFallback2-$inx">&#160;</span></div>
+					<div id="lzy-form-progressBarFallback1-$inx"><span id="lzy-form-progressBarFallback2-$inx">&#160;</span></div>
 				</progress>
-				<div><span aria-live="polite" id="progressPercent$inx"></span></div>
+				<div><span aria-live="polite" id="lzy-form-progressPercent$inx"></span></div>
 			</div>
 
-			<div id='uploaded$inx' class='uploaded'$dispNo >$list</div>
+			<div id='lzy-form-uploaded$inx' class='lzy-form-uploaded'$dispNo >$list</div>
+			<!--<div id='uploaded$inx' class='lzy-form-uploaded'$dispNo >$list</div>-->
 
 EOT;
+//??? -> upload with 'lzy-form-'?
 
 		$jq = <<<EOT
 
@@ -477,10 +509,10 @@ EOT;
 		$label = $this->currRec->label;
 		$value = (isset($this->currRec->value) && $this->currRec->value) ? $this->currRec->value : $label;
 		$out = '';
-		$class = $this->getClass('form-button');
+		$class = $this->classAttr('lzy-form-form-button lzy-button');
 		if (strpos($value, ',') === false) {
 			$id = 'btn_'.$this->currForm->formId.'_'.translateToIdentifier($value);
-			$out .= "$indent<output id='{$this->currForm->formId}_error-msg'  aria-live='polite' aria-relevant='additions'></output>\n";
+//			$out .= "$indent<output id='{$this->currForm->formId}_error-msg'  aria-live='polite' aria-relevant='additions'></output>\n";
 			$out .= "$indent<input type='submit' id='$id' value='$label' $class />\n";
 
 		} else {
@@ -488,10 +520,12 @@ EOT;
 			$labels = explode(',', $label);
 			
 			foreach ($types as $i => $type) {
+			    if (!$type) { continue; }
 				$id = 'btn_'.$this->currForm->formId.'_'.translateToIdentifier($type);
 				$label = (isset($labels[$i])) ? $labels[$i] : $type;
 				if (stripos($type, 'submit') !== false) {
-					$out .= "$indent<output id='{$this->currForm->formId}_error-msg'  aria-live='polite' aria-relevant='additions'></output>\n";
+//					$out .= "$indent<output id='{$this->currForm->formId}_error-msg$i'  aria-live='polite' aria-relevant='additions'></output>\n";
+//					$out .= "$indent<output id='{$this->currForm->formId}_error-msg'  aria-live='polite' aria-relevant='additions'></output>\n";
 					$out .= "$indent<input type='submit' id='$id' value='$label' $class />\n";
 					
 				} elseif (stripos($type, 'reset') !== false) {
@@ -527,14 +561,13 @@ EOT;
 		$label = $this->currRec->label;
 		if ($this->translateLabel) {
 		    $hasColon = (strpos($label, ':') !== false);
-		    $hasAsterisk = (strpos($label, '*') !== false);
             $label = trim(str_replace([':', '*'], '', $label));
             $label = "{{ $label }}";
             if ($hasColon) {
                 $label .= ':';
             }
-            if ($hasAsterisk) {
-                $label .= ' *';
+            if ($requiredMarker) {
+                $label .= ' '.$requiredMarker;
             }
         } else {
             if ($requiredMarker && (strpos($label, ':') !== false)) {
@@ -552,22 +585,25 @@ EOT;
     private function getRequiredMarker()
     {
 		$required = $this->currRec->required;
-        return ($required) ? "<span class='required-marker' aria-hidden='true'>{$this->currRec->requiredMarker}</span>" : '';
+        return ($required) ? "<span class='lzy-form-required-marker' aria-hidden='true'>{$this->currRec->requiredMarker}</span>" : '';
     } // getRequiredMarker
 
 
 //-------------------------------------------------------------
-    private function getClass($class = '')
+    private function classAttr($class = '')
     {
         $out = ($this->currRec->class . $class) ? " class='".trim($this->currRec->class .' '. $class). "'" : '';
         return trim($out);
-    } // getClass
+    } // classAttr
     
     
 //-------------------------------------------------------------
     private function parseArgs($args)
     {
 		if (!$this->currForm) {	// first pass -> must be type 'form-head' -> defines formId
+		    if (!isset($args['type'])) {
+		        fatalError("Forms: mandatory argument 'type' missing.");
+            }
 			if ($args['type'] != 'form-head') {
                 fatalError("Error: syntax error \nor form field definition encountered without previous element of type 'form-head'", 'File: '.__FILE__.' Line: '.__LINE__);
 			}
@@ -586,13 +622,14 @@ EOT;
 
 		} else {
             $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form-Elem'.($this->inx + 1);
-            $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : false;
+            $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : true;
+//            $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : false;
 			$formId = $this->currForm->formId;
 			$this->currForm = &$this->formDescr[ $formId ];
 		}
 		
 
-		$type = (isset($args['type'])) ? $args['type'] : 'text';
+		$type = $args['type'] = (isset($args['type'])) ? $args['type'] : 'text';
 		if ($args['type'] == 'form-tail') {	// end-element is exception, doesn't need a label
 			$label = 'form-tail';
 		}
@@ -629,7 +666,7 @@ EOT;
         $_name = " name='$name'";
 
 
-		if (isset($args['required'])) {
+        if (isset($args['required']) && $args['required']) {
             $rec->required = true;
             $rec->requiredMarker = (is_bool($args['required'])) ? '*' : $args['required'];
             $required = " required aria-required='true'";
