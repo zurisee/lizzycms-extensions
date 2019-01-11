@@ -716,6 +716,7 @@ function parseNumbersetDescriptor($descr, $minValue = 1, $maxValue = 9, $headers
 // don't parse if pattern contains ':' because that means it's a key:value
 {
     $names = false;
+    $descr = str_replace(['&#34;', '&#39;'], ['"', "'"], $descr);
 	$set = parseArgumentStr($descr);
 	if (!isset($set[0])) {
         foreach (array_values($set) as $i => $hdr) {
