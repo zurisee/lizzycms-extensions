@@ -17,8 +17,8 @@ function parseArgumentStr($str, $delim = ',')
     $options = [];
 
     // for compatibility with Yaml, the argument list may come enclosed in { }
-    if (preg_match('/^\s* (\{? \s*)  (.*)  \} \s* $/x', $str, $m)) {
-        $str = $m[2];
+    if (preg_match('/^\s* \{  (.*)  \} \s* $/x', $str, $m)) {
+        $str = $m[1];
     }
 
     $assoc = false;
@@ -50,6 +50,20 @@ function parseArgumentStr($str, $delim = ',')
                 fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
+        } elseif ($c == '{') {    // -> {
+            $p = findNextPattern($str, "}", 1);
+            if ($p) {
+                $val = substr($str, 1, $p - 1);
+                $val = str_replace("\\}", "}", $val);
+
+                $val = parseArgumentStr($val);
+
+                $str = trim(substr($str, $p + 1));
+                $str = preg_replace('/^\s*↵\s*$/', '', $str);
+            } else {
+                fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
+            }
+
         } else {    // -> bare value
             $rest = strpbrk($str, ':'.$delim);
             if ($rest) {
@@ -59,7 +73,13 @@ function parseArgumentStr($str, $delim = ',')
             }
             $str = $rest;
         }
-        $val = str_replace(['"', "'"], ['&#34;', '&#39;'], $val);
+        if ($val === 'true') {
+            $val = true;
+        } elseif ($val === 'false') {
+            $val = false;
+        } elseif (is_string($val)) {
+            $val = str_replace(['"', "'"], ['&#34;', '&#39;'], $val);
+        }
 
         // now, check whether it's a single value or a key:value pair
         if ($str && ($str[0] == ':')) {         // -> key:value pair
