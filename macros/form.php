@@ -25,17 +25,18 @@ $page->addJqFiles("{$jsFloatPath}jquery.FloatLabel.js");
 
 
 
-$this->addMacro($macroName, function ($args) {
+$this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
+    $args = $this->getArgsArray($macroName);
 
-	if (isset($args[0]) && ($args[0] == 'help')) {
-	    return '';
-    }
 
     if ($inx == 1) {
         $this->form = new Forms($this->page, $this);
+    }
+    if (isset($args[0]) && ($args[0] == 'help')) {
+        return $this->form->renderHelp();
     }
 
     $str = $this->form->render([ 'type' => 'form-head' ]);

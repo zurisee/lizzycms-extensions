@@ -953,7 +953,72 @@ EOT;
 			unset($_SESSION['lizzy'][$this->formId.'_userData']);
 		}
 	}
-	
+
+
+//-------------------------------------------------------------
+    public function renderHelp()
+    {
+        $help = <<<EOT
+
+# Options for macro *form()* end *formelem()*:
+
+type:
+: [init, radio, checkbox, date, month, number, range, text, email, password, textarea, button]
+
+label:
+: Some meaningful label used for the form element
+
+class:
+: Class identifier that is added to the surrounding div
+
+required:
+: Enforces user input
+
+placeholder:
+: Text displayed in empty field, disappears when user enters input field
+
+shortlabel:
+: text to be used in mail and .csv data file
+
+value:
+: Defines a preset value  
+: Radio and checkbox element only:  
+: {{ space }} -> list of values separated by '|', e.g. "A | BB | CCC"   
+: Button element only:  
+: {{ space }} -> [submit, reset]
+
+
+min:
+: Range element only: min value
+
+max:
+: Range element only: max value
+
+wrapperclass:
+: Applied to the element's wrapper div, if supplied - otherwise class will be applied
+
+form-head:
+: The first element (required)
+
+mailto:
+: Data entered by users will be sent to this address
+
+mailfrom: 
+: The sender address of the mail above
+
+process:
+: Name of php-script (in folder _code/) that will process submitted data
+
+form-tail:
+: The last element (required)
+
+
+
+
+EOT;
+        return compileMarkdownStr($help);
+    } // renderHelp
+
 } // Forms
 
 

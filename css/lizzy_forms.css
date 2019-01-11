@@ -16,7 +16,7 @@
     display: inline-block;
 }
 .lzy-form-field-wrapper.lzy-form-field-type-password input {
-    width: calc(100% - var(--label-width) + -14px - 2em);
+    width: calc(100% - var(--label-width) + -18px - 2em);
 }
 .lzy-form-field-wrapper.lzy-form-field-type-password .lzy-form-pw-toggle {
     width: 2em;
