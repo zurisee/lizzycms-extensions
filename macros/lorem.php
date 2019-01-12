@@ -16,8 +16,11 @@ $this->addMacro($macroName, function () {
 
     $lorem = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.';
 
+    if ($min == 'help') {
+        return '';
+    }
 
-	if (!$min) {
+	if (!$min && !$max) {
 		$str = $lorem;
 		
 	} else {
@@ -27,7 +30,8 @@ $this->addMacro($macroName, function () {
         if (!intval($max)) {
 			$n = $min;
 		} else {
-			$n = rand($min, min($nWords, $max));
+            $max = intval($max);
+            $n = rand($min, min($nWords, $max));
 		}
 		
 		$str = "";
@@ -38,6 +42,7 @@ $this->addMacro($macroName, function () {
 		if ($dot != 'false') {
 			$str .= '.';
 		}
+		$str = strtoupper($str[0]).substr($str, 1);
 	}
 	if ($class) {
 	    $str = "<div class='$class'>$str</div>";
