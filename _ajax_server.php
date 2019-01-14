@@ -163,6 +163,14 @@ class AjaxServer
 			$this->endPolling();
 		}
 
+		if ($this->get_request_data('newfile') !== null) {    // new file
+            $this->createNewFile();
+        }
+
+		if ($this->get_request_data('renamefile') !== null) {    // new file
+            $this->renameFile();
+        }
+
 		if ($this->get_request_data('getfile') !== null) {	// send md-file
 			$md = '';
 			if (isset($_POST['lzy_filename'])) {
@@ -489,6 +497,37 @@ EOT;
 		$str = substr($str, 0, MAX_URL_ARG_SIZE);	// restrict size to safe value
 		return $str;
 	} // safe_str
+
+
+
+    private function createNewFile()
+    {
+        if (isset($_POST['lzy_filename'])) {
+            $filename0 = $_POST['lzy_filename'];
+            $filename = '../pages/' . strtolower($filename0);
+            $filename = preg_replace('/\.\w+$/', '', $filename) . '.md';
+            $filename0 = basename($filename0);
+            file_put_contents($filename, "# $filename0\n\n");
+        }
+    } // createNewFile
+
+
+
+    private function renameFile()
+    {
+        if (isset($_POST['lzy_filename'])) {
+            $filename0 = $_POST['lzy_filename'];
+            $newName0 = $_POST['lzy_newName'];
+            $filename = '../' . $filename0;
+            $newFilename = dirname($filename)."/$newName0";
+            if (file_exists($filename) &&
+                rename($filename, $newFilename)) {
+                $this->mylog( "rename($filename, $newFilename)");
+                exit('Ok');
+            }
+        }
+        exit('Failed');
+    } // renameFile
 
 } // EditingService
 

@@ -63,6 +63,7 @@ main > .lzy-src-wrapper, .lzy-file-uploader {
     padding: 0;
 	width: inherit;
 	clear: both;
+	border: none;
 }
 .lzy-file-uploader #lzy-fileupload {
 	display: none;
@@ -191,6 +192,15 @@ span.lzy-ed-dropdown select {
 	margin-left: -40px;
 }
 
+/* for sitemap editor: overrule commented lines (#...) */
+.lzy-edit-sitemap .CodeMirror .CodeMirror-code .cm-header {
+	font-size: 100%;
+	line-height: 100%;
+}
+
+.lzy-edit-sitemap .cm-header, .cm-strong {
+	 font-weight: 100;
+}
 
 /* --- from bootstrap --------------------- */
 .lzy-file-uploader a,
@@ -263,3 +273,26 @@ span.lzy-ed-dropdown select {
 }
 
 
+/* --- Content Editor -------------------------- */
+
+#lzy-edit-rename-file-container,
+#lzy-edit-new-filename-container {
+    padding-top: 2em;
+    padding-right: 2em;
+    font-size: 11pt;
+    transform: scale(1);
+}
+#lzy-edit-rename-file-container h1,
+#lzy-edit-new-filename-container h1 {
+    font-size: 14pt;
+    margin: 0 0 1em 0;
+}
+
+#lzy-edit-new-filename,
+#lzy-edit-rename-file {
+    padding: 4px 8px;
+}
+#lzy-edit-rename-file-confirm {
+    display: inline-block;
+    cursor: pointer;
+}

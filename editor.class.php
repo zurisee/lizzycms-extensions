@@ -40,7 +40,9 @@ class ContentEditor
             $this->loadEditorResources();
             $this->loadEditorButtons();
         }
-        $this->html .= $this->injectUploader($filePath);
+        $uploader = $this->injectUploader($filePath);
+        $this->page->addBodyEndInjections($uploader);
+
         $this->page->addContent($this->html, true);
         $this->addEditorDock($filePath);
         $this->page->addJQFiles('~sys/third-party/jqueryui/drag-resize/jquery-ui.min.js');
@@ -63,6 +65,7 @@ class ContentEditor
     private function loadEditorButtons()
     {
         $buttons = <<<EOT
+                    <button class="lzy-files-btn" title='{{ Save }}'><img src='~sys/rsc/folder.png' alt='{{ Save }}' /></button>
                     <button class="lzy-save-btn" title='{{ Save }}'><img src='~sys/rsc/save.png' alt='{{ Save }}' /></button>
                     <button class="lzy-done-btn" title='{{ Done }}'><img src='~sys/rsc/done.png' alt='{{ Done }}' /></button>
                     <button class="lzy-cancel-btn" title='{{ Cancel }}'><img src='~sys/rsc/cancel.png' alt='{{ Cancel }}' /></button>
