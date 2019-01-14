@@ -365,6 +365,8 @@ EOT;
     private function applyFilter($rowData)
     {
         $filter = $this->filter;
+        $filter = str_replace('&#34;', "'", $filter);
+        $filter = str_replace('\\\'', "'", $filter);
         if (!$filter || !isset($this->data[0])) {
             return true;
         }
