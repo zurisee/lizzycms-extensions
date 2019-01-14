@@ -189,6 +189,9 @@ EOT;
 
             // class:
             $addClass = '';
+            if ($this->closeButton) {
+                $class .= ' lzy-close-button';
+            }
             if ($class) {
                 if ($this->type != 'info') {
                     $class .=  ' lzy-popup-'.$this->type;
@@ -231,14 +234,14 @@ EOT;
 
 
 
-    private function getArg($argName, $default = false, $jBoxArgName = null, $addQuotes = true)
+    private function getArg($argName, $default = false, $internalArgName = null, $addQuotes = true)
     {
         if (!isset($this->args[$argName]) && !$default) {
             $this->$argName = false;
             return;
         }
-        if ($jBoxArgName === false) {
-            $jBoxArgName = $argName;
+        if ($internalArgName === false) {
+            $internalArgName = $argName;
         }
         $value = isset($this->args[$argName]) ? $this->args[$argName] : '';
 
@@ -256,11 +259,11 @@ EOT;
             $value1 = 'true';
         }
         $this->$argName = $value;
-        if ($jBoxArgName !== null) {
+        if ($internalArgName !== null) {
             if (!$addQuotes) {
                 $value1 = trim($value1, "'");
             }
-            $this->argStr .= "$jBoxArgName: $value1,\n";
+            $this->argStr .= "$internalArgName: $value1,\n";
         }
     } // getArg
 

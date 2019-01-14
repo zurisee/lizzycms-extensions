@@ -36,9 +36,15 @@
 .popup_close:hover span {
     color: black;
 }
-.popup_content {
+.popup_content.lzy-close-button,
+.lzy-popup.lzy-close-button {
+    padding-top: 2em;
+    padding-right: 2em;
+}
+.popup_content,
+.lzy-popup {
     background: #eee;
-    padding: 1em 1em 0em 1em;
+    padding: 1em 1em 0.6em 1em;
     /*padding: 1em 1em 0 1em;*/
     border: none;
     border-radius: 4px;
@@ -49,6 +55,7 @@
 .lzy-popup-confirm .popup_content {
     padding: 2em 2em 1em 2em;
 }
-.popup_content[aria-hidden="false"] {
+/*.popup_content[aria-hidden="false"] {*/
+.lzy-popup[aria-hidden="false"] {
     transform: scale(1);
 }
