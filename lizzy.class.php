@@ -903,6 +903,11 @@ class Lizzy
 
 			$mdStr = $this->extractFrontmatter($mdStr, $newPage);
 
+            $variables = $newPage->get('variables', true);
+            if ($variables) {
+                $this->trans->addVariables($variables);
+            }
+
             if ($ext == 'md') {             // it's an MD file, convert it
 
                 $eop = strpos($mdStr, '__EOP__');           // check for 'end of page' marker, if found exclude all following (also following mdFiles)
