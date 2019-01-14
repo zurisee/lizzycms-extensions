@@ -112,7 +112,7 @@ lzy-sign-up-link sent3:
 
 
 
-/* renderEditProfileForm(): */
+# renderEditProfileForm():
 lzy-edit-profile:
     de: 'Profil bearbeiten'
     en: 'Edit Profile'
@@ -244,7 +244,7 @@ lzy-error-email-required:
     en: 'Entering an e-mail address is mandatory'
 
 
-/* SignUp Form: */
+# SignUp Form:
 lzy-self-sign-up:
     de: Registrierung
     en: Sign Up
@@ -263,7 +263,7 @@ lzy-change-password:
 
 
 
-/* One-time access link/code form and email */
+# One-time access link/code form and email
 lzy-onetime access link sent:
     de: "<h1>Zugangs-Link versendet</h1>
     <p>Wir haben eine E-Mail an Sie gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
@@ -285,12 +285,12 @@ lzy-onetime access link sent3:
     en: "<p><br />Alternatively, if you have a valid username and password you may log in directly.</p>"
 
 lzy-sign-up further info:
-    de: "<p>Weitere Informationen finden Sie unter: <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
-    en: "<p>For further information goto:  <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
+    de: "<p>Weitere Informationen finden Sie unter: <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p><p><br />(Mit der Taste ESC dieses Overlay schliessen)</p>"
+    en: "<p>For further information goto:  <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p><p><br />(Press ESC to remove overlay)</p>"
 
 
 
-/* Change Password */
+# Change Password:
 lzy-password-changed-response:
     de: Ihr neues Kennwort wurde gespeichert.
     en: Your new password has been saved.
@@ -299,13 +299,13 @@ lzy-change-password-not-logged-in-response:
     de: Wenn Sie Ihr Kennwort ändern möchten, müssen sich zuerst anmelden.
     en: If you want to change your password you need to log in first.
 
-/* Add User */
+# Add User:
 lzy-add-user-response:
     de: Benutzer erfolgreich hinzugefügt
     en: User has been added successfully
 
 
-/* Add Users */
+# Add Users:
 lzy-add-users-response:
     de: Folgende Benutzer wurden zur Gruppe
     en: Following users added to group
@@ -323,7 +323,7 @@ lzy-add-users-none-added2:
     en: ''
 
 
-/* Change Username */
+# Change Username:
 lzy-change-username-send:
     de: Speichern
     en: Save
@@ -334,7 +334,7 @@ lzy-username-changed-response:
     en: Your new username has been registered
 
 
-/* Change E-Mail Address */
+# Change E-Mail Address:
 lzy-change-user-email-send:
     de: Speichern
     en: Save
@@ -406,7 +406,7 @@ lzy-change-mail-link sent3:
         You don't need a user-name, but you can define one if you like."
 
 
-/* delete user account */
+# delete user account:
 lzy-delete-profile-text:
     de: Hier können Sie Ihr Benutzerprofil löschen.
     en: Here you can delete your user profile.
