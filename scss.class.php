@@ -19,6 +19,7 @@ class SCssCompiler
         $this->localCall = $lzy->localCall;
         $this->compiledStylesFilename = $lzy->config->site_compiledStylesFilename;
         $this->compiledSysStylesFilename = '_lizzy.css';
+        $this->scss = false;
 
         if (isset($_GET['reset'])) {
             $this->deleteCache();
@@ -91,12 +92,13 @@ class SCssCompiler
         $out = getFile($file);
         $out = zapFileEND($out);
         $out = removeCStyleComments($out);
+        $fname = basename($file);
         if ($this->localCall && $this->config->debug_compileScssWithLineNumbers) {
             $lines = explode(PHP_EOL, $out);
             $out = '';
             foreach ($lines as $i => $l) {
                 if (preg_match('/^[^\/\*]+\{/', $l)) {
-                    $l .= " /* content: '".($i+1)."'; */";
+                    $l .= " /* content: '$fname:".($i+1)."'; */";
                 }
                 $out .= $l."\n";
             }
@@ -135,7 +137,9 @@ class SCssCompiler
         file_put_contents($targetFile, $cssStr);
         touchFile($targetFile, $t0);
 
-        $cssStr = preg_replace("|\s+/\* .* \*/|m", '', $cssStr);
+        if (!$this->config->localCall) {
+            $cssStr = preg_replace("|\s+/\* .* \*/|m", '', $cssStr);
+        }
         file_put_contents($compiledFilename, $cssStr."\n\n\n", FILE_APPEND);
 
         return basename($file).", ";
