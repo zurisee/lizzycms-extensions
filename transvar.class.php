@@ -181,7 +181,8 @@ class Transvar
         if (isset($this->macros[$macro])) { // and try to execute it
 
             $this->optionAddNoComment = false;
-            $val = $this->macros[$macro]($this);                    // execute the macro
+
+            $val = $this->executeMacro($macro);
 
             if (($val !== null) && ($this->config->isLocalhost || $this->config->isPrivileged) && !$this->optionAddNoComment) {
                 $val = "\n\n<!-- Lizzy Macro: $macro() -->\n$val\n<!-- /$macro() -->\n\n\n";   // mark its output
@@ -215,10 +216,20 @@ class Transvar
 
 
     //....................................................
+    private function executeMacro($macro)
+    {
+        $val = $this->macros[$macro]( $this->getArgsArray($macro) );
+        return $val;                    // execute the macro
+    }
+
+
+
+    //....................................................
     public function setMacroInfo($macroName, $info)
     {
         $this->macroInfo[] = [$macroName, $info];
-    }
+    } // executeMacro
+
 
 
     //....................................................
@@ -480,6 +491,15 @@ class Transvar
             }
         }
     } // addVariable
+
+
+
+    public function addVariables($variables)
+    {
+        foreach ($variables as $key => $value) {
+            $this->transvars[$key] = $value;
+        }
+    } // addVariables
 
 
 
