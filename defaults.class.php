@@ -69,7 +69,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'path_stylesPath'                   => ['css/', 'Name of folder in which style sheets reside' ],
             'path_userCodePath'                 => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
 
-            'site_compiledStylesFilename'       => ['_compiled-styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
+            'site_compiledStylesFilename'       => ['__styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
             'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
@@ -137,7 +137,8 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js, css/quickview.css', 'weight' => 92);
 
         $this->loadModules['POPUPS']                = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
-                                                                        'js/popup.js, css/popup.css', 'weight' => 85);
+                                                                        'css/popup.css', 'weight' => 85);
+//                                                                        'js/popup.js, css/popup.css', 'weight' => 85);
 
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 
