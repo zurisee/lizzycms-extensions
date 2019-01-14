@@ -436,9 +436,7 @@ class Lizzy
     {
         $accForm = new UserAccountForm($this);
         $authPage = $accForm->renderLoginForm($this->auth->message, '{{ page requires login }}');
-        $this->page->addModules('USER_ADMIN' );
-        $this->page->addOverride($authPage->get('override'), true, false);   // override page with login form
-        $this->page->setOverrideMdCompile(false);
+        $this->page->merge($authPage);   // override page with login form
     }
 
 
@@ -656,10 +654,11 @@ class Lizzy
 		if (!$this->config->admin_enableEditing || !$this->editingMode) {
 			return;
 		}
+        $this->page->addModules('POPUPS');
 		require_once SYSTEM_PATH.'editor.class.php';
         require_once SYSTEM_PATH.'page-source.class.php';
 
-        $this->config->editingMode =$this->editingMode;
+        $this->config->editingMode = $this->editingMode;
 
         $ed = new ContentEditor($this);
 		$ed->injectEditor($this->pagePath);
@@ -750,6 +749,12 @@ class Lizzy
             $this->trans->addVariable('page_name_class', 'page_'.$pageName);        // just for compatibility
             $this->trans->addVariable('page_path_class', 'path_'.$pagePathClass);   // just for compatibility
             $this->page->addBodyClasses("page_$pageName path_$pagePathClass");
+            if ($this->config->isPrivileged) {
+                $this->page->addBodyClasses("privileged");
+            }
+            if ($this->auth->isAdmin()) {
+                $this->page->addBodyClasses("admin");
+            }
 		}
         setStaticVariable('pageName', $pageName);
 
@@ -1498,12 +1503,12 @@ EOT;
 
             $headers = "From: {$pM['from']}\r\n" .
                 'X-Mailer: PHP/' . phpversion();
-            $subject = $this->trans->translateVars( $pM['subject'] );
-            $message = $this->trans->translateVars( $pM['message'] );
-            $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p><p>(Press ESC to remove overlay)</p>";
+            $subject = $this->trans->translate( $pM['subject'] );
+            $message = $this->trans->translate( $pM['message'] );
+            $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p>";
 
             if ($this->localCall) {
-                $str = "$explanation<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre>";
+                $str = "<div class='lzy-onetime-code-sent-overlay'>\n$explanation<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre></div>";
                 $this->page->addOverlay($str);
             } else {
                 if (!mail($pM['to'], $subject, $message, $headers)) {
