@@ -1051,15 +1051,24 @@ EOT;
     //....................................................
     private function injectAllowOrigin()
     {
-        if ($this->config->feature_enableAllowOrigin == false) {
-            return;
-
-        } elseif (is_string($this->config->feature_enableAllowOrigin)) {
-            $allowOrigin = $this->config->feature_enableAllowOrigin;
+        if (isset($this->feature_enableAllowOrigin)) {  // from frontmatter
+            $allowOrigin = $this->feature_enableAllowOrigin;
         } else {
-            $allowOrigin = $this->allowOrigin;
+            $allowOrigin = $this->config->feature_enableAllowOrigin;
         }
 
+        if (is_bool($allowOrigin)) {
+            if ($allowOrigin) {
+                $allowOrigin = '*';
+            } else {
+                return;
+            }
+        }
+
+        if (($allowOrigin == '*') || ($allowOrigin == 'true') || ($allowOrigin == 'all') || ($allowOrigin == 'any')) {
+            header('Access-Control-Allow-Origin: *');
+            return;
+        }
         if (!$allowOrigin || !isset($_SERVER['HTTP_ORIGIN'])) {
             return;
         }
