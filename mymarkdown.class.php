@@ -520,7 +520,7 @@ class MyMarkdown
 			$style = '';
 			$span = '';
 
-			$c1 = trim($s2){0};
+			$c1 = $s2{0};
 			if ($c1 == '"') {		                                                        // span
                 if (preg_match('/([^"]*)"([^"]*)"(.*)/', $s2, $mm)) {	// "
                     $span = $mm[2];
