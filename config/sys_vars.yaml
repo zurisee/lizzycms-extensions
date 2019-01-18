@@ -66,6 +66,7 @@ Uploaded file list:
     en: "Uploaded files:"
 
 
+Loading: '<img class="lzy-loading-spinner" src="~sys/rsc/loader.gif" alt="" />'
 
 #--- Links -------------------------------
 opens mail app: 
