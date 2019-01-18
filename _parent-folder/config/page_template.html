@@ -7,15 +7,15 @@
 	<link href="~sys/css/normalize.min.css" rel="stylesheet" />
 	<link href="~sys/css/_lizzy.css" rel="stylesheet" />
 	<link href="~/css/__styles.css" rel="stylesheet" />
-{{^head_injections }}
+{{ head_injections }}
 </head>
 
-<body id='lzy'{{^ body_tag_injections }}>
-{{^body_top_injections }}
+<body id='lzy'{{  body_tag_injections }}>
+{{ body_top_injections }}
   <div class='page'>
 
 		<header class='header'>
-{{^ header }}
+{{ header }}
 {{ nav( top ) }}
 
 		</header>
@@ -31,15 +31,15 @@
 
 
 		<footer class='footer'>
-{{^ footer }}
-			<div id='loggedInUser'>{{^ toggle-edit-mode }}{{ Log-in }}</div>
+{{ footer }}
+			<div id='loggedInUser'>{{  toggle-edit-mode }}{{ Log-in }}</div>
 		</footer>
 
-{{^ nav( small-screen-header ) }}
+{{ nav( small-screen-header ) }}
   </div><!-- /.page -->
 
 
-{{^body_end_injections }}
+{{ body_end_injections }}
 </body>
 </html>
 
