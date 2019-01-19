@@ -94,6 +94,7 @@ class Lizzy
     {
 		global $globalParams;
 
+        $this->checkInstallation0();
         $this->dailyHousekeeping();
 		$this->init();
 		$this->setupErrorHandling();
@@ -256,8 +257,6 @@ class Lizzy
     //....................................................
     private function init()
     {
-        $this->checkInstallation0();
-
         $configFile = DEFAULT_CONFIG_FILE;
         if (file_exists($configFile)) {
             $this->configFile = $configFile;
@@ -1634,6 +1633,10 @@ EOT;
     //....................................................
     private function checkInstallation0()
     {
+        if (version_compare(PHP_VERSION, '7.0.0') < 0) {
+            die("Lizzy requires at PHP version 7 or higher to run.");
+        }
+
         if (!file_exists(DEFAULT_CONFIG_FILE)) {
             ob_end_flush();
             echo "<pre>";
@@ -1641,7 +1644,7 @@ EOT;
             echo "</pre>";
             exit;
         }
-    }
+    } // checkInstallation0
 
 
 
