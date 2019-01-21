@@ -75,6 +75,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
+            'site_robots'                       => [false, '[true|false] If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],
             'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
             'site_supportedLanguages'           => ['', 'Comma-separated list of language-codes. E.g. "en, de, fr"' ],
 

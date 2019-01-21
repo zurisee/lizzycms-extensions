@@ -701,6 +701,10 @@ EOT;
     {
         $headInjections = $this->head;
 
+        if ($this->config->site_robots || $this->site_robots) {
+            $headInjections .= "\t<meta name='robots' content='noindex,nofollow'>\n";
+        }
+
         $keywords = $this->keywords;
         if ($keywords) {
             $keywords = "\t<meta name='keywords' content='$keywords' />\n";
