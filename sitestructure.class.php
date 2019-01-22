@@ -67,6 +67,7 @@ class SiteStructure
                 'active' => false,
                 'hide!' => false,
                 'hasChildren' => false,
+                'restricted' => false,
                 'parent' => null
             ];
             return;
@@ -221,8 +222,16 @@ class SiteStructure
 				$rec['inx'] = $i;
 				$rec['urlExt'] = '';
 				$rec['active'] = false;
-                $rec['hide!'] = (isset($rec['hide'])) ? $rec['hide'] : false;   // always propagate hide attribute
-                unset($rec['hide']);    // beyond this point hide is permanently replaced by hide!
+
+				// Hide: hide always propagating, therefore we need 'hide!' element
+                if (isset($rec['hide!'])) {
+                    if (isset($rec['hide'])) {
+                        unset($rec['hide']);
+                    }
+                } else {
+                    $rec['hide!'] = (isset($rec['hide'])) ? $rec['hide'] : false;   // always propagate hide attribute
+                    unset($rec['hide']);    // beyond this point hide is permanently replaced by hide!
+                }
 
 				// case: page only visible to privileged users:
 				if (preg_match('/non\-?privileged/i',$rec['hide!'])) {
@@ -330,8 +339,15 @@ class SiteStructure
 
             if ($r !== null) {
                 foreach ($r as $k => $v) {
-                    if (strpos($k, '!') !== false) {    // item to propagate found
-                        $toPropagate1[$k] = $v;
+                    if ($k === 'hide!') { // special case 'hide!'
+                        if ($v) {
+                            $toPropagate1['hide!'] = true;
+                        }
+                    } elseif (strpos($k, '!') !== false) {    // item to propagate found
+                        $k1 = str_replace('!', '', $k);
+                        $toPropagate1[$k1] = $v;
+                        $r[$k1] = $v;
+                        unset($r[$k]);
                     }
                 }
             }

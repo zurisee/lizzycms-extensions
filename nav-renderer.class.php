@@ -334,11 +334,11 @@ EOT;
                     if ($out1) {
                         $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
                         $out .= $out1;
-                        $out .= "$_listWrapper$indent\t  </$li>\n";
+                        $out .= "$_listWrapper$indent\t</$li>\n";
                         $modif = true;
-                        $hasChildren = true;
                     } else {
-                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n\t</$li>";
+                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
+                        $modif = true;
                     }
 
                 } else {
@@ -362,8 +362,6 @@ EOT;
                 $out = "$indent<{$this->listTag}$ulClass>\n".$out;
             }
             $out .= "$indent</{$this->listTag}>\n";
-//        } else {
-//            $out = '';
         }
         return $out;
     } // _renderSitemap
