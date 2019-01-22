@@ -1189,7 +1189,7 @@ function createWarning($msg) {
 //------------------------------------------------------------------------------
 function createDebugOutput($msg) {
 	if ($msg) {
-		return "\t\t<div id='log'>$msg</div>\n";
+		return "\t\t<div id='lzy-log'>$msg</div>\n";
 	} else {
 		return '';
 	}

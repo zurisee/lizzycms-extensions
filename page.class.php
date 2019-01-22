@@ -620,7 +620,7 @@ EOT;
         if ($debugMsg = $this->debugMsg) {
             $debugMsg = compileMarkdownStr($debugMsg);
             $debugMsg = createDebugOutput($debugMsg);
-            $debugMsg = "<div id='log-placeholder'></div>\n".$debugMsg;
+            $debugMsg = "<div id='lzy-log-placeholder'></div>\n".$debugMsg;
             $this->addBodyEndInjections($debugMsg);
             $this->debugMsg = false;
             return true;
@@ -1134,7 +1134,7 @@ EOT;
             $this->addJQ('$(".scrollToBottom").scrollTop($(".scrollToBottom")[0].scrollHeight);');
         }
 
-        $debugInfo .= "<div id='log'></div>";
+        $debugInfo .= "<div id='lzy-log'></div>";
         $debugInfo = "\n<div id='debugInfo'><p><strong>DebugInfo:</strong></p>$debugInfo</div>\n";
         $debugInfo = str_replace('{', '&#123;', $debugInfo);
         return $debugInfo;
@@ -1163,9 +1163,9 @@ EOT;
     //....................................................
     public function lateApplyDebugMsg($html, $msg)
     {
-        if ((($p = strpos($html, '<div id="log">')) !== false) ||
-            (($p = strpos($html, "<div id='log'>")) !== false)) {
-            $p += strlen('<div id="log">');
+        if ((($p = strpos($html, '<div id="lzy-log">')) !== false) ||
+            (($p = strpos($html, "<div id='lzy-log'>")) !== false)) {
+            $p += strlen('<div id="lzy-log">');
             $before = substr($html, 0, $p);
             $after = substr($html, $p);
             $msg = "<p>$msg</p>";

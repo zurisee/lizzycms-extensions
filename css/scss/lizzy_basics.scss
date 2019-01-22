@@ -164,9 +164,6 @@ figure a {
 	justify-content: center;
 }
 
-#log:empty {
-    display: none;
-}
 /* === Module Encapsulation: */
 #lzy .lzy-encapsulated ul,
 #lzy .lzy-encapsulated ol,
@@ -353,7 +350,10 @@ footer a {
   100% { right: -80%; }
 }
 
-#log {
+#lzy-log:empty {
+  display: none;
+}
+#lzy-log {
 	height: 10vh;
 	background: #edd;
 	margin: 20px 0 0 0;
@@ -365,15 +365,15 @@ footer a {
 	left: 0;
 	bottom: 0;
 }
-#log h1 {
+#lzy-log h1 {
 	font-size: 11pt;
 	margin: 0 0 0.5em 0;
 }
-#log p {
+#lzy-log p {
 	font-size: 8pt;
 	margin: 0 0 0.5em 0;
 }
-#log-placeholder {
+#lzy-log-placeholder {
 	content: " ";
 	position: relative;
 	height: 11vh;
@@ -464,7 +464,7 @@ table.lizzyTable {
 #debugInfo > p {
     font-family: arial;
 }
-#debugInfo > .log {
+#debugInfo > .lzy-log {
     border: 0.1px solid #c3f1c3;
     margin-bottom: 1em;
     padding: 5px;
@@ -556,7 +556,7 @@ nav li {
 	.dont-print,
     .print_no,
     .print-no,
-	#log,
+	#lzy-log,
 	.Warning,
 	.MsgBox,
     #debugInfo, 

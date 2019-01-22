@@ -34,10 +34,10 @@ function mylog(txt)
 	console.log(txt);
 
 	if ($('body').hasClass('debug')) {
-        var $log = $('#log');
+        var $log = $('#lzy-log');
         if (!$log.length) {
-            $('body').append("<div id='log-placeholder'></div><div id='log'></div>");
-            $log = $('#log');
+            $('body').append("<div id='lzy-log-placeholder'></div><div id='lzy-log'></div>");
+            $log = $('#lzy-log');
         }
         text = String(txt).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         $log.append('<p>'+timeStamp()+'&nbsp;&nbsp;'+text+'</p>').animate({ scrollTop: $log.prop("scrollHeight")}, 100);
