@@ -701,7 +701,7 @@ EOT;
     {
         $headInjections = $this->head;
 
-        if ($this->config->site_robots || $this->site_robots) {
+        if ($this->config->site_robots || (isset($this->site_robots) && $this->site_robots)) {
             $headInjections .= "\t<meta name='robots' content='noindex,nofollow'>\n";
         }
 
