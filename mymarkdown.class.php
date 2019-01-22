@@ -310,32 +310,32 @@ class MyMarkdown
 
 
 
-	//....................................................
-	private function handleFrontmatter($lines)
-	{
-		$yaml = '';
-		$i = 0;
-		while ($i < sizeof($lines)) {
-			$l = $lines[$i];
-			if (!preg_match('/^\s*$/', $l)) {
-				break;
-			}
-			$i++;
-		}
-		if (!preg_match('/^---/', $l)) {
-			return $lines;
-		}
-		$i++;
-		$l = $lines[$i];
-		while (($i < sizeof($lines)) && (!preg_match('/---/', $l))) {
-			$yaml .= $l."\n";
-			$i++;
-			$l = $lines[$i];
-		}
-		$hdr = convertYaml($yaml);
-		$lines = array_slice($lines, $i+1);
-		return $lines;
-	} // handleFrontmatter
+//	//....................................................
+//	private function handleFrontmatter($lines)
+//	{
+//		$yaml = '';
+//		$i = 0;
+//		while ($i < sizeof($lines)) {
+//			$l = $lines[$i];
+//			if (!preg_match('/^\s*$/', $l)) {
+//				break;
+//			}
+//			$i++;
+//		}
+//		if (!preg_match('/^---/', $l)) {
+//			return $lines;
+//		}
+//		$i++;
+//		$l = $lines[$i];
+//		while (($i < sizeof($lines)) && (!preg_match('/---/', $l))) {
+//			$yaml .= $l."\n";
+//			$i++;
+//			$l = $lines[$i];
+//		}
+//		$hdr = convertYaml($yaml);
+//		$lines = array_slice($lines, $i+1);
+//		return $lines;
+//	} // handleFrontmatter
 
 
 
@@ -478,6 +478,12 @@ class MyMarkdown
 			$l = $this->postprocessShieldedTags($l, $preCode);
 
             if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
+                $l = $m[1];
+            }
+            if (preg_match('|^<p>(<.*)|', $l, $m)) { // remove <p> before pure HTML
+                $l = $m[1];
+            }
+            if (preg_match('|(.*>)</p>$|', $l, $m)) { // remove <p> after pure HTML
                 $l = $m[1];
             }
 
