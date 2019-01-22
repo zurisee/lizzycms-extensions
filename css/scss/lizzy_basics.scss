@@ -164,7 +164,9 @@ figure a {
 	justify-content: center;
 }
 
-
+#log:empty {
+    display: none;
+}
 /* === Module Encapsulation: */
 #lzy .lzy-encapsulated ul,
 #lzy .lzy-encapsulated ol,
