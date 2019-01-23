@@ -75,6 +75,129 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
     // ---------------------------------------------------------------
+    protected function identifyAsciiTable($line, $lines, $current)
+    {
+        // asciiTable starts with '|==='
+        if (strncmp($line, '|===', 4) === 0) {
+            return 'asciiTable';
+        }
+        return false;
+    }
+
+
+
+    protected function consumeAsciiTable($lines, $current)
+    {
+        $block = [
+            'asciiTable',
+            'content' => [],
+            'caption' => false,
+            'header' => false
+        ];
+        $firstLine = $lines[$current];
+        if (preg_match('/^\|===*\s+(.+)$/', $firstLine, $m)) {
+            $a = explode('|', trim($m[1], '|'));
+            if (sizeof($a) > 1) {
+                $block['caption'] = array_shift($a);
+                $block['header'] = $a;
+            } else {
+                $block['caption'] = $m[1];
+            }
+        }
+        for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
+            $line = $lines[$i];
+            if (strncmp($line, '|===', 4) !== 0) {
+                $block['content'][] = $line;
+            } else {
+                // stop consuming when code block is over
+                break;
+            }
+        }
+        return [$block, $i];
+    }
+
+
+
+    protected function renderAsciiTable($block)
+    {
+        $table = [];
+        $nCols = 0;
+        $row = 0;
+        $col = -1;
+
+        for ($i = 0; $i < sizeof($block['content']); $i++) {
+            $line = $block['content'][$i];
+
+            if (strncmp($line, '|---', 4) === 0) {  // new row
+                $row++;
+                $col = -1;
+                continue;
+            }
+
+            if ($line[0] == '|') {  // next cell starts
+                $line = trim($line, '|');
+                $cells = explode('|', $line);
+                foreach ($cells as $cell) {
+                    $col++;
+                    $table[$row][$col] = $cell;
+                }
+
+            } else {
+                $table[$row][$col] .= "\n$line";
+            }
+            $nCols = max($nCols, $col);
+        }
+        $nCols++;
+        $nRows = $row+1;
+
+
+        // now render the table:
+        $out = "\t<table><!-- asciiTable -->\n";
+        if ($block['caption']) {
+            $out .= "\t  <caption>{$block['caption']}</caption>\n";
+        }
+
+        if ($block['header']) {     // table header
+            $out .= "\t  <thead>\n";
+            for ($col = 0; $col < $nCols; $col++) {
+                $th = isset($block['header'][$col]) ? $block['header'][$col] : '';
+                $out .= "\t\t\t<th class='th$col'>$th</th>\n";
+            }
+            $out .= "\t  </thead>\n";
+        }
+
+        $out .= "\t  <tbody>\n";
+        for ($row = 0; $row < $nRows; $row++) {
+            $out .= "\t\t<tr>\n";
+            for ($col = 0; $col < $nCols; $col++) {
+                $cell = isset($table[$row][$col]) ? trim($table[$row][$col]) : '';
+                if ($cell) {
+                    $cell = compileMarkdownStr($cell);
+                    $cell = trim($cell);
+                    if (preg_match('|^<p>(.*)</p>$|', $cell, $m)) {
+                        $cell = $m[1];
+                    }
+                }
+                $out .= "\t\t\t<td class='row".($row+1)." col".($col+1)."'>$cell</td>\n";
+//                $out .= "\t\t\t<td class='row$row col$col'>$cell</td>\n";
+            }
+            $out .= "\t\t</tr>\n";
+//            if ($row == 0) {
+//                $out .= "\t  </thead>\n";
+//                $out .= "\t  <tbody>\n";
+//
+//            }
+//            $td = 'td';
+        }
+
+        $out .= "\t  </tbody>\n";
+        $out .= "\t</table><!-- /asciiTable -->\n";
+
+        return $out;
+    }
+
+
+    // ---------------------------------------------------------------
     protected function identifyDivBlock($line, $lines, $current)
     {
         // if a line starts with at least 3 colons it is identified as a fenced code block
