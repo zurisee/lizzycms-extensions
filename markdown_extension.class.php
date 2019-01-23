@@ -96,12 +96,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         ];
         $firstLine = $lines[$current];
         if (preg_match('/^\|===*\s+(.+)$/', $firstLine, $m)) {
-            $a = explode('|', trim($m[1], '|'));
+            $a = preg_split('/(?<!\\\)\|/', $m[1]);
             if (sizeof($a) > 1) {
-                $block['caption'] = array_shift($a);
+                $block['caption'] = str_replace('\|','|', array_shift($a));
                 $block['header'] = $a;
             } else {
-                $block['caption'] = $m[1];
+                $block['caption'] = str_replace('\|','|', $m[1]);
             }
         }
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
@@ -134,12 +134,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 continue;
             }
 
-            if ($line[0] == '|') {  // next cell starts
+            if (isset($line[0]) && ($line[0] == '|')) {  // next cell starts
                 $line = trim($line, '|');
-                $cells = explode('|', $line);
+                $cells = preg_split('/(?<!\\\)\|/', $line);
                 foreach ($cells as $cell) {
                     $col++;
-                    $table[$row][$col] = $cell;
+                    $table[$row][$col] = str_replace('\|','|', $cell);
                 }
 
             } else {
@@ -160,7 +160,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         if ($block['header']) {     // table header
             $out .= "\t  <thead>\n";
             for ($col = 0; $col < $nCols; $col++) {
-                $th = isset($block['header'][$col]) ? $block['header'][$col] : '';
+                $th = isset($block['header'][$col]) ? str_replace('\|','|', $block['header'][$col]) : '';
                 $out .= "\t\t\t<th class='th$col'>$th</th>\n";
             }
             $out .= "\t  </thead>\n";
@@ -179,22 +179,17 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                     }
                 }
                 $out .= "\t\t\t<td class='row".($row+1)." col".($col+1)."'>$cell</td>\n";
-//                $out .= "\t\t\t<td class='row$row col$col'>$cell</td>\n";
             }
             $out .= "\t\t</tr>\n";
-//            if ($row == 0) {
-//                $out .= "\t  </thead>\n";
-//                $out .= "\t  <tbody>\n";
-//
-//            }
-//            $td = 'td';
         }
 
         $out .= "\t  </tbody>\n";
         $out .= "\t</table><!-- /asciiTable -->\n";
 
         return $out;
-    }
+    } // AsciiTable
+
+
 
 
     // ---------------------------------------------------------------
