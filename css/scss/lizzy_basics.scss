@@ -1,24 +1,17 @@
   /* Lizzy Basic CSS */
 
   /* === General =============================== */
-html {
-  box-sizing: border-box;
-}
 body, main {
 	position: relative;
 }
 
-*, *:before, *:after {
-  /* box-sizing: inherit; */
-}
 
 html body, section {
 	position: relative;
 	padding: 0;
 }
-div, section {
-	/* box-sizing: border-box; */
-	/* vertical-align: top; */
+div {
+	box-sizing: border-box;
 }
 
 p {
@@ -33,7 +26,6 @@ li {
 }
 li > p {
 	margin: 0;
-
 }
 
 
@@ -79,13 +71,13 @@ figure a {
 .disp_no {
 	display: none!important;
 }
-.disp-none,
 .dispblock {
 	display: block;
 }
 .sr-only,
 .lzy-invisible,
-.invisible {
+.invisible,
+.visually-hidden {
 	position: absolute !important;
 	right: 200vw;
 	width: 1px;
@@ -108,10 +100,10 @@ figure a {
 	z-index: 999;
 	background: #d9ff72;
 }
-.footnote-ref {
-	font-size: 70%;
-	vertical-align: super;
-}
+//.footnote-ref {
+//	font-size: 70%;
+//	vertical-align: super;
+//}
 .tabulator_wrapper span.c1,
 .tabulator_wrapper span.c2,
 .tabulator_wrapper span.c3,
@@ -210,6 +202,53 @@ figure a {
 }
 
 
+/* === adaptive columns ========== */
+/* inspiration: http://www.heydonworks.com/article/the-flexbox-holy-albatross */
+
+body {		// parameters:
+	--lzy-columns-number: 3;
+	--lzy-column-min-width: 10rem;
+	--lzy-columns-gap: 1rem;
+}
+.lzy-columns-container {
+	--lzy-columns-min-width: calc(var(--lzy-columns-number) * var(--lzy-column-min-width) - ((var(--lzy-columns-number) - 1) * var(--lzy-columns-gap)));
+}
+.lzy-2-columns-container {
+	--lzy-columns-number: 2;
+	--lzy-columns-min-width: calc(2 * var(--lzy-column-min-width) - var(--lzy-columns-gap));
+}
+.lzy-3-columns-container {
+	--lzy-columns-number: 3;
+	--lzy-columns-min-width: calc(3 * var(--lzy-column-min-width) - (2 * var(--lzy-columns-gap)));
+}
+.lzy-4-columns-container {
+	--lzy-columns-number: 4;
+	--lzy-columns-min-width: calc(4 * var(--lzy-column-min-width) - (3 * var(--lzy-columns-gap)));
+}
+.lzy-columns-container,
+.lzy-2-columns-container,
+.lzy-3-columns-container,
+.lzy-4-columns-container {
+	display: flex;
+	flex-wrap: wrap;
+	--lzy-columns-flipper: calc((var(--lzy-columns-min-width) - 100%) * 1000);
+	margin: calc(var(--lzy-columns-gap) * -0.5);
+}
+.lzy-columns-container > div,
+.lzy-2-columns-container > div,
+.lzy-3-columns-container > div,
+.lzy-4-columns-container > div {
+	box-sizing: border-box;
+	max-width: 100%;
+	min-width: calc((100% / var(--lzy-columns-number)) - var(--lzy-columns-gap));
+	flex-grow: 1;
+	flex-basis: var(--lzy-columns-flipper);
+	margin: calc(var(--lzy-columns-gap) * 0.5);
+}
+
+
+
+
 .logo a, .logo a:hover {
 	border-bottom: none;
 }
@@ -269,11 +308,6 @@ var {
     height: 1.5em;
     margin-top: 3px;
 }
-/* hide/show icon for passwords:
-.lzy-form-show-password input:checked ~ label .login-form-icon {
-    outline: 1px solid red;
-}
-*/
 .layout .menu-link {
     font-size: 16px;
 }
@@ -321,16 +355,13 @@ footer a {
     border-radius: 10px;
     z-index: 999;
 }
-.lzy-delete-profile-request-button,
-.lzy-delete-profile-confirm-button {
-/*    padding: 10px 20px;*/
-}
 
 /* --- fade out effect --- */
 @-webkit-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
 @-moz-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
 @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
-.MsgBox, .WarningBox {
+.MsgBox,
+.WarningBox {
 	position: fixed!important;
 	top: 5px;
 	right: -80%;
@@ -407,25 +438,6 @@ footer a {
     height: 2em;
 }
 
-.able div {
-	box-sizing: content-box;
-}
-
-/* --- Tables ----------------- */
-table.lizzyTable {
-	border-collapse: collapse;
-	width: 100%;
-}
-.lizzyTable td, .lizzyTable th {
-	border: 1px solid #aaa;
-	padding: 5px 10px;
-	height: 1.6em;
-	min-width: 6em;
-	text-align: left;
-}
-.lizzyTable th {
-	background: #eee;
-}
 
 /* --- DivTables --------------- */
 .divtable {
