@@ -127,6 +127,9 @@ figure a {
 	width: 6em;
 }
 
+.dl-as-table  {
+	--dl-as-table-dt-width: 6em;
+}
 .dl-as-table dl {
     display: flex;
     flex-flow: row;
@@ -134,11 +137,11 @@ figure a {
     max-width: 600px;
     overflow: visible; }
   .dl-as-table dl dt {
-    flex: 0 0 5em;
+    flex: 0 0 var(--dl-as-table-dt-width);
     text-overflow: ellipsis;
     overflow: hidden; }
   .dl-as-table dl dd {
-    flex: 0 0 calc(100% - 5em);
+    flex: 0 0 calc(100% - var(--dl-as-table-dt-width));
     margin-left: auto;
     text-align: left;
     text-overflow: ellipsis;
