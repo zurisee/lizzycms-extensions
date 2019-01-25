@@ -79,7 +79,7 @@ class PopupWidget
                     break;
             }
             $this->getArg('contentFrom');
-            $this->getArg('class', "lzy-popup lzy-popup$popupInx");
+            $this->getArg('class', "lzy-popup$popupInx");
             $class = $this->class;
             $this->getArg('triggerSource');
             $this->getArg('triggerEvent', 'click');
@@ -112,9 +112,11 @@ class PopupWidget
             $popupId = str_replace('#', '', $popupId);
 
             // case text but no contentFrom:
-            if ($this->text && !$this->contentFrom) {
+            if (!$this->contentFrom) {
                 $this->contentFrom = "#$popupId";
-                $jq .= "$('body').append('<div class=\"dispno\"><div id=\"$popupId\">{$this->text}</div></div>');\n";
+                $text = str_replace("'", "\\'", $this->text);
+                $text = str_replace("\n", "\\n", $text);
+                $jq .= "$('body').append('<div class=\"dispno\"><div id=\"$popupId\">$text</div></div>');\n";
             }
 
             // transition:
@@ -188,16 +190,14 @@ EOT;
             $buttons =  "\t.append(\"<div class='lzy-popup-buttons'>$cancelButton$confirmButton</div>\")";
 
             // class:
-            $addClass = '';
             if ($this->closeButton) {
                 $class .= ' lzy-close-button';
             }
-            if ($class) {
-                if ($this->type != 'info') {
-                    $class .=  ' lzy-popup-'.$this->type;
-                }
-                $addClass = "\t.addClass('$class')\n";
+            if ($this->type != 'info') {
+                $class .=  ' lzy-popup-'.$this->type;
             }
+            $class = "lzy-popup $class";
+            $addClass = "\t.addClass('$class')\n";
 
             // offset vertical / horizontal:
             if ($this->horizontal && $this->vertical) {
@@ -209,19 +209,18 @@ EOT;
             } else {
                 $offset = '';
             }
+            if ($this->argStr) {
+                $this->argStr = "\t\t".str_replace("\n", "\n\t\t", $this->argStr);
+            }
 
             $jq .= <<<EOT
+
 $('#$popupId')
 $addClass$buttons
     .popup({
-{$this->argStr}
-})
-$offset;
-
+{$this->argStr}})$offset;
 $onConfirm
 $onCancel
-
-
 EOT;
         } // loop popup instances
 
