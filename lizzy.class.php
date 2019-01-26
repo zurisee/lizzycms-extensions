@@ -1016,14 +1016,22 @@ class Lizzy
 			} catch(Exception $e) {
                 fatalError("Error in Yaml-Code: <pre>\n$yaml\n</pre>\n".$e->getMessage(), 'File: '.__FILE__.' Line: '.__LINE__);
 			}
-			if ($hdr && is_array($hdr)) {
-				$page->merge( $hdr );
+            if (isset($hdr['dataPath'])) {  // special case: dataPath -> propagate immediately
+                $_SESSION['lizzy']['dataPath'] = $hdr['dataPath'];
+                $GLOBALS['globalParams']['dataPath'] = $hdr['dataPath'];
+                unset($hdr['dataPath']);
+            }
+			if (is_array($hdr)) {
+			    if ($hdr) {
+                    $page->merge($hdr);
+                }
 			} else {
                 fatalError("Error in Yaml-Code: <pre>\n$yaml\n</pre>\n", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 		}
 		$lines = array_slice($lines, $i+1);
 		$str = implode("\n",  $lines);
+
 		return $str;
 	} // extractFrontmatter
 

@@ -671,6 +671,7 @@ function resolveAllPaths( &$html, $requestRewriteActive = true)
     }
 
     $html = preg_replace('|~/|', $pathToRoot, $html);
+	$html = preg_replace('|~data/|', $pathToRoot.$globalParams['dataPath'], $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
 	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
 	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
@@ -678,6 +679,7 @@ function resolveAllPaths( &$html, $requestRewriteActive = true)
 
 
 
+//------------------------------------------------------------
 function resolveHrefs( &$html )
 {
     $appRoot = $GLOBALS["globalParams"]["appRoot"];
