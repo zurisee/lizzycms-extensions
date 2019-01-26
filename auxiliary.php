@@ -599,24 +599,34 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         }
     }
 
+    $from = [
+        '|~/|',
+        '|~data/|',
+        '|~sys/|',
+        '|~ext/|',
+        '|~page/|',
+    ];
+    $to = [
+        '',
+        $globalParams['dataPath'],
+        SYSTEM_PATH,
+        EXTENSIONS_PATH,
+        $globalParams['pathToPage'],
+    ];
+
+    $pathToRoot = $globalParams['pathToRoot'];
     if (is_string($httpAccess)) {  // http page access:
-        $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
-        $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
-        $path = preg_replace('|~ext/|', $globalParams['pathToRoot'].EXTENSIONS_PATH, $path);
-        $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pagePath'], $path);
+        for ($i=0; $i<4; $i++) {
+            $to[$i] = $pathToRoot.$to[$i];
+        }
+        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
 
     } elseif ($httpAccess) {  // http resource access:
-        $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
-        $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
-        $path = preg_replace('|~ext/|', $globalParams['pathToRoot'].EXTENSIONS_PATH, $path);
-        $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pathToPage'], $path);
-
-    } else {            // file access:
-        $path = preg_replace('|~/|', '', $path);
-        $path = preg_replace('|~sys/|', SYSTEM_PATH, $path);
-        $path = preg_replace('|~ext/|', EXTENSIONS_PATH, $path);
-        $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pathToPage'], $path);
+        for ($i=0; $i<5; $i++) {
+            $to[$i] = $globalParams['pathToRoot'].$to[$i];
+        }
     }
+    $path = preg_replace($from, $to, $path);
     return $path;
 } // resolvePath
 

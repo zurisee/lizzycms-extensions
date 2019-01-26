@@ -70,6 +70,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'path_userCodePath'                 => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
 
             'site_compiledStylesFilename'       => ['__styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
+            'site_dataPath'                     => ['data/', 'Path to data/ folder (default: "~/data/").' ],
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
             'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
@@ -190,8 +191,10 @@ private $userConfigurableSettingsAndDefaults      = [
             if (isset($configValues[$key])) {
                 $val = $configValues[$key];
                 if (stripos($key, 'Path') !== false) {
-                    $val = preg_replace('|/\.\.+|', '', $val);
-                    $val = fixPath(str_replace('/', '', $val));
+                    if ($key !== 'site_dataPath') { // site_dataPath is the only exception that is allowed to use ../
+                        $val = preg_replace('|/\.\.+|', '', $val);  // disallow ../
+                        $val = fixPath(str_replace('/', '', $val));
+                    }
                 } elseif (stripos($key, 'File') !== false) {
                     $val = str_replace('/', '', $val);
                 }

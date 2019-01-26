@@ -508,6 +508,7 @@ class Lizzy
         $globalParams['pagePath'] = $pagePath;
         $globalParams['pagesFolder'] = $this->config->path_pagesPath;
         $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;
+        $globalParams['dataPath'] = $this->config->site_dataPath;
 
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $this->pathToRoot = $pathToRoot;
@@ -564,7 +565,7 @@ class Lizzy
 
         $this->reqPagePath = $pagePath;
         $globalParams['appRoot'] = $appRoot;  // path from docRoot to base folder of app, e.g. 'on/'
-        $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
+//        $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['localCall'] = $this->localCall;
 
@@ -573,6 +574,7 @@ class Lizzy
         $baseUrl = $requestScheme.$_SERVER['SERVER_NAME'];
         $_SESSION['lizzy']['appRootUrl'] = $baseUrl.$appRoot; // https://domain.net/...
         $_SESSION['lizzy']['absAppRoot'] = $absAppRoot;
+        $_SESSION['lizzy']['dataPath'] = $this->config->site_dataPath;
 
         if ($this->config->debug_logClientAccesses) {
             writeLog('[' . getClientIP(true) . "] $ua" . (($this->config->isLegacyBrowser) ? " (Legacy browser!)" : ''));

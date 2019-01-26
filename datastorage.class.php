@@ -51,7 +51,6 @@ class DataStorage
         if ($secure && (strpos($dbFile, 'config/') !== false)) {
             return null;
         }
-
         if (file_exists($dbFile)) {
 	        $this->dataFile = $dbFile;
 
