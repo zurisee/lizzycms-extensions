@@ -1,0 +1,42 @@
+
+
+lzy-cal-event:
+    de: Ereignis
+    _: Event
+
+lzy-cal-location:
+    de: Ort
+    _: Location
+
+lzy-cal-date:
+    de: 'Datum:'
+    _: 'Date:'
+
+lzy-cal-time:
+    de: Zeit
+    _: Time
+
+lzy-cal-comment:
+    de: Notiz
+    _: Comment
+
+lzy-cal-comment-placeholder:
+    de: Notiz
+    _: Comment
+
+lzy-cal-delete-entry:
+    de: Eintrag löschen
+    _: Delete entry
+
+lzy-cal-delete-entry-now:
+    de: Jetzt löschen
+    _: Delete Now
+
+lzy-cal-modif-entry:
+    de: Eintrag ändern
+    _: Modify EEvent
+
+lzy-cal-new-entry:
+    de: Neuer Eintrag
+    _: New Event
+

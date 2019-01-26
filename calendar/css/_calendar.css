@@ -1,0 +1,94 @@
+/**** auto-created from 'css/scss/calendar.scss' - do not modify! ****/
+
+/* Calendar */
+section {
+  opacity: 0.999; }
+
+.lzy-popup-wrapper {
+  box-shadow: 0 0 15px #888; }
+
+.lzy-popup-header ~ .lzy-popup-close-button {
+  background: white;
+  border-radius: 50%;
+  width: 1.8em;
+  height: 1.8em;
+  text-align: center;
+  line-height: 1.8em; }
+
+.lzy-popup-body {
+  cursor: initial; }
+
+.lzy-popup-background {
+  background: rgba(200, 200, 200, 0.8); }
+
+.lzy-popup-widget .lzy-popup-header {
+  background: #efe; }
+
+.lzy-calendar .fc-index {
+  display: none; }
+  .lzy-calendar .fc-title {
+    font-weight: bold;
+    color: #fff; }
+  .lzy-calendar .fc-comment {
+    font-style: italic; }
+
+.lzy-cal-editing {
+  outline: 1px solid red; }
+
+.lzy-cal-editing .fc-event {
+  cursor: pointer; }
+
+.lzy-cal-popup fieldset {
+  border: 1px dotted #ddd;
+  margin-bottom: 1.5em; }
+  .lzy-cal-popup .field-type-textarea {
+    margin-bottom: 1.5em; }
+  .lzy-cal-popup .field-type-textarea textarea {
+    width: 100%; }
+  .lzy-cal-popup .btn_delete_entry {
+    margin-bottom: 1.5em; }
+  .lzy-cal-popup .lzy_cal_delete_entry {
+    margin-bottom: 1.5em;
+    line-height: 1.6em; }
+  .lzy-cal-popup .field-wrapper lzy_cal_delete_entry label {
+    margin-right: 1em; }
+  .lzy-cal-popup .lzy-cal-inactive {
+    color: #bbb; }
+  .lzy-cal-popup .fc-event {
+    cursor: initial; }
+
+#lzy-calendar-default-form, #lzy-calendar-default-form input, #lzy-calendar-default-form textarea {
+  font-size: 11pt; }
+
+#lzy-calendar-default-form fieldset {
+  width: calc(100% -1.5em);
+  margin: 0; }
+
+#lzy-calendar-default-form legend {
+  color: #888; }
+
+#lzy-calendar-default-form .field-type-textarea textarea,
+#lzy-calendar-default-form .field-type-text input {
+  width: 100%;
+  box-sizing: border-box;}
+
+#lzy-calendar-default-form .field-type-date input {
+  display: inline-block;
+  margin: 0; }
+
+#lzy-calendar-default-form .field-type-date input[type=date] {
+  min-width: 9em;
+  width: 60%; }
+
+#lzy-calendar-default-form .field-type-date input[type=time] {
+  min-width: 5em;
+  width: 32%; }
+
+.lzy-cal-popup h1 {
+  font-size: 16pt;
+  margin: 0 0 1em 0;
+}
+
+.lzy-cal-form-buttons {
+  text-align: right;
+}
