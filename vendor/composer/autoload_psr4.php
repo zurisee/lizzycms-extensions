@@ -14,4 +14,5 @@ return array(
     'Symfony\\Component\\CssSelector\\' => array($vendorDir . '/symfony/css-selector'),
     'Leafo\\ScssPhp\\' => array($vendorDir . '/leafo/scssphp/src'),
     'EndorphinStudio\\Detector\\' => array($vendorDir . '/endorphin-studio/browser-detector/src'),
+    'Eluceo\\iCal\\' => array($vendorDir . '/eluceo/ical/src'),
 );

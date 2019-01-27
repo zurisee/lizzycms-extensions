@@ -32,6 +32,7 @@ class ComposerStaticInitf773fc72f2df5c5db6b45dc256600503
         'E' => 
         array (
             'EndorphinStudio\\Detector\\' => 25,
+            'Eluceo\\iCal\\' => 12,
         ),
     );
 
@@ -67,6 +68,10 @@ class ComposerStaticInitf773fc72f2df5c5db6b45dc256600503
         'EndorphinStudio\\Detector\\' => 
         array (
             0 => __DIR__ . '/..' . '/endorphin-studio/browser-detector/src',
+        ),
+        'Eluceo\\iCal\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/eluceo/ical/src',
         ),
     );
 
