@@ -42,7 +42,8 @@ $this->addMacro($macroName, function () {
 
     $publish = $this->getArg($macroName, 'publish', 'If set, Lizzy will switch to calendar publishing mode (using given name). Use a calendar app to subscribe to this calendar.', false);
     if ($publish) {
-        exit( renderICal($source, $publish) );
+        $domain = $this->getArg($macroName, 'domain', 'Domain info that will be included in the published calendar.', $this->lzy->pageUrl);
+        exit( renderICal($source, $publish, $domain) );
     }
 
     $tooltips = $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', '');
@@ -206,13 +207,13 @@ function loadDefaultPopup($inx, $lzy, $popupForm, $calEditingPermission)
 
 
 
-function renderICal($source, $name)
+function renderICal($source, $name, $domain)
 {
     $ds = new DataStorage($source,'', false, '', 120, true);
     $data = $ds->read();
 
 
-    $vCalendar = new \Eluceo\iCal\Component\Calendar('getlizzy.net');
+    $vCalendar = new \Eluceo\iCal\Component\Calendar($domain);
 
     foreach ($data as $key => $rec) {
         $vEvent = new \Eluceo\iCal\Component\Event();
@@ -222,7 +223,7 @@ function renderICal($source, $name)
             ->setSummary($rec['title'])
             ->setLocation($rec['location'])
             ->setDescription($rec['comment'])
-            ->setUniqueId($key)
+            ->setUniqueId("$name$key")
         ;
         $vCalendar->addComponent($vEvent);
     }
