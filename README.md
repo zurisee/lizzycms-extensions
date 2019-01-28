@@ -1,7 +1,7 @@
 # lizzycms-extensions
 Extension modules for [lizzycms](https://github.com/zurisee/lizzycms)
 
-Install:
+Installation (assuming your are in your web-app's root folder):
 
   ``git clone https://github.com/zurisee/lizzycms-extensions.git _lizzy/extensions``
  
