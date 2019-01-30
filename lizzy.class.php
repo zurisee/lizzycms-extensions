@@ -434,8 +434,20 @@ class Lizzy
     private function renderLoginForm()
     {
         $accForm = new UserAccountForm($this);
-        $authPage = $accForm->renderLoginForm($this->auth->message, '{{ page requires login }}');
-        $this->page->merge($authPage);   // override page with login form
+        $html = $accForm->renderLoginForm($this->auth->message, false, true);
+        $this->page->addPopup( ['contentFrom' => '#login-form' ]);
+        $this->page->addBody("<div id='login-form'>$html</div>\n");
+        $this->page->addModules('PANELS');
+        $css = <<<EOT
+    #login-form.lzy-popup h2 {
+        margin: 0; 
+    }
+    .lzy-login-form, .lzy-signup-form {
+        margin: 0;
+        padding: 0px 10px;
+    }
+EOT;
+        $this->page->addCss($css);
     }
 
 

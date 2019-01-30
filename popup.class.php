@@ -79,6 +79,7 @@ class PopupWidget
                     break;
             }
             $this->getArg('contentFrom');
+//            $this->getArg('id', "lzy-popup$popupInx");
             $this->getArg('class', "lzy-popup$popupInx");
             $class = $this->class;
             $this->getArg('triggerSource');
@@ -109,11 +110,17 @@ class PopupWidget
             }
 
             $popupId = $this->contentFrom ? $this->contentFrom : "lzy-popup$popupInx";
-            $popupId = str_replace('#', '', $popupId);
+            $c1 = $popupId[0];
+            if (($c1 == '#') || ($c1 == '.')) {
+                $_popupId = $popupId;
+                $popupId = substr($popupId,1);
+            } else {
+                $_popupId = '#'.$popupId;
+            }
 
             // case text but no contentFrom:
             if (!$this->contentFrom) {
-                $this->contentFrom = "#$popupId";
+                $this->contentFrom = "$_popupId";
                 $text = str_replace("'", "\\'", $this->text);
                 $text = str_replace("\n", "\\n", $text);
                 $jq .= "$('body').append('<div class=\"dispno\"><div id=\"$popupId\">$text</div></div>');\n";
@@ -127,9 +134,9 @@ class PopupWidget
             // invocation:
             if ($this->triggerSource) {
                 if ($this->triggerEvent == "right-click") {
-                    $jq .= "$('{$this->triggerSource}').contextmenu(function() { $('#$popupId').popup('show'); return false; }).css('user-select', 'none');\n";
+                    $jq .= "$('{$this->triggerSource}').contextmenu(function() { $('$_popupId').popup('show'); return false; }).css('user-select', 'none');\n";
                 } else {
-                    $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function() { $('#$popupId').popup('show'); });\n";
+                    $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function() { $('$_popupId').popup('show'); });\n";
                 }
                 $this->getArg('triggerEvent', 'click');
                 $jq .= "$('{$this->triggerSource}').attr('aria-expanded', false);\n";
@@ -155,7 +162,7 @@ class PopupWidget
                     }
                 }
                 $onConfirm = <<<EOT
-$('#$popupId .lzy-popup-confirm').click(function(e) {
+$('$_popupId .lzy-popup-confirm').click(function(e) {
     var \$popup = $(e.target).closest('.popup_content');
     {$onConfirm}
     \$popup.popup('hide');
@@ -179,7 +186,7 @@ EOT;
                     }
                 }
                 $onCancel = <<<EOT
-$('#$popupId .lzy-popup-cancel').click(function(e) {
+$('$_popupId .lzy-popup-cancel').click(function(e) {
     var \$popup = $(e.target).closest('.popup_content');
     {$onCancel}
     \$popup.popup('hide');
@@ -215,7 +222,7 @@ EOT;
 
             $jq .= <<<EOT
 
-$('#$popupId')
+$('$_popupId')
 $addClass$buttons
     .popup({
 {$this->argStr}})$offset;

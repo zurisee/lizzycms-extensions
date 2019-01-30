@@ -1,6 +1,29 @@
 
 /* --- Authentication ----- */
 
+.lzy-login-menu ol {
+    padding-left: 1em;
+}
+.lzy-login-menu ol li {
+    list-style-type: none;
+}
+.lzy-logged-in-user {
+    line-height: 1.2em;
+}
+.lzy-login-link-menu img,
+.lzy-login-link img {
+    width: auto;
+    height: 1.2em;
+}
+.lzy-login-link-menu,
+.lzy-login-link {
+    margin-left: 5px;
+}
+.lzy-login-link-menu a:hover,
+.lzy-login-link a:hover {
+    border-bottom: none;
+}
+
 .lzy-onetime-code-sent-overlay {
     border: 1px dashed red;
     margin: 50px 10px 10px 10px;

@@ -39,13 +39,16 @@ class UserAccountForm
 
 
 
-    public function renderLoginForm($notification = '', $message = '')
+    public function renderLoginForm($notification = '', $message = '', $returnRaw = false)
     {
         $this->page = new Page;
         if ($this->config->admin_enableAccessLink) {
             $str = $this->createMultimodeLoginForm($notification, $message);
         } else {
             $str = $this->createPWAccessForm($notification, $message);
+        }
+        if ($returnRaw) {
+            return $str;
         }
 
         $this->page->addOverride($str);
@@ -711,7 +714,7 @@ EOT;
         $linkToThisPage = $GLOBALS['globalParams']['pageUrl'];
         if ($this->loggedInUser) {
             $logInVar = $this->renderLoginAccountMenu();
-            $this->page->addJq("$('.lzy-login-link-menu > a').click(function(e) { e.preventDefault(); $('.lzy-login-menu').toggle(); });");
+            $this->page->addPopup(['contentFrom' => '.lzy-login-menu', 'triggerSource' => '.lzy-login-link-menu > a']);
 
         } else {
             if ($this->config->isLocalhost) {
@@ -724,7 +727,7 @@ EOT;
                 $loggedInUser = '{{ LoginLink }}';
             }
             $logInVar = <<<EOT
-<div><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">&nbsp;{{ user_icon }}</a></div>
+<div><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">{{ user_icon }}</a></div>
 
 EOT;
         }
@@ -744,12 +747,14 @@ EOT;
         $username = $this->getUsername();
 
         $logInVar = <<<EOT
-<div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $username">
-    &nbsp;<img src="~sys/rsc/user.svg" height="24" /></a>
+<div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $username">{{ user_icon }}</a>
+    <!--&nbsp;<img src="~sys/rsc/user.svg" height="24" /></a>-->
     <div class="lzy-login-menu" style="display:none;">
-        <div>{{ Logged in as }} <strong>$username</strong></div>
-        <div>&rarr; <a href='$pageUrl?logout'>{{ Logout }}</a></div>
-        <div>&rarr; <a href='$pageUrl?admin=edit-profile'>{{ Your Profile }}</a></div>
+        <div>{{ User account }} <strong>$username</strong></div>
+        <ol>
+            <li><a href='$pageUrl?logout'>{{ Logout }}</a></li>
+            <li><a href='$pageUrl?admin=edit-profile'>{{ Your Profile }}</a></li>
+        </ol>
     </div>
 </div>
 
