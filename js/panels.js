@@ -15,6 +15,7 @@ $( document ).ready(function() {
     initPanels();
     setPanelHeights();
     setupEvents();
+    openRequestedPanel();
 
     $( window ).resize( onResize );
     onResize( true );
@@ -377,3 +378,14 @@ function scrollToWidget() {
 } // scrollToWidget
 
 
+
+
+function openRequestedPanel() {
+    if (window.location.hash) {
+        var id = window.location.hash;
+        if (id.match(/^\#\d+$/)) { // it was an index
+            id = "#lzy-panel-id10" + id.substr(1);
+        }
+        openPanel( id );
+    }
+} // openRequestedPanel
