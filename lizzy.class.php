@@ -454,7 +454,7 @@ class Lizzy
         } else {
             $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link']);
         }
-        $this->page->addBodyEndInjections("<div id='lzy-login-form'>$html</div>\n");
+        $this->page->addBodyEndInjections("<div id='lzy-login-form' class='dispno'>$html</div>\n");
         $this->page->addModules('PANELS');
     } // appendLoginForm
 
