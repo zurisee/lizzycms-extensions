@@ -33,6 +33,7 @@ class Page
     private $js = '';
     private $jqFiles = '';
     private $jq = '';
+    private $jqEnd = '';
     private $autoAttrFiles = '';
     private $bodyTagClasses = '';
     private $bodyTagInjections = '';
@@ -303,7 +304,11 @@ class Page
             return;
         }
 
-        $this->addToProperty('jq', $str, $replace);
+        if ($replace === 'append') {
+            $this->addToProperty('jqEnd', $str);
+        } else {
+            $this->addToProperty('jq', $str, $replace);
+        }
     } // addJQ
 
 
@@ -801,6 +806,10 @@ $rootJs$assembledJs
     </script>
 $bodyEndInjections
 EOT;
+        }
+
+        if ($this->jqEnd) {
+            $this->assembledJq .= $this->jqEnd;
         }
 
         if ($this->assembledJq) {

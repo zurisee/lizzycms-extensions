@@ -82,6 +82,7 @@ class PopupWidget
 //            $this->getArg('id', "lzy-popup$popupInx");
             $this->getArg('class', "lzy-popup$popupInx");
             $class = $this->class;
+            $this->getArg('autoOpen');
             $this->getArg('triggerSource');
             $this->getArg('triggerEvent', 'click');
             $this->getArg('confirmButton', $defaultConfirmBtn);
@@ -134,14 +135,17 @@ class PopupWidget
             // invocation:
             if ($this->triggerSource) {
                 if ($this->triggerEvent == "right-click") {
-                    $jq .= "$('{$this->triggerSource}').contextmenu(function() { $('$_popupId').popup('show'); return false; }).css('user-select', 'none');\n";
+                    $jq .= "$('{$this->triggerSource}').contextmenu(function(e) { e.preventDefault(); $('$_popupId').popup('show'); return false; }).css('user-select', 'none');\n";
                 } else {
-                    $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function() { $('$_popupId').popup('show'); });\n";
+                    $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function(e) { e.preventDefault(); $('$_popupId').popup('show'); });\n";
                 }
                 $this->getArg('triggerEvent', 'click');
                 $jq .= "$('{$this->triggerSource}').attr('aria-expanded', false);\n";
                 $this->argStr .= "onopen: function() { $('{$this->triggerSource}').attr('aria-expanded', true); },\n";
                 $this->argStr .= "onclose: function() { $('{$this->triggerSource}').attr('aria-expanded', false); },\n";
+                if ($this->autoOpen) {
+                    $this->argStr .= "autoopen: true,\n";
+                }
             } else {
                 $this->argStr .= "autoopen: true,\n";
             }

@@ -12,15 +12,13 @@ class Authentication
         $this->lzy = $lzy;
         $this->config = $this->lzy->config;
         $this->localCall = $lzy->config->isLocalhost;
-        $this->userDB = $usersFile = $this->config->configPath.$this->config->admin_usersFile;
-    	$this->knownUsers = getYamlFile($usersFile);
+        $this->loadKnownUsers();
         $this->loginTimes = (isset($_SESSION['lizzy']['loginTimes'])) ? unserialize($_SESSION['lizzy']['loginTimes']) : array();
 		if (!isset($_SESSION['lizzy']['user'])) {
 			$_SESSION['lizzy']['user'] = false;
 		}
         setStaticVariable('lastLoginMsg', '');
     } // __construct
-
 
 
 
@@ -68,11 +66,20 @@ class Authentication
             if ($res !== false) {
                 $this->mailIsPending = true;
                 $res = [false, $res, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
+            } else {
+                $res = [false, "<p>{{ lzy-login-user-unknown }}</p>", 'Message'];   //
             }
+
+        } elseif (isset($_POST['lzy-change-email'])) {
+            $emailRequest = $_POST['lzy-onetimelogin-email-email'];
         }
+
         if ($res === null) {        // no login attempt detected -> check whether already logged in:
             $this->getLoggedInUser();
             $res = (isset($this->userRec['name'])) ? $this->userRec['name'] : false;
+            if (isset($_GET['reload-arg'])) {
+                $res = [false, "<p>{{ lzy-{$_GET['reload-arg']} }}</p>", 'Message'];   //
+            }
         }
         return $res;
     } // authenticate
@@ -82,28 +89,31 @@ class Authentication
 
     public function adminActivities()
     {
-        if (!$this->isAdmin() || !isset($_POST['lzy-user-admin'])) {
+        if (!isset($_REQUEST['lzy-user-admin']) ||
+            !$this->getLoggedInUser()) {
             return false;
         }
 
         require_once SYSTEM_PATH.'admintasks.class.php';
         $adm = new AdminTasks($this);
 
-        $requestType = get_post_data('lzy-user-admin');
+        $requestType = $_REQUEST['lzy-user-admin'];
         $res = false;
         if ($requestType == 'add-users') {                // admin is adding users
+            if (!$this->isAdmin()) { return false; }
             $emails = get_post_data('lzy-add-users-email-list');
             $group = get_post_data('lzy-add-user-group');
             $str = $adm->addUsers($emails, $group);
             $res = [false, $str, 'Override'];
 
         } elseif ($requestType == 'add-user') {           // admin is adding a user
+            if (!$this->isAdmin()) { return false; }
             $email = get_post_data('lzy-add-user-email');
             $un = get_post_data('lzy-add-user-username');
             $key = ($un) ? $un : $email;
             $rec[$key] = [
                 'email' => $email,
-                'group' => get_post_data('lzy-add-user-group'),
+                'groups' => get_post_data('lzy-add-user-group'),
                 'username' => $un,
                 'displayName' => get_post_data('lzy-add-user-displayname'),
                 'emaillist' => get_post_data('lzy-add-user-emaillist')
@@ -119,18 +129,22 @@ class Authentication
             $res = $this->isValidPassword($password, $password2);
             if ($res == '') {
                 $str = $adm->changePassword($user, $password);
+                return [false, $str, 'Message'];
+
             } else {
                 $this->message = "<div class='lzy-adduser-wrapper'>$res</div>";
-                return false;
+                $accountForm = new UserAccountForm($this->lzy);
+                $str = $accountForm->createChangePwForm($user, $this->message, "<h1>{{ lzy-change-password-title }}</h1>");
+                $this->lzy->trans->readTransvarsFromFile('~sys/config/useradmin.yaml');
+                return [false, $str, 'Override'];
             }
-            $res = [false, $str, 'Override'];
 
 
         } elseif ($requestType == 'lzy-change-username') {        // user changes username
             $username = get_post_data('lzy-change-user-username');
             $displayName = get_post_data('lzy-change-user-displayname');
             $str = $adm->changeUsername($username, $displayName);
-            $res = [false, $str, 'Override'];
+            $this->lzy->page->addMessage($str);
 
 
         } elseif ($requestType == 'lzy-change-email') {           // user changes mail address
@@ -161,14 +175,15 @@ class Authentication
 
 		if (isset($this->knownUsers[$requestingUser])) {    // user found in user-DB:
             $rec = $this->knownUsers[$requestingUser];
-            $rec['name'] = $requestingUser; //???
+            $rec['name'] = $requestingUser;
             $correctPW = (isset($rec['password'])) ? $rec['password'] : '';
             $providedPW = isset($credentials['password']) ? trim($credentials['password']) : '####';
 
             // check username and password:
             if (password_verify($providedPW, $correctPW)) {  // login succeeded
-                writeLog("logged in: $requestingUser [{$rec['group']}] (" . getClientIP(true) . ')', LOGIN_LOG_FILENAME);
+                writeLog("logged in: $requestingUser [{$rec['groups']}] (" . getClientIP(true) . ')', LOGIN_LOG_FILENAME);
                 $this->setUserAsLoggedIn($requestingUser, $rec);
+                $this->lzy->page->addMessage('{{ lzy-login-successful }}');
                 return $requestingUser;
 
             } else {                                        // login failed: pw wrong
@@ -181,6 +196,8 @@ class Authentication
                 $this->message = '{{ Login failed }}';
                 setStaticVariable('lastLoginMsg', '{{ Login failed }}');
                 $this->unsetLoggedInUser();
+                $jq = "$('#lzy-login-form').popup('show')";
+                $this->lzy->page->addJq($jq, 'append');
             }
         }
         return false;
@@ -219,14 +236,13 @@ class Authentication
 
 	private function checkAccessCode($emailRequest)
 	{
-	    global $globalParams;
         if (!$emailRequest) {
             return false;
         }
         $submittedEmail = strtolower($emailRequest);
         $group = '';
         $found = false;
-        $user = '';
+
         if (isset($this->knownUsers[$submittedEmail])) {    // check whether it's a username rather than an email
             $user = $submittedEmail;
             $rec = $this->knownUsers[$submittedEmail];
@@ -269,7 +285,7 @@ class Authentication
                             if (($email{0} != '#') && ($email == $submittedEmail)) {
                                 $found = true;
                                 $user = $email;
-                                $group = (isset($rec['group'])) ? $rec['group'] : '';
+                                $group = $rec['groups'];
                                 break 2;
                             }
                         }
@@ -286,7 +302,12 @@ class Authentication
         $adm = new AdminTasks();
 
         $accessCodeValidyTime = isset($rec['accessCodeValidyTime']) ? $rec['accessCodeValidyTime'] : $this->config->admin_defaultAccessLinkValidyTime;
-        $message = $adm->sendCodeByMail($submittedEmail, 'email-login', $accessCodeValidyTime, $name, $user, $group);
+        if (isset($this->knownUsers[$name]['displayName'])) {
+            $displayName = $this->knownUsers[$name]['displayName'];
+        } else {
+            $displayName = $name;
+        }
+        $message = $adm->sendCodeByMail($submittedEmail, 'email-login', $accessCodeValidyTime, $name, $group, $displayName);
 
         return $message;
     } // checkAccessCode
@@ -334,7 +355,7 @@ class Authentication
                 unset($onetime[$t]);
                 continue;
             }
-            if ($codeCandidate == $rec['hash']) {
+            if ($codeCandidate === $rec['hash']) {
                 $user = $rec['user'];
                 unset($onetime[$t]);
                 $found = true;
@@ -343,10 +364,11 @@ class Authentication
         }
 
         if (isset($this->knownUsers[$user])) {
-            $rec = $this->knownUsers[$user];
-            if (!isset($rec['user'])) {
-                $rec['user'] = $user;
+            $userRec = $this->knownUsers[$user];
+            if (!isset($userRec['user'])) {
+                $userRec['user'] = $user;
             }
+
             if (isset($rec['accessCodeValidyTime'])) {
                 $accessCodeValidyTime = $rec['accessCodeValidyTime'];
             } else {
@@ -359,30 +381,34 @@ class Authentication
                 unset($onetime[$t]);
             }
 
-        } elseif (isset($rec['mode']) && ($rec['mode'] == 'email-signup')) {
+        }
+
+        $getArg = "login-successful";
+        $mode = isset($rec['mode']) ?$rec['mode'] : false;
+        if ($mode === 'email-signup') {
             require_once SYSTEM_PATH.'admintasks.class.php';
             $adm = new AdminTasks($this);
             if (!$adm->createGuestUserAccount($rec['user'])) {
-//??? notify user if account creation failed
+                $this->lzy->page->addMessage('lzy-user-account-creation-failed');
             }
 
-        } elseif (isset($rec['mode']) && ($rec['mode'] == 'email-change-email')) {
+        } elseif ($mode === 'email-change-mail') {
             require_once SYSTEM_PATH.'admintasks.class.php';
             $adm = new AdminTasks($this);
-            $adm->changeEMail($rec['user']);
+            $adm->changeEMail($rec['email']);
+            $getArg = 'email-change-successful';
         }
 
         writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
         if ($found) {
-            $this->knownUsers[$rec['user']] = ['email' => $rec['user'], 'group' => $rec['group']];
+            $this->knownUsers[$rec['user']] = ['email' => $rec['user'], 'groups' => $rec['groups']];
             $displayName = $this->setUserAsLoggedIn($user);
-
             if ($displayName) {
                 $user .= " ({$displayName})";
             }
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
             // access granted, remove hash-code from url
-            reloadAgent(true); // access granted, remove hash-code from url
+            reloadAgent(true, $getArg); // access granted, remove hash-code from url
         }
         $rep = '';
         if ($this->handleFailedLogins()) {
@@ -429,6 +455,9 @@ class Authentication
         }
         if (!$rec) {
             fatalError("Error: unknown user", 'File: '.__FILE__.' Line: '.__LINE__);
+        }
+        if (!isset($rec['groups'])) {
+            $rec['groups'] = '';
         }
         $this->userRec = $rec;
 
@@ -491,7 +520,7 @@ class Authentication
 
         } else {
             $this->userRec = $rec;
-            return ($rec != false);
+            return $rec['name'];
         }
     } // getLoggedInUser
 
@@ -525,9 +554,9 @@ class Authentication
 	        return true;
         }
 
-        if (isset($this->userRec['group'])) {
+        if (isset($this->userRec['groups'])) {
             $requiredGroups = explode(',', $requiredGroup);
-            $usersGroups = strtolower(str_replace(' ', '', ','.$this->userRec['group'].','));
+            $usersGroups = strtolower(str_replace(' ', '', ','.$this->userRec['groups'].','));
             foreach ($requiredGroups as $rG) {
                 $rG = strtolower(trim($rG));
                 if ((strpos($usersGroups, ",$rG,") !== false) ||
@@ -555,7 +584,7 @@ class Authentication
             $rec['name'] = '';
         }
 
-        if (isset($rec['group']) && $this->isGroupMember($rec['group'], 'admins')) { // admins have access by default
+        if ($this->isGroupMember($rec['groups'], 'admins')) { // admins have access by default
 		    return true;
         }
 
@@ -564,7 +593,7 @@ class Authentication
 			$lp = trim($lp);
 			if ($lp == $rec['name']) {
 				return true;
-			} elseif (isset($rec['group']) && ($lp == $rec['group'])) { //???
+			} elseif ($lp == $rec['groups']) { //???
 				return true;
 			}
 		}
@@ -682,6 +711,18 @@ class Authentication
         }
         return $this->checkAdmission('admins');
     }
+
+
+    private function loadKnownUsers()
+    {
+        $this->userDB = $usersFile = $this->config->configPath.$this->config->admin_usersFile;
+        $this->knownUsers = getYamlFile($usersFile);
+        foreach ($this->knownUsers as $i => $rec) {
+            if (!isset($rec['groups'])) {
+                $this->knownUsers[$i]['groups'] = isset($rec['group']) ? $rec['group'] : ''; // allow groups or group
+            }
+        }
+    } // loadKnownUsers
 
 
 } // class Authentication

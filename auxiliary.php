@@ -930,7 +930,7 @@ function getClientIP($normalize = false)
 
 
 //-------------------------------------------------------------------------
-function reloadAgent($target = false)
+function reloadAgent($target = false, $getArg = false)
 {
     global $globalParams;
     if ($target === true) {
@@ -939,6 +939,9 @@ function reloadAgent($target = false)
         $target = resolvePath($target, false, 'https');
     } else {
         $target = $globalParams['pageUrl'];
+    }
+    if ($getArg) {
+        $target .= "?reload-arg=$getArg";
     }
     header("Location: $target");
     exit;

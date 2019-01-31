@@ -6,8 +6,6 @@ class AdminTasks
 
     public function __construct($that = null)
     {
-//        $className = get_class($that);
-//        if (get_class($that) == 'Lizzy') {
         if ($that && get_class($that) == 'Lizzy') {
             $this->auth = $that->auth;
             $this->page = $that->page;
@@ -65,8 +63,9 @@ class AdminTasks
             $this->page->merge($pg);
             return $pg;
 
-        } elseif ($adminTask == 'edit-profile') {
-            $html = $accountForm->renderEditProfileForm($_SESSION['lizzy']['user'], $notification);
+        } elseif ($that->config->admin_userAllowSelfAdmin && ($adminTask == 'edit-profile')) {
+            $userRec = $that->auth->getLoggedInUser(true);
+            $html = $accountForm->renderEditProfileForm($userRec, $notification);
             $this->page->addOverride($html, true, false);
             return '';
         }
@@ -84,11 +83,6 @@ class AdminTasks
         } elseif ($adminTask == 'add-user') {
             $pg = $accountForm->renderAddUserForm($group, $notification);
 
-        } elseif ($adminTask == 'add-extension') {
-            $res = $this->addExtension();
-            $pg = new Page;
-            $pg->addOverlay($res);
-
         } else {
             return "Error: mode unknown 'adminTask'";
         }
@@ -105,9 +99,9 @@ class AdminTasks
     public function sendSignupMail($email, $group = 'guest')
     {
         $accessCodeValidyTime = 900; //???
-        $message = $this->sendCodeByMail($email, 'email-signup', $accessCodeValidyTime, $email, 'unknown-user', $group);
+        $message = $this->sendCodeByMail($email, 'email-signup', $accessCodeValidyTime, 'unknown-user', $group, false);
         return $message;
-    }
+    } // sendSignupMail
 
 
 
@@ -117,9 +111,9 @@ class AdminTasks
     {
         $accessCodeValidyTime = 900; //???
         $user = $this->auth->getLoggedInUser();
-        $message = $this->sendCodeByMail($email, 'email-change-mail', $accessCodeValidyTime, $email, $user, '');
+        $message = $this->sendCodeByMail($email, 'email-change-mail', $accessCodeValidyTime, $user, '', false);
         return $message;
-    }
+    } // sendChangeMailAddress_Mail
 
 
 
@@ -140,7 +134,7 @@ class AdminTasks
             } else {
                 continue;
             }
-            $newRecs[$email] = ['email' => $email, 'displayName' => $name, 'group' => $group];
+            $newRecs[$email] = ['email' => $email, 'displayName' => $name, 'groups' => $group];
         }
 
         if ($newRecs) {
@@ -185,31 +179,51 @@ class AdminTasks
 
 
     //....................................................
-    public function changeUsername($username, $displayName)
+    public function changeUsername($newUsername, $displayName)
     {
-        $user = $_SESSION['lizzy']['user'];
+        $user = isset($_SESSION['lizzy']['user']) ? $_SESSION['lizzy']['user'] : '';
         $rec = $this->auth->getLoggedInUser( true );
-        $knownUsers = $this->auth->getKnownUsers();
-        $userNames = array_keys($knownUsers);
 
-        // check whether new username is acceptable:
-        // must not be admin or any existing username, except his own
+        if (($user == $newUsername) && !$newUsername) {
+            return "<div class='lzy-admin-task-response'>{{ lzy-username-change-illegal-name-response }}</div>";
+        }
 
-        if (($user != $rec['name']) &&              // not user's previous own name
-            (($user == 'admin') || in_array($user, $userNames))) {      // not 'admin' and not existing name
+        if (!$newUsername) {
+            $newUsername = $user;
+            $res = false;
+        } else {
+            $res = $this->checkValidUsername($newUsername);
+        }
+        if ($res) { // user name already in use or invalid!
+            $str = "<div class='lzy-admin-task-response'>$res</div>";
+            return [false, $str];
+        }
+        if ($user != $rec['name']) {
             $str = "<div class='lzy-admin-task-response'>{{ lzy-username-change-illegal-name-response }}</div>";
 
         } else {
-
-            $rec['name'] = $username;
-            $rec['displayName'] = $displayName;
+            if ($displayName) {
+                $rec['displayName'] = $displayName;
+            }
             $this->deleteDbUserRec($user);
-            $this->addUserToDB($username, $rec);
-            $this->auth->setUserAsLoggedIn($username);
+            $rec['name'] = $newUsername;
+            $this->addUserToDB($newUsername, $rec);
             $str = "<div class='lzy-admin-task-response'>{{ lzy-username-changed-response }}</div>";
         }
         return $str;
-    }
+    } // changeUsername
+
+
+
+    private function checkValidUsername($username) {
+        if (isset($knownUsers[$username]) || ($username == 'admin')) {
+            return '{{ lzy-username-changed-error-name-taken }}';
+        }
+        if (!preg_match('/^\w{2,15}$/', $username)) {
+            return '{{ lzy-username-changed-error-illegal-name }}';
+        }
+        return false;
+    } // checkValidUsername
 
 
 
@@ -225,6 +239,7 @@ class AdminTasks
             }
         }
         $this->deleteDbUserRec($user);
+        $this->auth->logout();
         return "<div class='lzy-admin-task-response'>{{ lzy-delete-account-success-response }}</div>";
     }
 
@@ -248,27 +263,27 @@ class AdminTasks
                 return false;
 
             } else {
-                $this->addUsersToDB([ $email => ['email' => $email, 'group' => $group]]);
+                $this->addUsersToDB([ $email => ['email' => $email, 'groups' => $group]]);
                 writeLog("new admin user added: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
                 return true;
             }
 
         } else {
-            $this->addUsersToDB([ $email => ['email' => $email, 'group' => $group]]);
+            $this->addUsersToDB([ $email => ['email' => $email, 'groups' => $group]]);
             writeLog("new guest user added: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
             return true;
         }
-    }
+    } // createGuestUserAccount
 
 
     public function changeEMail($email)
     {
         writeLog("email for user changed: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
-        $rec = $this->auth->getLoggedInUser( true );
-        $user = $rec['name'];
-        $rec['email'] = $email;
-        $this->updateDbUserRec($user, $rec);
-    }
+        $userRec = $this->auth->getLoggedInUser( true );
+        $user = $userRec['name'];
+        $userRec['email'] = $email;
+        $this->updateDbUserRec($user, $userRec);
+    } // changeEMail
 
 
     //-------------------------------------------------------------
@@ -338,7 +353,7 @@ class AdminTasks
     }
 
 
-    public function sendCodeByMail($submittedEmail, $mode, $accessCodeValidyTime, $name, $user, $group)
+    public function sendCodeByMail($submittedEmail, $mode, $accessCodeValidyTime, $user, $group, $displayName)
     {
         global $globalParams;
 
@@ -349,13 +364,13 @@ class AdminTasks
 
         $hash = $this->createHash();
 
-        $onetime[time()] = ['hash' => $hash, 'user' => $name, 'group' => $group, 'validUntil' => $validUntil, 'mode' => $mode];
+        $onetime[time()] = ['hash' => $hash, 'user' => $user, 'email' => $submittedEmail,'groups' => $group, 'validUntil' => $validUntil, 'mode' => $mode];
         writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
 
         $url = $globalParams['pageUrl'] . $hash . '/';
         if ($mode == 'email-login') {
             $subject = "[{{ site_title }}] {{ lzy-email-access-link-subject }} {$globalParams['host']}";
-            $message = "{{ lzy-email-access-link1 }} $url {{ lzy-email-access-link2 }} $hash {{ lzy-email-access-link3 }} \n";
+            $message = "{{ lzy-email-access-link0 }}$displayName{{ lzy-email-access-link1 }} $url {{ lzy-email-access-link2 }} $hash {{ lzy-email-access-link3 }} \n";
 
             $this->sendMail($submittedEmail, $subject, $message);
 
@@ -421,27 +436,4 @@ class AdminTasks
         return $hash;
     } // createHash
 
-
-
-    private function addExtension()
-    {
-        $fileName = getUrlArg('file', true);
-
-        // download extension zip
-        // unzip outer
-        // check signature
-        // unzip inner to extensions/ folder
-        $res = '';
-        $name = base_name($fileName, false);
-        $zip = new ZipArchive;
-        $res = $zip->open($fileName);
-        if ($res === true) {
-            $zip->extractTo('_lizzy/extensions/');
-            $zip->close();
-            $res = "Extension '$name' successfully installed.";
-        } else {
-            $res = "Error installing extension '$name'.";
-        }
-        return $res;
-    }
 } // class

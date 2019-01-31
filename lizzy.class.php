@@ -181,6 +181,7 @@ class Lizzy
             $this->trans->doUserComputedVariables();
         }
 
+        $this->appendLoginForm();
         $this->handleUrlArgs2();
 
         $this->sendAccessLinkMail();
@@ -294,13 +295,15 @@ class Lizzy
         if (is_array($res)) {   // array means user is not logged in yet but needs the one-time access-code form
             if ($res[2] == 'Overlay') {
                 $this->page->addOverlay($res[1], false, false);
+            } elseif ($res[2] == 'Override') {
+                $this->page->addOverlay($res[1], false, false);
             } else {
-                $this->page->addOverride($res[1], false, false);
+                $this->page->addMessage($res[1], false, false);
             }
             $this->loggedInUser = false;
 
         } elseif ($res === null) {
-            $this->renderLoginForm();
+            $this->appendLoginForm();
             $this->loggedInUser = false;
 
         } else {
@@ -312,8 +315,10 @@ class Lizzy
         if ($res) {
             if (isset($res[2]) && ($res[2] == 'Overlay')) {
                 $this->page->addOverlay($res[1], false, false);
-            } else {
+            } elseif ($res[2] == 'Override') {
                 $this->page->addOverride($res[1], false, false);
+            } else {
+                $this->page->addMessage($res[1], false, false);
             }
         }
         $GLOBALS['globalParams']['auth-message'] = $this->auth->message;
@@ -431,24 +436,27 @@ class Lizzy
 
 
     //....................................................
-    private function renderLoginForm()
+    private function appendLoginForm()
     {
+        if (!$this->config->admin_userAllowSelfAdmin || $this->auth->getLoggedInUser()) {
+            return;
+        }
+
         $accForm = new UserAccountForm($this);
         $html = $accForm->renderLoginForm($this->auth->message, false, true);
-        $this->page->addPopup( ['contentFrom' => '#login-form' ]);
-        $this->page->addBody("<div id='login-form'>$html</div>\n");
+        if (($user = getUrlArg('login', true)) !== null) {
+            $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link', 'autoOpen' => true]);
+            if ($user) {
+                $jq = "$('.lzy-login-username').val('$user');\nsetTimeout(function() { $('.lzy-login-email').val('$user').focus(); },500);";
+                $this->page->addJq($jq, 'append');
+            }
+
+        } else {
+            $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link']);
+        }
+        $this->page->addBodyEndInjections("<div id='lzy-login-form'>$html</div>\n");
         $this->page->addModules('PANELS');
-        $css = <<<EOT
-    #login-form.lzy-popup h2 {
-        margin: 0; 
-    }
-    .lzy-login-form, .lzy-signup-form {
-        margin: 0;
-        padding: 0px 10px;
-    }
-EOT;
-        $this->page->addCss($css);
-    }
+    } // appendLoginForm
 
 
 
@@ -577,7 +585,6 @@ EOT;
 
         $this->reqPagePath = $pagePath;
         $globalParams['appRoot'] = $appRoot;  // path from docRoot to base folder of app, e.g. 'on/'
-//        $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['localCall'] = $this->localCall;
 
@@ -711,7 +718,6 @@ EOT;
             if  (!$this->localCall) {   // log only on non-local host
                 writeLog('starting debug mode');
             }
-//        	$this->trans->addVariable('debug_class', ' debug');
         	$this->page->addBodyClasses('debug');
 		}
 
@@ -1139,8 +1145,11 @@ EOT;
 		if (getUrlArg('logout')) {	// logout
             $this->userRec = false;
             $this->auth->logout();
-            reloadAgent(); // reload to get rid of url-arg ?logout
-		}
+            reloadAgent(false, 'logout-successful'); // reload to get rid of url-arg ?logout
+
+		} elseif (($arg = getUrlArg('reload-arg')) && ($arg === 'logout-successful')) {
+		    $this->page->addMessage('{{ lzy-logout-successful }}');
+        }
 
 
         if ($nc = getStaticVariable('nc')) {		// nc
@@ -1156,8 +1165,6 @@ EOT;
         if ($editingPermitted = $this->auth->checkGroupMembership('editors')) {
             if (isset($_GET['convert'])) {                                  // convert (pw to hash)
                 $this->renderPasswordConverter();
-//                $password = getUrlArg('convert', true);
-//                exit( password_hash($password, PASSWORD_DEFAULT) );
             }
 
             $editingMode = getUrlArgStatic('edit', false, 'editingMode');// edit
@@ -1290,8 +1297,6 @@ EOT;
                 $this->userRec = false;
                 setStaticVariable('user',false);
             }
-
-            $this->renderLoginForm();
 		}
 
 
@@ -1405,9 +1410,9 @@ EOT;
 
 
         if (getStaticVariable('editingMode')) {
-            $this->trans->addVariable('toggle-edit-mode', "<a href='?edit=false'>{{ turn edit mode off }}</a> | ");
+            $this->trans->addVariable('toggle-edit-mode', "<a class='toggle-edit-mode' href='?edit=false'>{{ turn edit mode off }}</a>");
         } else {
-            $this->trans->addVariable('toggle-edit-mode', "<a href='?edit'>{{ turn edit mode on }}</a> | ");
+            $this->trans->addVariable('toggle-edit-mode', "<a class='toggle-edit-mode' href='?edit'>{{ turn edit mode on }}</a>");
         }
 
 
@@ -1671,12 +1676,6 @@ EOT;
                     unlink($item);
                 }
             }
-
-            // purge rollback files:
-//            $dir = glob($item.'#RolledBack*');
-//            foreach ($dir as $item) {
-//                unlink($item);
-//            }
         }
 
         // purge global recycle bin:

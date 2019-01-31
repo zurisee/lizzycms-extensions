@@ -2,8 +2,9 @@
 
 # Login by password:
 
-
-
+lzy-email-change-successful:
+    de: 'Ihre neue E-Mail Adresse wurde gespeichert'
+    _: 'Your new e-mail address has been stored successfully'
 
 # Login / onetime-link:
 lzy-onetimelogin-email-prompt:
@@ -30,15 +31,22 @@ lzy-onetime-link-send:
     de: 'Zugangscode senden'
     en: 'Send access code'
 
+lzy-login-user-unknown:
+    de: 'Kein Benutzer mit diesem Benutzernamen gefunden.'
+    _: 'No user by this user name found.'
 
 lzy-email-access-link-subject:
     de: "Zugangslink für"
     en: "Access Link for"
 
-lzy-email-access-link1:
-    de: "Guten Tag\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
-    en: "Hello\n\nHere is the link with which you can access the webpage: \n\n\t"
+lzy-email-access-link0:
+    de: "Guten Tag "
+    en: "Hello"
     
+lzy-email-access-link1:
+    de: "\n\nFür Ihre E-Mail Adresse wurde ein Zugangscode angefordert.\nFalls Sie nichts davon wissen, können Sie diese Nachricht ignorieren.\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
+    en: "\n\nSomebody requested an access code using your e-mail address.\nIf you know nothing about it, please ignore this message.\n\nHere is the link with which you can access the webpage: \n\n\t"
+
 lzy-email-access-link2:
     de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
     en: "\n\nOr you can enter the following code into the entry field in the webpage:"
@@ -47,9 +55,13 @@ lzy-email-access-link3:
     de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nBeste Grüsse, Ihre Lizzy\n"
     en: "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
 
+lzy-username-changed-error-illegal-name:
+    de: "Ungültiger Benutzername.<br />Der Benutzername muss as mindestens 2 und maximal 15 Buchstaben bestehen. Er darf keine Leerzeichen und andere Sonderzeichen enthalten"
+    _: "Invalid user name. <br />A valid user name must consist of at least 2 and at most 15 characters. It must not contain any space or other special characters."
 
-
-
+lzy-username-changed-error-name-taken:
+    de: "Dieser Benutzername bereits belegt."
+    _: "This user name is already taken"
 
 # Self-Signup:
 lzy-self-signup-email-prompt:
@@ -219,11 +231,18 @@ lzy-change-user-email-prompt:
     de: 'Neue E-Mail Adresse'
     en: 'New e-mail address'
 
+lzy-username-change-illegal-name-response:
+    de: 'Keine Änderung'
+    _: 'Nothing changed'
 
 
 lzy-change-password-send:
     de: Speichern
     en: Save
+
+lzy-admin-cancel-button:
+    de: Abbrechen
+    en: Abort
 
 lzy-change-password-not-equal-response:
     de: Die eingegebenen Kennwörter stimmten nicht überein.
@@ -235,9 +254,9 @@ lzy-change-password-too-short-response:
 
 lzy-change-password-insufficient-response:
     de: "Das neue Kennwort entsprecht nicht den Minimalanforderungen: <br /><br />
-        Sie müssen mindestens 8 Zeichen lang sein und <br />Grossbuchstaben, Ziffern und Sonderzeichen enthalten."
+        Es muss mindestens 8 Zeichen lang sein und <br />Grossbuchstaben, Ziffern und Sonderzeichen enthalten."
     en: "The new password does not meet our security requirements:<br /><br />
-        They must be at least 8 characters long and <br />must contain uppercase letters, digits and special characters."
+        It must be at least 8 characters long and <br />must contain uppercase letters, digits and special characters."
 
 lzy-error-email-required:
     de: 'Eingabe einer E-Mail Adresse ist notwendig'
@@ -330,8 +349,8 @@ lzy-change-username-send:
 
 
 lzy-username-changed-response:
-    de: Ihr neueBenutzername wurde gespeichert
-    en: Your new username has been registered
+    de: "Ihr neuer Benutzername wurde gespeichert."
+    en: "Your new username has been registered."
 
 
 # Change E-Mail Address:
@@ -423,6 +442,10 @@ lzy-delete-profile-confirm-text:
     de: Sind Sie sicher, dass Sie Ihr Benutzerprofil löschen wollen?
     en: Are you sure that you want to delete your user profile?
 
-lzy-delete-profile-confirm-button:
-    de: Profil jetzt löschen
-    en: Delete profile now
+lzy-delete-profile-confirm-prompt:
+    de: 'Sind Sie sicher, dass Sie ihr Profil löschen wollen?'
+    en: 'Are you sure that you want to delete your profile?'
+
+lzy-delete-account-success-response:
+    de: 'Ihre Profil ist jetzt gelöscht.'
+    _: 'Your profile is now deleted.'

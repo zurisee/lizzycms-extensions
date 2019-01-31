@@ -87,6 +87,11 @@ lzy-add-user-info-title:
 
 
 
+# Change PW:
+lzy-change-password-title:
+    de: Kennwort ändern
+    _: Change your password
+
 
 __END__
 

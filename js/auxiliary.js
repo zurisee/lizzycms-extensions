@@ -62,11 +62,14 @@ function serverLog(text)
 
 
 //--------------------------------------------------------------
-function lzyReload()
+function lzyReload( arg )
 {
     console.log('initiating page reload');
     // location.reload(true);
     var call = window.location.pathname.replace(/\?.*/, '');
+    if (typeof arg != 'undefined') {
+        call = call + arg;
+    }
     window.location.assign(call);
 }
 
@@ -95,19 +98,6 @@ function htmlEntities(str)
 }
 
 
-/*
-// Make Overlay closable by ESC key:
-$( document ).ready(function() {
-	if ($('.overlay').length) {
-		$('body').keydown(function (e) {
-			var keycode = e.which;
-			if (keycode == 27) {
-				$('.overlay').hide();
-			}
-		});
-	}
-});
-*/
 
 
 //--------------------------------------------------------------

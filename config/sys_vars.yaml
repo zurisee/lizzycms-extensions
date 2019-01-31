@@ -207,6 +207,15 @@ email required for one-time-access-link:
     de: Eine E-Mail-Adresse wird benötigt, um den einmaligen Zugangs-Link zu senden.
     en: "We need your e-mail address to send you a one-time access link."
 
+lzy-login-successful:
+    de: 'Sie sind jetzt angemeldet.'
+    _: 'You are successfully logged in now.'
+
+lzy-logout-successful:
+    de: 'Sie sind jetzt abgemeldet.'
+    _: 'You are successfully logged out now.'
+
+
 #login with password:
 #    de: Anmeldung mit <br>Kennwort
 #    en: Login with <br>password

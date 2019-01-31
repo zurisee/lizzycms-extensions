@@ -175,15 +175,17 @@ EOT;
 
 
 
-    public function renderEditProfileForm($user, $notification = '', $message = '')
+    public function renderEditProfileForm($userRec, $notification = '', $message = '')
     {
+        $user = isset($userRec['name']) ? $userRec['name'] : '';
+        $email = isset($userRec['email']) ? $userRec['email'] : '';
         $form1 = $this->createChangePwForm($user, $notification, $message);
         $username = $this->createChangeUsernameForm($user, $notification, $message);
-        $email = $this->createChangeEmailForm($user, $notification, $message);
+        $emailForm = $this->createChangeEmailForm($user, $notification, $message);
         $delete = $this->createDeleteProfileForm($user, $notification, $message);
 
         $html = <<<EOT
-        <h2>{{ lzy-edit-profile }}</h2>
+        <h2>{{ lzy-edit-profile }} &laquo;$user&raquo;</h2>
 $message
         <div class="lzy-panels-widget lzy-tilted accordion one-open-only lzy-account-form lzy-login-multi-mode">
             <div>
@@ -206,8 +208,8 @@ $username
             <div>
             <h1>{{ lzy-change-e-mail }}</h1>
             
-            <h2>{{ lzy-change-e-mail }}</h2>
-$email
+            <h2>{{ lzy-change-e-mail }} ($email)</h2>
+$emailForm
             </div><!-- /lzy-panel-page -->
     
     
@@ -223,7 +225,11 @@ $delete
 
 EOT;
 
-        $this->page->addModules('USER_ADMIN, ~/css/user_admin.css' );
+        $userAdmCss = '~/css/user_admin.css';
+        if (!file_exists(resolvePath($userAdmCss))) {
+            $userAdmCss = '';
+        }
+        $this->page->addModules("USER_ADMIN, $userAdmCss" );
 
         return $html;
     }
@@ -233,7 +239,7 @@ EOT;
 
 
 //-------------------------------------------------------------
-    private function createMultimodeLoginForm($notification, $message = '')
+    public function createMultimodeLoginForm($notification, $message = '')
     {
         global $globalParams;
         $message = $this->wrapTag(MSG, $message);
@@ -447,7 +453,7 @@ EOT;
 
 
 
-    private function createChangePwForm($user, $notification, $message = '')
+    public function createChangePwForm($user, $notification, $message = '')
     {
         $notification = $this->wrapTag(NOTI, $notification);
         $message = $this->wrapTag(MSG, $message);
@@ -456,7 +462,8 @@ EOT;
         $passwordInput = $this->renderPasswordInput('lzy-change-password-', true);
         $this->inx++;
         $passwordInput2 = $this->renderPasswordInput('lzy-change-password2-', true,true);
-        $submitButton = $this->createSubmitButton('lzy-change-password-');
+        $submitButton = $this->createCancelButton('lzy-change-password-');
+        $submitButton .= $this->createSubmitButton('lzy-change-password-');
 
 
         $str = <<<EOT
@@ -476,6 +483,8 @@ $submitButton
 EOT;
 
         $this->page->addJQFiles('USER_ADMIN');
+        $jq = "\t$('.lzy-change-password-cancel').click(function(){ lzyReload(); });\n";
+        $this->page->addJq($jq);
         return $str;
     } // createPWAccessForm
 
@@ -483,7 +492,7 @@ EOT;
 
 
 
-    private function createChangeUsernameForm($user, $notification, $message = '')
+    public function createChangeUsernameForm($user, $notification, $message = '')
     {
         $notification = $this->wrapTag(NOTI, $notification);
         $message = $this->wrapTag(MSG, $message);
@@ -492,7 +501,8 @@ EOT;
         $username = $this->renderTextlineInput('lzy-change-user-', 'username');
         $this->inx++;
         $displayName = $this->renderTextlineInput('lzy-change-user-', 'displayname');
-        $submitButton = $this->createSubmitButton('lzy-change-username-');
+        $submitButton = $this->createCancelButton('lzy-change-username-');
+        $submitButton .= $this->createSubmitButton('lzy-change-username-');
 
 
         $str = <<<EOT
@@ -560,30 +570,20 @@ EOT;
 
             <div class="lzy-account-form-wrapper">
 $message
-                <p>{{ lzy-delete-profile-text }}</p>
+                <div>{{ lzy-delete-profile-text }}</div>
                 <button class="lzy-button lzy-login-form-button lzy-delete-profile-request-button">{{ lzy-delete-profile-request-button }}</button>
-                
-                <div class="lzy-popup-wrapper lzy-delete-profile-popup" style="display: none;">
-                    <div class="lzy-popup-header">{{ lzy-delete-profile-confirm-header }}</div>
-                    <button class="lzy-popup-close-button">{{ lzy-popup-close-button }}</button>
-                    <div class="lzy-popup-body">
-                        <p>{{ lzy-delete-profile-confirm-text }}</p>
-                        <a href="?lzy-delete-account=true" class="lzy-delete-profile-confirm-button lzy-login-form-button lzy-button">{{ lzy-delete-profile-confirm-button }}</a>
-                    </div>
-                </div>
 
             </div><!-- /account-form -->
 
 EOT;
-        $jq = <<<EOT
-    $('.lzy-delete-profile-request-button').click(function() {
-        var \$wrapper = $( this ).parent();
-        $('.lzy-popup-wrapper', \$wrapper).show();
-    });
-EOT;
 
-
-        $this->page->addJq($jq);
+        $this->page->addPopup([
+            'type' => 'confirm',
+            'text' => '{{ lzy-delete-profile-confirm-prompt }}',
+            'triggerSource' => '.lzy-delete-profile-request-button',
+            'onConfirm' => 'lzyReload("?lzy-user-admin=lzy-delete-account");',
+            'onCancel' => 'lzyReload();',
+        ]);
         $this->page->addJQFiles('USER_ADMIN');
         return $str;
     } // createPWAccessForm
@@ -597,6 +597,17 @@ EOT;
     {
         return <<<EOT
                     <button id="lzy-login-submit-button{$this->inx}" class="lzy-admin-submit-button {$prefix}submit-button lzy-button" name="btn_submit" value="submit">{{ {$prefix}send }}</button>
+
+EOT;
+    }
+
+
+
+
+    private function createCancelButton($prefix)
+    {
+        return <<<EOT
+                    <button id="lzy-login-cancel-button{$this->inx}" class="lzy-admin-cancel-button lzy-button" onclick="lzyReload(); return false;">{{ lzy-admin-cancel-button }}</button>
 
 EOT;
     }
@@ -746,14 +757,17 @@ EOT;
         $pageUrl = $GLOBALS['globalParams']['pageUrl'];
         $username = $this->getUsername();
 
+        $option = '';
+        if ($this->config->admin_userAllowSelfAdmin) {
+            $option = "\t\t\t<li><a href='$pageUrl?admin=edit-profile'>{{ Your Profile }}</a></li>\n";
+        }
+
         $logInVar = <<<EOT
 <div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $username">{{ user_icon }}</a>
-    <!--&nbsp;<img src="~sys/rsc/user.svg" height="24" /></a>-->
     <div class="lzy-login-menu" style="display:none;">
         <div>{{ User account }} <strong>$username</strong></div>
         <ol>
-            <li><a href='$pageUrl?logout'>{{ Logout }}</a></li>
-            <li><a href='$pageUrl?admin=edit-profile'>{{ Your Profile }}</a></li>
+            <li><a href='$pageUrl?logout'>{{ Logout }}</a></li>$option
         </ol>
     </div>
 </div>

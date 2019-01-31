@@ -7,8 +7,10 @@
 .lzy-login-menu ol li {
     list-style-type: none;
 }
-.lzy-logged-in-user {
+.lzy-logged-in-user * {
+    height: 1.2em;
     line-height: 1.2em;
+    display: inline-block;
 }
 .lzy-login-link-menu img,
 .lzy-login-link img {
@@ -232,9 +234,9 @@ input.lzy-login-email[type=email]:valid {
     width: 15em;
 }
 
-.lzy-admin-task-response,
-.lzy-adduser-wrapper {
+.main .lzy-admin-task-response {
     padding: 15px;
     border: 1px solid #ddd;
     margin-top: 4em;
+    max-width: 25em;
 }
