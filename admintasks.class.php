@@ -181,22 +181,29 @@ class AdminTasks
     //....................................................
     public function changeUsername($newUsername, $displayName)
     {
-        $user = isset($_SESSION['lizzy']['user']) ? $_SESSION['lizzy']['user'] : '';
         $rec = $this->auth->getLoggedInUser( true );
+        $user = $rec['name'];
 
-        if (($user == $newUsername) && !$newUsername) {
-            return "<div class='lzy-admin-task-response'>{{ lzy-username-change-illegal-name-response }}</div>";
+        if (!$newUsername && !$displayName) {
+            return "<div class='lzy-admin-task-response'>{{ lzy-username-change-no-change-response }}</div>";
+        }
+        if ($user == $newUsername) {
+            if (!$displayName) {
+                return "<div class='lzy-admin-task-response'>{{ lzy-username-change-no-change-response }}</div>";
+            }
+            $newUsername = '';
         }
 
         if (!$newUsername) {
             $newUsername = $user;
             $res = false;
         } else {
-            $res = $this->checkValidUsername($newUsername);
+            $newUsername = strtolower($newUsername);
+            $res = $this->isInvalidUsername($newUsername);
         }
         if ($res) { // user name already in use or invalid!
             $str = "<div class='lzy-admin-task-response'>$res</div>";
-            return [false, $str];
+            return $str;
         }
         if ($user != $rec['name']) {
             $str = "<div class='lzy-admin-task-response'>{{ lzy-username-change-illegal-name-response }}</div>";
@@ -215,10 +222,17 @@ class AdminTasks
 
 
 
-    private function checkValidUsername($username) {
-        if (isset($knownUsers[$username]) || ($username == 'admin')) {
+    private function isInvalidUsername($username) {
+        if ($username == 'admin') {
+            return '{{ lzy-username-changed-error-name-taken }}';
+
+        } elseif ($res = $this->auth->findUserRecKey($username, '*')) {
+            return '{{ lzy-username-changed-error-name-taken }}';
+
+        } elseif ($res = $this->auth->findEmailInEmailList($username)) {
             return '{{ lzy-username-changed-error-name-taken }}';
         }
+
         if (!preg_match('/^\w{2,15}$/', $username)) {
             return '{{ lzy-username-changed-error-illegal-name }}';
         }
@@ -278,12 +292,34 @@ class AdminTasks
 
     public function changeEMail($email)
     {
+        if ($res = $this->isInvalidEmailAddress($email)) {
+            return $res;
+        }
         writeLog("email for user changed: $email [".getClientIP().']', LOGIN_LOG_FILENAME);
         $userRec = $this->auth->getLoggedInUser( true );
         $user = $userRec['name'];
         $userRec['email'] = $email;
         $this->updateDbUserRec($user, $userRec);
     } // changeEMail
+
+
+
+    private function isInvalidEmailAddress($email) {
+        if (!is_legal_email_address( $email )) {
+            return 'email-changed-email-invalid';
+        }
+        if ($res = $this->auth->findUserRecKey($email, '*')) {
+            return 'email-changed-email-in-use';
+
+        }
+        if ($res = $this->auth->findEmailInEmailList($email)) {
+            return 'email-changed-email-in-use';
+        }
+
+        return false;
+    } // isInvalidEmailAddress
+
+
 
 
     //-------------------------------------------------------------
@@ -389,6 +425,14 @@ class AdminTasks
             $message = $userAcc->renderOnetimeLinkEntryForm($submittedEmail, $validUntilStr, 'lzy-sign-up-link');
 
         } elseif ($mode == 'email-change-mail') {
+            $rec = $this->auth->getLoggedInUser( true );
+            if (isset($rec['email']) && ($rec['email'] == $submittedEmail)) {
+                reloadAgent(false,"email-change-mail-unchanged");
+            }
+            $res = $this->isInvalidEmailAddress($submittedEmail);
+            if ($res) {
+                reloadAgent( false, $res );
+            }
             $subject = "[{{ site_title }}] {{ lzy-email-change-mail-subject }} {$globalParams['host']}";
             $message = "{{ lzy-email-change-mail-up1 }} $url {{ lzy-email-change-mail-up2 }} $hash {{ lzy-email-change-mail-up3 }} \n";
 

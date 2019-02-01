@@ -215,6 +215,10 @@ lzy-logout-successful:
     de: 'Sie sind jetzt abgemeldet.'
     _: 'You are successfully logged out now.'
 
+lzy-login-failed:
+    de: 'Die Anmeldung ist fehlgeschlagen.'
+    _: 'Login failed.'
+
 
 #login with password:
 #    de: Anmeldung mit <br>Kennwort

@@ -292,22 +292,36 @@ class Lizzy
 
 
         $res = $this->auth->authenticate();
-        if (is_array($res)) {   // array means user is not logged in yet but needs the one-time access-code form
-            if ($res[2] == 'Overlay') {
-                $this->page->addOverlay($res[1], false, false);
-            } elseif ($res[2] == 'Override') {
-                $this->page->addOverlay($res[1], false, false);
-            } else {
-                $this->page->addMessage($res[1], false, false);
-            }
-            $this->loggedInUser = false;
+        if ($res) {
+            if (is_string($res)) {  // already logged in
+                $this->auth->setUserAsLoggedIn($res);
 
-        } elseif ($res === null) {
-            $this->appendLoginForm();
-            $this->loggedInUser = false;
+            } elseif (is_array($res)) { // [login/false, message, communication-channel]
+                if ($res[2] == 'Overlay') {
+                    $this->page->addOverlay($res[1], false, false);
+
+                } elseif ($res[2] == 'Override') {
+                    $this->page->addOverlay($res[1], false, false);
+
+                } elseif ($res[2] == 'LoginForm') {
+                    $accForm = new UserAccountForm($this);
+                    $form = $accForm->renderLoginForm($this->auth->message, $res[1], true);
+                    $this->page->addOverlay($form, true, false);
+
+                } else {
+                    $this->page->addMessage($res[1], false, false);
+                }
+                if ($res[0]) {
+                    $this->auth->setUserAsLoggedIn($res[0]);
+                } else {
+                    $this->loggedInUser = false;
+                }
+            } else {
+                $this->loggedInUser = false;
+            }
 
         } else {
-            $this->loggedInUser = $res;
+            $this->loggedInUser = false;
         }
 
 
@@ -454,7 +468,8 @@ class Lizzy
         } else {
             $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link']);
         }
-        $this->page->addBodyEndInjections("<div id='lzy-login-form' class='dispno'>$html</div>\n");
+        $this->page->addBodyEndInjections("<div class='dispno'><div id='lzy-login-form'>$html</div></div>\n");
+//        $this->page->addBodyEndInjections("<div id='lzy-login-form' class='dispno'>$html</div>\n");
         $this->page->addModules('PANELS');
     } // appendLoginForm
 
@@ -541,7 +556,8 @@ class Lizzy
         $globalParams['requestedUrl'] = $requestedUrl;
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
 
-        $pagePath = $this->auth->validateOnetimeAccessCode($pagePath0);
+//        $pagePath = $this->auth->checkAndValdiateAccessCode($pagePath0); //???
+        $pagePath = $this->auth->handleAccessCodeInUrl( $pagePath0 );
 
         if (!$pagePath) {
             $pagePath = './';

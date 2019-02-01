@@ -35,6 +35,10 @@ lzy-login-user-unknown:
     de: 'Kein Benutzer mit diesem Benutzernamen gefunden.'
     _: 'No user by this user name found.'
 
+lzy-login-email-unknown:
+    de: 'Kein Benutzer mit dieser E-Mailadresse gefunden.'
+    _: 'No user by this e-mail address found.'
+
 lzy-email-access-link-subject:
     de: "Zugangslink für"
     en: "Access Link for"
@@ -232,9 +236,12 @@ lzy-change-user-email-prompt:
     en: 'New e-mail address'
 
 lzy-username-change-illegal-name-response:
-    de: 'Keine Änderung'
-    _: 'Nothing changed'
+    de: 'Benutzername entspricht nicht den Mindestanforderungen'
+    _: 'User name does not meet requirements'
 
+lzy-username-change-no-change-response:
+    de: 'Benutzername unverändert'
+    _: ' User name not changed'
 
 lzy-change-password-send:
     de: Speichern
@@ -262,6 +269,17 @@ lzy-error-email-required:
     de: 'Eingabe einer E-Mail Adresse ist notwendig'
     en: 'Entering an e-mail address is mandatory'
 
+lzy-email-change-mail-unchanged:
+    de: 'E-Mail Adresse unverändert'
+    _: 'E-mail address unchanged'
+
+lzy-email-changed-email-invalid:
+    de: 'Ungültige E-Mail Adresse'
+    _: 'Invalid e-mail address'
+
+lzy-email-changed-email-in-use:
+    de: 'E-Mail Adresse bereits belegt'
+    _: 'E-mail address already in use'
 
 # SignUp Form:
 lzy-self-sign-up:

@@ -28,55 +28,43 @@ class Authentication
         $uname = "unknown [$ip]";
 
         $res = null;
-        if (isset($_POST['lzy-onetime-code']) && isset($_POST['lzy-login-user'])) {                         // user sent accessCode
-            $str = $this->validateOnetimeAccessCode(false, $_POST['lzy-onetime-code']);
+        if (isset($_POST['lzy-onetime-code']) && isset($_POST['lzy-login-user'])) {    // user sent accessCode
+            $str = $this->validateOnetimeAccessCode( $_POST['lzy-onetime-code'] );
             $res = [false, $str, 'Override'];
-
-        } elseif (get_post_data('lzy-user-signup') == 'signup-email') {      // user sent email for signing up
-            $email = get_post_data('lzy-self-signup-email-email');
-            $group = getStaticVariable('self-signup-to-group');
-
-            require_once SYSTEM_PATH.'admintasks.class.php';
-            $adm = new AdminTasks($this);
-            if ($this->isKnownUser($email)) {
-                $res = $this->checkAccessCode($email);
-                writeLog("one time link sent: $uname", LOGIN_LOG_FILENAME);
-                if ($res !== false) {
-                    $this->mailIsPending = true;
-                    $res = [false, $res, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
-                } else {
-                    fatalError('not impl yet');
-                }
-            } else {
-                $str = $adm->sendSignupMail($email, $group);
-                $this->mailIsPending = true;
-                $res = [false, $str, 'Override'];
-            }
 
         } elseif (isset($_POST['lzy-login-username']) && isset($_POST['lzy-login-password-password'])) {    // user sent un & pw
             $credentials = array('username' => $_POST['lzy-login-username'], 'password' => $_POST['lzy-login-password-password']);
             if (!($res = $this->validateCredentials($credentials))) {
-                return null;
+                $res = [null, "{{ lzy-login-failed }}", 'Message'];   //
+            } else {
+                $res = [$res, "{{ lzy-login-successful }}", 'Message'];   //
             }
 
         } elseif (isset($_POST['lzy-onetimelogin-email-email'])) {                                          // user sent email for logging in
             $emailRequest = $_POST['lzy-onetimelogin-email-email'];
-            $res = $this->checkAccessCode($emailRequest);
-            writeLog("one time link sent: $uname", LOGIN_LOG_FILENAME);
-            if ($res !== false) {
-                $this->mailIsPending = true;
-                $res = [false, $res, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
+
+            $rec = $this->findEmailMatchingUserRec($emailRequest, true);
+            if ($rec) {
+                if (!is_legal_email_address($emailRequest)) {
+                    $emailRequest = isset($rec['email']) ? $rec['email'] : false;
+                }
+                if ($emailRequest) {
+                    $message = $this->sendOneTimeCode($emailRequest, $rec);
+                    writeLog("one time link sent: $uname", LOGIN_LOG_FILENAME);
+                    $this->mailIsPending = true;
+                    $res = [false, $message, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
+                } else {
+                    $res = [false, "<p>{{ lzy-login-email-unknown }}</p>", 'Message'];   //
+                }
+
             } else {
                 $res = [false, "<p>{{ lzy-login-user-unknown }}</p>", 'Message'];   //
             }
-
-        } elseif (isset($_POST['lzy-change-email'])) {
-            $emailRequest = $_POST['lzy-onetimelogin-email-email'];
         }
 
         if ($res === null) {        // no login attempt detected -> check whether already logged in:
-            $this->getLoggedInUser();
-            $res = (isset($this->userRec['name'])) ? $this->userRec['name'] : false;
+            $res = $this->getLoggedInUser();
+
             if (isset($_GET['reload-arg'])) {
                 $res = [false, "<p>{{ lzy-{$_GET['reload-arg']} }}</p>", 'Message'];   //
             }
@@ -158,7 +146,8 @@ class Authentication
 
         } elseif ($requestType == 'lzy-delete-account') {           // user deletes account
             $str = $adm->deleteUserAccount();
-            $res = [false, $str, 'Override'];
+            $this->logout();
+            $res = [false, $str, 'Message'];
         }
         return $res;
     }
@@ -170,10 +159,14 @@ class Authentication
 
 	private function validateCredentials($credentials)
 	{
+	    // returns username or false, if no valid match was found
         $requestingUser = strtolower($credentials['username']);
 
-
-		if (isset($this->knownUsers[$requestingUser])) {    // user found in user-DB:
+        $res = false;
+		if (!isset($this->knownUsers[$requestingUser])) {    // user found in user-DB:
+            $requestingUser = $this->findUserRecKey($requestingUser);
+        }
+		if (isset($this->knownUsers[$requestingUser])) {
             $rec = $this->knownUsers[$requestingUser];
             $rec['name'] = $requestingUser;
             $correctPW = (isset($rec['password'])) ? $rec['password'] : '';
@@ -182,9 +175,7 @@ class Authentication
             // check username and password:
             if (password_verify($providedPW, $correctPW)) {  // login succeeded
                 writeLog("logged in: $requestingUser [{$rec['groups']}] (" . getClientIP(true) . ')', LOGIN_LOG_FILENAME);
-                $this->setUserAsLoggedIn($requestingUser, $rec);
-                $this->lzy->page->addMessage('{{ lzy-login-successful }}');
-                return $requestingUser;
+                $res = $requestingUser;
 
             } else {                                        // login failed: pw wrong
                 $rep = '';
@@ -200,9 +191,8 @@ class Authentication
                 $this->lzy->page->addJq($jq, 'append');
             }
         }
-        return false;
+        return $res;
     } // validateCredentials
-
 
 
 
@@ -233,196 +223,130 @@ class Authentication
 
 
 
+    //....................................................
+    public function handleAccessCodeInUrl($pagePath)
+    {
+        $code = strtoupper(basename($pagePath));
+        if ($code && preg_match('/^[A-Z][A-Z0-9]{5,}$/', $code)) {
+            $this->validateOnetimeAccessCode($code);    // reloads on success, returns on failure
 
-	private function checkAccessCode($emailRequest)
-	{
-        if (!$emailRequest) {
-            return false;
-        }
-        $submittedEmail = strtolower($emailRequest);
-        $group = '';
-        $found = false;
-
-        if (isset($this->knownUsers[$submittedEmail])) {    // check whether it's a username rather than an email
-            $user = $submittedEmail;
-            $rec = $this->knownUsers[$submittedEmail];
-            if (isset($rec['email'])) {
-                $submittedEmail = $rec['email'];
-                $found = true;
-                $rec['name'] = $user;
-                $name = $user;
-            }
-
-        } else {
-            foreach ($this->knownUsers as $name => $rec) {
-                if (isset($rec['accessCodeEnabled']) && ($rec['accessCodeEnabled'] == false)) {
-                    continue;
-                }
-
-                if (isset($rec['email']) && ($rec['email'] == $submittedEmail)) {
-                    $found = true;
-                    break;
-
-                }
-
-                if (isset($rec['emailList']) && $rec['emailList']) {
-                    $filename = $this->config->configPath . $rec['emailList'];
-                    if (file_exists($filename)) {
-                        $emails = file($filename);
-                        $e2 = [];
-                        foreach ($emails as $i => $email) {
-                            $e = strtolower(trim(preg_replace('/.*\<([^\>]+)\>.*/', "$1", $email)));
-                            $e = preg_split("/[\s,;]/m", $e);
-                            if (sizeof($e) > 1) {
-                                $e2 = array_merge($e2, $e);
-                                unset($emails[$i]);
-                            }
-                        }
-                        $emails = array_merge($emails, $e2);
-                        foreach ($emails as $email) {
-                            if (!trim($email)) { continue; }
-                            $email = strtolower(trim(preg_replace('/.*\<([^\>]+)\>.*/', "$1", $email)));
-                            if (($email{0} != '#') && ($email == $submittedEmail)) {
-                                $found = true;
-                                $user = $email;
-                                $group = $rec['groups'];
-                                break 2;
-                            }
-                        }
-                    }
-                }
+            if ($this->validateAccessCode($code, $pagePath)) {
+                $pagePath = trunkPath($pagePath,1, false); // remove hash-code from
             }
         }
-
-        if (!$found) {
-            return false;
-        }
-
-        require_once SYSTEM_PATH.'admintasks.class.php';
-        $adm = new AdminTasks();
-
-        $accessCodeValidyTime = isset($rec['accessCodeValidyTime']) ? $rec['accessCodeValidyTime'] : $this->config->admin_defaultAccessLinkValidyTime;
-        if (isset($this->knownUsers[$name]['displayName'])) {
-            $displayName = $this->knownUsers[$name]['displayName'];
-        } else {
-            $displayName = $name;
-        }
-        $message = $adm->sendCodeByMail($submittedEmail, 'email-login', $accessCodeValidyTime, $name, $group, $displayName);
-
-        return $message;
-    } // checkAccessCode
-
-
+        return $pagePath;   // access granted
+    } // handleAccessCodeInUrl
 
 
 
 
     //....................................................
-    public function validateOnetimeAccessCode($pagePath, $code = false)
+    public function validateOnetimeAccessCode($code)
     {
-        global $globalParams;
-        $user = false;
-        if ($code) {
-            if (!$pagePath) {
-                $pagePath = $globalParams['pagePath'];
-            }
-            $codeCandidate = strtoupper(trim($code));
-        } else {
-            $codeCandidate = basename($pagePath);
-            if (!preg_match('/^[A-Z][A-Z0-9]{5,}$/', $codeCandidate)) {
-                return $pagePath;
-            }
-            $pagePath = trunkPath($pagePath,1, false);
-        }
+        // invoked in 2 possible ways:
+        //  1) from analyzeHttpRequest() -> code = last part of url
+        //  2) from authenticate() -> code from post variable
 
-        if ($this->validateAccessCode($codeCandidate)) {
-            reloadAgent('~/'.$pagePath); // access NOT granted, remove hash-code from url
-            return $pagePath;
-        }
-
-        $onetime = getYamlFile(ONETIME_PASSCODE_FILE);
-        if (!$onetime) {
-            $this->monitorFailedLoginAttempts();
-            writeLog("*** one-time link rejected: $codeCandidate [".getClientIP().']', LOGIN_LOG_FILENAME);
-            reloadAgent('~/'.$pagePath); // access NOT granted, remove hash-code from url
-            return $pagePath;
-        }
-
-        $tlim = time() - 3600;  // max admin_defaultAccessLinkValidyTime
-        $found = false;
-        foreach ($onetime as $t => $rec) {  // find matching entry in list of one-time-hashes
-            if ($t < $tlim) {
-                unset($onetime[$t]);
-                continue;
-            }
-            if ($codeCandidate === $rec['hash']) {
-                $user = $rec['user'];
-                unset($onetime[$t]);
-                $found = true;
-                break;
-            }
-        }
-
-        if (isset($this->knownUsers[$user])) {
-            $userRec = $this->knownUsers[$user];
-            if (!isset($userRec['user'])) {
-                $userRec['user'] = $user;
-            }
-
-            if (isset($rec['accessCodeValidyTime'])) {
-                $accessCodeValidyTime = $rec['accessCodeValidyTime'];
-            } else {
-                $accessCodeValidyTime = $this->config->admin_defaultAccessLinkValidyTime;
-            }
-            $tlim = time() - $accessCodeValidyTime;
-            if ($t < $tlim) {
-                $found = false;
-                $user = false;
-                unset($onetime[$t]);
-            }
-
-        }
-
-        $getArg = "login-successful";
-        $mode = isset($rec['mode']) ?$rec['mode'] : false;
-        if ($mode === 'email-signup') {
-            require_once SYSTEM_PATH.'admintasks.class.php';
-            $adm = new AdminTasks($this);
-            if (!$adm->createGuestUserAccount($rec['user'])) {
-                $this->lzy->page->addMessage('lzy-user-account-creation-failed');
-            }
-
-        } elseif ($mode === 'email-change-mail') {
-            require_once SYSTEM_PATH.'admintasks.class.php';
-            $adm = new AdminTasks($this);
-            $adm->changeEMail($rec['email']);
-            $getArg = 'email-change-successful';
-        }
-
-        writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
-        if ($found) {
-            $this->knownUsers[$rec['user']] = ['email' => $rec['user'], 'groups' => $rec['groups']];
-            $displayName = $this->setUserAsLoggedIn($user);
+        list($userRec, $oneTimeRec) = $this->readOneTimeAccessCode($code);
+        $getArg = $this->handleOneTimeCodeActions($oneTimeRec);
+        if ($userRec) {
+            $user = $userRec['name'];
+            $displayName = $this->setUserAsLoggedIn( $user );
             if ($displayName) {
                 $user .= " ({$displayName})";
             }
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
             // access granted, remove hash-code from url
             reloadAgent(true, $getArg); // access granted, remove hash-code from url
+
+        } else {
+            $rep = '';
+            if ($this->handleFailedLogins()) {
+                $rep = ' REPEATED';
+            }
+            $this->monitorFailedLoginAttempts();
+            writeLog("*** one time link rejected$rep: $code [".getClientIP().']', LOGIN_LOG_FILENAME);
         }
-        $rep = '';
-        if ($this->handleFailedLogins()) {
-            $rep = ' REPEATED';
-        }
-        $this->monitorFailedLoginAttempts();
-        writeLog("*** one time link rejected$rep: $codeCandidate $user [".getClientIP().']', LOGIN_LOG_FILENAME);
-        reloadAgent($pagePath); // access NOT granted, remove hash-code from url
+        return $getArg;
     } // validateOnetimeAccessCode
 
 
 
+    private function readOneTimeAccessCode($code)
+    {
+        // checks whether there is a pending oneTimeAccessCode, purges old entries
+        $onetime = getYamlFile(ONETIME_PASSCODE_FILE);
+        if (!$onetime) {
+            $this->monitorFailedLoginAttempts();
+            writeLog("*** one-time link rejected: $code [".getClientIP().']', LOGIN_LOG_FILENAME);
+            return false;
+        }
 
-    private function validateAccessCode($codeCandidate)
+        $tlim = time() - 86400; // weed out entries older than one day
+        $found = false;
+        foreach ($onetime as $t => $otRec) {  // find matching entry in list of one-time-hashes
+            if ($t < $tlim) {   // old entry -> delete
+                unset($onetime[$t]);
+                continue;
+            }
+            if ($code === $otRec['hash']) {   // entry found:
+                $user = $otRec['user'];
+                unset($onetime[$t]);
+                $found = $otRec;
+            }
+        }
+        writeToYamlFile(ONETIME_PASSCODE_FILE, $onetime);
+
+        if (!$found) {
+            return false;
+        }
+
+        if ($user = $this->findUserRecKey($found['email'], 'email')) {
+            $userRec = $this->knownUsers[$user];
+
+            if (isset($userRec['accessCodeValidyTime'])) {
+                $accessCodeValidyTime = $userRec['accessCodeValidyTime'];
+            } else {
+                $accessCodeValidyTime = $this->config->admin_defaultAccessLinkValidyTime;
+            }
+            $tlim = time() - $accessCodeValidyTime;
+            if ($t < $tlim) {
+                return false;
+            }
+        } else {
+            $userRec = false;
+        }
+
+        return [$userRec, $found];
+    } // readOneTimeAccessCode
+
+
+
+    private function handleOneTimeCodeActions($oneTimeRec)
+    {
+        $getArg = "login-successful";
+        $mode = isset($oneTimeRec['mode']) ? $oneTimeRec['mode'] : false;
+
+        if (($mode === 'email-signup') && isset($oneTimeRec['user'])) {
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $adm = new AdminTasks($this);
+            if (!$adm->createGuestUserAccount($oneTimeRec['user'])) {
+                $this->lzy->page->addMessage('lzy-user-account-creation-failed');
+            }
+
+        } elseif (($mode === 'email-change-mail') && isset($oneTimeRec['email'])) {
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $adm = new AdminTasks($this);
+            $adm->changeEMail($oneTimeRec['email']);
+            reloadAgent(false, 'email-change-successful');
+        }
+        return $getArg;
+    } // handleOneTimeCodeActions
+
+
+
+
+    private function validateAccessCode($codeCandidate, $pagePath)
     {
         if (!$this->knownUsers) {
             return false;
@@ -438,7 +362,8 @@ class Authentication
                         }
                     }
                     $this->setUserAsLoggedIn($user, $rec);
-                    return true;
+                    $pagePath = trunkPath($GLOBALS['globalParams']['requestedUrl'],1, false); // remove hash-code from
+                    reloadAgent($pagePath, 'login-successful');
                 }
             }
         }
@@ -456,9 +381,9 @@ class Authentication
         if (!$rec) {
             fatalError("Error: unknown user", 'File: '.__FILE__.' Line: '.__LINE__);
         }
-        if (!isset($rec['groups'])) {
-            $rec['groups'] = '';
-        }
+//        if (!isset($rec['groups'])) {
+//            $rec['groups'] = '';
+//        }
         $this->userRec = $rec;
 
         $this->loginTimes[$user] = time();
@@ -478,6 +403,7 @@ class Authentication
 
         } else {
             $_SESSION['lizzy']['userDisplayName'] = $user;
+            $displayName = $user;
         }
         return $displayName;
     } // setUserAsLoggedIn
@@ -487,13 +413,18 @@ class Authentication
 
     public function getLoggedInUser( $returnRec = false )
 	{
-		$rec = false;
+	    // if user is logged in (i.e. $_SESSION['lizzy']['user'] is set, returns string username
+        // if user was logged in but session expired, returns array
+        // if user is NOT logged in, returns false
+		$res = false;
 		$user = isset($_SESSION['lizzy']['user']) ? $_SESSION['lizzy']['user'] : false;
 		if ($user) {
 			$rec = (isset($this->knownUsers[$user])) ? $this->knownUsers[$user] : false;
 			if (!$rec) {    // just to be safe: if logged in user has nor record, don't allow to proceed
-			    $user = $_SESSION['lizzy']['user'] = false;
-            } else {
+			    $_SESSION['lizzy']['user'] = false;
+
+            } else {                    // user is logged in
+                $res = $user;
                 $rec['name'] = $user;
                 $isAdmin = $this->isAdmin(true);
                 $GLOBALS['globalParams']['isAdmin'] = $isAdmin;
@@ -503,24 +434,28 @@ class Authentication
                     $validityPeriod = $this->knownUsers[$user]['validity-period'];
                     if ($lastLogin < (time() - $validityPeriod)) {
                         $rec = false;
-                        $this->message = '{{ validity-period expired }}';
+                        $res = [false, '{{ validity-period expired }}', 'LoginForm'];
                         $this->unsetLoggedInUser();
                     }
                 } elseif ($this->config->admin_defaultLoginValidityPeriod) {
                     if ($lastLogin < (time() - $this->config->admin_defaultLoginValidityPeriod)) {
                         $rec = false;
-                        $this->message = '{{ validity-period expired }}';
+                        $res = [false, '{{ validity-period expired }}', 'LoginForm'];
                         $this->unsetLoggedInUser();
                     }
                 }
             }
 		}
-		if ($returnRec) {
+
+		if ($res && $returnRec) {
+            $this->userRec = $rec;
 		    return $rec;
 
-        } else {
+        } elseif ($res) {
             $this->userRec = $rec;
-            return $rec['name'];
+            return $res;
+        } else {
+		    return false;
         }
     } // getLoggedInUser
 
@@ -713,6 +648,7 @@ class Authentication
     }
 
 
+
     private function loadKnownUsers()
     {
         $this->userDB = $usersFile = $this->config->configPath.$this->config->admin_usersFile;
@@ -721,7 +657,149 @@ class Authentication
             if (!isset($rec['groups'])) {
                 $this->knownUsers[$i]['groups'] = isset($rec['group']) ? $rec['group'] : ''; // allow groups or group
             }
+            if (!isset($rec['name'])) {
+                $this->knownUsers[$i]['name'] = $i;
+            }
         }
+    } // loadKnownUsers
+
+
+
+    public function findUserRecKey($username, $searchField = false)
+    {
+        $username = strtolower($username);
+        if (isset($this->knownUsers[$username])) {
+            $res = $username;
+        } else {
+            $res = false;
+            $tolerant = $this->config->admin_allowDisplaynameForLogin;
+            foreach ($this->knownUsers as $name => $rec) {
+                if ($searchField == '*') {
+                    if ($name == $username) {
+                        $res = $name;
+                        break;
+                    }
+                    foreach ($rec as $key => $value) {
+                        if (strtolower($value) == $username) {
+                            $res = $name;
+                            break 2;
+                        }
+                    }
+                    continue;
+                }
+                if ($searchField) {
+                    if (isset($rec[$searchField]) && ($rec[$searchField] == $username)) {
+                        $res = $name;
+                        break;
+                    }
+                } elseif ($name == $username) {
+                    $res = $name;
+                    break;
+
+                } elseif (isset($rec['name']) && ($rec['name'] == $username)) {
+                    $res = $name;
+                    break;
+
+                } elseif ($tolerant && isset($rec['displayName']) && (strtolower($rec['displayName']) == $username)) {
+                    $res = $name;
+                    break;
+                }
+            }
+        }
+        return $res;
+    } // findUserRecKey
+
+
+
+
+    private function findEmailMatchingUserRec($emailRequest, $checkInEmailList = false)
+    {
+        if (!$emailRequest) {
+            return false;
+        }
+        $submittedEmail = strtolower($emailRequest);
+
+        // find matching record in DB of known users:
+        // 1) match with key (aka 'name')
+        // 2) match with explict 'email' field in rec
+        // 3) match with item refered to by 'emailList'
+
+        if (isset($this->knownUsers[$submittedEmail])) {    // 1)
+            $rec = $this->knownUsers[$submittedEmail];
+
+        } elseif ($user = $this->findUserRecKey($submittedEmail, '*')) { // 2)
+            $rec = $this->knownUsers[$user];
+
+        } elseif ($checkInEmailList && ($rec = $this->findEmailInEmailList($submittedEmail))) { // 3
+
+        } else {
+            $rec = false;   // no matching entry found
+        }
+        return $rec;
+    } // findEmailMatchingUserRec
+
+
+
+
+    private function sendOneTimeCode($submittedEmail, $rec)
+    {
+        $name = isset($rec['name']) ? $rec['name'] : $submittedEmail;
+        $group = isset($rec['groups']) ? $rec['groups'] : '';
+        $displayName = isset($rec['displayName']) ? $rec['displayName'] : $name;
+        $accessCodeValidyTime = isset($rec['accessCodeValidyTime']) ? $rec['accessCodeValidyTime'] : $this->config->admin_defaultAccessLinkValidyTime;
+
+
+        require_once SYSTEM_PATH.'admintasks.class.php';
+        $adm = new AdminTasks();
+        $message = $adm->sendCodeByMail($submittedEmail, 'email-login', $accessCodeValidyTime, $name, $group, $displayName);
+
+        return $message;
+    } // sendOneTimeCode
+
+
+
+
+
+    public function findEmailInEmailList(string $submittedEmail)
+    {
+        $found = false;
+        $submittedEmail = strtolower($submittedEmail);
+        foreach ($this->knownUsers as $name => $rec) {
+            if (isset($rec['accessCodeEnabled']) && ($rec['accessCodeEnabled'] == false)) {
+                continue;
+            }
+
+            if (isset($rec['emailList']) && $rec['emailList']) {
+                $filename = $this->config->configPath . $rec['emailList'];
+                if (file_exists($filename)) {
+                    $emails = file($filename);
+                    $e2 = [];
+                    foreach ($emails as $i => $email) {
+                        $e = strtolower(trim(preg_replace('/.*\<([^\>]+)\>.*/', "$1", $email)));
+                        $e = preg_split("/[\s,;]/m", $e);
+                        if (sizeof($e) > 1) {
+                            $e2 = array_merge($e2, $e);
+                            unset($emails[$i]);
+                        }
+                    }
+                    $emails = array_merge($emails, $e2);
+                    foreach ($emails as $email) {
+                        if (!trim($email)) {
+                            continue;
+                        }
+                        $email = strtolower(trim(preg_replace('/.*\<([^\>]+)\>.*/', "$1", $email)));
+                        if ($email === $submittedEmail) {
+                            $found = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+        if (!$found) {
+            $rec = false;
+        }
+        return $rec;
     } // loadKnownUsers
 
 

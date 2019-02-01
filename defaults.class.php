@@ -11,6 +11,7 @@ class Defaults
 // User configurable Settings -> config/config.yaml:
 private $userConfigurableSettingsAndDefaults      = [
             'admin_activityLogging'             => [true, 'If true, logs activities to file '.LOG_FILE.'.' ],
+            'admin_allowDisplaynameForLogin'    => [false, 'If true, logs activities to file '.LOG_FILE.'.' ],
             'admin_autoAdminOnLocalhost'        => [false, 'If true, on local host user has admin privileges without login.' ],
             'admin_enableAccessLink'            => [true, 'Activates one-time-access-link login mechanism.' ],
             'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
