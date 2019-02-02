@@ -2,40 +2,110 @@
 
 class AdminTasks
 {
-    private $pendingMail = false;
-
-    public function __construct($that = null)
+    public function __construct($lzy)
     {
-        if ($that && get_class($that) == 'Lizzy') {
-            $this->auth = $that->auth;
-            $this->page = $that->page;
-            $this->trans = $that->trans;
+        $this->lzy = $lzy;
+        $this->auth = $lzy->auth;
+        $this->page = $lzy->page;
+        $this->trans = $lzy->trans;
+        $this->loggedInUser = $this->auth->getLoggedInUser();
 
-            $adminTransvars = resolvePath('~sys/config/admin.yaml');
-            $this->trans->readTransvarsFromFile($adminTransvars);
-
-        } else {
-            $this->auth = $that;
-            $this->page = null;
-        }
+        $adminTransvars = resolvePath('~sys/config/admin.yaml');
+        $this->trans->readTransvarsFromFile($adminTransvars);
     }
 
 
 
 
-    public function execute($that, $adminTask)
+    public function adminActivities($requestType)
+    {
+        $res = false;
+        if ($requestType == 'add-users') {                // admin is adding users
+            if (!$this->auth->isAdmin()) { return false; }
+            $emails = get_post_data('lzy-add-users-email-list');
+            $group = get_post_data('lzy-add-user-group');
+            $str = $this->addUsers($emails, $group);
+            $res = [false, $str, 'Override'];
+
+        } elseif ($requestType == 'add-user') {           // admin is adding a user
+            if (!$this->isAdmin()) { return false; }
+            $email = get_post_data('lzy-add-user-email');
+            $un = get_post_data('lzy-add-user-username');
+            $key = ($un) ? $un : $email;
+            $rec[$key] = [
+                'email' => $email,
+                'groups' => get_post_data('lzy-add-user-group'),
+                'username' => $un,
+                'displayName' => get_post_data('lzy-add-user-displayname'),
+                'emaillist' => get_post_data('lzy-add-user-emaillist')
+            ];
+            $str = $this->addUser($rec);
+            $res = [false, $str, 'Override'];
+
+
+        } elseif ($requestType == 'change-password') {           // user is changing his/her password:
+            $user = get_post_data('lzy-user');
+            $password = get_post_data('lzy-change-password-password');
+            $password2 = get_post_data('lzy-change-password2-password2');
+            $res = $this->auth->isValidPassword($password, $password2);
+            if ($res == '') {
+                $str = $this->changePassword($user, $password);
+                $res = [false, $str, 'Message'];
+
+            } else {
+                $this->message = "<div class='lzy-adduser-wrapper'>$res</div>";
+                $accountForm = new UserAccountForm($this->lzy);
+                $str = $accountForm->createChangePwForm($user, $this->message, "<h1>{{ lzy-change-password-title }}</h1>");
+                $this->lzy->trans->readTransvarsFromFile('~sys/config/useradmin.yaml');
+                $res = [false, $str, 'Override'];
+            }
+
+
+        } elseif ($requestType == 'lzy-change-username') {        // user changes username
+            $username = get_post_data('lzy-change-user-username');
+            $displayName = get_post_data('lzy-change-user-displayname');
+            $str = $this->changeUsername($username, $displayName);
+            $this->lzy->page->addMessage($str);
+
+
+        } elseif ($requestType == 'lzy-change-email') {           // user changes mail address
+            $email = get_post_data('lzy-change-user-email-email');
+            $str = $this->sendChangeMailAddress_Mail($email);
+            $res = [false, $str, 'Override'];
+
+
+        } elseif ($requestType == 'lzy-delete-account') {           // user deletes account
+            $str = $this->deleteUserAccount();
+            $this->auth->logout();
+            $res = [false, $str, 'Message'];
+        }
+
+        if ($res) {
+            if (isset($res[2]) && ($res[2] == 'Overlay')) {
+                $this->page->addOverlay($res[1], false, false);
+            } elseif ($res[2] == 'Override') {
+                $this->page->addOverride($res[1], false, false);
+            } else {
+                $this->page->addMessage($res[1], false, false);
+            }
+        }
+    } // adminActivities
+
+
+
+
+    public function adminTasks2($adminTask)
     {
         $notification = getStaticVariable('lastLoginMsg');
         $group = getUrlArg('group', true);
 
-        $accountForm = new UserAccountForm($that);
-        if (!$_SESSION['lizzy']['user']) {
-
+        $accountForm = new UserAccountForm($this->lzy);
+        if (!$this->loggedInUser) {
             // everyone who is not logged in:
             if ($adminTask == 'login') {
                 $pg = $accountForm->renderLoginForm($notification);
 
-            } elseif (($adminTask == 'self-signup') && $this->auth->config->feature_enableSelfSignUp) {
+            } elseif (($adminTask == 'self-signup') && $this->lzy->config->feature_enableSelfSignUp) {
                 $pg = $accountForm->renderSignUpForm($notification);
                 return $pg;
 
@@ -59,14 +129,15 @@ class AdminTasks
 
         // for logged in users of any group:
         if ($adminTask == 'change-password') {
-            $pg = $accountForm->renderChangePwForm($_SESSION['lizzy']['user'], $notification);
+            $pg = $accountForm->renderChangePwForm($this->loggedInUser, $notification);
             $this->page->merge($pg);
             return $pg;
 
-        } elseif ($that->config->admin_userAllowSelfAdmin && ($adminTask == 'edit-profile')) {
-            $userRec = $that->auth->getLoggedInUser(true);
+        } elseif ($this->lzy->config->admin_userAllowSelfAdmin && ($adminTask == 'edit-profile')) {
+            $userRec = $this->auth->getLoggedInUser(true);
             $html = $accountForm->renderEditProfileForm($userRec, $notification);
             $this->page->addOverride($html, true, false);
+            $this->page->addModules('PANELS');
             return '';
         }
 
@@ -89,7 +160,7 @@ class AdminTasks
         $loginForm = $pg->get('override', true);
         $this->page->merge($pg);
 
-    } // execute
+    } // adminTasks2
 
 
 
@@ -210,12 +281,18 @@ class AdminTasks
 
         } else {
             if ($displayName) {
-                $rec['displayName'] = $displayName;
+                if (($dn = $this->auth->findUserRecKey($displayName, 'displayName')) && ($dn != $newUsername)) {
+                    return "<div class='lzy-admin-task-response'>{{ lzy-username-change-illegal-displayname-response }}</div>";
+                } else {
+                    $rec['displayName'] = $displayName;
+                }
             }
             $this->deleteDbUserRec($user);
             $rec['name'] = $newUsername;
             $this->addUserToDB($newUsername, $rec);
             $str = "<div class='lzy-admin-task-response'>{{ lzy-username-changed-response }}</div>";
+            $this->auth->setUserAsLoggedIn($newUsername, $rec);
+            $this->auth->loadKnownUsers();
         }
         return $str;
     } // changeUsername
@@ -244,7 +321,7 @@ class AdminTasks
     public function deleteUserAccount($user = false)
     {
         if (!$user) {
-            if (!$user = $_SESSION['lizzy']['user']) {
+            if (!$user = $this->loggedInUser) {
                 return "<div class='lzy-admin-task-response'>{{ lzy-delete-account-failed-response }}</div>";
             }
         } else {
@@ -325,19 +402,8 @@ class AdminTasks
     //-------------------------------------------------------------
     private function sendMail($to, $subject, $message)
     {
-        $from = isset($this->config->admin_webmasterEmail) ? $this->config->admin_webmasterEmail : 'webmaster@domain.net';
-        setStaticVariable('pendingMail', ['from' => $from, 'to' => $to, 'subject' => $subject, 'message' => $message]);
+        $this->lzy->sendMail($to, $subject, $message);
     } // sendMail
-
-
-
-    //-------------------------------------------------------------
-    public function getPendingMail()
-    {
-        return  getStaticVariable('pendingMail');
-    } // getPendingMail
-
-
 
 
 
@@ -347,7 +413,7 @@ class AdminTasks
         $userRecs[$username] = $userRec;
         writeToYamlFile($this->auth->userDB, $userRecs);
         return true;
-    }
+    } // addUserToDB
 
 
 
@@ -357,7 +423,7 @@ class AdminTasks
         $userRecs = array_merge($this->auth->getKnownUsers(), $userRecs);
         writeToYamlFile($this->auth->userDB, $userRecs);
         return true;
-    }
+    } // addUsersToDB
 
 
 
@@ -370,7 +436,7 @@ class AdminTasks
             writeToYamlFile($this->auth->userDB, $userRecs);
             $this->auth->knownUsers = $userRecs;
         }
-    }
+    } // deleteDbUserRec
 
 
 
@@ -395,7 +461,6 @@ class AdminTasks
 
         $message = '';
         $validUntil = time() + $accessCodeValidyTime;
-        setlocale(LC_TIME, 'de_DE.utf-8');     //??? should adapt to ... what?
         $validUntilStr = strftime('%R  (%x)', $validUntil);
 
         $hash = $this->createHash();

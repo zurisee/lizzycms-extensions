@@ -114,6 +114,10 @@
 	display: none;
 }
 
+.large-screen #lzy-login-form {
+    width: 482px;
+}
+
 .lzy-login-submit-button,
 .lzy-signup-submit-button {
     margin-top: 5px;

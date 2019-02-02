@@ -7,19 +7,19 @@ lzy-email-change-successful:
     _: 'Your new e-mail address has been stored successfully'
 
 # Login / onetime-link:
-lzy-onetimelogin-email-prompt:
+lzy-onetimelogin-request-prompt:
     de: 'E-Mail Adresse'
     en: 'E-mail address'
     
-lzy-info-onetimelogin-title:
+lzy-onetimelogin-request-title:
     de: "Hilfe: Zugang per E-Mail"
     en: "Help on access by e-mail"
 
-lzy-onetimelogin-info-title:
+lzy-onetimelogin-request-info-title:
     de: "Hilfe: Zugang per E-Mail"
     en: "Help on access by e-mail"
 
-lzy-onetimelogin-info-text:
+lzy-onetimelogin-request-info-text:
     de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
     <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
     <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
@@ -32,8 +32,8 @@ lzy-onetime-link-send:
     en: 'Send access code'
 
 lzy-login-user-unknown:
-    de: 'Kein Benutzer mit diesem Benutzernamen gefunden.'
-    _: 'No user by this user name found.'
+    de: 'Keinen entsprechenden Benutzer gefunden.'
+    _: 'No matching user found.'
 
 lzy-login-email-unknown:
     de: 'Kein Benutzer mit dieser E-Mailadresse gefunden.'
@@ -167,12 +167,12 @@ lzy-login-with-choice:
 
 
 lzy-login-with-password:
-    de: mit <br>Kennwort
-    en: by <br>password
+    de: 'Per Benutzername &amp; Kennwort'
+    en: 'By Username &amp; Password'
 
 lzy-login-without-password:
-    de: ohne <br>Kennwort
-    en: by <br>e-mail
+    de: 'Per E-Mail'
+    en: 'By E-Mail'
 
 lzy-add-user-group-is:
     de: Gruppe
@@ -238,6 +238,10 @@ lzy-change-user-email-prompt:
 lzy-username-change-illegal-name-response:
     de: 'Benutzername entspricht nicht den Mindestanforderungen'
     _: 'User name does not meet requirements'
+
+lzy-username-change-illegal-displayname-response:
+    de: 'Anzeige-Name bereits belegt.'
+    _: 'Display name already in use.'
 
 lzy-username-change-no-change-response:
     de: 'Benutzername unverändert'

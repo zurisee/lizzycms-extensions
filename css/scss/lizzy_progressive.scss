@@ -112,7 +112,7 @@ body.small-screen {
         bottom: 0;
         left: 0;
         padding: 0 1em;
-        background: var(--lzy-mobile-header-bg-color);
+//        background: var(--lzy-mobile-header-bg-color);
         width: calc(100vw - 2em);
         height: 7vh;
         line-height: 7vh;
@@ -120,10 +120,16 @@ body.small-screen {
         a {
             color: var(--lzy-mobile-header-txt-color);
         }
+        z-index: 9;
     }
     .lzy-mobile-page-header {
         display: block !important;
         z-index: 2;
+    }
+    .lzy-login-link img,
+    .lzy-login-link-menu img {
+        height: 44px;
+        width: auto;
     }
 }
 
