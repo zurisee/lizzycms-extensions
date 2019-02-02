@@ -39,7 +39,7 @@
 .popup_content.lzy-close-button,
 .lzy-popup.lzy-close-button {
     padding-top: 2em;
-    padding-right: 2em;
+/*    padding-right: 2em;*/
 }
 .popup_content,
 .lzy-popup {
