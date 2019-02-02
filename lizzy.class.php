@@ -77,7 +77,7 @@ class Lizzy
 	private $configPath = CONFIG_PATH;
 	private $systemPath = SYSTEM_PATH;
 	private $autoAttrDef = [];
-	private $httpSystemPath;
+//	private $httpSystemPath;
 	public  $pathToRoot;
 	public  $pagePath;
 	private $reqPagePath;
@@ -136,7 +136,104 @@ class Lizzy
 
 
 
-	//....................................................
+    //....................................................
+    private function init()
+    {
+        $configFile = DEFAULT_CONFIG_FILE;
+        if (file_exists($configFile)) {
+            $this->configFile = $configFile;
+        } else {
+            die("Error: file not found: ".$configFile);
+        }
+
+        session_start();
+        $this->sessionId = session_id();
+
+        $this->getConfigValues(); // from config/config.yaml
+
+        $this->setLocale();
+
+        $this->localCall = $this->config->localCall;
+
+        register_shutdown_function('handleFatalPhpError');
+
+        $this->config->appBaseName = base_name(rtrim(trunkPath(__FILE__, 1), '/'));
+
+        $GLOBALS['globalParams']['isAdmin'] = false;
+        $GLOBALS['globalParams']['activityLoggin'] = $this->config->admin_activityLogging;
+        $GLOBALS['globalParams']['errorLogging'] = $this->config->debug_errorLogging;
+
+        $this->trans = new Transvar($this);
+        $this->page = new Page($this);
+
+        $this->trans->readTransvarsFromFiles([ SYSTEM_PATH.'config/sys_vars.yaml', CONFIG_PATH.'user_variables.yaml' ]);
+
+        $this->auth = new Authentication($this);
+
+        $this->analyzeHttpRequest();
+//        $this->httpSystemPath = $this->pathToRoot.SYSTEM_PATH;
+
+
+        $this->auth->authenticate();
+
+        $this->adminTasks1();
+//        $this->auth->adminActivities();
+//        $res = $this->auth->adminActivities();
+//        if ($res) {
+//            if (isset($res[2]) && ($res[2] == 'Overlay')) {
+//                $this->page->addOverlay($res[1], false, false);
+//            } elseif ($res[2] == 'Override') {
+//                $this->page->addOverride($res[1], false, false);
+//            } else {
+//                $this->page->addMessage($res[1], false, false);
+//            }
+//        }
+        $GLOBALS['globalParams']['auth-message'] = $this->auth->message;
+
+        $this->config->isPrivileged = false;
+        if ($this->auth->isPrivileged()) {
+            $this->config->isPrivileged = true;
+
+        } elseif (file_exists(HOUSEKEEPING_FILE)) {  // suppress error msg output if not local host or admin or editor
+            ini_set('display_errors', '0');
+        }
+
+        $this->handleUrlArgs();
+
+        $this->saveEdition();  // if user chose to activate a previous edition of a page
+
+        $cliarg = getCliArg('lzy-compile');
+        if ($cliarg) {
+            $this->savePageFile();
+            $this->renderMD();  // exits
+
+        }
+
+        $cliarg = getCliArg('lzy-save');
+        if ($cliarg) {
+            $this->saveSitemapFile($this->config->site_sitemapFile); // exits
+        }
+
+        $this->scss = new SCssCompiler($this);
+        $this->scss->compile( $this->config->debug_forceBrowserCacheUpdate );
+
+        // Future: optionally enable Auto-Attribute mechanism
+        //        $this->loadAutoAttrDefinition();
+
+        $urlArgs = ['config', 'list', 'help', 'admin', 'reset', 'login', 'unused', 'reset-unused', 'remove-unused', 'log', 'info', 'touch'];
+        foreach ($urlArgs as $arg) {
+            if (isset($_GET[$arg])) {
+                $this->config->site_enableCaching = false;
+                break;
+            }
+        }
+        $this->config->cachingActive = $this->config->site_enableCaching;
+        $GLOBALS['globalParams']['cachingActive'] = $this->config->site_enableCaching;
+    } // init
+
+
+
+    //....................................................
     public function render()
     {
 		if ($this->timer) {
@@ -182,9 +279,10 @@ class Lizzy
         }
 
         $this->appendLoginForm();
+        $this->adminTasks2();
         $this->handleUrlArgs2();
 
-        $this->sendAccessLinkMail();
+//        $this->sendAccessLinkMail();
 
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
@@ -212,6 +310,37 @@ class Lizzy
 
         return $html;
     } // render
+
+
+
+
+
+
+    private function adminTasks1()
+    {
+        if (!isset($_REQUEST['lzy-user-admin']) ||
+            !$this->auth->getLoggedInUser()) {
+            return false;   // nothing to do
+        }
+        require_once SYSTEM_PATH.'admintasks.class.php';
+        $adm = new AdminTasks($this);
+        $adm->adminActivities( $_REQUEST['lzy-user-admin'] );
+
+    } // adminTasks1
+
+
+
+
+    private function adminTasks2()
+    {
+        if ($adminTask = getUrlArg('admin', true)) {
+            require_once SYSTEM_PATH.'admintasks.class.php';
+            $admTsk = new AdminTasks($this);
+            $overridePage = $admTsk->adminTasks2($adminTask);
+            $this->page->merge($overridePage, 'override');
+            $this->page->setOverrideMdCompile(false);
+        }
+    } // adminTasks2
 
 
 
@@ -252,131 +381,6 @@ class Lizzy
         }
     } // applyForcedBrowserCacheUpdate
 
-
-
-
-    //....................................................
-    private function init()
-    {
-        $configFile = DEFAULT_CONFIG_FILE;
-        if (file_exists($configFile)) {
-            $this->configFile = $configFile;
-        } else {
-            die("Error: file not found: ".$configFile);
-        }
-
-        session_start();
-        $this->sessionId = session_id();
-
-        $this->getConfigValues(); // from config/config.yaml
-
-        $this->localCall = $this->config->localCall;
-
-        register_shutdown_function('handleFatalPhpError');
-
-        $this->config->appBaseName = base_name(rtrim(trunkPath(__FILE__, 1), '/'));
-
-        $GLOBALS['globalParams']['isAdmin'] = false;
-        $GLOBALS['globalParams']['activityLoggin'] = $this->config->admin_activityLogging;
-        $GLOBALS['globalParams']['errorLogging'] = $this->config->debug_errorLogging;
-
-        $this->trans = new Transvar($this);
-        $this->page = new Page($this);
-
-        $this->trans->readTransvarsFromFiles([ SYSTEM_PATH.'config/sys_vars.yaml', CONFIG_PATH.'user_variables.yaml' ]);
-
-        $this->auth = new Authentication($this);
-
-        $this->analyzeHttpRequest();
-        $this->httpSystemPath = $this->pathToRoot.SYSTEM_PATH;
-
-
-        $res = $this->auth->authenticate();
-        if ($res) {
-            if (is_string($res)) {  // already logged in
-                $this->auth->setUserAsLoggedIn($res);
-
-            } elseif (is_array($res)) { // [login/false, message, communication-channel]
-                if ($res[2] == 'Overlay') {
-                    $this->page->addOverlay($res[1], false, false);
-
-                } elseif ($res[2] == 'Override') {
-                    $this->page->addOverlay($res[1], false, false);
-
-                } elseif ($res[2] == 'LoginForm') {
-                    $accForm = new UserAccountForm($this);
-                    $form = $accForm->renderLoginForm($this->auth->message, $res[1], true);
-                    $this->page->addOverlay($form, true, false);
-
-                } else {
-                    $this->page->addMessage($res[1], false, false);
-                }
-                if ($res[0]) {
-                    $this->auth->setUserAsLoggedIn($res[0]);
-                } else {
-                    $this->loggedInUser = false;
-                }
-            } else {
-                $this->loggedInUser = false;
-            }
-
-        } else {
-            $this->loggedInUser = false;
-        }
-
-
-        $res = $this->auth->adminActivities();
-        if ($res) {
-            if (isset($res[2]) && ($res[2] == 'Overlay')) {
-                $this->page->addOverlay($res[1], false, false);
-            } elseif ($res[2] == 'Override') {
-                $this->page->addOverride($res[1], false, false);
-            } else {
-                $this->page->addMessage($res[1], false, false);
-            }
-        }
-        $GLOBALS['globalParams']['auth-message'] = $this->auth->message;
-
-        $this->config->isPrivileged = false;
-        if ($this->auth->isPrivileged()) {
-            $this->config->isPrivileged = true;
-
-        } elseif (file_exists(HOUSEKEEPING_FILE)) {  // suppress error msg output if not local host or admin or editor
-            ini_set('display_errors', '0');
-        }
-
-        $this->handleUrlArgs();
-
-        $this->saveEdition();  // if user chose to activate a previous edition of a page
-
-        $cliarg = getCliArg('lzy-compile');
-        if ($cliarg) {
-            $this->savePageFile();
-            $this->renderMD();  // exits
-
-        }
-
-        $cliarg = getCliArg('lzy-save');
-        if ($cliarg) {
-            $this->saveSitemapFile($this->config->site_sitemapFile); // exits
-        }
-
-        $this->scss = new SCssCompiler($this);
-        $this->scss->compile( $this->config->debug_forceBrowserCacheUpdate );
-
-        // Future: optionally enable Auto-Attribute mechanism
-        //        $this->loadAutoAttrDefinition();
-
-        $urlArgs = ['config', 'list', 'help', 'admin', 'reset', 'login', 'unused', 'reset-unused', 'remove-unused', 'log', 'info', 'touch'];
-        foreach ($urlArgs as $arg) {
-            if (isset($_GET[$arg])) {
-                $this->config->site_enableCaching = false;
-                break;
-            }
-        }
-        $this->config->cachingActive = $this->config->site_enableCaching;
-        $GLOBALS['globalParams']['cachingActive'] = $this->config->site_enableCaching;
-    } // init
 
 
 
@@ -439,7 +443,8 @@ class Lizzy
                 $this->renderLoginForm();
                 return false;
             }
-            setStaticVariable('isRestrictedPage', $this->loggedInUser);
+            setStaticVariable('isRestrictedPage', $this->auth->getLoggedInUser());
+//            setStaticVariable('isRestrictedPage', $this->loggedInUser);
         } else {
             setStaticVariable('isRestrictedPage', false);
         }
@@ -452,7 +457,12 @@ class Lizzy
     //....................................................
     private function appendLoginForm()
     {
-        if (!$this->config->admin_userAllowSelfAdmin || $this->auth->getLoggedInUser()) {
+        if ($this->auth->getLoggedInUser()) {
+            $this->page->addBodyClasses('lzy-user-logged-in');
+            return;
+        }
+        if (!$this->config->admin_userAllowSelfAdmin) {
+//        if (!$this->config->admin_userAllowSelfAdmin || $this->auth->getLoggedInUser()) {
             return;
         }
 
@@ -468,8 +478,7 @@ class Lizzy
         } else {
             $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link']);
         }
-        $this->page->addBodyEndInjections("<div class='dispno'><div id='lzy-login-form'>$html</div></div>\n");
-//        $this->page->addBodyEndInjections("<div id='lzy-login-form' class='dispno'>$html</div>\n");
+        $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
         $this->page->addModules('PANELS');
     } // appendLoginForm
 
@@ -556,7 +565,6 @@ class Lizzy
         $globalParams['requestedUrl'] = $requestedUrl;
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
 
-//        $pagePath = $this->auth->checkAndValdiateAccessCode($pagePath0); //???
         $pagePath = $this->auth->handleAccessCodeInUrl( $pagePath0 );
 
         if (!$pagePath) {
@@ -1003,7 +1011,7 @@ class Lizzy
 	//....................................................
     private function handleMissingFolder($folder)
 	{
-	    if ($this->loggedInUser || $this->localCall) {
+	    if ($this->auth->getLoggedInUser() || $this->localCall) {
             if (!file_exists($folder)) {
                 $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
                 mkdir($folder, MKDIR_MASK, true);
@@ -1294,14 +1302,14 @@ EOT;
 	//....................................................
 	private function handleUrlArgs2()
 	{
-        if ($adminTask = getUrlArg('admin', true)) {                        // execute admin task
-            require_once SYSTEM_PATH.'admintasks.class.php';
-            $admTsk = new AdminTasks($this);
-            $overridePage = $admTsk->execute($this, $adminTask);
-            $this->page->merge($overridePage, 'override');
-            $this->page->setOverrideMdCompile(false);
-        }
-
+//        if ($adminTask = getUrlArg('admin', true)) {                        // execute admin task
+//            require_once SYSTEM_PATH.'admintasks.class.php';
+//            $admTsk = new AdminTasks($this);
+//            $overridePage = $admTsk->execute($adminTask);
+//            $this->page->merge($overridePage, 'override');
+//            $this->page->setOverrideMdCompile(false);
+//        }
+//
         if (getUrlArg('reset')) {			            // reset (cache)
             $this->clearCaches(true);
             reloadAgent();  //  reload to get rid of url-arg ?reset
@@ -1617,32 +1625,60 @@ EOT;
 
 
 
+//    //....................................................
+//    private function sendAccessLinkMail()
+//    {
+//        if ($this->auth->mailIsPending) {
+//            require_once SYSTEM_PATH.'admintasks.class.php';
+//            $adm = new AdminTasks();
+//
+//            $pM = $adm->getPendingMail();
+//
+////            $headers = "From: {$pM['from']}\r\n" .
+////                'X-Mailer: PHP/' . phpversion();
+//            $subject = $this->trans->translate( $pM['subject'] );
+//            $message = $this->trans->translate( $pM['message'] );
+//            $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p>";
+//
+//            if ($this->localCall) {
+//                $str = "<div class='lzy-onetime-code-sent-overlay'>\n$explanation<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre></div>";
+//                $this->page->addOverlay($str);
+//            } else {
+//                sendMail($pM['to'], $subject, $message);
+////                if (!mail($pM['to'], $subject, $message, $headers)) {
+////                    fatalError("Error: unable to send e-mail", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+////                }
+//            }
+//        }
+//    } // sendAccessLinkMail
+
+
+
+
     //....................................................
-    private function sendAccessLinkMail()
+    public function sendMail($to, $subject, $message, $from = false)
     {
-        if ($this->auth->mailIsPending) {
-            require_once SYSTEM_PATH.'admintasks.class.php';
-            $adm = new AdminTasks();
-
-            $pM = $adm->getPendingMail();
-
-            $headers = "From: {$pM['from']}\r\n" .
-                'X-Mailer: PHP/' . phpversion();
-            $subject = $this->trans->translate( $pM['subject'] );
-            $message = $this->trans->translate( $pM['message'] );
-            $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p>";
-
-            if ($this->localCall) {
-                $str = "<div class='lzy-onetime-code-sent-overlay'>\n$explanation<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre></div>";
-                $this->page->addOverlay($str);
-            } else {
-                if (!mail($pM['to'], $subject, $message, $headers)) {
-                    fatalError("Error: unable to send e-mail", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
-                }
-            }
+        if (!$from) {
+            $from = $this->config->admin_webmasterEmail;
         }
-    } // sendAccessLinkMail
+        $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p>";
 
+        if ($this->localCall) {
+            $str = <<<EOT
+        <div class='lzy-local-mail-sent-overlay'>
+$explanation
+            <pre class='debug-mail'>
+                <div>Subject: $subject</div>
+                <div>$message</div>
+            </pre>
+        </div> <!-- /lzy-local-mail-sent-overlay -->
+
+EOT;
+            $this->page->addOverlay($str);
+        } else {
+            sendMail($to, $from, $subject, $message);
+        }
+    } // sendMail
 
 
 
@@ -1851,6 +1887,31 @@ EOT;
     {
         return $this->editingMode;
     }
+
+
+
+
+    //....................................................
+    private function setLocale(): void
+    {
+        $locale = $this->config->site_defaultLocale;
+        if (preg_match('/^[a-z]{2}_[A-Z]{2}$/', $locale)) {
+            setlocale(LC_ALL, "$locale.utf-8");
+        } else {
+            setlocale(LC_ALL, "en_UK.utf-8");
+        }
+        if ($this->config->site_timeZone) {
+            $systemTimeZone = $this->config->site_timeZone;
+        } else {
+            exec('date +%Z',$systemTimeZone, $res);
+            if ($res || !isset($systemTimeZone[0])) {
+                $systemTimeZone = 'UTC';
+            } else {
+                $systemTimeZone = $systemTimeZone[0];
+            }
+        }
+        date_default_timezone_set($systemTimeZone);
+    } // setLocale
 
 } // class WebPage
 

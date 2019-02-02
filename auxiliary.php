@@ -1550,8 +1550,7 @@ function fatalError($msg, $origin = '', $offendingFile = '')
 //-------------------------------------------------------------
 function sendMail($to, $from, $subject, $message)
 {
-    $headers = "From: $from\r\n" .
-        'X-Mailer: PHP/' . phpversion();
+    $headers = "From: $from\r\n" . 'X-Mailer: PHP/' . phpversion();
 
     if (!mail($to, $subject, $message, $headers)) {
         fatalError("Error: unable to send e-mail", 'File: '.__FILE__.' Line: '.__LINE__);

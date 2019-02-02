@@ -74,12 +74,14 @@ private $userConfigurableSettingsAndDefaults      = [
             'site_compiledStylesFilename'       => ['__styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
             'site_dataPath'                     => ['data/', 'Path to data/ folder (default: "~/data/").' ],
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
+            'site_defaultLocale'                => ['en_US', 'Default local, e.g. "en_US" or "de_CH"' ],
             'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
             'site_robots'                       => [false, '[true|false] If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],
             'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
+            'site_timeZone'                     => [false, 'Name of timezone, e.g. "UTC" or "CET". If false, attempts to set it automatically.' ],
             'site_supportedLanguages'           => ['', 'Comma-separated list of language-codes. E.g. "en, de, fr"' ],
 
 ];
@@ -180,7 +182,7 @@ private $userConfigurableSettingsAndDefaults      = [
             unset($this->userConfigurableSettingsAndDefaults);
         }
         return $this;
-    }
+    } // __construct
 
 
     //....................................................
