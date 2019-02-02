@@ -6,7 +6,6 @@
 */
 
 ob_start();
-date_default_timezone_set('CET');
 
 if (!file_exists('_lizzy/')) {
 	die("Error: incomplete installation,\nFolder '_lizzy/' is missing.");
