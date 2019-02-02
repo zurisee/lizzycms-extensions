@@ -35,7 +35,7 @@ class UserAccountForm
         $this->inx = &$lizzyAccountCounter;
         $this->message = (isset($lzy->auth->message)) ? $lzy->auth->message : '';
         $this->warning = (isset($lzy->auth->warning)) ? $lzy->auth->warning : '';
-    }
+    } // __construct
 
 
 
@@ -252,18 +252,18 @@ EOT;
         $form2 = $this->createPWAccessForm($notification);
 
         $html = <<<EOT
-        <h2>{{ lzy-login-with-choice }}</h2>
+        <h1>{{ lzy-login-with-choice }}</h1>
 $message
         <div class="lzy-panels-widget lzy-tilted one-open-only lzy-account-form lzy-login-multi-mode">
-            <div>
-            <h1>{{ lzy-login-without-password }}</h1>
+            <div><!-- lzy-panel-page -->
+            <h2>{{ lzy-login-without-password }}</h2>
       
 $form1      
             
             </div><!-- /lzy-panel-page -->
             
-            <div>
-            <h1>{{ lzy-login-with-password }}</h1>
+            <div><!-- lzy-panel-page -->
+            <h2>{{ lzy-login-with-password }}</h2>
             
 $form2
 
@@ -273,10 +273,6 @@ $form2
 
 EOT;
 
-
-
-        $html = preg_replace("/\n\s*/m", "\n", trim($html));  // make sure the MD-compiler doesn't get in the way
-        $html = preg_replace("/\n\s*\n/m", "\n", $html);  // make sure the MD-compiler doesn't get in the way
         return $html;
     } // createMultimodeLoginForm
 
@@ -291,7 +287,7 @@ EOT;
         $notification = $this->wrapTag(NOTI, $notification);
         $this->inx++;
 
-        $email = $this->renderEMailInput('lzy-onetimelogin-email-', true);
+        $email = $this->renderEMailInput('lzy-onetimelogin-request-', true);
         $submitButton = $this->createSubmitButton('lzy-onetime-link-');
 
         $str = <<<EOT
@@ -303,7 +299,7 @@ $notification
 $email
 $submitButton
                 </form>
-            </div><!-- /account-form -->
+            </div><!-- /lzy-account-form-wrapper -->
 
 EOT;
 
@@ -334,7 +330,7 @@ $usernameInput
 $passwordInput                    
 $submitButton
                 </form>
-            </div><!-- /account-form -->
+            </div><!-- /lzy-account-form-wrapper -->
 
 EOT;
 
@@ -819,7 +815,7 @@ EOT;
             $str .= ' '.$GLOBALS['globalParams']['auth-message'];
         }
         if ($str) {
-            $str = "\t\t<div class='$className'>$str</div>\n";
+            $str = "\t\t\t<div class='$className'>$str</div>\n";
         }
         return $str;
     }
