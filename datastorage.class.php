@@ -32,8 +32,9 @@
 define('LIZZY_META', '_meta_');
 define('LIZZY_LOCK', 'lock');
 define('LIZZY_LOCK_TIME', 'time');
-define('LIZZY_SID', 'sid');
+define('LIZZY_SID', 'sid');     // session ID
 define('LIZZY_MODIF_TIME', 'modif');
+define('LIZZY_LOCK_ALL', 'lock_all');
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
 
@@ -293,16 +294,21 @@ class DataStorage
             return false;
         }
 
-        if (isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID])) { // is data element locked?
-            $sid = $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID];
-            if ($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] != $this->sid) { // locked by other sid?
-                return false;   // element was locked, locking failed
-            } else {
-                return true;    // already locked by caller
+        if ($key == 'all') {        // lock entire DB
+            $data[LIZZY_META][LIZZY_LOCK_ALL] = true;
+
+        } else {
+            if (isset($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID])) { // is data element locked?
+                $sid = $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID];
+                if ($data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] != $this->sid) { // locked by other sid?
+                    return false;   // element was locked, locking failed
+                } else {
+                    return true;    // already locked by caller
+                }
             }
+            $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_LOCK_TIME] = time();
+            $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] = $this->sid;
         }
-        $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_LOCK_TIME] = time();
-        $data[LIZZY_META][$key][LIZZY_LOCK][LIZZY_SID] = $this->sid;
         $this->lowLevelWrite();
 
         return true;
@@ -317,7 +323,16 @@ class DataStorage
         if (!is_array($data)) {
             return false;
         }
-        if ($key === '*') {    // unlock all records
+        if (isset($data[LIZZY_META][LIZZY_LOCK_ALL]) && $data[LIZZY_META][LIZZY_LOCK_ALL]) { // entire DB was locked
+            unset($data[LIZZY_META][LIZZY_LOCK_ALL]);
+
+        }
+
+        if ($key == 'all') {        // lock entire DB
+            unset($data[LIZZY_META][LIZZY_LOCK_ALL]);
+
+        } else
+            if ($key === '*') {    // unlock all records
             foreach ($data[LIZZY_META] as $id => $rec) {
                 unset($data[LIZZY_META][$id][LIZZY_LOCK]);
             }
