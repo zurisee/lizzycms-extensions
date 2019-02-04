@@ -231,7 +231,7 @@ lzy-change-user-displayname-prompt:
     de: 'Neuer Anzeige-Name'
     en: 'New display name'
 
-lzy-change-user-email-prompt:
+lzy-change-user-request-prompt:
     de: 'Neue E-Mail Adresse'
     en: 'New e-mail address'
 
@@ -380,11 +380,11 @@ lzy-change-user-email-send:
     de: Speichern
     en: Save
 
-lzy-change-user-email-info-title:
+lzy-change-user-request-info-title:
     de: Hilfe
     en: Help
 
-lzy-change-user-email-info-text:
+lzy-change-user-request-info-text:
     de: 'Hier können Sie Ihre E-Mail Adresse ändern. Diese benötigen Sie, um sich anzumelden.'
     en: 'Here you can change your e-mail address. You need it to log in.'
 

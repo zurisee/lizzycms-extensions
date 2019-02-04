@@ -177,7 +177,11 @@ EOT;
 
     public function renderEditProfileForm($userRec, $notification = '', $message = '')
     {
-        $user = isset($userRec['name']) ? $userRec['name'] : '';
+        $user = isset($userRec['username']) ? $userRec['username'] : '';
+        if (isset($userRec['groupAccount']) && $userRec['groupAccount'] &&
+            isset($_SESSION["lizzy"]["loginEmail"])) {
+            $user = $_SESSION["lizzy"]["loginEmail"];
+        }
         $email = isset($userRec['email']) ? $userRec['email'] : '';
         $form1 = $this->createChangePwForm($user, $notification, $message);
         $username = $this->createChangeUsernameForm($user, $notification, $message);
@@ -531,7 +535,8 @@ EOT;
         $message = $this->wrapTag(MSG, $message);
         $this->inx++;
 
-        $email = $this->renderEMailInput('lzy-change-user-email-', true,true);
+        $email = $this->renderEMailInput('lzy-change-user-request-', true,true);
+//        $email = $this->renderEMailInput('lzy-change-user-email-', true,true);
         $submitButton = $this->createSubmitButton('lzy-change-user-email-');
 
 
@@ -716,11 +721,11 @@ EOT;
 
 
 
-    public function renderLoginLink()
+    public function renderLoginLink( $userRec )
     {
         $linkToThisPage = $GLOBALS['globalParams']['pageUrl'];
         if ($this->loggedInUser) {
-            $logInVar = $this->renderLoginAccountMenu();
+            $logInVar = $this->renderLoginAccountMenu( $userRec );
             $this->page->addPopup(['contentFrom' => '.lzy-login-menu', 'triggerSource' => '.lzy-login-link-menu > a']);
 
         } else {
@@ -748,20 +753,23 @@ EOT;
      * @param $username
      * @return string
      */
-    private function renderLoginAccountMenu()
+    private function renderLoginAccountMenu( $userRec )
     {
         $pageUrl = $GLOBALS['globalParams']['pageUrl'];
-        $username = $this->getUsername();
-
+        $displayName = $this->getDisplayName();
+        $locked = isset($userRec['locked']) && $userRec['locked'];
         $option = '';
-        if ($this->config->admin_userAllowSelfAdmin) {
+        if ($this->config->admin_userAllowSelfAdmin && !$locked) {
             $option = "\t\t\t<li><a href='$pageUrl?admin=edit-profile'>{{ Your Profile }}</a></li>\n";
+        }
+        if (isset($userRec['groupAccount']) && $userRec['groupAccount'] && isset($_SESSION["lizzy"]["loginEmail"])) {
+            $displayName = $_SESSION["lizzy"]["loginEmail"];
         }
 
         $logInVar = <<<EOT
-<div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $username">{{ user_icon }}</a>
+<div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $displayName">{{ user_icon }}</a>
     <div class="lzy-login-menu" style="display:none;">
-        <div>{{ User account }} <strong>$username</strong></div>
+        <div>{{ User account }} <strong>$displayName</strong></div>
         <ol>
             <li><a href='$pageUrl?logout'>{{ Logout }}</a></li>$option
         </ol>
@@ -775,10 +783,15 @@ EOT;
 
 
 
-    /**
-     * @return bool
-     */
     public function getUsername()
+    {
+        return $this->loggedInUser;
+    } // getUsername
+
+
+
+
+    public function getDisplayName()
     {
         if (isset($_SESSION['lizzy']['userDisplayName'])) {
             $username = $_SESSION['lizzy']['userDisplayName'];
@@ -786,7 +799,7 @@ EOT;
             $username = $this->loggedInUser;
         }
         return $username;
-    }
+    } // getDisplayName
 
 
 

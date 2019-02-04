@@ -171,23 +171,11 @@ class Lizzy
         $this->auth = new Authentication($this);
 
         $this->analyzeHttpRequest();
-//        $this->httpSystemPath = $this->pathToRoot.SYSTEM_PATH;
-
 
         $this->auth->authenticate();
 
-        $this->adminTasks1();
-//        $this->auth->adminActivities();
-//        $res = $this->auth->adminActivities();
-//        if ($res) {
-//            if (isset($res[2]) && ($res[2] == 'Overlay')) {
-//                $this->page->addOverlay($res[1], false, false);
-//            } elseif ($res[2] == 'Override') {
-//                $this->page->addOverride($res[1], false, false);
-//            } else {
-//                $this->page->addMessage($res[1], false, false);
-//            }
-//        }
+        $this->handleAdminRequests(); // form-responses e.g. change profile etc.
+
         $GLOBALS['globalParams']['auth-message'] = $this->auth->message;
 
         $this->config->isPrivileged = false;
@@ -278,11 +266,9 @@ class Lizzy
             $this->trans->doUserComputedVariables();
         }
 
-        $this->appendLoginForm();
-        $this->adminTasks2();
+        $this->appendLoginForm();   // sleeping code for popup population
+        $this->handleAdminRequests2();
         $this->handleUrlArgs2();
-
-//        $this->sendAccessLinkMail();
 
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
@@ -316,7 +302,7 @@ class Lizzy
 
 
 
-    private function adminTasks1()
+    private function handleAdminRequests()
     {
         if (!isset($_REQUEST['lzy-user-admin']) ||
             !$this->auth->getLoggedInUser()) {
@@ -324,23 +310,23 @@ class Lizzy
         }
         require_once SYSTEM_PATH.'admintasks.class.php';
         $adm = new AdminTasks($this);
-        $adm->adminActivities( $_REQUEST['lzy-user-admin'] );
+        $adm->handleAdminRequests( $_REQUEST['lzy-user-admin'] );
 
-    } // adminTasks1
-
-
+    } // handleAdminRequests
 
 
-    private function adminTasks2()
+
+
+    private function handleAdminRequests2()
     {
         if ($adminTask = getUrlArg('admin', true)) {
             require_once SYSTEM_PATH.'admintasks.class.php';
             $admTsk = new AdminTasks($this);
-            $overridePage = $admTsk->adminTasks2($adminTask);
+            $overridePage = $admTsk->handleAdminRequests2($adminTask);
             $this->page->merge($overridePage, 'override');
             $this->page->setOverrideMdCompile(false);
         }
-    } // adminTasks2
+    } // handleAdminRequests2
 
 
 
@@ -444,7 +430,6 @@ class Lizzy
                 return false;
             }
             setStaticVariable('isRestrictedPage', $this->auth->getLoggedInUser());
-//            setStaticVariable('isRestrictedPage', $this->loggedInUser);
         } else {
             setStaticVariable('isRestrictedPage', false);
         }
@@ -462,7 +447,6 @@ class Lizzy
             return;
         }
         if (!$this->config->admin_userAllowSelfAdmin) {
-//        if (!$this->config->admin_userAllowSelfAdmin || $this->auth->getLoggedInUser()) {
             return;
         }
 
@@ -727,7 +711,8 @@ class Lizzy
 	private function setTransvars1()
 	{
 	    $userAcc = new UserAccountForm($this);
-	    $login = $userAcc->renderLoginLink();
+	    $rec = $this->auth->getLoggedInUser( true );
+	    $login = $userAcc->renderLoginLink( $rec );
         $this->trans->addVariable('Log-in', $login);
         $this->trans->addVariable('user', $userAcc->getUsername(), false);
 
@@ -1302,14 +1287,6 @@ EOT;
 	//....................................................
 	private function handleUrlArgs2()
 	{
-//        if ($adminTask = getUrlArg('admin', true)) {                        // execute admin task
-//            require_once SYSTEM_PATH.'admintasks.class.php';
-//            $admTsk = new AdminTasks($this);
-//            $overridePage = $admTsk->execute($adminTask);
-//            $this->page->merge($overridePage, 'override');
-//            $this->page->setOverrideMdCompile(false);
-//        }
-//
         if (getUrlArg('reset')) {			            // reset (cache)
             $this->clearCaches(true);
             reloadAgent();  //  reload to get rid of url-arg ?reset
@@ -1489,8 +1466,8 @@ EOT;
         $doSave = getUrlArg('lzy-save');
         if ($doSave && ($filename = get_post_data('lzy_filename'))) {
             $rec = $this->auth->getLoggedInUser(true);
-            $user = $rec['name'];
-            $group = $rec['group'];
+            $user = $rec['username'];
+            $group = $rec['groups'];
             $permitted = $this->auth->checkGroupMembership('editors');
             if ($permitted) {
                 if (preg_match("|^{$this->config->path_pagesPath}(.*)\.md$|", $filename)) {
@@ -1516,8 +1493,8 @@ EOT;
         $str = get_post_data('lzy_sitemap', true);
         $permitted = $this->auth->checkGroupMembership('editors');
         $rec = $this->auth->getLoggedInUser(true);
-        $user = $rec['name'];
-        $group = $rec['group'];
+        $user = $rec['username'];
+        $group = $rec['groups'];
         if ($permitted) {
             require_once SYSTEM_PATH.'page-source.class.php';
             PageSource::storeFile($filename, $str, SYSTEM_RECYCLE_BIN_PATH);
@@ -1625,35 +1602,6 @@ EOT;
 
 
 
-//    //....................................................
-//    private function sendAccessLinkMail()
-//    {
-//        if ($this->auth->mailIsPending) {
-//            require_once SYSTEM_PATH.'admintasks.class.php';
-//            $adm = new AdminTasks();
-//
-//            $pM = $adm->getPendingMail();
-//
-////            $headers = "From: {$pM['from']}\r\n" .
-////                'X-Mailer: PHP/' . phpversion();
-//            $subject = $this->trans->translate( $pM['subject'] );
-//            $message = $this->trans->translate( $pM['message'] );
-//            $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p>";
-//
-//            if ($this->localCall) {
-//                $str = "<div class='lzy-onetime-code-sent-overlay'>\n$explanation<pre class='debug-mail'><div>Subject: $subject</div>\n<div>$message</div></pre></div>";
-//                $this->page->addOverlay($str);
-//            } else {
-//                sendMail($pM['to'], $subject, $message);
-////                if (!mail($pM['to'], $subject, $message, $headers)) {
-////                    fatalError("Error: unable to send e-mail", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
-////                }
-//            }
-//        }
-//    } // sendAccessLinkMail
-
-
-
 
     //....................................................
     public function sendMail($to, $subject, $message, $from = false)
@@ -1674,7 +1622,7 @@ $explanation
         </div> <!-- /lzy-local-mail-sent-overlay -->
 
 EOT;
-            $this->page->addOverlay($str);
+            $this->page->addOverlay(['text' => $str, 'mdCompile' => false ]);
         } else {
             sendMail($to, $from, $subject, $message);
         }
