@@ -941,7 +941,11 @@ function reloadAgent($target = false, $getArg = false)
         $target = $globalParams['pageUrl'];
     }
     if ($getArg) {
-        $target .= "?reload-arg=$getArg";
+        if (strpos($target, '?') === false) {
+            $target .= "?reload-arg=$getArg";
+        } else {
+            $target .= "&reload-arg=$getArg";
+        }
     }
     header("Location: $target");
     exit;
