@@ -5,6 +5,8 @@ define('NOTI', 'lzy-account-form-notification');
 
 $lizzyAccountCounter = 0;
 
+
+
 class UserAccountForm
 {
     public function __construct($lzy, $infoIcon = '&#9432;')
@@ -22,8 +24,7 @@ class UserAccountForm
             } else {
                 $this->trans = $lzy;
             }
-            $adminTransvars = resolvePath('~sys/config/admin.yaml');
-            $this->trans->readTransvarsFromFile($adminTransvars);
+            $this->trans->readTransvarsFromFile('~sys/config/admin.yaml');
             $this->checkInsecureConnection();
             $this->page->addModules('USER_ADMIN');
         } else {

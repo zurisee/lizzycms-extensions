@@ -4,10 +4,14 @@ define ('DEFAULT_TICKET_STORAGE_FILE', CACHE_PATH.'tickets.yaml');
 define ('DEFAULT_TICKET_HASH_SIZE', 6);
 define ('DEFAULT_TICKET_VALIDITY_TIME', 900);
 
+/*
+ * $validityPeriod:
+ *      null = system default
+ *      0    = infinite
+ */
 
 class Ticketing
 {
-//    public function __construct($dataSrc = DEFAULT_TICKET_STORAGE_FILE, $hashSize = 6, $defaultType = 'generic')
     public function __construct($options = [])
     {
         $dataSrc = isset($options['dataSrc']) ? $options['dataSrc'] : DEFAULT_TICKET_STORAGE_FILE;
