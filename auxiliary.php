@@ -987,6 +987,9 @@ function path_info($file)
 //------------------------------------------------------------
 function preparePath($path)
 {
+    if ($path[0] == '~') {
+        $path = resolvePath($path);
+    }
 	$path = dirname($path.'x');
     if (!file_exists($path)) {
         if (!mkdir($path, MKDIR_MASK2, true)) {
