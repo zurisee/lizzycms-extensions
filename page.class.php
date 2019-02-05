@@ -468,28 +468,6 @@ class Page
 
 
 
-//    public function applyBodyTopInjection( $html )
-//    {
-//        if (!$this->bodyTopInjections) {
-//            return $html; // nothing to do
-//        }
-//
-//        $p = strpos($html, '<body');
-//        if ($p) {
-//            $p = strpos($html, '>', $p);
-//            if (!$p) {  // syntax error, body tag not closed
-//                return $html;
-//            }
-//            $p++;
-//            $injectStr = "\n\t<!-- body top injections -->\n".$this->bodyTopInjections."\t<!-- /body top injections -->\n";
-//            $html = substr($html, 0, $p).$injectStr.substr($html, $p);
-//        }
-//        return $html;
-//    } // applyBodyTopInjection
-
-
-
-
     //....................................................
     public function applyOverride()
     {
@@ -525,6 +503,8 @@ class Page
         }
         return false;
     } // applyOverride
+
+
 
 
     //....................................................
@@ -930,30 +910,6 @@ EOT;
         $this->modulesInitialized = true;
 
     } // prepareModuleLists
-
-
-
-//    //....................................................
-//    public function resolveVarsAndMacros()
-//    {
-//        return; // TODO
-//        // translate template
-//        $this->template = $this->trans->translate($this->template);
-//
-//        // translate content
-//        $this->content = $this->trans->translate($this->content);
-//
-//        // now, feed page elements gathered from macros back to main page object:
-//        $this->merge($this->trans->getPageObject());
-//
-//        // translate bodyTopInjections
-//        $this->bodyTopInjections = $this->trans->translate($this->bodyTopInjections);
-//
-//        // translate bodyEndInjections
-//        $this->bodyEndInjections = $this->trans->translate($this->bodyEndInjections);
-//
-//    } // resolveVarsAndMacros
-
 
 
 

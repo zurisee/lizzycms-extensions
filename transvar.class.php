@@ -116,7 +116,6 @@ class Transvar
                 } else { // not commented
                     if (strpos($var, '{{') !== false) {     // nested transvar/macros
                         $modified |= $this->doTranslate($var, $iterationDepth + 1);
-//                        $var = $this->doTranslate($var, $iterationDepth + 1);
                     }
 
                     $var = str_replace("\n", '', $var);    // remove newlines
@@ -996,13 +995,6 @@ EOT;
     public function unshieldVariables($str)
     {
         return str_replace(["{||{","}||}"], ['{{', '}}'], $str);
-    }
-
-
-
-    public function hasShieldVariables($str)
-    {
-        return (strpos($str, "{||{") !== false);
     }
 
 } // Transvar

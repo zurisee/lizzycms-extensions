@@ -17,7 +17,6 @@ private $userConfigurableSettingsAndDefaults      = [
             'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
             'admin_defaultGuestGroup'           => ['guest', 'Name of default group for self-registration.' ],
             'admin_defaultLoginValidityPeriod'  => [86400, 'Defines how long a user can access the page since the last login.' ],
-//            'admin_enableAutoCreateAccount'     => [false, '[false|true] If true, lets users create their accounts with admin intervention.' ],
             'admin_enableDailyUserTask'         => [true, '[false|true] If true, looks for "code/user-daily-task.php" and executes it.' ],
             'admin_enableEditing'               => [true, '[true|false] enables online editing' ],
             'admin_hideWhileEditing'            => [false, 'List of CSS-selectors which shall be hidden while online editing is active, e.g. [#menu, .logo]' ],
@@ -133,7 +132,6 @@ private $userConfigurableSettingsAndDefaults      = [
 
         $this->loadModules['TABBABLE']              = array('module' => 'third-party/tabbable/jquery.tabbable.min.js', 'weight' => 126);
         $this->loadModules['NAV']                   = array('module' => 'js/nav.js', 'weight' => 125);
-//        $this->loadModules['NAV']                   = array('module' => 'js/nav.js, css/_nav.css', 'weight' => 125);
 
         $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js,'.
                                                             'extensions/editable/css/editable.css', 'weight' => 120);
@@ -145,7 +143,6 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['POPUP']  = // POPUP is synonym for POPUPS
         $this->loadModules['POPUPS']                = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
                                                                         'css/popup.css', 'weight' => 85);
-//                                                                        'js/popup.js, css/popup.css', 'weight' => 85);
 
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 

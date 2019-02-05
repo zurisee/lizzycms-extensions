@@ -28,8 +28,6 @@ class Authentication
         // - oneTimeCode [lzy-onetime-code]
 
 
-        $ip = getClientIP();
-//        $uname = "unknown [$ip]";
         $res = null;
         if (isset($_POST['lzy-login-username']) && isset($_POST['lzy-login-password-password'])) {    // user sent un & pw
             $credentials = array('username' => $_POST['lzy-login-username'], 'password' => $_POST['lzy-login-password-password']);
@@ -284,7 +282,6 @@ class Authentication
 
         } else {
             $_SESSION['lizzy']['userDisplayName'] = $user;
-//            $displayName = $user;
         }
         return $user;
     } // setUserAsLoggedIn
@@ -756,9 +753,9 @@ class Authentication
 
 
     private function monitorFailedLoginAttempts()
+    {
         // More than HACKING_THRESHOLD failed login attempts within 15 minutes are considered a hacking attempt.
         // If that is detected, we delay ALL login attempts by 5 seconds.
-    {
         $tnow = time();
         file_put_contents(HACK_MONITORING_FILE, $tnow."\n", FILE_APPEND);
         $lines = file(HACK_MONITORING_FILE);

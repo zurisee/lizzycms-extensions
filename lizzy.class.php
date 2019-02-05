@@ -77,7 +77,6 @@ class Lizzy
 	private $configPath = CONFIG_PATH;
 	private $systemPath = SYSTEM_PATH;
 	private $autoAttrDef = [];
-//	private $httpSystemPath;
 	public  $pathToRoot;
 	public  $pagePath;
 	private $reqPagePath;
@@ -306,7 +305,6 @@ class Lizzy
     {
         if (!isset($_REQUEST['lzy-user-admin']) ||
             !$this->auth->isAdmin()) {
-//            !$this->auth->getLoggedInUser()) {
             return false;   // nothing to do
         }
         require_once SYSTEM_PATH.'admintasks.class.php';
@@ -1327,10 +1325,10 @@ EOT;
             $this->page->addOverlay($str);
         }
 
-
-//        if ($n = getUrlArg('printall', true)) {			// printall pages
-//            exit( $this->printall($n) );
-//        }
+        // TODO:
+        //        if ($n = getUrlArg('printall', true)) {			// printall pages
+        //            exit( $this->printall($n) );
+        //        }
 
 
         if (getUrlArg('log')) {    // log
@@ -1405,7 +1403,8 @@ Unset individually as ?xy=false or globally as ?reset
 
 </pre>
 EOT;
-//<a href='?printall'>?printall</a>	    show all pages in one
+        // TODO: printall -> add above
+        //<a href='?printall'>?printall</a>	    show all pages in one
 			$this->page->addOverlay($overlay);
         }
 
