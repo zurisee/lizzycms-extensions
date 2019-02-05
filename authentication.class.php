@@ -26,9 +26,10 @@ class Authentication
         // checks and verifies login attempts, if post-variables are received:
         // - credentials [lzy-login-username, lzy-login-password-password]
         // - oneTimeCode [lzy-onetime-code]
-        $ip = getClientIP();
-        $uname = "unknown [$ip]";
 
+
+        $ip = getClientIP();
+//        $uname = "unknown [$ip]";
         $res = null;
         if (isset($_POST['lzy-login-username']) && isset($_POST['lzy-login-password-password'])) {    // user sent un & pw
             $credentials = array('username' => $_POST['lzy-login-username'], 'password' => $_POST['lzy-login-password-password']);
@@ -271,7 +272,7 @@ class Authentication
         $this->loginTimes[$user] = time();
         session_regenerate_id();
         $_SESSION['lizzy']['user'] = $user;
-        $isAdmin = $this->isAdmin();
+        $isAdmin = $this->checkAdmission('admins');
         $GLOBALS['globalParams']['isAdmin'] = $isAdmin;
         $_SESSION['lizzy']['isAdmin'] = $isAdmin;
         $_SESSION['lizzy']['loginTimes'] = serialize($this->loginTimes);
@@ -283,7 +284,7 @@ class Authentication
 
         } else {
             $_SESSION['lizzy']['userDisplayName'] = $user;
-            $displayName = $user;
+//            $displayName = $user;
         }
         return $user;
     } // setUserAsLoggedIn
@@ -471,8 +472,9 @@ class Authentication
         $this->userRec = null;
         $_SESSION['lizzy']['user'] = false;
         $_SESSION['lizzy']['userDisplayName'] = false;
-        $_SESSION['lizzy']['isAdmin'] = false;
-        $GLOBALS['globalParams']['isAdmin'] = false;
+        $isAdmin = ($this->localCall && $this->config->admin_autoAdminOnLocalhost);
+        $_SESSION['lizzy']['isAdmin'] = $isAdmin ;
+        $GLOBALS['globalParams']['isAdmin'] = $isAdmin;
     } // unsetLoggedInUser
 
 
@@ -533,14 +535,11 @@ class Authentication
     //-------------------------------------------------------------
     public function isAdmin($thorough = false)
     {
-        if ($thorough) {
-            return $this->checkAdmission('admins');
-        }
-        if (getStaticVariable('isAdmin')) {
+        if (!$thorough && getStaticVariable('isAdmin')) {
             return true; //??? secure?
         }
         return $this->checkAdmission('admins');
-    }
+    } // isAdmin
 
 
 

@@ -2,6 +2,9 @@
 
 require_once SYSTEM_PATH.'ticketing.class.php';
 
+$this->trans->readTransvarsFromFile('~sys/config/useradmin.yaml');
+
+
 class AdminTasks
 {
     public function __construct($lzy)
@@ -30,7 +33,7 @@ class AdminTasks
             $res = [false, $str, 'Override'];
 
         } elseif ($requestType == 'add-user') {           // admin is adding a user
-            if (!$this->isAdmin()) { return false; }
+            if (!$this->auth->isAdmin()) { return false; }
             $email = get_post_data('lzy-add-user-email');
             $un = get_post_data('lzy-add-user-username');
             $key = ($un) ? $un : $email;
@@ -79,7 +82,6 @@ class AdminTasks
                         $this->message = "<div class='lzy-adduser-wrapper'>$res</div>";
                         $accountForm = new UserAccountForm($this->lzy);
                         $str = $accountForm->createChangePwForm($user, $this->message, "<h1>{{ lzy-change-password-title }}</h1>");
-                        $this->lzy->trans->readTransvarsFromFile('~sys/config/useradmin.yaml');
                         $res = [false, $str, 'Override'];
                     }
 
@@ -167,12 +169,26 @@ class AdminTasks
 
         } elseif ($adminTask == 'add-user') {
             $pg = $accountForm->renderAddUserForm($group, $notification);
+            $jq = "setTimeout(function() { $('#lzy-login-email3').focus(); console.log('focus');}, 500);\n";
+            if (isset($_GET['lzy-preset-email'])) {
+                $email = $_GET['lzy-preset-email'];
+                $jq .= "$('input[name=lzy-add-user-email]').val('$email');\n";
+            }
+            if (isset($_GET['lzy-preset-groups'])) {
+                $groups = $_GET['lzy-preset-groups'];
+                $jq .= "$('input[name=lzy-add-user-group]').val('$groups');\n";
+            }
+            if ($jq) {
+                $this->page->addJq($jq);
+            }
 
         } else {
             return "Error: mode unknown 'adminTask'";
         }
-        $loginForm = $pg->get('override', true);
-        $this->page->merge($pg);
+        $override = $pg->get('override', true);
+        $override['mdCompile'] = false;
+        $this->page->addOverride($override);
+        $this->page->addModules('USER_ADMIN');
 
     } // handleAdminRequests2
 

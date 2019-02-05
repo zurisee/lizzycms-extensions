@@ -305,7 +305,8 @@ class Lizzy
     private function handleAdminRequests()
     {
         if (!isset($_REQUEST['lzy-user-admin']) ||
-            !$this->auth->getLoggedInUser()) {
+            !$this->auth->isAdmin()) {
+//            !$this->auth->getLoggedInUser()) {
             return false;   // nothing to do
         }
         require_once SYSTEM_PATH.'admintasks.class.php';
