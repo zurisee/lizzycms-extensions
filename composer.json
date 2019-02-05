@@ -8,6 +8,7 @@
         "endorphin-studio/browser-detector": "^3.0",
         "symfony/dom-crawler": "^4.2",
         "symfony/css-selector": "^4.2",
-        "eluceo/ical": "^0.15.0"
+        "eluceo/ical": "^0.15.0",
+        "chillerlan/php-qrcode": "^2.0"
     }
 }

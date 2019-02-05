@@ -15,6 +15,8 @@ class ComposerStaticInitf773fc72f2df5c5db6b45dc256600503
     public static $prefixLengthsPsr4 = array (
         'c' => 
         array (
+            'chillerlan\\Traits\\' => 18,
+            'chillerlan\\QRCode\\' => 18,
             'cebe\\markdown\\' => 14,
         ),
         'S' => 
@@ -37,6 +39,14 @@ class ComposerStaticInitf773fc72f2df5c5db6b45dc256600503
     );
 
     public static $prefixDirsPsr4 = array (
+        'chillerlan\\Traits\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-traits/src',
+        ),
+        'chillerlan\\QRCode\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-qrcode/src',
+        ),
         'cebe\\markdown\\' => 
         array (
             0 => __DIR__ . '/..' . '/cebe/markdown',
