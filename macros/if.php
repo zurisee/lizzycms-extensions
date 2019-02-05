@@ -117,6 +117,15 @@ function evalResult($trans, $code)
                 $trans->page->addPopup($arg);
                 break;
 
+            case 'include' :
+                $filename = resolvePath($arg, true);
+                $str = getFile($filename);
+                if ($str) {
+                    $str = compileMarkdownStr($str);
+                    $trans->page->addContent($str);
+                }
+                break;
+
             default:
                 $out = $code;
         }
