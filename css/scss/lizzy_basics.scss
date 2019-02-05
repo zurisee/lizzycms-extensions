@@ -536,7 +536,6 @@ nav li {
 
 
 
-/* === Mobile ========================================= */
 .lzy-button {
   color: #666;
   font-family: helvetica, arial, sans-serif;
@@ -547,6 +546,9 @@ nav li {
   background: -webkit-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
   background: -ms-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
   background: linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+}
+a.lzy-button {
+  padding: 3px 12px;
 }
 
 
