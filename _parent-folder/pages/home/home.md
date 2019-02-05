@@ -9,10 +9,11 @@ If you know what you are doing you are ready to go. Just start editing file ``pa
 If not, visit {{ link( 'https://getlizzy.net/', type:external ) }}.
 
 
+
 {{ if( 
     file:'~/config/users.yaml', 
     op: '<', 
     arg: 1, 
-    then: "%overlay: fromFile( to-delete/intro.md )" 
+    then: "%include: to-delete/intro.md" 
 ) }}
 
