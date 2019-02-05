@@ -27,6 +27,7 @@ class Transvar
 	private $macroInfo = array();
 	private $invocationCounter = array();
 	private $sysVariables = ['head_injections', 'content', 'body_end_injections'];
+	private $filesLoaded = array();
     public $page;
 
 
@@ -374,9 +375,10 @@ class Transvar
     //....................................................
     private function loadMacro($macroName)
     {
-        $sys = '~/'.$this->config->systemPath;
+        $sys = '~/'.$this->config->systemPath;  // to be available inside marco
+        $page = &$this->page;  // to be available inside marco
+
         $file = $this->config->macrosPath.$macroName.'.php';
-        $page = &$this->page;
         if (file_exists($file)) {	// filename == macroname
             require_once($file);
 
@@ -405,8 +407,8 @@ class Transvar
 
     //....................................................
     public function readTransvarsFromFiles($file, $markSource = false)
-        // read from multiple files
     {
+        // read from multiple files
         if (is_array($file)) {
             $a = $file;
             foreach ($a as $f) {
@@ -443,28 +445,32 @@ class Transvar
         if (!file_exists($file)) {
             fatalError("File not found: '$file'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
-        $newVars = getYamlFile($file);
-        if (is_array($newVars)) {
-            $markSource = true;
-            if ($this->config->debug_showVariablesUnreplaced) { // for debugging
-                array_walk($newVars, function(&$value, &$key, $file) {
-                    if ($key != 'page_title') {
-                        $value = "<span title='$file'>&#123;&#123; $key }}</span>";
-                    }
-                }, $file);
-                $markSource = false; // no need to also mark source
+        if (!in_array($file, $this->filesLoaded)) { // avoid multiple loading of transvar files
+            $this->filesLoaded[] = $file;
+
+            $newVars = getYamlFile($file);
+            if (is_array($newVars)) {
+                $markSource = true;
+                if ($this->config->debug_showVariablesUnreplaced) { // for debugging
+                    array_walk($newVars, function (&$value, &$key, $file) {
+                        if ($key != 'page_title') {
+                            $value = "<span title='$file'>&#123;&#123; $key }}</span>";
+                        }
+                    }, $file);
+                    $markSource = false; // no need to also mark source
+                }
+                if ($markSource) {
+                    foreach ($newVars as $key => $rec) {
+                        if (!is_array($rec)) {
+                            $v = $rec;
+                            unset($newVars[$key]);
+                            $newVars[$key]['_'] = $v;
+                        }
+                        $newVars[$key]['src'] = $file;
+                    };
+                }
+                $this->transvars = array_merge($this->transvars, $newVars);
             }
-            if ($markSource) {
-                foreach ($newVars as $key => $rec) {
-                    if (!is_array($rec)) {
-                        $v = $rec;
-                        unset($newVars[$key]);
-                        $newVars[$key]['_'] = $v;
-                    }
-                    $newVars[$key]['src'] = $file;
-                };
-            }
-            $this->transvars = array_merge($this->transvars, $newVars);
         }
     } // readTransvarsFromFile
 
