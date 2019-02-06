@@ -441,28 +441,27 @@ class Lizzy
     //....................................................
     private function appendLoginForm()
     {
-        if ($this->auth->getLoggedInUser()) {
-            $this->page->addBodyClasses('lzy-user-logged-in');
-            return;
-        }
-        if (!$this->config->admin_userAllowSelfAdmin) {
+        if ( !$this->auth->getKnownUsers() ) { // don't bother with login if there are no users
             return;
         }
 
-        $accForm = new UserAccountForm($this);
-        $html = $accForm->renderLoginForm($this->auth->message, false, true);
+        if ($this->auth->getLoggedInUser()) {   // signal in body tag class whether user is logged in
+            $this->page->addBodyClasses('lzy-user-logged-in');  // if user is logged in, there's no need for login form
+            return;
+        }
+
         if (($user = getUrlArg('login', true)) !== null) {
             $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link', 'autoOpen' => true]);
-            if ($user) {
+            $this->renderLoginForm();
+            if ($user) {    // preset username if known
                 $jq = "$('.lzy-login-username').val('$user');\nsetTimeout(function() { $('.lzy-login-email').val('$user').focus(); },500);";
                 $this->page->addJq($jq, 'append');
             }
 
-        } else {
+        } elseif ($this->config->feature_preloadLoginForm) {    // preload login form if configured
             $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link']);
+            $this->renderLoginForm();
         }
-        $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
-        $this->page->addModules('PANELS');
     } // appendLoginForm
 
 
@@ -1859,6 +1858,14 @@ EOT;
             }
         }
         date_default_timezone_set($systemTimeZone);
+    }
+
+    private function renderLoginForm(): void
+    {
+        $accForm = new UserAccountForm($this);
+        $html = $accForm->renderLoginForm($this->auth->message, false, true);
+        $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
+        $this->page->addModules('PANELS');
     } // setLocale
 
 } // class WebPage

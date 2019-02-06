@@ -10,14 +10,15 @@ class PopupWidget
     {
         $this->page = $page;
         $this->popups = &$this->page->popups;
-    }
+        $this->popupCnt = 0;
+    } // __construct
 
 
 
     //-----------------------------------------------------------------------
     public function addPopup($args)
     {
-        $this->popups[] = $args;
+        $this->popups[$this->popupCnt++] = $args;
         return "\t<!-- lzy-popup invoked -->\n";
     } // addPopup
 
@@ -68,6 +69,7 @@ class PopupWidget
             $defaultConfirmBtn = $defaultCancelBtn = '';
             $this->getArg('text');
             $this->getArg('type', 'info'); // [info, confirm, dialog]
+            $type = '';
             switch ($this->type) {
                 case 'confirm' :
                     $defaultConfirmBtn = '{{ Confirm }}';
@@ -76,6 +78,17 @@ class PopupWidget
                 case 'dialog' :
                     $defaultConfirmBtn = '{{ Save }}';
                     $defaultCancelBtn = '{{ Cancel }}';
+                    break;
+                case 'tooltip' :
+                    $this->argStr .= <<<EOT
+
+    type: tooltip,
+    offsetleft: 0,
+    offsettop: '-15',
+    vertical: 'top',
+    horizontal: 'center',
+EOT;
+//                    $type = 'type: tooltip,';
                     break;
             }
             $this->getArg('contentFrom');
@@ -136,6 +149,24 @@ class PopupWidget
             if ($this->triggerSource) {
                 if ($this->triggerEvent == "right-click") {
                     $jq .= "$('{$this->triggerSource}').contextmenu(function(e) { e.preventDefault(); $('$_popupId').popup('show'); return false; }).css('user-select', 'none');\n";
+
+                } elseif ($this->triggerEvent == "hover") {
+                    $jq .= <<<EOT
+$('{$this->triggerSource}').on({
+    mouseenter: function(event) {
+        $('$_popupId').popup({
+            tooltipanchor: event.target,
+            autoopen: true,
+            type: 'tooltip'
+        });
+    },
+    mouseleave: function() {
+        $('$_popupId').popup('hide');
+    }
+});
+
+EOT;
+
                 } else {
                     $jq .= "$('{$this->triggerSource}').bind('{$this->triggerEvent}', function(e) { e.preventDefault(); $('$_popupId').popup('show'); });\n";
                 }
@@ -223,7 +254,7 @@ EOT;
             if ($this->argStr) {
                 $this->argStr = "\t\t".str_replace("\n", "\n\t\t", $this->argStr);
             }
-
+            if ($this->triggerEvent != "hover") {
             $jq .= <<<EOT
 
 $('$_popupId')
@@ -233,6 +264,7 @@ $addClass$buttons
 $onConfirm
 $onCancel
 EOT;
+            }
         } // loop popup instances
 
         $this->page->addJQ($jq);

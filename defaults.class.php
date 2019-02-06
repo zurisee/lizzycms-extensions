@@ -57,6 +57,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_quickview'                 => [true, '[true|false] enables automatic Quickview of images' ],
             'feature_ImgDefaultMaxDim'          => ['1600x1200', 'Defines the max dimensions ("WxH") to which Lizzy automatically converts images which it finds in the pages folders.' ],
             'feature_SrcsetDefaultStepSize'     => [300, 'Defines the step size when Lizzy creates srcsets for images.' ],
+            'feature_preloadLoginForm'          => [false, '[true|false] If true, code for login popup is preloaded and opens without page load.' ],
             'feature_renderTxtFiles'            => [false, '[true|false] If true, all .txt files in the pages folder are rendered (in &lt;pre>-tags, i.e. as is). Otherwise they are ignored.' ],
             'feature_screenSizeBreakpoint'      => [480, '[px] Determines the point where Lizzy switches from small to large screen mode.' ],
             'feature_selflinkAvoid'             => [true, '[true|false] If true, the nav-link of the current page is replaced with a local page link (to improve accessibility).' ],
