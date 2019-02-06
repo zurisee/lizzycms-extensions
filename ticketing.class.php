@@ -86,8 +86,8 @@ class Ticketing
 
     private function createHash()
     {
-        $hash = chr(rand(65, 90));  // first always a letter
-        $hash .= strtoupper(substr(sha1(rand()), 0, $this->hashSize-1));  // letters and digits
+        $hash = chr(random_int(65, 90));  // first always a letter
+        $hash .= strtoupper(substr(sha1(random_int(0,  PHP_INT_MAX)), 0, $this->hashSize-1));  // letters and digits
         return $hash;
     } // createHash
 
