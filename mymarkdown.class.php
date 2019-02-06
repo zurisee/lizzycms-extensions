@@ -553,8 +553,8 @@ class MyMarkdown
 				$id = " id='$id'";
 				$s2 = $mm[1].$mm[3];
 			}
-
-			if (preg_match_all('/([\w\-]+):\s*([^;\s]*);?/', $s2, $mm)) {		// styles or attr
+//TODO: re-implement
+			if (preg_match_all('/([\w\-]+):\s*([^;\s]*);?/', $s2, $mm)) {		// styles
 				foreach ($mm[0] as $s2) {
 					$s2 = str_replace(' ', '', $s2);
 					list($key, $val) = explode(':', $s2);
@@ -567,6 +567,13 @@ class MyMarkdown
 				}
 				$style = $style ? " style='$style'" : '';
 			}
+			if (preg_match_all('/([\w\-]+)=\s*([^;\s]*);?/', $s2, $mm)) {		// attr
+                foreach ($mm[0] as $s2) {
+                    $s2 = str_replace(' ', '', $s2);
+                    list($key, $val) = explode('=', $s2);
+                    $attr .= ' '.trim("$key='$val'");
+                }
+            }
 
 			if ($span) {
                 $s1 .= "<span$id$class$style$attr>$span</span>";
