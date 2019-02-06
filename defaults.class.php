@@ -143,7 +143,7 @@ private $userConfigurableSettingsAndDefaults      = [
 
         $this->loadModules['POPUP']  = // POPUP is synonym for POPUPS
         $this->loadModules['POPUPS']                = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
-                                                                        'css/popup.css', 'weight' => 85);
+                                                                        'js/popup.js, css/popup.css', 'weight' => 85);
 
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 
