@@ -106,6 +106,90 @@ function parseArgumentStr($str, $delim = ',')
 
 
 
+function parseInlineBlockArguments($str)
+{
+    // Example: article  #my-id  .my-class  color:orange .class2 aria-expanded=false line-height: '1.5em;' !off .class3 aria-hidden= 'true' lang=de-CH literal=true md-compile=false
+    $tag = $id = $class = $style = $attr = $lang = $comment = '';
+    $literal = false;
+    $mdCompile = true;
+
+    if (preg_match('/(.*) !([\w-]+) (.*)/x', $str, $m)) {      // !arg
+        if ($m[2]) {    // found
+            $str = $m[1].$m[3];
+            $style = ' display:none;';
+        }
+    }
+
+    if (preg_match_all('/([\w-]+\:\s*[^\s,]+)/x', $str, $m)) {  // style:arg
+        foreach ($m[1] as $elem) {
+            $s = str_replace([';', '"', "'"], '', $elem);
+            $style .= " $s;";
+        }
+        $str = str_replace($m[0], '', $str);
+    }
+    if ($style) {
+        $style = ' style="'. trim($style) .'"';
+    }
+
+    if (preg_match_all('/( [\w-]+ \=\s* " .*? " ) /x', $str, $m)) {  // attr='arg '
+        $elems = $m[1];
+        $str = str_replace($m[1], '', $str);
+    }
+    if (preg_match_all("/( [\w-]+ \=\s* ' .*? ' ) /x", $str, $m)) {  // attr='arg '
+        $elems = array_merge($elems, $m[1]);
+        $str = str_replace($m[1], '', $str);
+    }
+    if (preg_match_all("/( [\w-]+ \=\s* [^\s,]+ ) /x", $str, $m)) {  // attr='arg '
+        $elems = array_merge($elems, $m[1]);
+        $str = str_replace($m[1], '', $str);
+    }
+    foreach ($elems as $elem) {
+        list($name, $arg) = explode('=', $elem);
+        $arg = trim($arg);
+        $ch1 = isset($arg[0]) ? $arg[0]: '';
+        if ($ch1 == '"') {
+            $arg = trim($arg, '"');
+        } elseif ($ch1 == "'") {
+            $arg = trim($arg, "'");
+        }
+
+        if (strtolower($name) == 'lang') {                                  // pseudo-attr: 'lang'
+            $lang = $arg;
+        }
+        if (strtolower($name) == 'literal') {                               // pseudo-attr: 'literal'
+            $literal = stripos($arg, 'true') !== false;
+        } elseif (strtolower($name) == 'md-compile') {                      // pseudo-attr: 'md-compile'
+            $mdCompile = stripos($arg, 'false') === false;
+        } else {
+            $attr .= " $name='$arg'";
+        }
+    }
+
+    if (preg_match('/(.*) \#([\w-]+) (.*)/x', $str, $m)) {      // #id
+        if ($m[2]) {    // found
+            $str = $m[1].$m[3];
+            $id = " id='{$m[2]}'";
+            $comment = "#{$m[2]}";
+        }
+    }
+
+    if (preg_match_all('/\.([\w-]+)/x', $str, $m)) {            // .class
+        $class = implode(' ', $m[1]);
+        $str = str_replace($m[0], '', $str);
+        $comment .= '.'.str_replace(' ', '.', $class);
+    }
+    if ($class) {
+        $class = ' class="'. trim($class) .'"';
+    }
+
+    if (preg_match('/\b(\w+)\b/', trim($str), $m)) {            // tag
+        $tag = $m[1];
+    }
+
+    $str = "$id$class$style$attr";
+    return [$tag, $str, $lang, $comment, $literal, $mdCompile];
+} // parseInlineBlockArguments
+
 
 
 //--------------------------------------------------------------

@@ -209,11 +209,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             'divBlock',
             'content' => [],
             'tag' => 'div',
-            'style' => '',
-            'class' => '',
-            'id' => '',
-            'attr' => '',
-            'shield' => false
+            'attributes' => '',
+            'literal' => false
         ];
         $line = rtrim($lines[$current]);
     
@@ -225,7 +222,14 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             fatalError("Error in Markdown source line $current: $line", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
-        $block = array_merge($block, $this->parseInlineStyling($rest));
+        list($tag, $attr, $lang, $comment, $literal, $mdCompile) = $this->parseInlineStyling($rest);
+
+        $block['tag'] = $tag ? $tag : 'div';
+        $block['attributes'] = $attr;
+        $block['comment'] = $comment;
+        $block['lang'] = $lang;
+        $block['literal'] = $literal;
+        $block['mdcompile'] = $mdCompile;
 
         // consume all lines until :::
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
@@ -245,7 +249,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $block['content'][] = $line;
             }
         }
-        if ($block['shield']) {
+        if ($block['literal']) {     // for shielding, we just encode the entire block to hide it from further processing
             $content = implode("\n", $block['content']);
             unset($block['content']);
             $content = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $content);
@@ -257,25 +261,19 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function renderDivBlock($block)
     {
         $tag = $block['tag'];
-        $class = ($block['class']) ? ' class="'.$block['class'].'"' : '';
-        $id = ($block['id']) ? " id='{$block['id']}'" : '';
-        $style = ($block['style']) ? " style='{$block['style']}'" : '';
-        $attr = $block['attr'];
+        $attrs = $block['attributes'];
+        $comment = $block['comment'];
+
         $out = implode("\n", $block['content']);
-        $out = \cebe\markdown\Markdown::parse($out);
-        $comment = ($block['id']) ? ' #'.$block['id'] : '';
-        $comment .= ($block['class']) ? ' .'.$block['class'] : '';
 
-
-        if (preg_match('/lang:\s*(\w\w)/', $style, $m)) {   // check language selector
-            $lang = $this->page->config->lang;
-            if ($m[1] != $this->page->config->lang) {
-                return '';
-            }
+        if (!$block['literal'] && $block['mdcompile']) {  // within such a block we need to compile explicitly:
+            $out = \cebe\markdown\Markdown::parse($out);
         }
-        $dataAttr = ($block['shield']) ? ' data-lzy-literal-block="true"' : '';
-        return "<$tag$id$class$style$dataAttr$attr>\n$out</$tag><!-- /$comment -->\n\n";
-    }
+        if ($block['literal']) {     // flag block for post-processing
+            $attrs = trim("$attrs data-lzy-literal-block='true'");
+        }
+        return "\t\t<$tag $attrs>\n$out\n\t\t</$tag><!-- /$comment -->\n\n";
+    } // renderDivBlock
 
 
 
@@ -635,53 +633,10 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
         if (!$line) {
-            return ['', '', '', false];
-        }
-        $tag = 'div';
-        $id = '';
-        $class = '';
-        $style = '';
-        $attr = '';
-        $shield = false;
-        if (strpos($line, '!') !== false) {
-            $shield = true;
-            $line = str_replace('!', '', $line);
+            return ['', '', '', '', false, false];
         }
 
-        if (preg_match('/^\s* ([\w]+) (.*)/x', $line, $mm)) {        // tag
-            $tag = $mm[1];
-            $line = $mm[2];
-        }
-
-        while ($line) {
-
-            if (preg_match('/([^\#]*) \# ([\w\-]+)(.*)/x', $line, $mm)) {        // id
-                $id = $mm[2];
-                $line = $mm[1] . $mm[3];
-
-            } elseif (preg_match('/([^\.]*) \. ([\w\-\.]+) (.*)/x', $line, $mm)) {        // class
-                $class .= ' '.str_replace('.', ' ', $mm[2]);
-                $line = $mm[1] . $mm[3];
-
-            } else {
-                break;
-            }
-            $line = trim($line);
-        }
-
-        $styles = parseArgumentStr($line,' ');          // styles
-        if ($styles) {
-            foreach ($styles as $key => $val) {
-                if (!is_int($key)) {
-                    if ($this->isCssProperty($key)) {
-                        $style .= "$key:$val;";
-                    } else {
-                        $attr .= " $key:'$val'";
-                    }
-                }
-            }
-        }
-        return ['tag' =>$tag, 'id' => $id, 'class' => trim($class), 'style' => trim($style), 'attr' => $attr, 'shield' => $shield];
+        return parseInlineBlockArguments($line);
     } // parseInlineStyling
 
 
