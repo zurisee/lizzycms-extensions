@@ -7,7 +7,7 @@ body {
 }
 [data-lzy-tooltip-from] {
     display: inline-block;
-    border-bottom: 1px dashed var(--lzy-tooltip-border-color);
+    border-bottom: 1px dashed darkolivegreen;
 }
 .lzy-tooltip-content {
     box-sizing: border-box;
@@ -22,7 +22,6 @@ body {
     margin: 0;
 }
 /* Tooltip Arrows */
-/*:not(.lzy-tooltip-anchor).lzy-tooltip-arrow::before,*/
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow::before,
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow::after {
     content: "";
@@ -55,7 +54,7 @@ body {
 }
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow-top::after {
     border-bottom-color: var(--lzy-tooltip-bg-color);
-    margin-bottom: -1px;
+    margin-bottom: -2px;
 }
 
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow-left::before,
@@ -69,7 +68,7 @@ body {
 }
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow-left::after {
     border-right-color: var(--lzy-tooltip-bg-color);
-    margin-right: -1px;
+    margin-right: -2px;
 }
 
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow-right::before,
@@ -83,7 +82,7 @@ body {
 }
 :not(.lzy-tooltip-anchor).lzy-tooltip-arrow-right::after {
     border-left-color: var(--lzy-tooltip-bg-color);
-    margin-left: -1px;
+    margin-left: -2px;
 }
 
 .lzy-tooltip-icon {

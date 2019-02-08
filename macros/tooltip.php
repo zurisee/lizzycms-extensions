@@ -1,7 +1,7 @@
 <?php
 // @info: Creates a popup widget.
 
-// TODO: mobile => close on bg-click
+// TODO: mobile => close on bg-tap
 
 $page->addModules('TOOLTIPS');
 
@@ -22,7 +22,13 @@ $this->addMacro($macroName, function () {
         ' "vertical" means above or below depending where there is sufficient space. "horizontal" likewise.', '');
     $arrow = $this->getArg($macroName, 'arrow', 'If true, a small triangle will be displayed pointing to the anchor.', '');
     $arrowSize = $this->getArg($macroName, 'arrowSize', 'Size of the arrow.', '');
+    $sticky = $this->getArg($macroName, 'sticky', 'If true, tooltip will open on mouseover and remain open till a click outside occurs.', 'false');
     $catchFocus = $this->getArg($macroName, 'catchFocus', '', '');
+
+    $this->optionAddNoComment = true;
+    if (($text == 'help') || (!$text && !$contentFrom)) {
+        return "\n<!-- TOOLTIPS modules loaded -->\n";
+    }
 
     $ch1 = isset($contentFrom[0]) ? $contentFrom[0] : '';
     if (($ch1 != '#') && ($ch1 != '.')) {
@@ -45,6 +51,10 @@ $this->addMacro($macroName, function () {
         $class .= " lzy-tooltip-catch-focus";
     }
 
+    if ($sticky !== 'false') {
+        $class .= " lzy-tooltip-sticky";
+    }
+
     $class = " class='".trim("lzy-tooltip-anchor $class")."'";
 
     if ($id) {
@@ -59,7 +69,6 @@ $this->addMacro($macroName, function () {
         }
         $text .= "<img src='$icon' class='lzy-tooltip-icon $iconClass' alt='' />";
     }
-    $this->optionAddNoComment = true;
     return "<span$id data-lzy-tooltip-from='$contentFrom'$class$attr>$text</span>";
 });
 
