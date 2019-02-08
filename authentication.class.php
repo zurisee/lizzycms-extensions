@@ -759,30 +759,27 @@ class Authentication
         $tnow = time();
         $tooOld = time() - 900;
         $origin = $_SERVER["HTTP_HOST"];
+        $out = "$origin|$tnow\n";   // add this attempt
         if (file_exists(HACK_MONITORING_FILE)) {
             $lines = file(HACK_MONITORING_FILE);
-            $cnt = 0;
-            $out = "$origin|$tnow\n";
+            $cnt = $allCnt = 0;
             foreach ($lines as $l) {
                 list($o, $t) = explode('|', $l);
-                $ii = intval($t);
-                $jj = $ii - $tooOld;
-                if (intval($t) < $tooOld) {   // omit old entries
+                if (intval($t) < $tooOld) {   // drop old entries
                     continue;
                 }
+                $allCnt++;
                 if (strpos($origin, $o) === 0) {
                     $cnt++;
                 }
                 $out .= $l;
             }
-            file_put_contents(HACK_MONITORING_FILE, $out);
-            if ($cnt > HACKING_THRESHOLD) {
+            if (($cnt > HACKING_THRESHOLD) || ($allCnt > 4*HACKING_THRESHOLD)) {
                 writeLog("!!!!! Possible hacking attempt [".getClientIP().']', LOGIN_LOG_FILENAME);
                 sleep(5);
             }
-        } else {
-            file_put_contents(HACK_MONITORING_FILE, "$origin|$tnow\n");
         }
+        file_put_contents(HACK_MONITORING_FILE, $out);
 
     } // monitorFailedLoginAttempts
 
