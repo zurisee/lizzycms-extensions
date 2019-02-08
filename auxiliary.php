@@ -112,6 +112,7 @@ function parseInlineBlockArguments($str)
     $tag = $id = $class = $style = $attr = $lang = $comment = '';
     $literal = false;
     $mdCompile = true;
+    $elems = [];
 
     if (preg_match('/(.*) !([\w-]+) (.*)/x', $str, $m)) {      // !arg
         if ($m[2]) {    // found
