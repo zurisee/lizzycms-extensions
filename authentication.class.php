@@ -116,11 +116,11 @@ class Authentication
     //....................................................
     public function handleAccessCodeInUrl($pagePath)
     {
-        $code = strtoupper(basename($pagePath));
-        if ($code && preg_match('/^[A-Z][A-Z0-9]{5,}$/', $code)) {
-            $this->validateOnetimeAccessCode($code);    // reloads on success, returns on failure
+        $codeCandidate = basename($pagePath);
+        if ($codeCandidate && preg_match('/^[A-Z][A-Z0-9]{5,}$/', $codeCandidate)) {
+            $this->validateOnetimeAccessCode($codeCandidate);    // reloads on success, returns on failure
 
-            if ($this->validateAccessCode($code, $pagePath)) {
+            if ($this->validateAccessCode($codeCandidate, $pagePath)) {
                 $pagePath = trunkPath($pagePath,1, false); // remove hash-code from
             }
         }
@@ -757,23 +757,33 @@ class Authentication
         // More than HACKING_THRESHOLD failed login attempts within 15 minutes are considered a hacking attempt.
         // If that is detected, we delay ALL login attempts by 5 seconds.
         $tnow = time();
-        file_put_contents(HACK_MONITORING_FILE, $tnow."\n", FILE_APPEND);
-        $lines = file(HACK_MONITORING_FILE);
-        $cnt = 0;
-        $out = '';
-        foreach ($lines as $t) {
-            if (intval($t) < ($tnow - 900)) {   // omit old entries
-                continue;
+        $tooOld = time() - 900;
+        $origin = $_SERVER["HTTP_HOST"];
+        if (file_exists(HACK_MONITORING_FILE)) {
+            $lines = file(HACK_MONITORING_FILE);
+            $cnt = 0;
+            $out = "$origin|$tnow\n";
+            foreach ($lines as $l) {
+                list($o, $t) = explode('|', $l);
+                $ii = intval($t);
+                $jj = $ii - $tooOld;
+                if (intval($t) < $tooOld) {   // omit old entries
+                    continue;
+                }
+                if (strpos($origin, $o) === 0) {
+                    $cnt++;
+                }
+                $out .= $l;
             }
-            $cnt++;
-            $out .= $t;
+            file_put_contents(HACK_MONITORING_FILE, $out);
+            if ($cnt > HACKING_THRESHOLD) {
+                writeLog("!!!!! Possible hacking attempt [".getClientIP().']', LOGIN_LOG_FILENAME);
+                sleep(5);
+            }
+        } else {
+            file_put_contents(HACK_MONITORING_FILE, "$origin|$tnow\n");
         }
-        file_put_contents(HACK_MONITORING_FILE, $out);
 
-        if ($cnt > HACKING_THRESHOLD) {
-            writeLog("!!!!! Possible hacking attempt [".getClientIP().']', LOGIN_LOG_FILENAME);
-            sleep(5);
-        }
     } // monitorFailedLoginAttempts
 
 
