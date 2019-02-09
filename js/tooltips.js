@@ -14,8 +14,7 @@ $('[data-lzy-tooltip-from]').each(function() {
         anchorId = 'lzy-tooltip-anchor0' + Math.floor(Math.random()*1000 );
         $( this ).attr('id', anchorId);
     }
-    anchorId = '#' + anchorId;
-    // console.log('setting up ' + anchorId);
+    // console.log('setting up ' + '#' + anchorId);
     var tooltipTextFrom = $tooltipShowAt.attr('data-lzy-tooltip-from');
     var ch1 = tooltipTextFrom.substring(0,1);
     if ((ch1 != '#') && (ch1 != '.')) {
@@ -166,24 +165,23 @@ function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
 
 
 function determineBestPosition(tooltipPos) {
-    // var tooltipPos = '';
-    tooltipPos = tooltipPos.replace(/[^ablrvh\>]/, '');
+    tooltipPos = tooltipPos.replace(/[^ablrvh\>]/, ''); // remove illegal characters
     if ((tooltipPos == '') || (tooltipPos == 'v')) {	// case: no or vertical preference
         tooltipPos = bestPosition('t>b>r>l');
 
-    } else if (tooltipPos == 'h') {		// case: horizontal preference
+    } else if (tooltipPos == 'h') {		                // case: horizontal preference
         tooltipPos = bestPosition('r>l>t>b');
 
-    } else { // case: specific preference
+    } else {
         if (tooltipPos.length > 1) {
-            tooltipPos = bestPosition(tooltipPos);
+            tooltipPos = bestPosition(tooltipPos);      // case: order of preferences
         } else {
-            var names = {t: 'top', b: 'bottom', l: 'left', r: 'right'};
+            var names = {t: 'top', b: 'bottom', l: 'left', r: 'right'}; // case unambiguous
             tooltipPos = names[tooltipPos];
         }
     }
     return tooltipPos;
-} // determinePosition
+} // determineBestPosition
 
 
 
@@ -206,5 +204,5 @@ function bestPosition(preferences) {
         }
     }
     return result;
-} // sufficientSpace
+} // bestPosition
 
