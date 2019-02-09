@@ -36,7 +36,8 @@ $this->addMacro($macroName, function () {
     }
     $attr = '';
     if (strlen($position) > 0) {
-        $attr = " data-lzy-tooltip-where='".strtolower(substr($position, 0, 1))."'";
+        $attr = " data-lzy-tooltip-pos='".strtolower($position)."'";
+//        $attr = " data-lzy-tooltip-pos='".strtolower(substr($position, 0, 1))."'";
     }
 
     if ($arrow) {

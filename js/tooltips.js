@@ -15,7 +15,7 @@ $('[data-lzy-tooltip-from]').each(function() {
         $( this ).attr('id', anchorId);
     }
     anchorId = '#' + anchorId;
-    console.log('setting up ' + anchorId);
+    // console.log('setting up ' + anchorId);
     var tooltipTextFrom = $tooltipShowAt.attr('data-lzy-tooltip-from');
     var ch1 = tooltipTextFrom.substring(0,1);
     if ((ch1 != '#') && (ch1 != '.')) {
@@ -105,16 +105,13 @@ var dim = {};
 
 function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
     var xDir = 0, yDir = 0, ttCls = '';
-    var popupW = $tooltipTextFrom.outerWidth();
-    var anchorW = $tooltipShowAt.innerWidth();
-    var popupH = $tooltipTextFrom.outerHeight();
-    var anchorH = $tooltipShowAt.innerHeight();
 
     var thisArrowSize = defaultArrowSize;
     var arrowSizeStr = $tooltipShowAt.attr('data-lzy-tooltip-arrow-size');
     if (typeof arrowSizeStr !== 'undefined') {
         thisArrowSize = parseInt(arrowSizeStr);
     }
+    $tooltipTextFrom.css('transform', 'translateX(0px) translateY(0px)');  // reset position
 
     var anchorDim = $tooltipShowAt[0].getBoundingClientRect();
     var popupDim = $tooltipTextFrom[0].getBoundingClientRect();
@@ -134,22 +131,21 @@ function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
     dim.pw = popupDim.width + thisArrowSize;
 
     // evaluate data and class attributes to find prefered position:
-    var tooltipPos = $tooltipShowAt.attr('data-lzy-tooltip-where');
+    var tooltipPos = $tooltipShowAt.attr('data-lzy-tooltip-pos');
     if (typeof tooltipPos == 'undefined') {
         if ($tooltipShowAt.hasClass('lzy-tooltip-right')) {
-            tooltipPos = 'right';
+            tooltipPos = 'r';
         } else if ($tooltipShowAt.hasClass('lzy-tooltip-left')) {
-            tooltipPos = 'left';
+            tooltipPos = 'l';
         } else if ($tooltipShowAt.hasClass('lzy-tooltip-top')) {
-            tooltipPos = 'top';
+            tooltipPos = 't';
         } else if ($tooltipShowAt.hasClass('lzy-tooltip-bottom')) {
-            tooltipPos = 'bottom';
+            tooltipPos = 'b';
         }
     }
 
     // determine best possible position:
-    var tP = (typeof tooltipPos == 'string') ? tooltipPos.substring(0, 1) : '';	// just determine by first letter (l,r,t,b,h,v)
-    tooltipPos = determineBestPosition(tP);
+    tooltipPos = determineBestPosition(tooltipPos);
 
     // activate position:
     switch (tooltipPos) {
@@ -160,8 +156,8 @@ function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
     }
 
     // move tooltip in selected direction away from anchor:
-    var moveX = ((popupW + anchorW) * 0.5 + thisArrowSize) * xDir;
-    var moveY = (popupH/2 + anchorH * 0.5 + thisArrowSize) * yDir;
+    var moveX = (popupDim.right - dim.al + thisArrowSize) * xDir;
+    var moveY = (popupDim.bottom - dim.at + thisArrowSize) * yDir;
     $tooltipTextFrom.css('transform', 'translateX(' + moveX + 'px) translateY(' + moveY + 'px)');
     $('.lzy-tooltip-arrow').removeClass('lzy-tooltip-arrow-left lzy-tooltip-arrow-right lzy-tooltip-arrow-top lzy-tooltip-arrow-bottom ')
         .addClass('lzy-tooltip-arrow-' + ttCls);
@@ -169,28 +165,21 @@ function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
 
 
 
-function determineBestPosition(tP) {
-    var tooltipPos = '';
-    if ((tP == '') || (tP == 'v')) {	// case: no or vertical preference
-        tooltipPos = bestPosition('t > b > r > l');
+function determineBestPosition(tooltipPos) {
+    // var tooltipPos = '';
+    tooltipPos = tooltipPos.replace(/[^ablrvh\>]/, '');
+    if ((tooltipPos == '') || (tooltipPos == 'v')) {	// case: no or vertical preference
+        tooltipPos = bestPosition('t>b>r>l');
 
-    } else if (tP == 'h') {		// case: horizontal preference
-        tooltipPos = bestPosition('r > l > t > b');
+    } else if (tooltipPos == 'h') {		// case: horizontal preference
+        tooltipPos = bestPosition('r>l>t>b');
 
     } else { // case: specific preference
-        switch (tP) {
-            case 't':
-                tooltipPos = bestPosition('t > b > r > l');
-                break;
-            case 'b':
-                tooltipPos = bestPosition('b > t > r > l');
-                break;
-            case 'l':
-                tooltipPos = bestPosition('l > r > t > b');
-                break;
-            case 'r':
-                tooltipPos = bestPosition('r > l > t > b');
-                break;
+        if (tooltipPos.length > 1) {
+            tooltipPos = bestPosition(tooltipPos);
+        } else {
+            var names = {t: 'top', b: 'bottom', l: 'left', r: 'right'};
+            tooltipPos = names[tooltipPos];
         }
     }
     return tooltipPos;
