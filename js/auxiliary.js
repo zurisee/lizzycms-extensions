@@ -65,12 +65,11 @@ function serverLog(text)
 function lzyReload( arg )
 {
     console.log('initiating page reload');
-    // location.reload(true);
     var call = window.location.pathname.replace(/\?.*/, '');
     if (typeof arg != 'undefined') {
         call = call + arg;
     }
-    window.location.assign(call);
+    window.location.replace(call);
 }
 
 
