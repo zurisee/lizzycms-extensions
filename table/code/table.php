@@ -19,12 +19,25 @@ $this->addMacro($macroName, function () {
     $options = $this->getArgsArray($macroName, false);
 
     if (isset($options[0]) && ($options[0] == 'help')) {
-        return '';
+        return renderHelp($this, $macroName);
     }
 
-    $dataTable = new HtmlTable($this->page, $inx, $options);
+    $dataTable = new HtmlTable($this, $inx, $options);
 	$table = $dataTable->render();
 	
 	return $table;
 });
+
+
+
+
+function renderHelp($page, $macroName)
+{
+    $dataTable = new HtmlTable($page, 0, 'help');
+    $help = $dataTable->render('help');
+    foreach ($help as $helpText) {
+        $page->getArg($macroName, $helpText['option'], $helpText['text']);
+    }
+    return '';
+}
 
