@@ -1,6 +1,6 @@
 <?php
 
-define ('DEFAULT_TICKET_STORAGE_FILE', CACHE_PATH.'tickets.yaml');
+define ('DEFAULT_TICKET_STORAGE_FILE', CACHE_PATH.'tickets.json');
 define ('DEFAULT_TICKET_HASH_SIZE', 6);
 define ('DEFAULT_TICKET_VALIDITY_TIME', 900);
 
@@ -95,6 +95,10 @@ class Ticketing
 
     private function purgeExpiredTickets()
     {
+        $lastPurge = $this->ds->readMeta('lastPurge');
+        if ($lastPurge > (time() - 3600)) { // perform purge only once per hour at most
+            return;
+        }
         $this->ds->lock('all');
         $tickets = $this->ds->read();
         $now = time();
@@ -103,6 +107,7 @@ class Ticketing
                 $this->ds->delete($key);
             }
         }
+        $this->ds->writeMeta('lastPurge', time());
         $this->ds->unlock('all');
     } // purgeExpiredTickets
 
