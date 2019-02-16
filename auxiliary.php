@@ -11,6 +11,7 @@ use Symfony\Component\Yaml\Yaml;
 function parseArgumentStr($str, $delim = ',')
 {
     $str0 = $str;
+    $str = trim($str);
     if (!($str = trim($str))) {
         return false;
     }
@@ -252,6 +253,7 @@ function arrayToCsv($array, $quote = '"', $delim = ',')
 } // arrayToCsv
 
 
+
 //--------------------------------------------------------------
 function convertYaml($str, $stopOnError = true, $origin = '')
 {
@@ -364,6 +366,7 @@ function zapFileEND($file)
     }
     return $file;
 }
+
 
 
 //--------------------------------------------------------------
@@ -533,7 +536,7 @@ function fileExt($file, $reverse = false)
     } else {
         return pathinfo($file, PATHINFO_EXTENSION);
     }
-} // getDir
+} // fileExt
 
 
 
@@ -1524,7 +1527,9 @@ function trunkPath($path, $n = 1, $leaveNotRemove = true)
 
 
 //-----------------------------------------------------------------------------
-function rrmdir($src) {
+function rrmdir($src)
+{
+    // remove dir recursively
     $src = rtrim($src, '/');
     $dir = opendir($src);
     while(false !== ( $file = readdir($dir)) ) {
@@ -1541,6 +1546,7 @@ function rrmdir($src) {
     closedir($dir);
     rmdir($src);
 } // rrmdir
+
 
 
 //-----------------------------------------------------------------------------
@@ -1561,7 +1567,7 @@ function shieldMD($md)
 {
     $md = str_replace('#', '&#35;', $md);
     return $md;
-} //
+} // shieldMD
 
 
 
@@ -1639,6 +1645,7 @@ function fatalError($msg, $origin = '', $offendingFile = '')
 
 
 
+
 //-------------------------------------------------------------
 function sendMail($to, $from, $subject, $message)
 {
@@ -1665,6 +1672,7 @@ function handleFatalPhpError() {
 //....................................................
 function parseDimString($str, $imageFile = false, $aspectRatio = false)
 {
+    // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
     if (strpos($str, 'x') === false) {
         if (!$str) {
             $w = $h = $aspectRatio = 0;
@@ -1788,6 +1796,7 @@ function writeToCache($obj, $cacheFileName = CACHE_FILENAME)
     $cacheFile = $globalParams['pathToPage'].$cacheFileName;
     file_put_contents($cacheFile, serialize($obj));
 } // writeToCache
+
 
 
 
