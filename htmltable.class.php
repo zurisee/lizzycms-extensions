@@ -3,400 +3,571 @@
 
 class HtmlTable
 {
+    private $errMsg = '';
+
     public function __construct($page, $inx, $options)
     {
         global $tableCounter;
+        $this->options = $options;
         $this->page 		= $page;
         $this->tableCounter = &$tableCounter;
-
-        $this->id 			= (isset($options['id'])) ? $options['id'] : false;
-        $this->tableclass 	= (isset($options['tableclass'])) ? " class='{$options['tableclass']}'" : '';
-        $this->cellclass 	= (isset($options['cellclass'])) ? $options['cellclass'] : '';
-        $this->nRows 		= (isset($options['nRows'])) ? $options['nRows'] : false;
-        $this->nCols 		= (isset($options['nCols'])) ? $options['nCols'] : false;
-        $this->columns 		= (isset($options['columns'])) ? $options['columns'] : false;
-        $this->filter 		= (isset($options['filter'])) ? $options['filter'] : false;
-        $this->sort 		= (isset($options['sort'])) ? $options['sort'] : false;
-        $this->autoConvertLinks = (isset($options['autoConvertLinks'])) ? $options['autoConvertLinks'] : false;
-        $this->paging 		= (isset($options['paging'])) ? " 'paging': ".(($options['paging']!='false')?'true':'false').',' : '';
-        $this->searching 	= (isset($options['searching'])) ? " 'searching': ".(($options['searching']!='false')?'true':'false').',' : '';
-        $this->processing	= (isset($options['processing'])) ? $options['processing'] : false;
-        $this->caption	    = (isset($options['caption'])) ? $options['caption'] : false;
-        $this->captionIndex = (isset($options['captionIndex'])) ? $options['captionIndex'] : false;
-        $this->headersTop	= (isset($options['headersTop'])) ? $options['headersTop'] : false;
-        $this->headersLeft	= (isset($options['headersLeft'])) ? $options['headersLeft'] : false;
-        $this->renderAsDiv	= (isset($options['renderAsDiv'])) ? $options['renderAsDiv'] : false;
-        $this->renderAsDiv  = !(($this->renderAsDiv === false) || ($this->renderAsDiv == 'false'));
-
-        if ($this->headersTop && preg_match('/^\[(.*)\]$/', $this->headersTop, $m)) {
-            $this->headersTop = explode(',', $m[1]);
-        } else {
-            $this->headersTop = false;
-        }
-        if ($this->headersLeft && preg_match('/^\[(.*)\]$/', $this->headersLeft, $m)) {
-            $this->headersLeft = explode(',', $m[1]);
-        } else {
-            $this->headersLeft = false;
+        $this->helpText = false;
+        if ($options == 'help') {
+            $this->helpText = [];
+            $options = [];
         }
 
-
-        if (isset($options['dataSource'])) {
-            $this->dataSource = $options['dataSource'];
-            if (strpos($this->dataSource, '~') !== 0) {
-                $this->dataSource = '~page/'.$this->dataSource;
-            }
-            $this->dataSource = resolvePath($this->dataSource, true);
-//            $this->dataSource = resolvePath($options['dataSource'], true);
-        } else {
-            $this->dataSource = false;
+        $this->dataSource	        = $this->getOption('dataSource', '(optional if nCols is set) Name of file containing data. Format may be .cvs or .yaml and is expected be local to page folder.');
+        $this->id 			        = $this->getOption('id', '(optional) Id applied to the table tag (resp. wrapping div tag if renderAsDiv is set)');
+        $this->tableClass 	        = $this->getOption('tableClass', '(optional) Class applied to the table tag (resp. wrapping div tag if renderAsDiv is set)');
+        $this->cellClass 	        = $this->getOption('cellClass', '(optional) Class applied to each table cell');
+        $this->cellIds 	            = $this->getOption('cellIds', '(optional) If true, each cell gets an ID which is derived from the cellClass');
+        $this->nRows 		        = $this->getOption('nRows', '(optional) Number of rows: if set the table is forced to this number of rows');
+        $this->nCols 		        = $this->getOption('nCols', '(optional) Number of columns: if set the table is forced to this number of columns');
+        $this->excludeColumns       = $this->getOption('excludeColumns', '(optional) Allows to exclude specific columns, e.g. "excludeColumns:2,4-5"');
+        $this->sort 		        = $this->getOption('sort', '(optional) Allows to sort the table on a given columns, e.g. "sort:3"');
+        $this->sortExcludeHeader    = $this->getOption('sortExcludeHeader', '(optional) Allows to exclude the first row from sorting');
+        $this->autoConvertLinks     = $this->getOption('autoConvertLinks', '(optional) If true, all data is scanned for patterns of URL, mail address or telephone numbers. If found the value is wrapped in a &lt;a> tag');
+        $this->caption	            = $this->getOption('caption', '(optional) If set, a caption tag is added to the table. The caption text may contain the pattern "##" which will be replaced by a number.');
+        $this->captionIndex         = $this->getOption('captionIndex', '(optional) If set, will override the automatically applied table counter');
+        $this->headers	            = $this->getOption('headers', '(optional) Column headers may be supplied in the form [A|B|C...]');
+        if (!$this->headers) {
+            $this->headers          = $this->getOption('headersTop');   // synonyme for 'headers'
         }
+        $this->headersLeft          = $this->getOption('headersLeft', '(optional) Row headers may be supplied in the form [A|B|C...]');
+        $this->showRowNumbers       = $this->getOption('showRowNumbers', '(optional) Adds a left most column showing row numbers.');
+        $this->renderAsDiv	        = $this->getOption('renderAsDiv', '(optional) If set, the table is rendered as &lt;div> tags rather than &lt;table>');
+        $this->tableDataAttr	    = $this->getOption('tableDataAttr', '(optional) ');
+        $this->renderDivRows        = $this->getOption('renderDivRows', '(optional) If set, each row is wrapped in an additional &lt;div> tag. Omitting this may be useful in conjunction with CSS grid.');
+        $this->includeCellRefs	    = $this->getOption('includeCellRefs', '(optional) If set, data-source and cell-coordinates are added as \'data-xy\' attributes');
+        $this->cellMask 	        = $this->getOption('cellMask', '(optional) Lets you define regions that a masked and thus will not get the cellClass. Selection code: rY -> row, cX -> column, eX,Y -> cell element.');
+        $this->cellMaskedClass      = $this->getOption('cellMaskedClass', '(optional) Class that will be applied to masked cells');
+        $this->process	            = $this->getOption('process', '(optional) Provide name of a frontmatter variable to activate this feature. In the frontmatter area define an array containing instructions for manipulating table data. See <a href="https://getlizzy.net/macros/extensions/table/" target="_blank">Doc</a> for further details.');
+        $this->processInstructionsFile	= $this->getOption('processInstructionsFile', 'The same as \'process\' except that instructions are retrieved from a .yaml file');
 
-        if (!file_exists($this->dataSource)) {
-            $this->dataSource = false;
-        }
+        $this->checkArguments($inx);
+        
+        $this->handleDatatableOption($page);
 
-        $this->data = false;
-        if ($this->dataSource) {
-            $ds = new DataStorage($this->dataSource);
-            $this->data = $ds->read();
-        }
-
-
-        if (!$this->id) {
-            $this->id = 'table'.$inx;
-        }
-
-        if (!$this->data && !$this->nRows && !$this->nCols) {
-            fatalError("Error in Table() macro: must specify at least one of [dataSource | nRows | nCols]", 'File: '.__FILE__.' Line: '.__LINE__);
-        }
-
-        if ($this->data) {
-            $this->nRows = ($this->nRows) ? $this->nRows : sizeof($this->data);
-            $this->nCols = ($this->nCols) ? $this->nCols : sizeof($this->data[0]);
-        } else {
-            $this->nRows = ($this->nRows) ? $this->nRows : 1;
-            $this->nCols = ($this->nCols) ? $this->nCols : 1;
-        }
-
-        if ($this->processing) {
-            $this->preProcessData();
-        }
-
-        if (strpos($this->tableclass, 'datatables') !== false) {
-//            $page->addCssFiles('DATATABLES_CSS');
-            $page->addModules('DATATABLES');
-            $order = '';
-            if ($this->sort) {
-                $sortCols = csv_to_array($this->sort);
-                $headers = $this->data[0];
-                foreach ($sortCols as $sortCol) {
-                    $sortCol = alphaIndexToInt($sortCol, $headers) - 1;
-                    $order .= "[ $sortCol, 'asc' ],";
-                }
-                $order = rtrim($order, ',');
-                $order = " 'order': [$order],";
-            }
-            $page->addJq("\t\$('.datatables').DataTable({ 'language':{'search':'{{QuickSearch}}:', 'info': '_TOTAL_ {{Records}}'}, $order {$this->paging}{$this->searching} });\n");
-        }
-
-
-        if ($this->caption) {
-            $tableCounter++;
-            $this->tableCounter = $tableCounter;
-            if ($this->captionIndex) {
-                $this->tableCounter = $this->captionIndex;
-            }
-            if (preg_match('/(.*)\#\#=(\d+)(.*)/', $this->caption, $m)) {
-                $this->tableCounter = intval($m[2]);
-                $this->caption = $m[1].'##'.$m[3];
-            }
-            $this->caption = str_replace('##', $this->tableCounter, $this->caption);
-
-            if ($this->renderAsDiv) {
-                $this->caption = "\t\t<div class='caption'>$this->caption</div>\n";
-            } else {
-                $this->caption = "\t\t<caption>$this->caption</caption>\n";
-            }
-        }
-
+        $tableCounter = $this->handleCaption($tableCounter);
     } // __construct
 
 
 
 
-    //----------------------------------------------------------
-    public function render()
+    public function render( $help = false)
     {
+        if ($help) {
+            return $this->helpText;
+        }
+        $this->loadData();
+
+        $this->applyHeaders();
+
+        $this->loadProcessingInstructions();
+        $this->applyProcessingToData();
+
+        $this->convertLinks();
+
         if ($this->renderAsDiv) {
             return $this->renderDiv();
         } else {
-            return $this->renderTable();
+            return $this->renderHtmlTable();
         }
     } // render
 
 
 
-    //----------------------------------------------------------
-    private function renderTable()
+
+    private function applyHeaders()
+    {
+        if (!$this->headers && !$this->headersLeft) {
+            return;
+        }
+
+        $data = &$this->data;
+        if ($this->headers) {
+            $headers = $this->extractList($this->headers, true);
+            $headers = array_pad ( $headers , sizeof($data[0]) , '' );
+
+            array_unshift($data, $headers);
+            $this->nRows = sizeof($data);
+        }
+
+        if ($this->headersLeft) {
+            $headers = $this->extractList($this->headersLeft, true);
+            array_pad($headers, $this->nRows, '');
+            for ($r = 0; $r < $this->nRows; $r++) {
+                array_unshift($data[$r], $headers[$r]);
+            }
+        }
+        return;
+    } // applyHeaders
+
+
+
+    private function renderHtmlTable()
     {
         $header = '';
-        $row = 1;
-        $tdClass = ($this->cellclass) ? " class='{$this->cellclass}'" : '';
-
-        $hdrLabels = false;
-        if ($this->headersTop) {
-            $hdrLabels = $this->headersTop;
-        } elseif (isset($this->data[0])) {
-            $hdrLabels = $this->data[0];
-        }
-
-
-        // Columns
-        if ($this->columns) {
-            $activeCols = parseNumbersetDescriptor($this->columns, 1, $this->nCols, $hdrLabels);
-        } else {
-            $activeCols = range(1,$this->nCols);
-        }
-
-
-
-        // Table Header:
-        if ($this->headersTop || $this->data) {
-            $header = <<<EOT
-
-	<thead>
-	  <tr>
-
-EOT;
-
-            foreach($activeCols as $col) {
-                $name = false;
-                if (is_array($col)) {   // it's an array if user used column definition containing column label, as in "A:Label"
-                    $name = $col[1];
-                }
-                if (!$name) {
-                    $col -= 1;
-                    if (isset($hdrLabels[$col])) {
-                        $name = $hdrLabels[$col];
-                    } else {
-                        $name = '???';
-                    }
-                }
-                $header .= "\t\t<th title='$name'>$name</th>\n";
-            }
-            $header .= "\t  </tr>\n\t</thead>\n";
-            $row++;
-        }
-
-        if (isset($activeCols[0][0])) {
-            array_walk($activeCols, function (&$e) {
-                $e = $e[0];
-            });
-        }
-
-
-        // Table Body:
+        $data = &$this->data;
+        $header = ($this->headers != false);
+        $tableClass = trim('lzy-table '.$this->tableClass);
+        $thead = '';
         $tbody = '';
-        for (; $row<=$this->nRows; $row++) {
-            $rowData = &$this->data[$row-1];
-            $rawData = null;
-            $rowStr = '';
+        $nRows = sizeof($data);
+        $nCols = sizeof($data[0]);
 
-            if (!$this->applyFilter($rowData)) {
-                continue;
-            }
-
-            foreach($activeCols as $col) {
-                $col -= 1;
-                $d = isset($rowData[$col]) ? $rowData[$col]: '';
-                $rawData .= $d;
-                $colName = $hdrLabels[$col];
-                if ($this->autoConvertLinks && (($this->autoConvertLinks == 'true') ||
-                        ((strpos($this->autoConvertLinks, $colName) !== false)))) {
-                    if (preg_match('/^(.*)\@(.*\.\w{2,6})$/', $d, $m)) {
-                        $d = "<a href='mailto:$d'>$d</a>";
-
-                    } elseif (preg_match('/^([\d\-\s\(\)]*)$/', $d, $m)) {
-                        $tel = preg_replace('/\D/', '', $d);
-                        if (strlen($tel) > 7) {
-                            $d = "<a href='tel:$tel'>$d</a>";
-                        }
+        for ($r = 0; $r < $nRows; $r++) {
+            if ($header && ($r == 0)) {
+                $thead = "\t<thead>\n\t\t<tr>\n";
+                if ($this->showRowNumbers) {
+                    $thead .= "\t\t\t<th class='lzy-table-row-nr'></th>\n";
+                }
+                for ($c = 0; $c < $nCols; $c++) {
+                    $c1 = $c + 1;
+                    $cell = $this->getDataElem($r, $c, 'th');
+                    $thead .= "\t\t\t$cell\n";
+                }
+                $thead .= "\t\t</tr>\n\t</thead>\n";
+            } else {
+                $tbody .= "\t\t<tr>\n";
+                if ($this->showRowNumbers) {
+                    if ($this->headers) {
+                        $n = $r;
+                    } else {
+                        $n = $r + 1;
                     }
+                    $tbody .= "\t\t\t<td class='lzy-table-row-nr'>$n</td>\n";
                 }
-                if (!$d) {
-                    $d = '&nbsp;';
+                for ($c = 0; $c < $nCols; $c++) {
+                    $c1 = $c + 1;
+                    $cell = $this->getDataElem($r, $c);
+                    $tbody .= "\t\t\t$cell\n";
                 }
-                $rowStr .= "\t\t<td$tdClass>$d</td>\n";
-            }
-            if ($rawData !== null) {
-                $tbody .= "\t  <tr>\n";
-                $tbody .= $rowStr;
-                $tbody .= "\t  </tr>\n";
+                $tbody .= "\t\t</tr>\n";
             }
         }
 
+        if ($this->includeCellRefs && $this->dataSource) {
+            $dataSource = " data-lzy-source='{$this->dataSource}'";
+        } else {
+            $dataSource = '';
+        }
 
         $out = <<<EOT
 
-<table id='$this->id'{$this->tableclass}>
-{$this->caption}$header
-	<tbody>
+<table id='$this->id' class='$tableClass'$dataSource{$this->tableDataAttr}>
+{$this->caption}
+$thead	<tbody>
 $tbody	</tbody>
 </table>
 
 EOT;
         return $out;
-    } // renderTable
+    } // renderHtmlTable
 
 
 
-    //----------------------------------------------------------
     private function renderDiv()
     {
-        $out = "\t";
-        $r = 1;
-        if ($this->headersTop) {
-            $cl = " class='divTableHdr'";
+        $header = '';
+        $data = &$this->data;
+        $header = true;
+        $body = '';
+        $nRows = sizeof($data);
+        $nCols = sizeof($data[0]);
+        $tableClass = 'lzy-div-table';
+        if (!$this->renderDivRows) {
+            $tableClass .= ' lzy-grid-table';
+        }
+        $tableClass = trim($tableClass);
+
+        for ($r = 0; $r < $nRows; $r++) {
+            if ($this->renderDivRows) {
+                $body .= "\t\t<div class='lzy-div-table-row'>\n";
+            }
+            for ($c = 0; $c < $nCols; $c++) {
+                $c1 = $c + 1;
+                $cell = $this->getDataElem($r, $c, 'div');
+                $body .= "\t\t\t$cell\n";
+            }
+            if ($this->renderDivRows) {
+                $body .= "\t\t</div>\n";
+            }
+        }
+
+        if ($this->includeCellRefs && $this->dataSource) {
+            $dataSource = " data-lzy-source='{$this->dataSource}'";
         } else {
-            $cl = ($this->cellclass) ? " class='divTableCell $this->cellclass'" : '';
+            $dataSource = '';
         }
 
+        $out = <<<EOT
 
-
-        if (($this->nCols == 1) && ($this->nRows == 1)) {     // special case: single 1x1 ield
-            if (isset($this->data[0][0])) {
-                $val = $this->data[0][0];
-            } else {
-                $val = '';
-            }
-            $out .= "<div id='$this->id'$cl>$val</div>";
-            return $out;
-        }
-
-
-        $colIds = [];
-        for ($c=1; $c<=$this->nCols; $c++) {           // render header row
-            $val = '';
-            $colIds[$c] = $c;
-            if (isset($this->headersTop[$c-1])) {
-                $val = trim(preg_replace('/^"(.*)"$/', "$1", $this->headersTop[$c-1]));
-                $colIds[$c] = translateToIdentifier($val);
-            }
-            $out .= "<div id='{$this->id}{$r}_{$colIds[$c]}'$cl>$val</div>";
-        }
-        $r++;
-        if ($this->nCols > 1) {
-            $out = "\t\t<div class='divTableRow'>\n\t\t$out\n\t\t</div><!-- /row -->\n";
-        } else {
-            $out = "\t\t$out\n";
-        }
-
-
-        $this->id0 = $this->id;
-        for (; $r<=$this->nRows; $r++) {               // render table body
-            $cells = '';
-            for ($c=1; $c<=$this->nCols; $c++) {
-                $this->id = "$this->id0{$r}_".$colIds[$c];
-                $cl = ($this->cellclass) ? " class='divTableCell $this->cellclass'" : " class='divTableCell'";
-                $val = '';
-                if ($this->headersLeft) {
-                    if ($c == 1) {
-                        $td = 'th';
-                        $cl = " class='divHdr'";
-                        if (isset($this->headersLeft[$c-1])) {
-                            $val = preg_replace('/^"(.*)"$/', "$1", $this->headersLeft[$c-1]);
-                        }
-                    }
-                } elseif (isset($this->data[$r][$c])) {
-                    $val = $this->data[$r][$c];
-                }
-                $cells .= "<div id='$this->id'$cl>$val</div>";
-            }
-            if ($this->nCols > 1) {
-                $out .= "\t\t<div class='divTableRow'>\n\t\t\t$cells\n\t\t</div><!-- /row -->\n";
-            } else {
-                $out .= "\t\t$cells\n";
-            }
-        }
-
-        if (($this->nRows > 1) || ($this->nCols > 1)) {
-            $out = <<<EOT
-
-	<div id='$this->id' class='divTable'>
-$out{$this->caption}
-	</div> <!-- /$this->id -->
+<div id='$this->id' class='{$this->tableClass}'$dataSource{$this->tableDataAttr}>
+{$this->caption}
+    <div class="$tableClass">
+$body
+    </div>
+</div>
 
 EOT;
-        }
-
         return $out;
     } // renderDiv
 
 
 
 
-//-------------------------------------------------------------------
-    private function preProcessData()
+    private function applyProcessingToData()
     {
-        $processings = explode(';', $this->processing);
-        foreach ($processings as $process) {
-            if (!preg_match('/col\((.+)\):(.*)/', $process, $m)) {
+        if (!$this->instructionSet) {
+            return;
+        }
+        foreach ($this->instructionSet as $type => $instructions) {
+            switch ($type) {
+                case 'addCol':
+                    $this->addCol($instructions);
+                    break;
+                case 'removeCols':
+                    $this->removeCols($instructions);
+                    break;
+                case 'modifyCol':
+                    $this->modifyCol($instructions);
+                    break;
+                case 'addRow':
+                    $this->addRow($instructions);
+                    break;
+                case 'modifyCells':
+                    $this->modifyCells($instructions);
+                    break;
+            }
+        }
+    } // applyProcessingToData
+
+
+
+
+    private function addCol($cellInstructions)
+    {
+        $data = &$this->data;
+        $this->instructions = $cellInstructions;
+
+        $newCol = $this->getArg('column');
+        $content = $this->getArg('content');
+        $header = $this->getArg('headerTop');
+        $class = $this->getArg('class');
+        $instructions = $this->getArg('instructions');
+
+        if ($class) {
+            $content .= " @@$class@@";
+            $header .= " @@$class@@";
+        }
+
+        foreach ($data as $i => $row) {
+            array_splice($data[$i], $newCol, 0, $content);
+        }
+        $this->nCols++;
+
+        if ($instructions) {
+            $this->applyinstructionsToColumn($newCol, $instructions);
+        }
+        if ($header) {
+            $data[0][$newCol] = $header;
+        }
+    } // addCol
+
+
+
+    private function addRow($cellInstructions)
+    {
+        $data = &$this->data;
+        $this->instructions = $cellInstructions;
+
+        $content = $this->getArg('content');
+        $class = $this->getArg('class');
+        $instructions = $this->getArg('instructions');
+
+        if ($class) {
+            $content .= " @@$class@@";
+        }
+
+        $instructions = $this->compileInstructions($instructions);
+        $row = [];
+        $newCellVal = '';
+        for ($c = 0; $c < sizeof($data[0]); $c++) {
+            if ($instructions) {
+                try {
+                    $newCellVal = eval( $instructions );
+                } catch (Throwable $t) {
+                    print_r($t);
+                    exit;
+                }
+
+            }
+            $row[$c] = $content.$newCellVal;
+        }
+        $data[] = $row;
+    } // addRow
+
+
+
+
+    private function removeCols($instructions)
+    {
+        $data = &$this->data;
+        $this->instructions = $instructions;
+
+        $colSpec = $this->getArg('columns');
+        $columns = parseNumbersetDescriptor($colSpec);
+        $columns = array_reverse($columns);
+
+        foreach ($data as $r => $row) {
+            foreach ($columns as $column) {
+                array_splice($row, $column-1, 1);
+            }
+            $data[$r] = $row;
+        }
+
+    } // removeCols
+
+
+
+
+    private function modifyCol($instructions)
+    {
+        $data = &$this->data;
+        $this->instructions = $instructions;
+
+        $col = $this->getArg('column');
+        $content = $this->getArg('content');
+        $header = $this->getArg('header');
+        $class = $this->getArg('class');
+        $instructions = $this->getArg('instructions');
+        $inclHead = $this->getArg('includeHead');
+
+        if ($content) {
+            $this->applyContentToColumn($col, $content, $inclHead);
+        }
+        if ($instructions) {
+            $this->applyinstructionsToColumn($col, $instructions, $inclHead);
+        }
+        if ($class) {
+            $this->applyClassToColumn($col, $class, $inclHead);
+        }
+        if ($header) {
+            $data[0][$col - 1] = $header;
+        }
+    } // modifyCol
+
+
+
+
+
+    private function modifyCells($cellInstructions)
+    {
+        $data = &$this->data;
+        $this->instructions = $cellInstructions;
+
+        $content = $this->getArg('content');
+        if (!$header = $this->getArg('header')) {
+            $header = $this->getArg('headers');
+        }
+        $class = $this->getArg('class');
+        $instructions = $this->getArg('instructions');
+        $inclHead = $this->getArg('includeHead');
+
+        for ($col = 1; $col < sizeof($data[0]); $col++) {
+            if ($content) {
+                $this->applyContentToColumn($col, $content, $inclHead);
+            }
+            if ($instructions) {
+                $this->applyinstructionsToColumn($col, $instructions, $inclHead);
+            }
+            if ($class) {
+                $this->applyClassToColumn($col, $class, $inclHead);
+            }
+            if ($header && isset($header[$col-1])) {
+                $data[0][$col-1] = trim($header[$col-1]);
+            }
+        }
+    } // modifyCells
+
+
+
+
+    private function applyClass($class)
+    {
+        if ($class) {
+            $c['class'] = $class;
+            foreach ($this->data as $r => $row) {
+                if ($this->headers && ($r == 0)) {
+                    continue;
+                }
+                $c['content'] = $this->data[$r][$col];
+                $this->data[$r][$col] = $c;
+            }
+        }
+    } // applyClass
+
+
+
+
+    private function applyClassToColumn($column, $class, $inclHead = false)
+    {
+        $c = $column - 1;
+        $data = &$this->data;
+        $nCols = sizeof($data[0]);
+        $class = $class ? " @@$class@@" : '';
+
+        foreach ($data as $r => $row) {
+            if (!$inclHead && ($r == 0)) {
                 continue;
             }
-            $algo = $m[2];
-            if (strpos($algo, 'return') === false) {
-                $algo = "return $algo;";
-            }
-            $cols = parseNumbersetDescriptor($m[1]);
-            foreach ($cols as $col) {
-                $col--;
-                for ($r = 1; $r < $this->nRows; $r++) {
-                    $val = $this->data[$r][$col];
-                    $code = str_replace('$val', $val, $algo);
-                    $this->data[$r][$col] = eval($code);
-                }
-            }
+            $data[$r][$c] .= $class;
         }
-    } // preProcessData
+    } // applyClassToColumn
 
 
 
-//-------------------------------------------------------------------
-    private function applyFilter($rowData)
+
+    private function applyContentToColumn($column, $content, $inclHead = false)
     {
-        $filter = $this->filter;
-        $filter = str_replace('&#34;', "'", $filter);
-        $filter = str_replace('\\\'', "'", $filter);
-        if (!$filter || !isset($this->data[0])) {
-            return true;
-        }
+        $c = $column - 1;
+        $data = &$this->data;
+        $nCols = sizeof($data[0]);
 
-        $headers = $this->data[0];
-        if ($filter) {				// filter, i.e. skip undesired rows
-            while (preg_match('/(.*) col\(  ([^)]+)  \)  (.*)/x', $filter, $m)) {
-                list($eaten, $before, $colName, $rest) = $m;
-                $col = alphaIndexToInt($colName, $headers)-1;
-                if (isset($rowData[$col]) && $rowData[$col]) {
-                    $val = $rowData[$col];
-                } else {
-                    $val = '';
-                }
-                $val = str_replace("'", "\\'", $val);
-                $filter = $before."'$val'".$rest;
+        foreach ($data as $r => $row) {
+            if (!$inclHead && ($r == 0)) {
+                continue;
             }
-            $filter = str_replace(["&#39;", "&apos;"], "'", $filter); // decode coded '
-            $filter = htmlspecialchars_decode($filter); // decode html spec chars
-            $filter = "return ($filter);";
-            $filter = eval($filter);
-        } else {
-            $filter = true;
+            if (is_array($content)) {
+                $data[$r][$c] = (isset($content[$r]) ? $content[$r] : '');
+
+            } else {
+                $data[$r][$c] = $content;
+            }
         }
-        return $filter;
-    } // applyFilter
+    } // applyContentToColumn
 
 
 
-//-------------------------------------------------------------------
+
+    private function applyinstructionsToColumn($column, $cellInstructions, $inclHead = false)
+    {
+        if (!$cellInstructions) {
+            return;
+        }
+        $c = $column - 1;
+        $data = &$this->data;
+        $nCols = sizeof($data[0]);
+
+        $cellInstructions = $this->compileInstructions($cellInstructions);
+
+        // iterate over rows and apply cell-instructions:
+        foreach ($data as $r => $row) {
+            if (!$inclHead && ($r == 0)) {
+                continue;
+            }
+            try {
+                $newCellVal = eval( $cellInstructions );
+            } catch (Throwable $t) {
+                print_r($t);
+                exit;
+            }
+            $data[$r][$c] .= $newCellVal;
+        }
+    } // applyinstructionsToColumn
+
+
+
+
+    private function compileInstructions($cellInstructions)
+    {
+        if (!$cellInstructions) {
+            return '';
+        }
+        $data = &$this->data;
+        $nCols = sizeof($data[0]);
+        $headers = $data[0];
+
+        if (preg_match_all('/( (?<!\\\) \[\[ [^\]]* \]\] )/x', $cellInstructions, $m)) {
+            foreach ($m[1] as $cellRef) {
+                $cellRef0 = $cellRef;
+                $cellRef = trim(str_replace(['[[', ']]'], '', $cellRef));
+                $cellVal = false;
+                $ch1 = ($cellRef != '') ? $cellRef[0] : false;
+
+                if (($ch1 == '"') || ($ch1 == "'")) {
+                    $cellRef = preg_replace('/^ [\'"]? (.*) [\'"]? $/x', "$1", $cellRef);
+                    if (($i = array_search($cellRef, $headers)) !== false) { // column name
+                        $c = $i;
+
+                    } else {
+                        $cellVal = $cellRef;    // literal content
+                    }
+                } elseif (($cellRef == '') || ($cellRef === '0')) { // this cell
+                    $c = '$c';
+
+                } elseif (($ch1 == '-') || ($ch1 == '+')) { // relative index
+                    $c = '$c + ' . $cellRef;
+
+                } elseif (($i = array_search($cellRef, $headers)) !== false) { // column name
+                    $c = $i;
+
+                } elseif (intval($cellRef)) { // numerical index
+                    $c = intval($cellRef) - 1;
+
+                } else {
+                    $cellVal = $cellRef;    // literal content
+                }
+
+                $cellVal = $cellVal ? $cellVal : "\$data[\$r][$c]";
+                $cellInstructions = str_replace($cellRef0, $cellVal, $cellInstructions);
+            }
+        }
+        $cellInstructions = preg_replace('/^ \\\ \[ \[/x', '[[', $cellInstructions);
+
+        if (strpos($cellInstructions, 'return') === false) {
+            $cellInstructions = "return $cellInstructions;";
+        }
+        return $cellInstructions;
+    } // compileInstructions
+
+
+
+
+
+    private function getOption( $name, $helpText = '', $default = false )
+    {
+        $value = isset($this->options[$name]) ? $this->options[$name] : $default;
+
+        if ($value === 'false') {
+            $value = false;
+        } elseif ($value === 'true') {
+            $value = true;
+        }
+        if ($helpText) {
+            $this->helpText[] = ['option' => $name, 'text' => $helpText];
+        }
+        return $value;
+    } // getArg
+
+
+
+
+    private function getArg( $name )
+    {
+        if (!isset($this->instructions[$name])) {
+            $this->errMsg .= "Argument '$name' missing\n";
+            return '';
+        }
+        $value = $this->instructions[$name];
+        $value = $this->extractList($value);
+        return $value;
+    } // getArg
+
+
+
     private function getData()
     {
         $this->dataFile = $this->dataSource;
@@ -415,5 +586,318 @@ EOT;
         }
         return true;
     } // getData
+
+
+
+
+    private function getDataElem($row, $col, $tag = 'td')
+    {
+        $cell = $this->data[$row][$col];
+        $col1 = $col + 1;
+        $tdClass = $this->cellClass;
+        $tdId = '';
+        $ref = '';
+        if (preg_match('/(@@([\w- ]*)@@)/', $cell, $m)) { // extract tdClass
+            $tdClass = trim($m[2]);
+            $cell = trim(str_replace($m[1], '', $cell));
+        }
+        if (preg_match('/(\<\<([^\>]*)\>\>)/', $cell, $m)) {    // extract ref
+            $ref = trim($m[2]);
+            $cell = trim(str_replace($m[1], '', $cell));
+            $ref = " data-lzy-cell='$ref'";
+        }
+        if ($this->cellIds) {
+             $tdId = " id='{$this->cellClass}_{$col}_{$row}'";
+        }
+        if ($this->cellMask && $this->cellMask[$row][$col]) {
+            $tdClass = $this->cellMaskedClass;
+        }
+        $tdClass = trim(str_replace('  ', ' ', "$tdClass lzy-col-$col1"));
+        $tdClass = " class='$tdClass'";
+        return "<$tag$tdId$tdClass$ref>$cell</$tag>";
+    } // getDataElem
+
+
+
+
+    private function handleDatatableOption($page)
+    {
+        if (strpos($this->tableClass, 'datatables') !== false) {
+            $page->addModules('DATATABLES');
+            $order = '';
+            if ($this->sort) {
+                $sortCols = csv_to_array($this->sort);
+                $headers = $this->data[0];
+                foreach ($sortCols as $sortCol) {
+                    $sortCol = alphaIndexToInt($sortCol, $headers) - 1;
+                    $order .= "[ $sortCol, 'asc' ],";
+                }
+                $order = rtrim($order, ',');
+                $order = " 'order': [$order],";
+            }
+            $page->addJq("\t\$('.datatables').DataTable({ 'language':{'search':'{{QuickSearch}}:', 'info': '_TOTAL_ {{Records}}'}, $order {$this->paging}{$this->searching} });\n");
+        }
+    } // handleDatatableOption
+
+
+
+
+    private function handleCaption($tableCounter)
+    {
+        if ($this->caption) {
+            $tableCounter++;
+            $this->tableCounter = $tableCounter;
+            if ($this->captionIndex) {
+                $this->tableCounter = $this->captionIndex;
+            }
+            if (preg_match('/(.*)\#\#=(\d+)(.*)/', $this->caption, $m)) {
+                $this->tableCounter = intval($m[2]);
+                $this->caption = $m[1] . '##' . $m[3];
+            }
+            $this->caption = str_replace('##', $this->tableCounter, $this->caption);
+
+            if ($this->renderAsDiv) {
+                $this->caption = "\t\t<div class='caption'>$this->caption</div>\n";
+            } else {
+                $this->caption = "\t\t<caption>$this->caption</caption>\n";
+            }
+        }
+        return $tableCounter;
+    } // handleCaption
+
+
+
+
+    private function loadData()
+    {
+        if ($this->dataSource) {
+            $this->dataSource = resolvePath($this->dataSource, true);
+            if (!file_exists($this->dataSource)) {
+                $this->dataSource = false;
+            }
+        } else {
+            $this->dataSource = false;
+        }
+
+        $this->data = [[]];
+        if ($this->dataSource) {
+            $ds = new DataStorage($this->dataSource);
+            $this->data = $ds->read();
+        }
+
+        $this->adjustTableSize();
+        $this->insertCellAddressAttributes();
+
+        $this->excludeColumns();
+
+        $this->nCols = sizeof($this->data[0]);
+        $this->nRows = sizeof($this->data);
+
+        $this->sortData();
+        return;
+    } // loadData
+
+
+
+
+    private function loadProcessingInstructions()
+    {
+        if ($this->process && isset($this->page->frontmatter[$this->process])) {
+            $this->instructionSet = $this->page->frontmatter[$this->process];
+        } elseif ($this->processInstructionsFile) {
+            $file = resolvePath($this->processInstructionsFile, true);
+            $this->instructionSet = getYamlFile($file);
+        } else {
+            $this->instructionSet = false;
+        }
+    } // loadProcessingInstructions
+
+
+
+
+    private function checkArguments($inx)
+    {
+        if (!$this->id) {
+            $this->id = 'table' . $inx;
+        }
+        if ($this->tableDataAttr) {
+            list($name, $value) = explode('=', $this->tableDataAttr);
+            if (strpos($name, 'data-') !== 0) {
+                $name = "data-$name";
+            }
+            $this->tableDataAttr = " $name='$value'";
+        }
+    } // checkArguments
+
+
+
+
+    private function extractList($value, $bracketsOptional = false)
+    {
+        if (!$value || is_array($value)) {
+            return $value;
+        }
+        if (is_string($value) && ($bracketsOptional && ($value[0] != '['))) {
+            $value = "[$value]";
+        }
+        if (is_string($value) && preg_match('/^(?<!\\\) \[ (?!\[) (.*) \] $/x', "$value", $m)) {
+            $value = $m[1];
+            $ch1 = $value[1];
+            if (!($ch1 == ',') && !($ch1 == '|')) {
+                $ch1  = false;
+                $comma = substr_count($value, ',');
+                $bar = substr_count($value, '|');
+            }
+            if ($ch1 || $comma || $bar) {
+                if ($ch1) {
+                    $value = explode($ch1, $value);
+                } elseif ($comma > $bar) {
+                    $value = explode(',', $value);
+                } else {
+                    $value = explode('|', $value);
+                }
+            }
+        }
+        if (is_array($value)) {
+            foreach ($value as $i => $val) {
+                $value[$i] = preg_replace('/^ \\\ \[/x', '[', $val);
+            }
+        }
+        return $value;
+    } // extractList
+
+
+
+
+    private function adjustTableSize()
+    {
+        $data = &$this->data;
+        if (!isset($data[0])) {
+            $data[0] = '';
+        }
+
+        $nCols = $this->nCols ? $this->nCols : sizeof($data[0]);
+        $nRows = $this->nRows ? $this->nRows : sizeof($data);
+
+        if ($nCols > sizeof($data[0])) { // increase size
+            for ($r=0; $r < sizeof($data); $r++) {
+                $data[$r] = array_pad([], $nCols, '');
+            }
+        } elseif ($nCols < sizeof($data[0])) { // reduce size
+            for ($r=0; $r < sizeof($data); $r++) {
+                $data[$r] = array_slice($data[$r], 0, $nCols);
+            }
+        }
+
+        if ($nRows < sizeof($data)) { // reduce size
+            $data = array_slice($data, 0, $nRows);
+
+        } elseif ($nRows > sizeof($data)) { // increase size
+            $emptyRow = array_pad([], $nCols, '');
+            $data = array_pad($data, $nRows, $emptyRow);
+        }
+    } // adjustTableSize
+
+
+
+
+    private function sortData()
+    {
+        if ($this->sort) {
+            $data = &$this->data;
+            $s = $this->sort - 1;
+            if (($s >= 0) && ($s < $this->nCols)) {
+                if ($this->sortExcludeHeader) {
+                    $row0 = array_shift($data);
+                }
+                usort($data, function ($a, $b) use ($s) {
+                    return ($a[$s] > $b[$s]);
+                });
+                if ($this->sortExcludeHeader) {
+                    array_unshift($data, $row0);
+                }
+            }
+        }
+    } // sortData
+
+
+
+
+    private function insertCellAddressAttributes()
+    {
+        if ($this->includeCellRefs) {
+            $i = $this->tableCounter;
+            for ($r = 0; $r < $this->nRows; $r++) {
+                for ($c = 0; $c < $this->nCols; $c++) {
+                    $this->data[$r][$c] .= "<<$c,$r>>";
+                }
+            }
+        }
+    } // insertCellAddressAttributes
+
+
+
+
+    private function excludeColumns()
+    {
+        if ($this->excludeColumns) {
+            $data = &$this->data;
+            $exclColumns = explode(',', $this->excludeColumns);
+            $totalExcluded = 0;
+            foreach ($exclColumns as $descr) {
+                $descr = str_replace(' ', '', $descr);
+                if (preg_match('/(.*)\-(.*)/', $descr, $m)) {
+                    $c = $m[1] ? intval($m[1]) - 1 : 0;
+                    $to = $m[2] ? intval($m[2]) : 9999;
+                    $len = $to - $c;
+                } else {
+                    $c = intval($descr) - 1;
+                    $len = 1;
+                }
+                $c -= $totalExcluded;
+                $nCols = sizeof($data[0]);
+                $c = max(0, min($c, $nCols));
+                $len = max(0, min($len, $nCols - $c));
+                $totalExcluded += $len;
+
+                foreach ($data as $r => $row) {
+                    array_splice($data[$r], $c, $len);
+                }
+            }
+        }
+    } // excludeColumns
+
+
+
+
+    private function convertLinks()
+    {
+        if ($this->autoConvertLinks) {
+            $data = &$this->data;
+            foreach ($data as $r => $row) {
+                foreach ($data[$r] as $c => $col) {
+                    $d = &$data[$r][$c];
+                    if (preg_match('/^(.*)\@(.*\.\w{2,6})$/', $d, $m)) {
+                        $d = "<a href='mailto:$d'>$d</a>";
+
+                    } elseif (preg_match('/^( \+? [\d\-\s\(\)]* )$/x', $d, $m)) {
+                        $tel = preg_replace('/[^\d\+]/', '', $d);
+                        if (strlen($tel) > 7) {
+                            $d = "<a href='tel:$tel'>$d</a>";
+                        }
+                    } elseif (preg_match('|^( (https?://)? ([\w-\.]+ \. [\w-]{1,6}))$|xi', $d, $m)) {
+                        if (!$m[2]) {
+                            $url = "https://".$m[3];
+                        } else {
+                            $url = $m[1];
+                        }
+                        if (strlen($tel) > 7) {
+                            $d = "<a href='$url'>$d</a>";
+                        }
+                    }
+                }
+            }
+        }
+    } // convertLinks
 
 } // HtmlTable
