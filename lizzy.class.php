@@ -596,6 +596,7 @@ class Lizzy
 
         $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php
         $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$pagePath;
+        $_SESSION['lizzy']['pagesFolder'] = $this->config->path_pagesPath;
         $baseUrl = $requestScheme.$_SERVER['SERVER_NAME'];
         $_SESSION['lizzy']['appRootUrl'] = $baseUrl.$appRoot; // https://domain.net/...
         $_SESSION['lizzy']['absAppRoot'] = $absAppRoot;
@@ -1049,6 +1050,11 @@ class Lizzy
 			if (is_array($hdr)) {
 			    if ($hdr) {
                     $page->merge($hdr);
+                    $frontmatter =  $this->page->get('frontmatter');
+                    if ($frontmatter) {
+                        $hdr = array_merge($hdr, $this->page->get('frontmatter'));
+                    }
+                    $this->page->set('frontmatter', $hdr);
                 }
 			} else {
                 fatalError("Error in Yaml-Code: <pre>\n$yaml\n</pre>\n", 'File: '.__FILE__.' Line: '.__LINE__);
@@ -1825,7 +1831,7 @@ EOT;
             $html = substr($html, 0, $p).createWarning($note).substr($html,$p);
         }
         return $html;
-    }
+    } // postprocess
 
 
 
@@ -1833,7 +1839,7 @@ EOT;
     public function getEditingMode()
     {
         return $this->editingMode;
-    }
+    } // getEditingMode
 
 
 
@@ -1858,7 +1864,11 @@ EOT;
             }
         }
         date_default_timezone_set($systemTimeZone);
-    }
+        setStaticVariable('systemTimeZone', $systemTimeZone);
+    } // setLocale
+
+
+
 
     private function renderLoginForm(): void
     {
