@@ -40,17 +40,21 @@ getfile
 
 */
 
-date_default_timezone_set('CET');		// modify as appropriate
-define('SYSTEM_PATH', 		'');		        // same directory
-define('DATA_PATH', 		'../data/');		// modify if necessary
-define('SERVICE_LOG', 		'../.#logs/log.txt');	// modify if necessary
-define('ERROR_LOG', 		'../.#logs/errlog.txt');	// modify if necessary
-define('LOCK_TIMEOUT', 		120);	// max time till field is automatically unlocked
-define('MAX_URL_ARG_SIZE', 255);
-define('MKDIR_MASK',            0700); // remember to modify _lizzy/_install/install.sh as well
+define('SYSTEM_PATH', 		'');		                            // same directory
+define('PATH_TO_APP_ROOT', 	'../');		                            // root folder of web app
+define('DATA_PATH', 		PATH_TO_APP_ROOT.'data/');		        // must correspond to lizzy app
+define('CACHE_PATH',        PATH_TO_APP_ROOT.'.#cache/');           // required by Ticketing class
+define('SERVICE_LOG',       PATH_TO_APP_ROOT.'.#logs/log.txt');	    //
+define('ERROR_LOG',         PATH_TO_APP_ROOT.'.#logs/errlog.txt');	//
+define('LOCK_TIMEOUT', 		120);	                                // max time till field is automatically unlocked
+define('MAX_URL_ARG_SIZE',  255);
+define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
+define('RECYCLE_BIN_PATH',  '~page/.#recycleBin/');
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
 
 require_once 'vendor/autoload.php';
 require_once 'datastorage.class.php';
+require_once 'ticketing.class.php';
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -68,6 +72,10 @@ class AjaxServer
             $this->mylog("ERROR in __construct(): failed to start session");
         }
         $this->clear_duplicate_cookies();
+
+        $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'CET';
+        date_default_timezone_set($timezone);
+
 
         if (!isset($_SESSION['lizzy']['userAgent'])) {
             $this->mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
@@ -87,10 +95,7 @@ class AjaxServer
         }
         $pagePath = isset($_REQUEST['pg']) ? $_REQUEST['pg'] : $_SESSION['lizzy']['pagePath'];
 
-        if (isset($_SESSION['lizzy']['db'][$pagePath]) && $_SESSION['lizzy']['db'][$pagePath]) {
-            $dbFile = $this->dbFile = '../' . $_SESSION['lizzy']['db'][$pagePath];
-            $this->db = new DataStorage($dbFile, $this->sessionId, true);
-        }
+        $this->db = false;
         $this->user = '';
         if (isset($_SESSION['lizzy']['userDisplayName']) && $_SESSION['lizzy']['userDisplayName']) {    // get user name for logging
             $this->user = '['.$_SESSION['lizzy']['userDisplayName'].']';
@@ -108,6 +113,7 @@ class AjaxServer
 		$this->userAgent = isset($_SESSION['lizzy']['userAgent']) ? $_SESSION['lizzy']['userAgent'] : $_SERVER["HTTP_USER_AGENT"];
 		$this->isLocalhost = (($this->remoteAddress == 'localhost') || (strpos($this->remoteAddress, '192.') === 0) || ($this->remoteAddress == '::1'));
 		$this->handleUrlArguments();
+		$this->config = [];
 	} // __construct
 
 
@@ -115,80 +121,13 @@ class AjaxServer
 	//---------------------------------------------------------------------------
 	private function handleUrlArguments()
 	{
-		if ($upd = $this->get_request_data('upd')) {		// update request (long-polling)
-			$this->update($upd);
-			exit;
-		}
+        $this->handleEditableRequests();    // Editable: conn, get, reset, lock, unlock, save
 
-		if ($id = $this->get_request_data('get')) {		// get value(s)
-			$this->get($id);
-			exit;
-		}
+        $this->handleGenericRequests();     // log, info
 
-        if (isset($_GET['conn'])) {	    // conn  initial interaction with client, defines used ids
-			$this->initConnection();
-			exit;
-		}
+        $this->handleFileRequests();        // Files: newfile, renamefile, getfile
 
-		if (isset($_GET['reset'])) {					// reset all locks
-			$this->reset();
-			exit;
-		}
-
-		if ($id = $this->get_request_data(LIZZY_LOCK)) {	// lock an editable field
-			$this->lock($id);
-			exit;
-		}
-
-		if ($id = $this->get_request_data('unlock')) {	// unlock an editable field
-			$this->unlock($id);
-			exit;
-		}
-
-		if ($id = $this->get_request_data('save')) {	// save data & unlock
-			$this->save($id);
-			exit;
-		}
-
-		if (isset($_GET['log'])) {	// remote log, write to backend's log
-            $msg = $this->get_request_data('text');
-			$this->mylog("Client: $msg");
-			exit;
-		}
-		if ($this->get_request_data('info') !== null) {	// respond with info-msg
-			$this->info();
-		}
-
-		if ($this->get_request_data('end') !== null) {	// end update
-			$this->endPolling();
-		}
-
-		if ($this->get_request_data('newfile') !== null) {    // new file
-            $this->createNewFile();
-        }
-
-		if ($this->get_request_data('renamefile') !== null) {    // new file
-            $this->renameFile();
-        }
-
-		if ($this->get_request_data('getfile') !== null) {	// send md-file
-			$md = '';
-			if (isset($_POST['lzy_filename'])) {
-			    $filename = $_POST['lzy_filename'];
-                $approot = trunkPath($_SERVER['SCRIPT_FILENAME']);
-                if ($filename == 'sitemap') {
-			        $filename = $approot . 'config/sitemap.txt';
-                } else {
-                    $filename = $approot . $filename;
-                }
-                if (file_exists($filename)) {
-                    $md = file_get_contents($filename);
-                }
-            }
-			exit($md);
-		}
-
-	} // handleUrlArguments
+    } // handleUrlArguments
 
 
 
@@ -216,7 +155,13 @@ EOT;
 	//---------------------------------------------------------------------------
 	private function initConnection() {
         $json = $this->get_request_data('ids');
-        $ids = json_decode($json);
+        try {
+            $ids = json_decode($json);
+        } catch (Exception $e) {
+            $this->mylog("*** Client connection failed: ". $e->getMessage());
+            exit( 'failed#conn' );
+        }
+
 
         if (!session_start()) {
             $this->mylog("ERROR in initConnection(): failed to start session");
@@ -227,39 +172,18 @@ EOT;
         }
 
         $pagePath = $_SESSION['lizzy']['pagePath'];
-        $pathToPage = $_SESSION['lizzy']['pagesFolder'].$pagePath;
-
-        $this->mylog("=======");
         $this->mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent} (pagePath: $pagePath)");
-
-        if (isset($_SESSION['lizzy']['db'][$pagePath]) && $_SESSION['lizzy']['db'][$pagePath]) {   // explicit data path provided
-            $dbFile = '../'.$_SESSION['lizzy']['db'][$pagePath];
-
-        } else {                                            // no data path, use default: local to page
-            $dbFile = "../{$pathToPage}editable.yaml";
-            $_SESSION['lizzy']['db'][$pagePath] = "{$pathToPage}editable.yaml";
-        }
 
 		$_SESSION['lizzy']['lastSentData'] = '';
 		session_write_close();
 
-        $this->mylog("Database File: $dbFile");
-        $this->db = new DataStorage($dbFile, $this->sessionId, true);
-
-        $this->db->initRecs($ids);
+        if ($ids) {
+            $this->openDB();
+            $this->db->initRecs($ids);
+        }
 
 		exit('ok#conn');
 	} // initConnection
-
-
-
-    private function endPolling()
-    {
-        $this->terminatePolling = true;
-        $this->mylog("termination initiated");
-        exit('#termination initiated');
-    }
-
 
 
 
@@ -269,26 +193,25 @@ EOT;
 			$this->mylog("lock: Error -> id not defined");
 			exit;
 		}
-		if (!isset($this->db) || !$this->db) {
-            $this->mylog("lock: Error: need to initialize connection first");
-			exit('Error: need to initialize connection first');
-		}
 
-		// Safety measure: datasource stated by client must correspond to session data
-        // otherwise, either client got out of sync or somebody tried some manipulation
-        $dataSrc = $this->get_request_data('ds');
-		$dbFile = substr($this->dbFile, 3);
-		if ($dbFile != $dataSrc) {
-		    unset($_SESSION['lizzy']);
-		    exit('restart');
+        if (!$this->openDB( true )) {
+            exit('failed#lock/DB');
         }
 
-		if (!$this->db->lock($id)) {
+        $ref = $this->getRef();
+        if ($ref) {
+            $res = $this->db->lock($ref);
+        } else {
+            $res = $this->db->lock($id);
+        }
+
+        if (!$res) {
 			$this->mylog("lock: $id -> failed");
-			exit('failed');
+			exit('failed#lock');
 
 		} else {
             $id0 = preg_replace('/_\d+-\d+$/', '', $id);
+
             $val = $this->db->read($id);
 		    $th = $this->db->read("_meta_/$id0/lzy-editable-freeze-after");
 		    if ($val && $th) {
@@ -299,7 +222,8 @@ EOT;
                 }
             }
 
-		    $json = json_encode(['res' => 'ok', 'val' => $val]);
+            exit($this->prepareClientData($id).'#lock:ok');
+            $json = json_encode(['res' => 'ok', 'val' => $val]);
 			$this->mylog("lock: $id -> $json");
 			exit($json);
 		}
@@ -314,11 +238,28 @@ EOT;
 			$this->mylog("unlock: Error -> id not defined");
 			exit;
 		}
-		if ($this->db->unlock($id)) {
+        if (!$this->openDB( true )) {
+            exit('failed#unlock');
+        }
+        $ref = $this->get_request_data('ref');
+        if ($ref) {
+            $res = $this->db->unlock($ref);
+        } else {
+            $res = $this->db->unlock($id);
+        }
+        if ($res) {
 			$this->mylog("unlock: $id -> ok");
             exit('ok');
         }
 	} // unlock
+
+
+
+
+	//---------------------------------------------------------------------------
+	private function update($upd) {
+		exit($this->prepareClientData($id).'#update');
+	} // get
 
 
 
@@ -338,7 +279,15 @@ EOT;
 			exit;
 		}
 		$text = $this->get_request_data('text');
-		$this->mylog("save: $id -> [$text]");
+		if ($text == 'undefined') {
+            exit('failed#save');
+        }
+
+        $ref = $this->getRef();
+        $this->mylog("save: $id -> [$text]");
+        if (!$this->openDB( true )) {
+            exit('failed#save');
+        }
 		$lzyEditableFreezeAfter = $this->db->read('lzy-editable-freeze-after');
 		if ($lzyEditableFreezeAfter) {
 		    $freezeBefore = time() - $lzyEditableFreezeAfter;
@@ -348,7 +297,13 @@ EOT;
                 exit('restart');
             }
         }
-		if (!$this->db->write($id, $text)) {
+        if ($ref) {
+            $res = $this->db->write($ref, $text);
+        } else {
+            $res = $this->db->write($id, $text);
+        }
+
+        if (!$res) {
             $this->mylog("### save failed!: $id -> [$text]");
         }
 		$this->db->unlock(true); // unlock all owner's locks
@@ -361,7 +316,10 @@ EOT;
 
 	//---------------------------------------------------------------------------
 	private function reset() {
-		if ($this->db) {
+        if (!$this->openDB( true )) {
+            exit('failed#lock/DB');
+        }
+        if ($this->db) {
 			$this->db->unlock('*');
 		}
 		session_start();
@@ -379,7 +337,10 @@ EOT;
 	//------------------------------------------------------------
 	private function prepareClientData($key = false)
 	{
-	    $data = $this->db->read('*');
+        if (!$this->openDB()) {
+            exit('failed#getData');
+        }
+        $data = $this->db->read('*');
 		if (!$data) {
 			$data = [];
 		} elseif ($key && isset($data[$key])) {
@@ -391,7 +352,48 @@ EOT;
 
 
 
-	//------------------------------------------------------------
+    //---------------------------------------------------------------------------
+    private function openDB( $lockDB = false) {
+	    if ($this->db) {
+	        return true;    // already opened
+        }
+        $this->dbFile = false;
+	    $useRecycleBin = false;
+        $dataRef = $this->get_request_data('ds');
+        if ($dataRef &&preg_match('/^[A-Z0-9]{4,20}$/', $dataRef)) {     // dataRef (=ticket hash) available
+            require_once SYSTEM_PATH . 'ticketing.class.php';
+            $ticketing = new Ticketing();
+            $ticket = $ticketing->consumeTicket($dataRef);
+            if ($ticket) {      // corresponding ticket found
+                $this->dbFile = PATH_TO_APP_ROOT . $ticket['dataSrc'];
+                $this->config = $ticket;
+                $useRecycleBin = $ticket['useRecycleBin'];
+            }
+        }
+
+        // if primary method didn't work, try default DB in page folder
+        $pagePath = isset($_SESSION["lizzy"]["pathToPage"]) ? $_SESSION["lizzy"]["pathToPage"] : '';
+        if (!$this->dbFile && $pagePath) {
+            $this->dbFile = PATH_TO_APP_ROOT . $pagePath . DEFAULT_EDITABLE_DATA_FILE;
+        }
+
+        if ($this->dbFile) {
+            $this->db = new DataStorage([
+                'dbFile' => $this->dbFile,
+                'sid' => $this->sessionId,
+                'lockDB' => $lockDB,
+                'useRecycleBin' => $useRecycleBin
+            ]);
+            return true;
+        }
+
+        return false;
+    } // openDB
+
+
+
+
+//------------------------------------------------------------
 	private function get_request_data($varName) {
 		global $argv;
 		$out = null;
@@ -411,6 +413,16 @@ EOT;
 		}
 		return $out;
 	} // get_request_data
+
+
+
+
+    //    private function endPolling()
+    //    {
+    //        $this->terminatePolling = true;
+    //        $this->mylog("termination initiated");
+    //        exit('#termination initiated');
+    //    }
 
 
 
@@ -489,7 +501,6 @@ EOT;
 
 
 
-	//---------------------------------------------------------------------------
 	function safeStr($str) {
 		if (preg_match('/^\s*$/', $str)) {
 			return '';
@@ -528,6 +539,116 @@ EOT;
         }
         exit('Failed');
     } // renameFile
+
+
+
+
+    private function handleEditableRequests()
+    {
+        // Possible enhancement: continuous updating of editable fields:
+        //		if ($upd = $this->get_request_data('upd')) {		// update request (long-polling)
+        //			$this->update($upd);
+        //			exit;
+        //		}
+        //        if ($this->get_request_data('end') !== null) {	    // end update
+        //            $this->endPolling();
+        //        }
+
+
+        if (isset($_GET['conn'])) {                                // conn  initial interaction with client, defines used ids
+            $this->initConnection();
+            exit;
+        }
+
+        if ($id = $this->get_request_data('get')) {     // get value(s)
+            $this->get($id);
+            exit;
+        }
+
+        if (isset($_GET['reset'])) {                            // reset all locks
+            $this->reset();
+            exit;
+        }
+
+        if ($id = $this->get_request_data('lock')) {    // lock an editable field
+            $this->lock($id);
+            exit;
+        }
+
+        if ($id = $this->get_request_data('unlock')) {    // unlock an editable field
+            $this->unlock($id);
+            exit;
+        }
+
+        if ($id = $this->get_request_data('save')) {    // save data & unlock
+            $this->save($id);
+            exit;
+        }
+    } // handleEditableRequests
+
+
+
+
+    private function handleFileRequests()
+    {
+        if ($this->get_request_data('newfile') !== null) {       // create new file
+            $this->createNewFile();
+        }
+
+        if ($this->get_request_data('renamefile') !== null) {    // rename file
+            $this->renameFile();
+        }
+
+        if ($this->get_request_data('getfile') !== null) {          // send md-file
+            $md = '';
+            if (isset($_POST['lzy_filename'])) {
+                $filename = $_POST['lzy_filename'];
+                $approot = trunkPath($_SERVER['SCRIPT_FILENAME']);
+                if ($filename == 'sitemap') {
+                    $filename = $approot . 'config/sitemap.txt';
+                } else {
+                    $filename = $approot . $filename;
+                }
+                if (file_exists($filename)) {
+                    $md = file_get_contents($filename);
+                }
+            }
+            exit($md);
+        }
+    } // handleFileRequests
+
+
+
+
+    private function handleGenericRequests()
+    {
+        if (isset($_GET['log'])) {                                // remote log, write to backend's log
+            $msg = $this->get_request_data('text');
+            $this->mylog("Client: $msg");
+            exit;
+        }
+        if ($this->get_request_data('info') !== null) {    // respond with info-msg
+            $this->info();
+        }
+    } // handleGenericRequests
+
+
+
+
+    private function getRef()
+    {
+        $ref = $this->get_request_data('ref');
+        if ($ref) {
+            if (isset($this->config["protectedCells"])) {
+                list($c, $r) = $this->db->array2DKey($ref);
+                if (isset($this->config["protectedCells"][$r][$c]) && $this->config["protectedCells"][$r][$c]) {
+                    $this->mylog("attempted access to protected cell: $ref -> failed");
+                    exit('protected#lock');
+                }
+            }
+        }
+        return $ref;
+    } // getRef
 
 } // EditingService
 
