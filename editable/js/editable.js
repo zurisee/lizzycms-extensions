@@ -2,7 +2,6 @@
  *  Editable.js
 */
 
-
 var editableObj = new Object();
 editableObj.backend = systemPath+'_ajax_server.php';
 editableObj.doSave = false;
@@ -10,7 +9,9 @@ editableObj.lastText = {};
 editableObj.editing = false;
 editableObj.keyTimeout = false;
 editableObj.fieldIDs = [];
+editableObj.dataRef = [];
 
+var instanceCounter = 0;
 
 
 (function ( $ ) {
@@ -19,6 +20,7 @@ editableObj.fieldIDs = [];
         if ( this.length == 0 ) {
             return;
         }
+        instanceCounter++;
         var invokingClass = $(this).attr('class').replace(/\s.*/, '');
         if (typeof invokingClass == 'undefined') {
             invokingClass = 'lzy-editable';
@@ -38,6 +40,7 @@ editableObj.fieldIDs = [];
 function initializeEditableField(invokingClass)
 {
     var edObj = editableObj;
+    // edObj.editModeTimeout = 15000;  // automatically terminate editing after 20s of no key activity
     edObj.editModeTimeout = 60000;  // automatically terminate editing after 20s of no key activity
     edObj.invokingClass = invokingClass;
     if ($('body').hasClass('touch')) {
@@ -67,6 +70,10 @@ function initializeConnection()
     $('.lzy-editable input').addClass('lzy-wait');
     this.ajaxSend(edObj, 'conn', '', json, function(json) {
         mylog('Server connection established: ' + json);
+        if (json.match(/^</)) {
+            console.log('response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
+            return;
+        }
         if (json.match(/failed/)) {
             mylog('Session aborted');
             $('main').html("<h1>Error connecting to server.</h1><p>Please try again with another browser or another computer.</p>");
@@ -107,11 +114,20 @@ function initEditableFields()
         }
 
         if (typeof id == 'undefined') {
-            id =  edObj.invokingClass + '_field' + (parseInt(inx) + 1);
+            id =  edObj.invokingClass + '-field_' + (parseInt(inx) + 1);
             $elem.attr('id', id);
         }
 
         edObj.fieldIDs.push(id); // keep track of fieldIDs
+
+        var dataRef = $elem.attr('data-lzy-editable');
+        if (typeof dataRef === 'undefined') {
+            dataRef = $elem.closest('[data-lzy-editable]').attr('data-lzy-editable');
+            if (typeof dataRef === 'undefined') {
+                dataRef = '';
+            }
+        }
+        edObj.dataRef[id] = dataRef;
 
         var origText = $elem.text();
         $elem.text('');
@@ -121,7 +137,7 @@ function initEditableFields()
         if (showButton) {
             buttons = "<button class='lzy-editable-submit-button lzy-button'>"+okSymbol+"<span class='invisible'> Save</span></button>";
         }
-        if (typeof label == 'undefined') {
+        if (typeof label === 'undefined') {
             $elem.html('<input id="'+_id+'" aria-live="polite" aria-relevant="all" />'+buttons);
         } else {
             $elem.html('<label for="'+_id+'" class="invisible">'+label+'</label><input id="'+_id+'" aria-live="polite" aria-relevant="all" />'+buttons);
@@ -135,7 +151,7 @@ function initEditableFields()
     // activate 'loading' indication
     // $editable.addClass('lzy-wait');
 
-    $edInput.focus(function(e) {                // on focus()
+    $edInput.focus(function(e) {        // on focus()
         onFocus(edObj, this);
     });
 
@@ -162,14 +178,16 @@ function initEditableFields()
         onOkClick(edObj, this);
     });
 
+    updateFieldContent(edObj);
+
 } // initEditableFields()
 
 
 
 
 //--------------------------------------------------------------
-function initEdit(edObj, id, dataSrc) {
-    if (lockField(edObj, id, dataSrc)) {
+function initEdit(edObj, id) {
+    if (lockField(edObj, id)) {
         showButton(id);
     }
 } // initEdit
@@ -177,13 +195,18 @@ function initEdit(edObj, id, dataSrc) {
 
 
 //--------------------------------------------------------------
-function lockField(edObj, id, dataSrc)
+function lockField(edObj, id)
 {
     mylog( 'lockField: '+id );
-    var url = edObj.backend + "?lock=" + id + "&ds=" + dataSrc +'&pg='+pagePath;
+    // var url = edObj.backend + "?lock=" + id + "&ds=" + dataSrc +'&pg='+pagePath;
+    var url = edObj.backend + "?lock=" + id + "&ds=" + edObj.dataRef[id];
     var $editableField = $('#' + id);
     var $inputField = $('#_' + id);
     edObj.lastText[id] = $inputField.val();
+    var dataIndex = $editableField.attr('data-lzy-cell');
+    if (typeof dataIndex !== 'undefined') {
+        url = url + '&ref=' + dataIndex;
+    }
 
     $inputField.addClass('lzy-editable-active').addClass('lzy-wait');
 
@@ -191,32 +214,44 @@ function lockField(edObj, id, dataSrc)
         if (!json) {
             return;
         }
-        if (json == 'restart') {
+        if (json.match(/^</)) { // syntax error on host
+            console.log('response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
+            return;
+        }
+        if (json.match(/^restart/)) {      // reload request from host
             lzyReload();
 
-        } else if (json == 'failed') {      // field already locked
+        } else if (json.match(/^failed/)) {      // field already locked
             $inputField.val(edObj.lastText[id]).blur().addClass('lzy-locked');
-            alert(lzy_editable_msg);
+            // $inputField.parent().addClass('lzy-locked');
+            // alert(lzy_editable_msg); //???
             mylog( 'field was locked: '+id );
+            setTimeout(function() {$inputField.removeClass('lzy-locked'); }, 60000);
             return false;
 
-        } else if (json == 'frozen') {      // field already locked
+        } else if (json.match(/^protected/)) {      // field is protected
+            $inputField.val(edObj.lastText[id]).blur().addClass('lzy-locked');
+            lzyReload();
+            return false;
+
+        } else if (json.match(/^frozen/)) {      // field already locked
             $editableField.addClass('lzy-editable-frozen').text(edObj.lastText[id]);
             mylog( 'field has been frozen: '+id );
             return false;
 
         } else {
-            json = json.replace(/(\{.*\}).*/, "$1");    // remove trailing #comment
-            var data = JSON.parse(json);
-            $inputField.removeClass('lzy-wait').removeClass('lzy-locked');
-            if (data.res == 'ok') {
-                $inputField.val(data.val);
-                edObj.lastText[id] = data.val;
-
-                if (edObj.keyTimeout) {
-                    clearTimeout(edObj.keyTimeout);
+            if (json.match(/^</)) {
+                console.log('response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
+                return;
+            } else {
+                $inputField.removeClass('lzy-wait').removeClass('lzy-locked');
+                if (json.match(/\#lock:ok/)) {
+                    if (edObj.keyTimeout) {
+                        clearTimeout(edObj.keyTimeout);
+                    }
+                    edObj.keyTimeout = setTimeout(timeoutAction, edObj.editModeTimeout);
+                    updateUi(edObj, json);
                 }
-                edObj.keyTimeout = setTimeout(timeoutAction, edObj.editModeTimeout);
             }
         }
     });
@@ -263,7 +298,6 @@ function endEdit(edObj, _id, sendToServer)
     edObj.doSave = false;
 
     hideButton(_id);
-
 } // endEdit
 
 
@@ -309,28 +343,51 @@ function hideButton(_id)
 
 
 //--------------------------------------------------------------
-function ajaxSend(edObj, cmd, id, data, onSuccess, synchronous)
+function updateFieldContent(edObj)
+{
+    this.ajaxSend(edObj, 'get', '*', '', false);
+} // updateFieldContent
+
+
+
+//--------------------------------------------------------------
+function ajaxSend(edObj, cmd, id, data, onSuccess)
 {
     if (id) {
         $('#_' + id).addClass('lzy-wait');
     }
+    if (id === '*') {
+        var $dataRefs = $('[data-lzy-editable]');
+        var dataRef = '&ds=' + $dataRefs.attr('data-lzy-editable');
+        // if ($dataRefs.length == 1) {
+        //     var dataRef = "&ds=" + $dataRefs.attr('data-lzy-editable');
+        // }
+    } else if (id) {
+        var dataRef = '&ds=' + edObj.dataRef[id];
+        var dataIndex = $('#' + id).attr('data-lzy-cell');
+        if (typeof dataIndex !== 'undefined') {
+            dataRef = dataRef + '&ref=' + dataIndex;
+        }
+    } else {
+        var dataRef = '';
+    }
+
     if (cmd == 'conn') {
         data = encodeURIComponent(data);
         var method = 'POST';
-        var arg = 'conn'+'&pg='+pagePath;
+        // var arg = 'conn'+'&pg='+pagePath;
+        var arg = 'conn' + dataRef;
         var postData = 'ids='+data;
 
     } else if (cmd == 'save') {
         data = encodeURIComponent(data);
         var method = 'POST';
-        // var arg = 'save='+id;
-        var arg = 'save='+id+'&pg='+pagePath;
+        var arg = 'save=' + id + dataRef;
         var postData = 'text='+data;
 
     } else {
         var method = 'GET';
-        // var arg = cmd+'='+id;
-        var arg = cmd+'='+id+'&pg='+pagePath;
+        var arg = cmd+'=' + id + dataRef;
         var postData = '';
     }
     $.ajax({
@@ -339,6 +396,10 @@ function ajaxSend(edObj, cmd, id, data, onSuccess, synchronous)
         data: postData,
         cache: false,
         success: function (json) {
+            if (json.match(/^</)) {
+                console.log('response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
+                return;
+            }
             if ((json != 'failed') && onSuccess) {
                 onSuccess(json);
             }
@@ -380,9 +441,19 @@ function updateUi(edObj, json)
                 }
             }
         }
-    } else if (json == 'restart') {
+    } else if (json && json.match(/^\[/)) { // it's an array
+        json = json.replace(/(.*)\#.*/, "$1");    // remove trailing #comment
+        var data = JSON.parse(json);
+        $('[data-lzy-cell]').each(function() {
+            var ref = $( this ).attr('data-lzy-cell');
+            var xy = ref.split(',');
+            var value = data[xy[1]][xy[0]];
+            $( 'input', this ).val(value);
+        });
+
+    } else if (json.match(/^restart/)) {
         lzyReload();
-    } else if (json == 'frozen') {
+    } else if (json.match(/^frozen/)) {
         var editingField = $('.lzy-editable-active').attr('id');
         $('#' + editingField).addClass('lzy-editable-frozen');
     }
@@ -393,8 +464,6 @@ function updateUi(edObj, json)
 
 
 
-
-//===================================================
 
 //--------------------------------------------------------------
 function setupKeyHandler()
@@ -438,8 +507,7 @@ function setupKeyHandler()
 function onFocus(edObj, that)
 {
     var id = $(that).parent().attr('id');
-    var dataSrc = $('#' + id).attr('data-storage-path');
-    initEdit(edObj, id, dataSrc);
+    initEdit(edObj, id);
 }
 
 
