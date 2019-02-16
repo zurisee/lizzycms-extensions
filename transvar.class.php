@@ -80,6 +80,7 @@ class Transvar
 	//....................................................
 	private function doTranslate(&$str, $iterationDepth = 0)
 	{
+        $this->page->set('frontmatter', $this->lzy->page->get('frontmatter'));
         if ($iterationDepth >= MAX_TRANSVAR_ITERATION_DEPTH) {
             fatalError("Max. iteration depth exeeded.<br>Most likely cause: a recursive invokation of a macro or variable.");
         }
@@ -258,7 +259,7 @@ class Transvar
                 $this->macroArgs[$macroName][$name] = $out; // prepare named option as well
             }
         }
-        if ($removeNl) {
+        if ($removeNl && $out) {
             $out = str_replace('↵', '', $out);
         }
 
