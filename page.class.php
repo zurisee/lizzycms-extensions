@@ -108,6 +108,12 @@ class Page
                         $this->$key .= ',' . $value;
                     } elseif (strpos(',jq,js,css,', ",$key,") !== false) {
                         $this->$key .= "\t\t\t$value\n";
+                    } elseif (is_array($value)) {
+                        if (is_array($this->$key)) {
+                            $this->$key = array_merge($this->$key, $value);
+                        } else {
+                            $this->$key = $value;
+                        }
                     } else {
                         $this->$key .= $value;
                     }
