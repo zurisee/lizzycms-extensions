@@ -140,6 +140,8 @@ function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
             tooltipPos = 't';
         } else if ($tooltipShowAt.hasClass('lzy-tooltip-bottom')) {
             tooltipPos = 'b';
+        } else {
+            tooltipPos = 'r>l>t>b';
         }
     }
 
