@@ -39,7 +39,7 @@ $this->addMacro($macroName, function () {
 			$str .= $words[rand(1, $nWords - 1 )].' ';
 		}
 		$str = preg_replace('/\W$/', '', trim($str));
-		if ($dot != 'false') {
+		if ($dot) {
 			$str .= '.';
 		}
 		$str = strtoupper($str[0]).substr($str, 1);

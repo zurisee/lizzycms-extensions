@@ -617,7 +617,8 @@ class Transvar
             $phpFile = $this->config->path_userCodePath.basename($name,'.php').'.php';
             if (file_exists($phpFile)) {
                 $page = &$this->page;
-                if ($execType == 'true') {
+                if (($execType === 'true') || ($execType === true)) {
+//                if ($execType == 'true') {
                     $res =  require($phpFile);
                     if (is_array($res)) {
                         foreach ($res as $key => $value) {

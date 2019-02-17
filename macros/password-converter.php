@@ -6,7 +6,7 @@ $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');
-    $overlay = $this->getArg($macroName, 'overlay', 'If true, the converter tool will be presented in an overlay.', 'true');
+    $overlay = $this->getArg($macroName, 'overlay', 'If true, the converter tool will be presented in an overlay.', true);
 
     $html = <<<EOT
 <h1>{{ Convert Password }}</h1>

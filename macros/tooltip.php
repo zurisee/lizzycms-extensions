@@ -15,13 +15,13 @@ $this->addMacro($macroName, function () {
     $contentFrom = $this->getArg($macroName, 'contentFrom', 'CSS-selector of the text that will be displayed in the tooptip. E.g. "#tt-content"', '');
     $id = $this->getArg($macroName, 'id', 'ID to be applied to the tooltip anchor.', '');
     $class = $this->getArg($macroName, 'class', 'Class(es) to be applied to the tooltip anchor.', '');
-    $icon = $this->getArg($macroName, 'icon', '(path-to-icon-file) Alternative to "text" argument.', 'false');
+    $icon = $this->getArg($macroName, 'icon', '(path-to-icon-file) Alternative to "text" argument.', false);
     $iconClass = $this->getArg($macroName, 'iconClass', 'Class(es) to be applied to the tooltip icon.', '');
     $position = $this->getArg($macroName, 'position', '[top,right,bottom,left,vertical,horizontal] Indicates where the tooltip shall be displayed.'.
         ' "vertical" means above or below depending where there is sufficient space. "horizontal" likewise.', '');
     $arrow = $this->getArg($macroName, 'arrow', 'If true, a small triangle will be displayed pointing to the anchor.', '');
     $arrowSize = $this->getArg($macroName, 'arrowSize', 'Size of the arrow.', '');
-    $sticky = $this->getArg($macroName, 'sticky', 'If true, tooltip will open on mouseover and remain open till a click outside occurs.', 'false');
+    $sticky = $this->getArg($macroName, 'sticky', 'If true, tooltip will open on mouseover and remain open till a click outside occurs.', false);
     $catchFocus = $this->getArg($macroName, 'catchFocus', '', '');
 
     $this->optionAddNoComment = true;
@@ -51,7 +51,6 @@ $this->addMacro($macroName, function () {
     }
 
     if ($sticky) {
-//    if ($sticky !== 'false') {
         $class .= " lzy-tooltip-sticky";
     }
 
@@ -63,7 +62,7 @@ $this->addMacro($macroName, function () {
         $id = " id='lzy-tooltip-anchor$inx'";
     }
 
-    if ($icon != 'false') {
+    if ($icon) {
         if (!$icon || ($icon == 'default')) {
             $icon = '~sys/rsc/info.svg';
         }

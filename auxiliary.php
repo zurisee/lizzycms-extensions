@@ -936,7 +936,7 @@ function getUrlArg($tag, $stringMode = false, $unset = false)
 
         } else {    // boolean mode
             $arg = $_GET[$tag];
-            $out = (($arg != 'false') && ($arg != '0') && ($arg != 'off') && ($arg != 'no'));
+            $out = (($arg !== 'false') && ($arg != '0') && ($arg != 'off') && ($arg != 'no'));
         }
 		if ($unset) {
 			unset($_GET[$tag]);
