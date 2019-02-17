@@ -33,8 +33,6 @@ $this->addMacro($macroName, function () {
     }
 
     $args = $this->getArgsArray($macroName);
-//    $class = &$args->class;
-//    $args['src'] = $src;
 
     if (!$id) {
         $id = "img$inx";
@@ -55,7 +53,6 @@ $this->addMacro($macroName, function () {
     }
 
     $impTag = new ImageTag($this, $args);
-//    $impTag = new ImageTag($this, $src, $alt, $class, $size, $srcset, $lateImgLoading);
     $str = $impTag->render($id);
     $class = ''; //???
 
