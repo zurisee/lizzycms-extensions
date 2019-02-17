@@ -6,19 +6,17 @@
 class ImageTag
 {
 
-    public function __construct($obj, $src, $alt, $class, $size, $srcset, $lateImgLoading) {
-        list($feature_image_default_max_width) = parseDimString($obj->config->feature_ImgDefaultMaxDim, $src);
+    public function __construct($obj, $args) {
+        list($feature_image_default_max_width) = parseDimString($obj->config->feature_ImgDefaultMaxDim, $args['src']);
         $this->feature_SrcsetDefaultStepSize = $obj->config->feature_SrcsetDefaultStepSize;
 
-        $this->src = $src;
-        $this->alt = $alt;
-        $this->class = $class;
-        $this->size = $size;
-        $this->srcset = ($srcset) ? $srcset : true;
-        $this->lateImgLoading = $lateImgLoading;
         $this->feature_image_default_max_width = $feature_image_default_max_width;
         $this->feature_ImgDefaultMaxDim = $obj->config->feature_ImgDefaultMaxDim;
         $this->quickviewEnabled = $obj->config->feature_quickview;
+
+        foreach ($args as $key => $value) {
+            $this->$key = $value;
+        }
 
         $this->srcFilename = null;
         $this->path = null;
@@ -58,17 +56,18 @@ class ImageTag
         $srcset = $this->renderSrcset();
 
         if ($class = $this->class) {
-            $class = " $class";
+            $class = trim("$id $class");
         }
 
         $attr = " width='{$this->w}' height='{$this->h}'";
 
+        $genericAttibs = $this->imgTagAttributes ? ' '.$this->imgTagAttributes : '';
 
         // basic img code:
-        $str = "<img  id='$id' class='$id$class' {$this->lateImgLoadingPrefix}src='{$this->src}'{$srcset} title='{$this->alt}' alt='{$this->alt}' $qvDataAttr />";
+        $str = "<img id='$id' class='$class' {$this->lateImgLoadingPrefix}src='{$this->src}'{$srcset} title='{$this->alt}' alt='{$this->alt}'$genericAttibs $qvDataAttr />";
 
         return $str;
-    }
+    } // render
 
 
 
@@ -80,7 +79,7 @@ class ImageTag
             $resizer = new ImageResizer($this->feature_ImgDefaultMaxDim);
             $resizer->resizeImage($origSrc, $this->imgFullsizeFile);
         }
-    }
+    } // prepareImageWorkingCopy
 
 
 
@@ -101,7 +100,7 @@ class ImageTag
             }
         }
         return $this->qvDataAttr;
-    }
+    } // renderQuickview
 
 
 
@@ -114,12 +113,13 @@ class ImageTag
                 $this->class .= ' lzy-late-loading';
             }
         }
-    }
+    } // prepareLateLoading
 
 
 
     private function renderSrcset()
     {
+        $this->srcset = ($this->srcset === null) ? true : $this->srcset;
         if (!$this->fileSize || !$this->imgFullsizeWidth) {
             if (file_exists($this->imgFullsizeFile)) {
                 $this->fileSize = filesize($this->imgFullsizeFile);
@@ -151,24 +151,16 @@ class ImageTag
                 $h1 = round($w1 * $this->aspRatio);
             }
             $this->srcset = " {$this->lateImgLoadingPrefix}srcset='" . substr($this->srcset, 0, -2) . "'";
-            if ($this->size) {
-                $size = $this->size;
-                if (preg_match('/^\d+$/', $size)) {
-                    $size .= 'px';
-                }
-                $this->srcset .= " sizes='$size'";
-            } else {
-                $this->srcset .= ($this->w) ? " sizes='{$this->w}px'" : '';
-            }
+            $this->srcset .= ($this->w) ? " sizes='{$this->w}px'" : '';
 
-        } elseif ($this->srcset && ($this->srcset != 'false')) {
+        } elseif ($this->srcset) {
             $this->srcset = " {$this->lateImgLoadingPrefix}srcset='{$this->srcset}'";
 
         } else {
             $this->srcset = '';
         }
         return $this->srcset;
-    }
+    } // renderSrcset
 
 
 
@@ -181,6 +173,6 @@ class ImageTag
         $this->h = ($dimFound) ? $this->h : null;
 
         $this->imgFullsizeFile = resolvePath($this->path) . $this->basename . $this->ext;
-    }
+    } // determineFilePaths
 
 } // class ImagePrep
