@@ -259,7 +259,7 @@ class Transvar
                 $this->macroArgs[$macroName][$name] = $out; // prepare named option as well
             }
         }
-        if ($removeNl && $out) {
+        if ($removeNl && is_string($out)) {
             $out = str_replace('↵', '', $out);
         }
 

@@ -18,10 +18,10 @@ $this->addMacro($macroName, function () {
     $res = false;
     $state = strtolower($state);
 
-    if ($state == 'true') {
+    if ($state === 'true') {
         $res = true;
 
-    } elseif ($state == 'false') {
+    } elseif ($state === 'false') {
         $res = false;
 
     } elseif ($state == 'islocalhost') {

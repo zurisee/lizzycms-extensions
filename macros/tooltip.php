@@ -50,7 +50,8 @@ $this->addMacro($macroName, function () {
         $class .= " lzy-tooltip-catch-focus";
     }
 
-    if ($sticky !== 'false') {
+    if ($sticky) {
+//    if ($sticky !== 'false') {
         $class .= " lzy-tooltip-sticky";
     }
 
