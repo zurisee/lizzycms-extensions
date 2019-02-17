@@ -131,7 +131,7 @@ function placeTooltip( $tooltipTextFrom, $tooltipShowAt) {
 
     // evaluate data and class attributes to find prefered position:
     var tooltipPos = $tooltipShowAt.attr('data-lzy-tooltip-pos');
-    if (typeof tooltipPos == 'undefined') {
+    if (typeof tooltipPos === 'undefined') {
         if ($tooltipShowAt.hasClass('lzy-tooltip-right')) {
             tooltipPos = 'r';
         } else if ($tooltipShowAt.hasClass('lzy-tooltip-left')) {
