@@ -310,35 +310,6 @@ class MyMarkdown
 
 
 
-//	//....................................................
-//	private function handleFrontmatter($lines)
-//	{
-//		$yaml = '';
-//		$i = 0;
-//		while ($i < sizeof($lines)) {
-//			$l = $lines[$i];
-//			if (!preg_match('/^\s*$/', $l)) {
-//				break;
-//			}
-//			$i++;
-//		}
-//		if (!preg_match('/^---/', $l)) {
-//			return $lines;
-//		}
-//		$i++;
-//		$l = $lines[$i];
-//		while (($i < sizeof($lines)) && (!preg_match('/---/', $l))) {
-//			$yaml .= $l."\n";
-//			$i++;
-//			$l = $lines[$i];
-//		}
-//		$hdr = convertYaml($yaml);
-//		$lines = array_slice($lines, $i+1);
-//		return $lines;
-//	} // handleFrontmatter
-
-
-
 	//....................................................
 	private function handleVariables($str)
 	{
@@ -447,7 +418,6 @@ class MyMarkdown
 					$l2             = substr($l2, 2);
 				}
 				$str = str_replace("\n", ' ', $str);
-				$str = "{[{[$str]}]}";
 				$l   = $l1 . $str . $l2;
 				$str = $this->variable[$sym];
 			
@@ -520,15 +490,9 @@ class MyMarkdown
         }
 
 		while (preg_match('/([^\[]*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
-//			$s1 = $m[1];
-//			$s2 = trim($m[2]);
 			$head = $m[1];
 			$args = trim($m[2]);
 			$tail = $m[3];
-//			$id = '';
-//			$class = '';
-//			$attr = '';
-//			$style = '';
 			$span = '';
 
 			$c1 = $args{0};
@@ -545,64 +509,11 @@ class MyMarkdown
             }
             list($tag, $attr, $lang, $comment, $literal, $mdCompile) = parseInlineBlockArguments($args);
 
-//			$c1 = $s2{0};
-//			if ($c1 == '"') {		                                                        // span
-//                if (preg_match('/([^"]*)"([^"]*)"(.*)/', $s2, $mm)) {	// "
-//                    $span = $mm[2];
-//                    $s2 = $mm[1] . $mm[3];
-//                }
-//            } elseif ($c1 == "'") {
-//                if (preg_match("/([^ ']*)'([^']*)'(.*)/", $s2, $mm)) {	 // '
-//                    $span = $mm[2];
-//                    $s2 = $mm[1] . $mm[3];
-//                }
-//            }
-//
-//            $cl = '';
-//			while (preg_match('/([^\.]*)\.([\w\-\.]+)(.*)/', $s2, $mm)) {		// class
-//				$cl .= ' '.str_replace('.', ' ', $mm[2]);
-//				$s2 = $mm[1].$mm[3];
-//			}
-//			if ($cl) {
-//                $class .= " class='".trim($cl)."'";
-//            }
-//
-//			if (preg_match('/([^\#]*)\#([\w\-]+)(.*)/', $s2, $mm)) {		// id
-//				$id = $mm[2];
-//				$id = " id='$id'";
-//				$s2 = $mm[1].$mm[3];
-//			}
-////TODO: re-implement
-//			if (preg_match_all('/([\w\-]+):\s*([^;\s]*);?/', $s2, $mm)) {		// styles
-//				foreach ($mm[0] as $s2) {
-//					$s2 = str_replace(' ', '', $s2);
-//					list($key, $val) = explode(':', $s2);
-//                    if ($this->isCssProperty($key)) {
-//                        $style .= rtrim($s2, ';') . ';';
-//                    } else {
-//                        $val = str_replace(';', '', $val);
-//                        $attr .= ' '.trim("$key:'$val'");
-//                    }
-//				}
-//				$style = $style ? " style='$style'" : '';
-//			}
-//			if (preg_match_all('/([\w\-]+)=\s*([^;\s]*);?/', $s2, $mm)) {		// attr
-//                foreach ($mm[0] as $s2) {
-//                    $s2 = str_replace(' ', '', $s2);
-//                    list($key, $val) = explode('=', $s2);
-//                    $attr .= ' '.trim("$key='$val'");
-//                }
-//            }
-
 			if ($span) {
                 $head .= "<span $attr>$span</span>";
-//                $s1 .= "<span$id$class$style$attr>$span</span>";
 
 			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $m)) {	// now insert into preceding tag
 				$head = $m[1] . "$attr>" . $m[2] . $span;
-//			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $mm)) {	// now insert into preceding tag
-//				$head = $mm[1] . "$attr>" . $mm[2] . $span;
-//				$s1 = $mm[1] . "$id$class$style$attr>" . $mm[2] . $span;
 			}
 			$line = $head.$tail;
 		}
