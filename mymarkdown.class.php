@@ -56,7 +56,8 @@ class MyMarkdown
 	public function parse($str, $page)
 	{
 		$this->page = $page;
-		$this->variable = array();
+        $this->addReplacesFromFrontmatter($page);
+        $this->variable = array();
 
 		$str = $this->doMDincludes($str);
 		
@@ -572,11 +573,25 @@ class MyMarkdown
     } // handleLiteralBlock
 
 
+
     private function isCssProperty($str)
     {
         $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
         return (sizeof($res) > 0);
-    }
+    } // isCssProperty
+
+
+
+    private function addReplacesFromFrontmatter($page)
+    {
+        if (isset($page->replace)) {
+            $newReplaces = [];
+            foreach ($page->replace as $pattern => $value) {
+                $newReplaces[preg_quote($pattern)] = $value;
+            }
+            $this->replaces = array_merge($newReplaces, $this->replaces);
+        }
+    } // addReplacesFromFrontmatter
 
 
 } // class MyMarkdown
