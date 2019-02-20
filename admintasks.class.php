@@ -2,7 +2,7 @@
 
 require_once SYSTEM_PATH.'ticketing.class.php';
 
-$this->lzy->trans->readTransvarsFromFile('~sys/config/useradmin.yaml');
+$this->trans->readTransvarsFromFile('~sys/config/useradmin.yaml');
 
 
 class AdminTasks
