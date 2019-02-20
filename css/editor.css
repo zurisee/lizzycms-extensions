@@ -173,6 +173,10 @@ span.lzy-ed-dropdown select {
 .lzy-edit-btns2 {
     position: absolute;
     bottom: 0px;
+    z-index: 10;
+}
+.lzy-edit-btns2 button {
+    cursor:pointer;
 }
 
 .lzy-src-wrapper.lzy-editing {
