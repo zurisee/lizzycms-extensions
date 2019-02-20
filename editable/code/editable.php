@@ -21,15 +21,15 @@ $this->addMacro($macroName, function () {
 
     $args['id'] = $this->getArg($macroName, 'id', 'Defines the base-Id applied to editable field(s).<br />If omitted, "lzy-editable-field{index}" is used.', '');
     $args['class'] = $this->getArg($macroName, 'class', 'Class name that will be applied to editable fields', '');
-    $args['showButton'] = $this->getArg($macroName, 'showButton', '[false|true|auto] Defines whether the submit button is displayed (default: true).<br />"auto" means it will be displayed only on touch devices.', 'true');
+    $args['showButton'] = $this->getArg($macroName, 'showButton', '[false|true|auto] Defines whether the submit button is displayed (default: true).<br />"auto" means it will be displayed only on touch devices.', true);
     $args['dataSource'] = $this->getArg($macroName, 'dataSource', '<code>path</code> (optional) defines path&filename where to store data (default: page folder)', '');
     $args['dataIndex'] = $this->getArg($macroName, 'dataIndex', '(optional) If dataSource points to a .csv file, this argument defines the coordinates of the data element to be selected', '');
     $args['protectedCells'] = $this->getArg($macroName, 'protectedCells', '(optional) E.g. ""', '');
 
-    $args['nCols'] = $this->getArg($macroName, 'nCols', '[number] If set, creates a table with N columns <br /><strong>Note</strong>: If using nCols or nRows, any arguments of table() macro may be applied in addition to the list here.', '1');
-    $args['nRows'] = $this->getArg($macroName, 'nRows', '[number] If set, creates a table with N rows, rather than just one field', '1');
+    $args['nCols'] = $this->getArg($macroName, 'nCols', '[number] If set, creates a table with N columns <br /><strong>Note</strong>: If using nCols or nRows, any arguments of table() macro may be applied in addition to the list here.', 1);
+    $args['nRows'] = $this->getArg($macroName, 'nRows', '[number] If set, creates a table with N rows, rather than just one field', 1);
     $args['headers'] = $this->getArg($macroName, 'headers', 'A list of headers (sep. by "|")  used as header column, e.g. "[Aa|Bb|Cc]"', '');
-    $args['showRowNumbers'] = $this->getArg($macroName, 'showRowNumbers', '[true|false] Adds an index number to every row (default: true)', 'true');
+    $args['showRowNumbers'] = $this->getArg($macroName, 'showRowNumbers', '[true|false] Adds an index number to every row (default: true)', true);
     $args['useRecycleBin'] = $this->getArg($macroName, 'useRecycleBin', '[true|false] If true, previous values will be saved in a recycle bin rather than discared (default: false)', false);
     $args['freezeFieldAfter'] = $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
     $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
@@ -122,7 +122,8 @@ function prepareArguments($args, $inx)
     $args['showButtonClass'] = '';
     if ($args['showButton'] == 'auto') {
         $args['showButtonClass'] = ' lzy-editable-auto-show-button';
-    } else if ($args['showButton'] == 'true') {
+    } else if ($args['showButton']) {
+//    } else if ($args['showButton'] == 'true') {
         $args['showButtonClass'] = ' lzy-editable-show-button';
     }
 
