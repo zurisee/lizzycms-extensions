@@ -50,6 +50,7 @@ define('LIZZY_LOCK_TIME', 'time');
 define('LIZZY_SID', 'sid');     // session ID
 define('LIZZY_MODIF_TIME', 'modif');
 define('LIZZY_LOCK_ALL', 'lock_all');
+//define('LIZZY_DEFAULT_FILE_TYPE', 'yaml');
 define('LIZZY_DEFAULT_FILE_TYPE', 'json');
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
@@ -63,6 +64,7 @@ class DataStorage
 	private $sid;
 	private $dbMetaDBfile = false;
 	private $dataModified = false;
+	private $meta = [];
 
 
 
@@ -105,6 +107,10 @@ class DataStorage
         $this->lockTimeout = $lockTimeout;
         $this->useRecycleBin = $useRecycleBin;
 
+        if (!isset($this->data)) {
+            $this->lowLevelRead();
+        }
+
         $this->checkDB();   // make sure DB is initialized
         return;
     } // __construct
@@ -128,6 +134,7 @@ class DataStorage
                 $this->data[LIZZY_META] = [];
             }
             $meta = $this->data[LIZZY_META];
+            $this->meta = $meta;
         }
 
         if (!is_array($data)) {
@@ -276,6 +283,9 @@ class DataStorage
 
     public function readMeta($key)
     {
+        if (!isset($this->data)) {
+            $this->lowLevelRead();
+        }
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
@@ -420,8 +430,12 @@ class DataStorage
             $meta = &$this->data[LIZZY_META];
         }
 
-        if (!is_array($meta) || !$key) {
+//        if (!is_array($meta) || !$key) {
+        if (!$key) {
             return false;
+        }
+        if (!is_array($meta)) {
+            $meta = [];
         }
 
         if ($key == 'all') {        // lock entire DB
@@ -612,6 +626,9 @@ class DataStorage
             $this->meta = $this->decode(file_get_contents($this->dbMetaDBfile), LIZZY_DEFAULT_FILE_TYPE);
         } else {
             $this->meta = &$this->data[LIZZY_META]; // no sep meta file -> meta == data
+            if ($this->meta === null) {
+                $this->data[LIZZY_META] = [];
+            }
         }
         return $data;
     } // lowLevelRead
@@ -631,7 +648,7 @@ class DataStorage
             mkdir($destPath, 0777);
         }
         $destFile = "$destPath/" . date('Y-m-d H.i.s') . ' ' . basename($this->dataFile);
-        copy($file, $destFile);
+        copy($this->dataFile, $destFile);
     } // saveToRycleBin
 
 
@@ -642,10 +659,6 @@ class DataStorage
     {
         if (!$this->dataFile || !$this->lockDB) {
             return false;
-        }
-
-        if (!isset($this->meta)) {
-            $this->lowLevelRead();
         }
 
         $this->resetTimedOutLocks();
@@ -726,7 +739,7 @@ class DataStorage
     private function getValue($key)
     {
         if (list($c, $r) = $this->array2DKey($key)) {      // 2 dimensional data
-            $value = isset($this->data[$r][$d]) ? $this->data[$r][$d] : null;
+            $value = isset($this->data[$r][$c]) ? $this->data[$r][$c] : null;
 
         } else {
             $value = isset($this->data[$key]) ? $this->data[$key] : null;
