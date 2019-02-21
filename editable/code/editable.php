@@ -141,11 +141,11 @@ function prepareArguments($args, $inx)
 //---------------------------------------------------------------
 function prepareProtectedCellsArray($args)
 {
+    $protectedCells = [];
     if ($args['protectedCells']) {
         $protCells = $args['protectedCells'];
         $delim = (substr_count($protCells, ',') > substr_count($protCells, '|')) ? ',' : '|';
         $elems = parseArgumentStr($protCells, $delim);
-        $protectedCells = [];
         $protectedCells = array_fill(0, $args['nRows'], array_fill(0, $args['nCols'], false));;
         foreach ($elems as $elem) {
             if (!trim($elem)) {
