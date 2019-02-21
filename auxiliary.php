@@ -672,7 +672,7 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 {
     global $globalParams;
 
-    if (!$path) {
+    if (!$path && !$relativeToCurrPage) {
         return '';
     } elseif (preg_match('|^https?\://|i', $path)) {
         return $path;

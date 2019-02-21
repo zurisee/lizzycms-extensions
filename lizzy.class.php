@@ -112,8 +112,11 @@ class Lizzy
 			$globalParams['pagePath'] = $this->pagePath;                    // excludes pages/
 			$this->pathToPage = $this->config->path_pagesPath.$this->pagePath;   //  includes pages/
 			$globalParams['pathToPage'] = $this->pathToPage;
+            $_SESSION['lizzy']['pagePath'] = $this->pagePath;               // for _ajax_server.php and _upload_server.php
+            $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$this->pagePath;
 
-			$this->pageRelativePath = $this->pathToRoot.$this->pagePath;
+
+            $this->pageRelativePath = $this->pathToRoot.$this->pagePath;
 
             $this->trans->loadStandardVariables($this->siteStructure);
             $this->trans->addVariable('next_page', "<a href='~/{$this->siteStructure->nextPage}'>{{ nextPageLabel }}</a>");
@@ -594,7 +597,7 @@ class Lizzy
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['localCall'] = $this->localCall;
 
-        $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php
+        $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php -> temporaty, corrected later in rendering when sitestruct has been analyzed
         $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$pagePath;
         $_SESSION['lizzy']['pagesFolder'] = $this->config->path_pagesPath;
         $baseUrl = $requestScheme.$_SERVER['SERVER_NAME'];
