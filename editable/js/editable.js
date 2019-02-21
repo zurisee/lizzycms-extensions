@@ -51,9 +51,10 @@ function initializeEditableField(invokingClass)
         edObj.isTouchDevice = 'ontouchstart' in document.documentElement;
     }
 
+    // initializeConnection();
     initEditableFields();
     setupKeyHandler();
-    initializeConnection();
+    // initializeConnection();
 
     mylog('Editable.js started for class ".'+edObj.invokingClass+'" ('+ ((edObj.isTouchDevice) ? 'touch-device' : 'non-touch-device') + ', backend: '+ edObj.backend+')');
 } // initializeEditableField

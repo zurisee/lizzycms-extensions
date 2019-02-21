@@ -2,7 +2,8 @@
 
 // @info: Renders a field that can be modified by the user. Changes are persistent and can immediately be seen by other visitors.
 
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LIZZY_DEFAULT_FILE_TYPE);
+//define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
 
 $macroName = basename(__FILE__, '.php');
 
@@ -120,9 +121,9 @@ function prepareArguments($args, $inx)
     $args['freezeThreshold'] = ($args['freezeFieldAfter']) ? time() - intval($args['freezeFieldAfter']) : 0;
 
     $args['showButtonClass'] = '';
-    if ($args['showButton'] == 'auto') {
+    if ($args['showButton'] === 'auto') {
         $args['showButtonClass'] = ' lzy-editable-auto-show-button';
-    } else if ($args['showButton']) {
+    } elseif ($args['showButton']) {
 //    } else if ($args['showButton'] == 'true') {
         $args['showButtonClass'] = ' lzy-editable-show-button';
     }
@@ -212,7 +213,8 @@ function prepareDataSource($args, $inx)
     $args['db'] = new DataStorage($args['dbFile']);
 
     if ($args['freezeFieldAfter']) {
-        $args['db']->write("_meta_/{$args['id']}/lzy-editable-freeze-after", $args['freezeFieldAfter']);
+        $args['db']->writeMeta("{$args['id']}/lzy-editable-freeze-after", $args['freezeFieldAfter']);
+//        $args['db']->write("_meta_/{$args['id']}/lzy-editable-freeze-after", $args['freezeFieldAfter']);
     }
     return $args;
 } // prepareDataSource
