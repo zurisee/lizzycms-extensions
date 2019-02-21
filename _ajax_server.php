@@ -50,11 +50,13 @@ define('LOCK_TIMEOUT', 		120);	                                // max time till 
 define('MAX_URL_ARG_SIZE',  255);
 define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
 define('RECYCLE_BIN_PATH',  '~page/.#recycleBin/');
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
+//define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
 
 require_once 'vendor/autoload.php';
 require_once 'datastorage.class.php';
 require_once 'ticketing.class.php';
+
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LIZZY_DEFAULT_FILE_TYPE);
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -213,7 +215,8 @@ EOT;
             $id0 = preg_replace('/_\d+-\d+$/', '', $id);
 
             $val = $this->db->read($id);
-		    $th = $this->db->read("_meta_/$id0/lzy-editable-freeze-after");
+		    $th = $this->db->readMeta("$id0/lzy-editable-freeze-after");
+//		    $th = $this->db->read("_meta_/$id0/lzy-editable-freeze-after");
 		    if ($val && $th) {
                 $t = $this->db->lastModified($id);
                 $th = time() - $th;
@@ -258,7 +261,8 @@ EOT;
 
 	//---------------------------------------------------------------------------
 	private function update($upd) {
-		exit($this->prepareClientData($id).'#update');
+		exit($this->prepareClientData($upd).'#update');
+//		exit($this->prepareClientData($id).'#update');
 	} // get
 
 

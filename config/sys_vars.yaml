@@ -385,6 +385,10 @@ turn edit mode on:
     de: Seite bearbeiten
     en: Edit page
 
+turn edit mode off:
+    de: Seitebearbeitung beenden
+    en: End page editing
+
 
 # Macro Editable()
 'lzy-editable-temporarily-locked': 
