@@ -436,7 +436,7 @@ class SiteStructure
         if ($elem['active']) {
             return true;
         }
-        while ($elem['parent']) {
+        while ($elem['parent'] !== null) {
             $elem = $this->list[$elem['parent']];
             if ($elem['active']) {
                 return true;
