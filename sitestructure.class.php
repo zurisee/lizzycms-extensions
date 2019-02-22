@@ -368,7 +368,7 @@ class SiteStructure
 	{
 		$this->currPageRec['active'] = true;
 		$rec = &$this->currPageRec;
-		while ($rec['parent']) {
+		while ($rec['parent'] !== null) {
 			$rec = &$this->list[$rec['parent']];
 			$rec['active'] = true;
 		}
