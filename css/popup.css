@@ -41,8 +41,9 @@
     padding-top: 2em;
 /*    padding-right: 2em;*/
 }
-/*.popup_content,*/
+
 .lzy-popup,
+.lzy-popup a,
 .lzy-popup * {
     color: black;
 }
