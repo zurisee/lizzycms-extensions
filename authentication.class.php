@@ -120,9 +120,9 @@ class Authentication
         if ($codeCandidate && preg_match('/^[A-Z][A-Z0-9]{5,}$/', $codeCandidate)) {
             $this->validateOnetimeAccessCode($codeCandidate);    // reloads on success, returns on failure
 
-            if ($this->validateAccessCode($codeCandidate, $pagePath)) {
-                $pagePath = trunkPath($pagePath,1, false); // remove hash-code from
-            }
+            $this->validateAccessCode($codeCandidate);   // check access code in user records and log in&reload if found
+
+            $pagePath = trunkPath($pagePath,1, false); // remove hash-code from
         }
         return $pagePath;   // access granted
     } // handleAccessCodeInUrl
@@ -150,7 +150,8 @@ class Authentication
             }
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
             // access granted, remove hash-code from url
-            reloadAgent(true, 'login-successful'); // access granted, remove hash-code from url
+            $requestedUrl = trunkPath($GLOBALS['globalParams']['requestedUrl'],1, false); // remove hash-code from
+            reloadAgent($requestedUrl, 'login-successful'); // access granted, remove hash-code from url
 
         } else {
             $rep = '';
@@ -210,8 +211,9 @@ class Authentication
 
 
 
-    private function validateAccessCode($codeCandidate, $pagePath)
+    private function validateAccessCode($codeCandidate)
     {
+        // this is an access code stored in a user's record
         if (!$this->knownUsers) {
             return false;
         }
@@ -226,8 +228,8 @@ class Authentication
                         }
                     }
                     $this->setUserAsLoggedIn($user, $rec);
-                    $pagePath = trunkPath($GLOBALS['globalParams']['requestedUrl'],1, false); // remove hash-code from
-                    reloadAgent($pagePath, 'login-successful');
+                    $requestedUrl = trunkPath($GLOBALS['globalParams']['requestedUrl'],1, false); // remove hash-code from
+                    reloadAgent($requestedUrl, 'login-successful');
                 }
             }
         }
