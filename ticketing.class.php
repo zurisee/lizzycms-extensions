@@ -58,12 +58,15 @@ class Ticketing
 
 
 
-    public function consumeTicket($ticketHash)
+    public function consumeTicket($ticketHash, $type = false)
     {
         $this->ds->lock($ticketHash);
         $ticket = $this->ds->read($ticketHash);
 
-        if ($ticket['lzy_ticketValidTill'] < time()) {      // ticket expired
+        if ($type && ($type !== $ticket['lzy_ticketType'])) {
+            $ticket = false;
+
+        } elseif ($ticket['lzy_ticketValidTill'] < time()) {      // ticket expired
             $this->ds->delete($ticketHash);
             $ticket = false;
 
@@ -76,9 +79,16 @@ class Ticketing
             } else {
                 $this->ds->delete($ticketHash);
             }
+
+            $lzy_ticketType = $ticket['lzy_ticketType'];
+
             unset($ticket['lzy_maxConsumptionCount']);  // don't return private properties
-            unset($ticket['lzy_ticketType']);
             unset($ticket['lzy_ticketValidTill']);
+
+            if ($lzy_ticketType === 'sessionVar') {     // type 'sessionVar': make ticket available in session variable
+                $_SESSION['lizzy']['ticket'] = $ticket;
+            }
+            unset($ticket['lzy_ticketType']);
         }
         return $ticket;
     } // consumeTicket
