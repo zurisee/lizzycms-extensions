@@ -117,7 +117,7 @@ class Authentication
     public function handleAccessCodeInUrl($pagePath)
     {
         $codeCandidate = basename($pagePath);
-        if ($codeCandidate && preg_match('/^[A-Z][A-Z0-9]{5,}$/', $codeCandidate)) {
+        if ($codeCandidate && preg_match('/^[A-Z][A-Z0-9]{4,}$/', $codeCandidate)) {
             $this->validateOnetimeAccessCode($codeCandidate);    // reloads on success, returns on failure
 
             $this->validateAccessCode($codeCandidate);   // check access code in user records and log in&reload if found
@@ -149,8 +149,12 @@ class Authentication
                 $user .= " ({$displayName})";
             }
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
-            // access granted, remove hash-code from url
-            $requestedUrl = trunkPath($GLOBALS['globalParams']['requestedUrl'],1, false); // remove hash-code from
+
+            // access granted, remove hash-code from url, if there is one:
+            $requestedUrl = $GLOBALS['globalParams']['requestedUrl'];
+            if ($requestedUrl && preg_match('|/[A-Z][A-Z0-9]{4,}/?$|', $requestedUrl)) {
+                $requestedUrl = trunkPath($requestedUrl, 1, false); // remove hash-code from
+            }
             reloadAgent($requestedUrl, 'login-successful'); // access granted, remove hash-code from url
 
         } else {
