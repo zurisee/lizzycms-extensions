@@ -153,7 +153,8 @@ class ImageTag
             $this->srcset = " {$this->lateImgLoadingPrefix}srcset='" . substr($this->srcset, 0, -2) . "'";
             $this->srcset .= ($this->w) ? " sizes='{$this->w}px'" : '';
 
-        } elseif ($this->srcset) {
+//        } elseif ($this->srcset) {
+        } elseif ($this->srcset !== true) {
             $this->srcset = " {$this->lateImgLoadingPrefix}srcset='{$this->srcset}'";
 
         } else {
