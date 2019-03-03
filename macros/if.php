@@ -6,22 +6,30 @@ $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');
+    $this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
+
     $state = $this->getArg($macroName, 'state', '[isLocalhost, isPrivileged] The system state to be checked.', '');
     $config = $this->getArg($macroName, 'config', 'Name of a config-value (as in config/config.yaml)', '');
     $file = $this->getArg($macroName, 'file', 'File name to be checked (relative to page path by default)', '');
     $urlArg = $this->getArg($macroName, 'urlArg', 'Name of URL-argument, e.g. "?arg=true"', '');
+    $request = $this->getArg($macroName, 'request', 'Name of request-argument, either GET or POST as submitted by a form', '');
+    $variable = $this->getArg($macroName, 'request', 'Name of a Session-Variable', '');
     $op = $this->getArg($macroName, 'op', "[==, <, >, <=, >=, !=] Operand to be applied in comparison of config-value and argument.  \nOr file-op [exists, empty, <, >]", '');
     $arg = $this->getArg($macroName, 'arg', 'Argument to be applied in comparison', '');
     $then = $this->getArg($macroName, 'then', 'What to return if the state is active', '');
     $else = $this->getArg($macroName, 'else', 'What to return if the state is not active', '');
 
-    $res = false;
-    $state = strtolower($state);
+    $inx = $this->invocationCounter[$macroName] + 1;
 
-    if ($state === 'true') {
+    $res = false;
+    if (is_string($state)) {
+        $state = strtolower($state);
+    }
+
+    if (($state === true) || ($state === 'true')) {
         $res = true;
 
-    } elseif ($state === 'false') {
+    } elseif (($state === false) || ($state === 'false')) {
         $res = false;
 
     } elseif ($state == 'islocalhost') {
@@ -57,21 +65,30 @@ $this->addMacro($macroName, function () {
             $val = getUrlArg($urlArg, true);
             $res = evalOp($val, $op, $arg);
         }
+    } elseif ($request) {
+        if (!$op) {
+            $res = isset($_REQUEST['$request']) ? $_REQUEST['$request'] : '';
+        } else {
+            $val = isset($_REQUEST['$request']) ? $_REQUEST['$request'] : '';
+            $res = evalOp($val, $op, $arg);
+        }
+    } elseif ($variable) {
+        $res = isset($_SESSION['lizzy']['$variable']) ? $_REQUEST['$variable'] : '';
     }
     $this->optionAddNoComment = true;
 
     if ($res) {
-        $then =  evalResult($this, $then);
+        $then =  evalResult($this, $then, $inx);
         return $then;
     } else {
-        $else =  evalResult($this, $else);
+        $else =  evalResult($this, $else, $inx);
         return $else;
     }
 });
 
 
 
-function evalResult($trans, $code)
+function evalResult($trans, $code, $inx)
 {
     $out = $code;
     if (preg_match('/^\%(\w+):(.*)/', $code, $m)) {
@@ -117,6 +134,26 @@ function evalResult($trans, $code)
                 $trans->page->addPopup($arg);
                 break;
 
+            case 'macro' :
+                if (preg_match('/([\w-]+) \( (.*) \)/x', $arg, $m)) {
+                    $macro = $m[1];
+                    $arg = $m[2];
+                    $out = $trans->translateMacro($macro, $arg);
+                }
+                break;
+
+            case 'contentFrom' :
+                $arg = html_entity_decode($arg);
+                if (preg_match('/^ ["\']? ([\#\.] [\w-]+)/x', $arg, $m)) {
+                    $id = "lzy-content-from-if{$inx}";
+                    $selector = $m[1];
+                    $jq = "\n\t$('#$id').html( $('$selector').html() );";
+                    $trans->page->addJq($jq);
+                    $trans->optionAddNoComment = true;
+                    $out = "\t\t<div id='$id' class='lzy-content-from'></div>\n";
+                }
+                break;
+
             case 'include' :
                 $filename = resolvePath($arg, true);
                 $str = getFile($filename);
@@ -129,7 +166,12 @@ function evalResult($trans, $code)
             default:
                 $out = $code;
         }
+    } elseif (preg_match('/([\w-]+) \( (.*) \)/x', $code, $m)) {
+        $macro = $m[1];
+        $arg = $m[2];
+        $out = $trans->translateMacro($macro, $arg);
     }
+
     return $out;
 }
 
