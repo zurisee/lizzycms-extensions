@@ -170,7 +170,8 @@ class Transvar
 
 
     //....................................................
-    private function translateMacro($macro, $argStr)
+    public function translateMacro($macro, $argStr)
+//    private function translateMacro($macro, $argStr)
     {
         $this->macroArgs[$macro] = parseArgumentStr($argStr);
         $this->macroInx = 0;
