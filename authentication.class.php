@@ -172,6 +172,7 @@ class Authentication
 
 
     private function readOneTimeAccessCode($code)
+//    public function readOneTimeAccessCode($code)
     {
         // checks whether there is a pending oneTimeAccessCode, purges old entries
         require_once SYSTEM_PATH.'ticketing.class.php';
@@ -239,6 +240,24 @@ class Authentication
         }
         return false;
     } // validateAccessCode
+
+
+
+    public function validateTicket($ticket)
+    {
+        // checks whether there is a pending ticket, purges old entries
+        require_once SYSTEM_PATH.'ticketing.class.php';
+
+        $tick = new Ticketing();
+        $ticket = $tick->consumeTicket($ticket);
+        if (!$ticket) {
+            $this->monitorFailedLoginAttempts();
+            writeLog("*** ticket rejected: $ticket [".getClientIP().']', LOGIN_LOG_FILENAME);
+            return false;
+        }
+
+        return $ticket;
+    } // validateTicket
 
 
 
