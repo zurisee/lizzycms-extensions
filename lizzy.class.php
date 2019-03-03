@@ -11,6 +11,7 @@ define('USER_CODE_PATH',        'code/');
 define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 
+define('DATA_PATH',            'data/');
 define('CACHE_PATH',            '.#cache/');
 define('LOGS_PATH',             '.#logs/');
 define('MACROS_PATH',           SYSTEM_PATH.'macros/');
