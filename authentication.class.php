@@ -569,11 +569,13 @@ class Authentication
     {
         $this->userDB = $usersFile = $this->config->configPath.$this->config->admin_usersFile;
         $this->knownUsers = getYamlFile($usersFile);
-        foreach ($this->knownUsers as $key => $rec) {
-            if (!isset($rec['groups'])) {
-                $this->knownUsers[$key]['groups'] = isset($rec['group']) ? $rec['group'] : ''; // make group a synonym for groups
+        if (is_array($this->knownUsers)) {
+            foreach ($this->knownUsers as $key => $rec) {
+                if (!isset($rec['groups'])) {
+                    $this->knownUsers[$key]['groups'] = isset($rec['group']) ? $rec['group'] : ''; // make group a synonym for groups
+                }
+                $this->knownUsers[$key]['username'] = $key;
             }
-            $this->knownUsers[$key]['username'] = $key;
         }
     } // loadKnownUsers
 

@@ -712,11 +712,17 @@ class Lizzy
     //....................................................
 	private function setTransvars1()
 	{
-	    $userAcc = new UserAccountForm($this);
-	    $rec = $this->auth->getLoggedInUser( true );
-	    $login = $userAcc->renderLoginLink( $rec );
+	    if ($this->auth->knownUsers) {
+            $userAcc = new UserAccountForm($this);
+            $rec = $this->auth->getLoggedInUser(true);
+            $login = $userAcc->renderLoginLink($rec);
+            $userName = $userAcc->getUsername();
+        } else {
+            $login = '';
+            $userName = '';
+        }
         $this->trans->addVariable('Log-in', $login);
-        $this->trans->addVariable('user', $userAcc->getUsername(), false);
+        $this->trans->addVariable('user', $userName, false);
 
 
         $this->trans->addVariable('pageUrl', $this->pageUrl);
