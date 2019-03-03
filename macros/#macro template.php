@@ -62,6 +62,9 @@ $this->addMacro($macroName, function () {
     // how to define additional variables within a macro:
     // $this->addVariable('myvar', 'value');
 
+    //
+    // $this->optionAddNoComment = true;
+
     $str = "<!-- sample extension -->\n";
 	return $str;
 });
