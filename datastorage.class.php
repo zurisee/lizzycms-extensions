@@ -50,7 +50,6 @@ define('LIZZY_LOCK_TIME', 'time');
 define('LIZZY_SID', 'sid');     // session ID
 define('LIZZY_MODIF_TIME', 'modif');
 define('LIZZY_LOCK_ALL', 'lock_all');
-//define('LIZZY_DEFAULT_FILE_TYPE', 'yaml');
 define('LIZZY_DEFAULT_FILE_TYPE', 'json');
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
@@ -140,6 +139,7 @@ class DataStorage
         if (!is_array($data)) {
             return false;
         }
+
         if (is_array($key)) {
             if ($value) {
                 $data = $key;   // overwrite all //???
@@ -229,6 +229,7 @@ class DataStorage
         $this->dataModified = true;
         return $this->lowLevelWrite();
     } // append
+
 
 
 
@@ -445,7 +446,6 @@ class DataStorage
             $meta = &$this->data[LIZZY_META];
         }
 
-//        if (!is_array($meta) || !$key) {
         if (!$key) {
             return false;
         }
@@ -716,7 +716,15 @@ class DataStorage
         } else {
             $meta = &$this->data[LIZZY_META];
         }
-        if (strpos($key, '/') === false) {      // regular value
+
+//???: sort out!
+        if (is_array($key)) {                               // special case: entire rec to set
+            $rec = $key;
+            $this->shieldSpecialChars($rec);
+
+        } elseif (strpos($key, '/') === false) {      // regular value
+//???: sort out!
+//      if (strpos($key, '/') === false) {      // regular value
             if (list($c, $r) = $this->array2DKey($key)) {      // 2-dimensional key
                 if (is_array($value)) {
                     foreach ($value as $k => $v) {
@@ -739,7 +747,7 @@ class DataStorage
 
             }
 
-        } else {                                // meta-value
+        } else {                                        // meta-value
             $expr = "\$data['" . str_replace('/', "']['", $key) . "'] = \$value;";
             eval("$expr");
         }
@@ -838,8 +846,10 @@ class DataStorage
         $encodedData = false;
         if ($format == 'json') {
             $encodedData = json_encode($data);
+
         } elseif ($format == 'yaml') {
             $encodedData = $this->convertToYaml($data);
+
         } elseif ($format == 'csv') {
             $encodedData = $this->arrayToCsv($data);
         }
@@ -874,6 +884,7 @@ class DataStorage
 
 
 
+
 //--------------------------------------------------------------
     function arrayToCsv($array, $quote = '"', $delim = ',')
     {
@@ -887,9 +898,10 @@ class DataStorage
             $rowStr = '';
             for ($c=0; $c < $nCols; $c++) {
                 $elem = isset($array[$r][$c]) ? $array[$r][$c] : '';
-                if (strpbrk($elem, $quote.$delim)) {
+                if (strpbrk($elem, "$quote$delim")) {
                     $elem = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
                 }
+                $elem = str_replace(["\n", "\r"], ["\\n", ''], $elem);
                 $rowStr .= "$elem,";
             }
             $out .= substr($rowStr, 0, -1)."\n";
@@ -914,10 +926,12 @@ class DataStorage
         $array = array();
         foreach ($lines as $line) {
             if (!$line) { continue; }
+            $line = str_replace("\\n", "\n", $line);
             $array[] = str_getcsv($line, $delim, $enclos);
         }
         return $array;
     } // parseCsv
+
 
 
 

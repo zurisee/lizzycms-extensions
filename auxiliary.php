@@ -243,9 +243,10 @@ function arrayToCsv($array, $quote = '"', $delim = ',')
     $out = '';
     foreach ($array as $row) {
         foreach ($row as $i => $elem) {
-            if (strpbrk($elem, $quote.$delim)) {
+            if (strpbrk($elem, "$quote$delim")) {
                 $row[$i] = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
             }
+            $row[$i] = str_replace(["\n", "\r"], ["\\n", ''], $row[$i]);
         }
         $out .= implode($delim, $row)."\n";
     }

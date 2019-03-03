@@ -614,6 +614,7 @@ EOT;
         }
         $tdClass = trim(str_replace('  ', ' ', "$tdClass lzy-col-$col1"));
         $tdClass = " class='$tdClass'";
+        $cell = str_replace("\n", '<br />', $cell);
         return "<$tag$tdId$tdClass$ref>$cell</$tag>";
     } // getDataElem
 
