@@ -197,11 +197,26 @@ class DataStorage
 	//---------------------------------------------------------------------------
     public function append($newData)
     {
+        if (!$newData) {
+            return;
+        }
+
         $data = &$this->data;
         if (!is_array($data)) {
             return false;
         }
-        if (!isset($newData[0])) {
+
+        if ($this->format === 'csv') {      // it a csv file
+            if (!isset($newData[0])) {      // new data is in key=>value format
+                $keys = array_keys($newData);
+                $newData = array_values($newData);
+                if (!$data) {       // db not initialized yet
+                    $data[0] = $keys;
+                }
+            }
+            $data[] = $newData;
+
+        } elseif (!isset($newData[0])) {
             foreach ($newData as $k => $rec) {
                 while (isset($data[$k])) { // just in case of multiple concurrent actions
                     $k = (is_int($k)) ? $k+1 : $k.'1'; //???
