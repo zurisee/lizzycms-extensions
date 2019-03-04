@@ -29,6 +29,7 @@ class Page
     private $modules = '';
     private $cssFiles = '';
     private $css = '';
+    private $scss = '';
     private $jsFiles = '';
     private $js = '';
     private $jqFiles = '';
@@ -106,7 +107,7 @@ class Page
                 if ($value) {
                     if (strpos(',jqFiles,jsFiles,cssFiles,', ",$key,") !== false) {
                         $this->$key .= ',' . $value;
-                    } elseif (strpos(',jq,js,css,', ",$key,") !== false) {
+                    } elseif (strpos(',jq,js,css,scss,', ",$key,") !== false) {
                         $this->$key .= "\t\t\t$value\n";
                     } elseif (is_array($value)) {
                         if (is_array($this->$key)) {

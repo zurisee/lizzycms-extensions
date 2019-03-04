@@ -939,6 +939,7 @@ class Lizzy
             }
 
 			$mdStr = $this->extractFrontmatter($mdStr, $newPage);
+            $this->compileLocalCss($newPage);
 
             $variables = $newPage->get('variables', true);
             if ($variables) {
@@ -998,6 +999,18 @@ class Lizzy
         return $page;
 	} // loadFile
 
+
+
+
+
+    private function compileLocalCss($newPage)
+    {
+        $scssStr = $newPage->get('scss');
+        if ($scssStr) {
+            $css = $this->scss->compileStr($scssStr);
+        }
+        $newPage->addCss($css);
+    } // compileLocalCss
 
 
 

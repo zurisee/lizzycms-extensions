@@ -145,4 +145,20 @@ class SCssCompiler
         return basename($file).", ";
     } // doCompile
 
+
+
+
+    public function compileStr($scssStr)
+    {
+        if (!$this->scss) {
+            $this->scss = new Compiler;
+        }
+        try {
+            $cssStr = $this->scss->compile($scssStr);
+        } catch (Exception $e) {
+            fatalError("Error in SCSS string: '$scssStr'.");
+        }
+        return $cssStr;
+    } // compileStr
+
 } // SCssCompiler
