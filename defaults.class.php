@@ -65,6 +65,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_slideShowSupport'          => [false, '[true|false] If true, provides support for slide-shows' ],
             'feature_supportLegacyBrowsers'     => [false, '[true|false] Determines whether jQuery 3 can be loaded, if false jQuery 1 is invoked' ],
             'feature_touchDeviceSupport'        => [true, '[true|false] Determines whether to support swipe gestures etc. on touch devices.' ],
+            'feature_frontmatterCssLocalToSection' => [false, '[true|false] If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
 
             'path_logPath'                      => [LOGS_PATH, '[true|Name] Name of folder to which logging output should be sent. Or "false" for disabling logging.' ],
             'path_pagesPath'                    => ['pages/', 'Name of folder in which all pages reside.' ],

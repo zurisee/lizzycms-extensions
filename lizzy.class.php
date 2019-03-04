@@ -931,6 +931,8 @@ class Lizzy
 			}
             $globalParams['lastLoadedFile'] = $f;
 			$ext = fileExt($f);
+//            $id = translateToIdentifier(base_name($f, false));
+//            $id = $cls = preg_replace('/^\d{1,3}[_\s]*/', '', $id); // remove leading sorting number
 
             if ($handleEditions) {
                 $mdStr = PageSource::getFileOfRequestedEdition($f);
@@ -939,7 +941,7 @@ class Lizzy
             }
 
 			$mdStr = $this->extractFrontmatter($mdStr, $newPage);
-            $this->compileLocalCss($newPage);
+//            $this->compileLocalCss($newPage, $id);
 
             $variables = $newPage->get('variables', true);
             if ($variables) {
@@ -980,9 +982,14 @@ class Lizzy
             } else {
                 $wrapperTag = $newPage->get('wrapperTag');
             }
-			$str = "\n\t\t    <$wrapperTag id='{$wrapperTag}_$id' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
+			$wrapperId= "{$wrapperTag}_$id";
+			$str = "\n\t\t    <$wrapperTag id='$wrapperId' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
+//			$str = "\n\t\t    <$wrapperTag id='{$wrapperTag}_$id' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
 			$newPage->addContent($str, true);
-			$this->page->merge($newPage);
+
+            $this->compileLocalCss($newPage, $wrapperId);
+
+            $this->page->merge($newPage);
 
 			if ($eop) {
 			    break;
@@ -1003,13 +1010,35 @@ class Lizzy
 
 
 
-    private function compileLocalCss($newPage)
+    private function compileLocalCss($newPage, $id)
     {
         $scssStr = $newPage->get('scss');
-        if ($scssStr) {
-            $css = $this->scss->compileStr($scssStr);
+        $cssStr = $newPage->get('css');
+        if ($this->config->feature_frontmatterCssLocalToSection) {
+            $scssStr .= $cssStr;
+            if ($scssStr) {
+                $scssStr = "#$id { $scssStr }";
+                $css = $this->scss->compileStr($scssStr);
+            }
+            $css = str_replace(["\t",'  '], ' ', $css);
+            $newPage->addCss($css, true);
+
+        } else {
+            $compile = false;
+            if ($scssStr) {
+                $scssStr = str_replace('#this', "#$id", $scssStr);
+                $compile = true;
+            }
+            if (strpos($cssStr, '#this') !== false) {
+                $cssStr = str_replace('#this', "#$id", $cssStr);
+                $compile = true;
+            }
+            if ($compile) {
+                $css = $this->scss->compileStr($scssStr.$cssStr);
+                $css = str_replace(["\t",'  '], ' ', $css);
+                $newPage->addCss($css, true);
+            }
         }
-        $newPage->addCss($css);
     } // compileLocalCss
 
 
