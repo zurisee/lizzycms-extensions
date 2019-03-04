@@ -50,6 +50,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_enableAllowOrigin'         => [false, '[true|false] If true, Lizzy allows to produce a "allow origin" header' ],
             'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
             'feature_filterRequestString'       => [false, '[true|false] If true, permits only regular text in requests. Special characters and anything enclosed by them will be discarded.' ],
+            'feature_frontmatterCssLocalToSection' => [false, '[true|false] If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
             'feature_jQueryModule'              => ['JQUERY', 'One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
             'feature_loadFontAwesome'           => [false, '[true|false] loads Font-Awesome support' ],
             'feature_pageSwitcher'              => [false, '[true|false] whether code should be added to support page switching (by arrow-keys or swipe gestures)' ],
@@ -65,7 +66,6 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_slideShowSupport'          => [false, '[true|false] If true, provides support for slide-shows' ],
             'feature_supportLegacyBrowsers'     => [false, '[true|false] Determines whether jQuery 3 can be loaded, if false jQuery 1 is invoked' ],
             'feature_touchDeviceSupport'        => [true, '[true|false] Determines whether to support swipe gestures etc. on touch devices.' ],
-            'feature_frontmatterCssLocalToSection' => [false, '[true|false] If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
 
             'path_logPath'                      => [LOGS_PATH, '[true|Name] Name of folder to which logging output should be sent. Or "false" for disabling logging.' ],
             'path_pagesPath'                    => ['pages/', 'Name of folder in which all pages reside.' ],

@@ -931,8 +931,6 @@ class Lizzy
 			}
             $globalParams['lastLoadedFile'] = $f;
 			$ext = fileExt($f);
-//            $id = translateToIdentifier(base_name($f, false));
-//            $id = $cls = preg_replace('/^\d{1,3}[_\s]*/', '', $id); // remove leading sorting number
 
             if ($handleEditions) {
                 $mdStr = PageSource::getFileOfRequestedEdition($f);
@@ -941,7 +939,6 @@ class Lizzy
             }
 
 			$mdStr = $this->extractFrontmatter($mdStr, $newPage);
-//            $this->compileLocalCss($newPage, $id);
 
             $variables = $newPage->get('variables', true);
             if ($variables) {
@@ -984,7 +981,6 @@ class Lizzy
             }
 			$wrapperId= "{$wrapperTag}_$id";
 			$str = "\n\t\t    <$wrapperTag id='$wrapperId' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
-//			$str = "\n\t\t    <$wrapperTag id='{$wrapperTag}_$id' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
 			$newPage->addContent($str, true);
 
             $this->compileLocalCss($newPage, $wrapperId);
