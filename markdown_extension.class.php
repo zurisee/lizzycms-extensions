@@ -200,7 +200,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             return 'fencedCode';
         }
         return false;
-    }
+    } // identifyDivBlock
     
     protected function consumeDivBlock($lines, $current)
     {
@@ -256,7 +256,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $block['content'][0] = base64_encode($content);
         }
         return [$block, $i];
-    }
+    } // consumeDivBlock
 
     protected function renderDivBlock($block)
     {
@@ -285,7 +285,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             return 'tabulator';
         }
         return false;
-    }
+    } // identifyTabulator
 
 
 
@@ -312,7 +312,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             }
         }
         return [$block, $last];
-    }
+    } // consumeTabulator
 
 
 
@@ -361,7 +361,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $out = str_replace(['<p>', '</p>'], '', $out);
         $out = str_replace(['@/@ul@\\@', '@/@ol@\\@'], '', $out);
         return "<$wrapperTag$wrapperAttr class='tabulator_wrapper'>\n$out</$wrapperTag>\n";
-    }
+    } // renderTabulator
 
 
 
@@ -369,12 +369,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // ---------------------------------------------------------------
     protected function identifyDefinitionList($line, $lines, $current)
     {
-        // if a line starts with at least 3 colons it is identified as a fenced code block
+        // if next line starts with ': ', it's a dl:
         if (isset($lines[$current+1]) && strncmp($lines[$current+1], ': ', 2) === 0) {
             return 'definitionList';
         }
         return false;
-    }
+    } // identifyDefinitionList
 
 
 
@@ -384,37 +384,46 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         // create block array
         $block = [
             'definitionList',
-            'dt',
-            'dd' => [],
+            'content' => [],
         ];
-        $block['dt'] = rtrim($lines[$current]);   
-    
+
         // consume all lines until empty line
-        for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
-            $line = $lines[$i];
-            if (preg_match('/^\:\s+(.*)$/', $line, $m)) {
-                $block['dd'][] = $m[1];
-            } else {
-                // stop consuming when code block is over
-                break;
+        $nEmptyLines = 0;
+        for($i = $current, $count = count($lines); $i < $count; $i++) {
+            if (!preg_match('/\S/', $lines[$i])) {
+                if ($nEmptyLines++ > 1) {
+                    break;
+                }
             }
+            $block['content'][] = $lines[$i];
         }
         return [$block, $i];
-    }
+    } // consumeDefinitionList
 
 
 
 
     protected function renderDefinitionList($block)
     {
-        $dt = "\t\t<dt>{$block['dt']}</dt>";
-        $dd = implode("\n", $block['dd']);
-        $dd = \cebe\markdown\Markdown::parse($dd);
-        $dd = str_replace("  \n", "<br>\n", $dd);
-        $dd = preg_replace('|\<p\>(.*)\</p\>\n|ms', "$1", $dd);
-        $out = "\t<dl>\n$dt\n\t\t<dd>$dd</dd>\n\t</dl>\n";
+        $out = '';
+        foreach ($block['content'] as $line) {
+            if (!trim($line)) {                             // end of definitin item reached
+                $out .= "\t\t</dd>\n";
+            } elseif (preg_match('/^: /', $line)) { // within dd block
+                $out .= "\t\t\t".substr($line, 2);
+                if (preg_match('/\s\s$/', $line)) { // 2 blanks at end of line -> insert line break
+                    $out .= "<br />";
+                }
+                $out .= "\n";
+
+            } else {                                        // new dt block starts
+                $out .= "\t\t<dt>$line</dt>\n";
+                $out .= "\t\t<dd>\n";
+            }
+        }
+        $out = "\t<dl>\n$out\t</dl>\n";
         return $out;
-    }
+    } // renderDefinitionList
 
 
 
