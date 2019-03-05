@@ -979,11 +979,12 @@ class Lizzy
             } else {
                 $wrapperTag = $newPage->get('wrapperTag');
             }
-			$wrapperId= "{$wrapperTag}_$id";
-			$str = "\n\t\t    <$wrapperTag id='$wrapperId' class='$editingClass{$wrapperTag}_$cls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
+			$wrapperId = "{$wrapperTag}_$id";
+			$wrapperCls = "{$wrapperTag}_$cls";
+			$str = "\n\t\t    <$wrapperTag id='$wrapperId' class='$editingClass$wrapperCls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
 			$newPage->addContent($str, true);
 
-            $this->compileLocalCss($newPage, $wrapperId);
+            $this->compileLocalCss($newPage, $wrapperId, $wrapperCls);
 
             $this->page->merge($newPage);
 
@@ -1006,35 +1007,22 @@ class Lizzy
 
 
 
-    private function compileLocalCss($newPage, $id)
+    private function compileLocalCss($newPage, $id, $class)
     {
         $scssStr = $newPage->get('scss');
         $cssStr = $newPage->get('css');
-        if ($this->config->feature_frontmatterCssLocalToSection) {
+        if ($this->config->feature_frontmatterCssLocalToSection) {  // option: generally prefix local CSS with section class
             $scssStr .= $cssStr;
+            $cssStr = '';
             if ($scssStr) {
-                $scssStr = "#$id { $scssStr }";
-                $css = $this->scss->compileStr($scssStr);
-            }
-            $css = str_replace(["\t",'  '], ' ', $css);
-            $newPage->addCss($css, true);
-
-        } else {
-            $compile = false;
-            if ($scssStr) {
-                $scssStr = str_replace('#this', "#$id", $scssStr);
-                $compile = true;
-            }
-            if (strpos($cssStr, '#this') !== false) {
-                $cssStr = str_replace('#this', "#$id", $cssStr);
-                $compile = true;
-            }
-            if ($compile) {
-                $css = $this->scss->compileStr($scssStr.$cssStr);
-                $css = str_replace(["\t",'  '], ' ', $css);
-                $newPage->addCss($css, true);
+                $scssStr = ".$class { $scssStr }";
             }
         }
+        if ($scssStr) {
+            $cssStr .= $this->scss->compileStr($scssStr);
+        }
+        $cssStr = str_replace(['#this', '.this'], ["#$id", ".$class"], $cssStr); // '#this', '.this' are short-hands for section class/id
+        $newPage->addCss($cssStr, true);
     } // compileLocalCss
 
 
