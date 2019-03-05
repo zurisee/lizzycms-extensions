@@ -107,14 +107,14 @@ class Page
                 if ($value) {
                     if (strpos(',jqFiles,jsFiles,cssFiles,', ",$key,") !== false) {
                         $this->$key .= ',' . $value;
-                    } elseif (strpos(',jq,js,css,scss,', ",$key,") !== false) {
-                        $this->$key .= "\t\t\t$value\n";
+
                     } elseif (is_array($value)) {
                         if (is_array($this->$key)) {
                             $this->$key = array_merge($this->$key, $value);
                         } else {
                             $this->$key = $value;
                         }
+
                     } else {
                         $this->$key .= $value;
                     }
@@ -131,6 +131,7 @@ class Page
     } // appendValue
 
 
+    
 
     //-----------------------------------------------------------------------
     public function merge($page, $propertiesToReplace = '')
