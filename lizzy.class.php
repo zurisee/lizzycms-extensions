@@ -1071,7 +1071,7 @@ class Lizzy
 		    return $str;
         }
 
-		if ($yaml) {
+		if (preg_match('/\S/', $yaml)) {
 			$yaml = str_replace("\t", '    ', $yaml);
 			try {
 				$hdr = convertYaml($yaml);
