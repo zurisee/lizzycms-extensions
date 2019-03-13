@@ -50,7 +50,6 @@ define('LOCK_TIMEOUT', 		120);	                                // max time till 
 define('MAX_URL_ARG_SIZE',  255);
 define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
 define('RECYCLE_BIN_PATH',  '~page/.#recycleBin/');
-//define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
 
 require_once 'vendor/autoload.php';
 require_once 'datastorage.class.php';
@@ -216,7 +215,6 @@ EOT;
 
             $val = $this->db->read($id);
 		    $th = $this->db->readMeta("$id0/lzy-editable-freeze-after");
-//		    $th = $this->db->read("_meta_/$id0/lzy-editable-freeze-after");
 		    if ($val && $th) {
                 $t = $this->db->lastModified($id);
                 $th = time() - $th;
@@ -262,7 +260,6 @@ EOT;
 	//---------------------------------------------------------------------------
 	private function update($upd) {
 		exit($this->prepareClientData($upd).'#update');
-//		exit($this->prepareClientData($id).'#update');
 	} // get
 
 
@@ -319,6 +316,40 @@ EOT;
 
 
 	//---------------------------------------------------------------------------
+	private function getAllData()
+    {
+        if (!$this->openDB( )) {
+            exit('failed#save');
+        }
+        exit($this->prepareClientData().'#get-all');
+    } // getAllData
+
+
+
+
+	//---------------------------------------------------------------------------
+	private function saveData() {
+        $rawData = $this->get_request_data('data');
+		if ($rawData == 'undefined') {
+            exit('failed#save-data');
+        }
+		$data = json_decode($rawData, true);
+		$ticket = $this->get_request_data('ticket');
+		if ($ticket == 'undefined') {
+            exit('failed#save-data');
+        }
+
+        if (!$this->openDB( )) {
+            exit('failed#save');
+        }
+        $res = $this->db->write($data);
+
+		exit($this->prepareClientData().'#save-data');
+	} // saveData
+
+
+
+    //---------------------------------------------------------------------------
 	private function reset() {
         if (!$this->openDB( true )) {
             exit('failed#lock/DB');
@@ -367,11 +398,10 @@ EOT;
         if ($dataRef &&preg_match('/^[A-Z0-9]{4,20}$/', $dataRef)) {     // dataRef (=ticket hash) available
             require_once SYSTEM_PATH . 'ticketing.class.php';
             $ticketing = new Ticketing();
-            $ticket = $ticketing->consumeTicket($dataRef);
-            if ($ticket) {      // corresponding ticket found
-                $this->dbFile = PATH_TO_APP_ROOT . $ticket['dataSrc'];
-                $this->config = $ticket;
-                $useRecycleBin = $ticket['useRecycleBin'];
+            $ticketRec = $ticketing->consumeTicket($dataRef);
+            if ($ticketRec) {      // corresponding ticket found
+                $this->dbFile = PATH_TO_APP_ROOT . $ticketRec['dataSrc'];
+                $this->config = $ticketRec;
             }
         }
 
@@ -633,6 +663,12 @@ EOT;
         }
         if ($this->get_request_data('info') !== null) {    // respond with info-msg
             $this->info();
+        }
+        if ($this->get_request_data('save-data') !== null) {    // respond with info-msg
+            $this->saveData();
+        }
+        if ($this->get_request_data('get-all') !== null) {    // respond with info-msg
+            $this->getAllData();
         }
     } // handleGenericRequests
 
