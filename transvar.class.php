@@ -171,7 +171,6 @@ class Transvar
 
     //....................................................
     public function translateMacro($macro, $argStr)
-//    private function translateMacro($macro, $argStr)
     {
         $this->macroArgs[$macro] = parseArgumentStr($argStr);
         $this->macroInx = 0;
@@ -222,7 +221,7 @@ class Transvar
     {
         $val = $this->macros[$macro]( $this->getArgsArray($macro) );
         return $val;                    // execute the macro
-    }
+    } // executeMacro
 
 
 
@@ -230,7 +229,7 @@ class Transvar
     public function setMacroInfo($macroName, $info)
     {
         $this->macroInfo[] = [$macroName, $info];
-    } // executeMacro
+    } // setMacroInfo
 
 
 
