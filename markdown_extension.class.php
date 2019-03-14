@@ -13,8 +13,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             'scroll', 'tab', 'table', 'text', 'top', 'transform', 'transition', 'unicode', 'user',
             'vertical', 'visibility', 'white', 'widows', 'width', 'word', 'writing', 'z-index'];
 
-    public function __construct($page = false)
+    public function __construct($mymd, $page = false)
     {
+        $this->mymd = $mymd;
         $this->page = $page;
     } // __construct
     
@@ -367,6 +368,113 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
     // ---------------------------------------------------------------
+    protected function identifyCheckList($line, $lines, $current)
+    {
+        if (preg_match('/^\s*\[\s?x?\s?\]/', $line)) {
+            return 'checkList';
+        }
+        return false;
+    } // identifyCheckList
+
+
+    protected function consumeCheckList($lines, $current)
+    {
+        // create block array
+        $block = [
+            'checkList',
+            'content' => [],
+        ];
+        // consume all lines until 2 empty line
+        $nEmptyLines = 0;
+        for($i = $current, $count = count($lines); $i < $count; $i++) {
+            $line = $lines[$i];
+            if (!preg_match('/\S/', $line)) {                               // line empty
+                if ($nEmptyLines++ > 1) {                                           // already second empty line
+                    break;
+                }
+                continue;
+            } elseif ($line && !preg_match('/^\s* \[ \s?x?\s? \] /x', $line)) {  // no pattern [] or [x]
+                $i--;
+                break;
+            }
+            $block['content'][] = $lines[$i];
+        }
+        return [$block, $i];
+    } // consumeCheckList
+
+
+    protected function renderCheckList($block)
+    {
+        if (isset($this->mymd->trans->lzy->page->checklist)) {
+            $this->mymd->trans->lzy->page->checklist++;
+        } else {
+            $this->mymd->trans->lzy->page->checklist = 1;
+        }
+        $inx = $this->mymd->trans->lzy->page->checklist;
+        $cnt = 1;
+        $line = $block['content'][0];
+        list($line, $tag, $id, $class, $attr) = $this->mymd->postprocessInlineStylings($line, true);
+        $i=0;
+        if (!$id) {
+            $id = "lzy-checklist-$inx";
+        }
+
+        $this->attr = $attr;
+
+        $block['content'][0] = $line;
+        $out = $this->_renderCheckList($i, $block['content'], $inx, 1, $cnt);
+        $out = "\t<ul id='$id' class='lzy-checklist lzy-checklist-$inx' {$this->attr}>\n$out\t</ul>\n";
+        return $out;
+    } // renderCheckList
+
+
+
+
+    private function _renderCheckList(&$i, $lines, $inx, $indent0, &$cnt)
+    {
+        $out = '';
+        while ($i<sizeof($lines)) {
+            $line = $lines[$i];
+            if (preg_match('/^(\s*) \[ \s?(x?)\s? \]\s (.*) /x', $line, $m)) {
+                $elem = $m[3];
+                $checked = $m[2] ? ' checked': '';
+                $lead = str_replace("\t", '    ', $m[1]);
+                $indent = intval(strlen($lead) / 4) + 1;
+                $indentStr = str_pad('', $indent * 4);
+                $cls = "lzy-checklist-elem-$indent";
+                $inpName = str_pad('', $indent, '_') . str_replace(' ', '_', trim($elem));
+                $input = "\t$indentStr  <input type='checkbox' class='lzy-checklist-input lzy-checklist-input-$cnt' name='cb-$inx$inpName'$checked disabled />";
+                $elem = "\t$indentStr  <span>$elem</span>";
+
+                if ($indent0 == $indent) {                  // same level -> add elem
+                    $out .= "\t$indentStr<li class='lzy-checklist-elem $cls'>\n$input\n$elem\n\t$indentStr</li>\n";
+
+                } elseif ($indent0 < $indent) {             // descend
+                    $indent0 = intval(strlen($lead) / 4);
+                    $indentStr0 = str_pad('', $indent0 * 4);
+                    $out = substr($out, 0, -6)."\n";
+                    $out .= "\t$indentStr0  <ul>\n";
+                    $out .= $this->_renderCheckList($i, $lines, $inx, $indent, $cnt);
+                    $indent = intval(strlen($lead) / 4);
+                    $indentStr = str_pad('', $indent * 4);
+                    $out .= "\t$indentStr0  </ul>\n";
+                    $out .= "\t$indentStr</li>\n";
+                    $i--;
+
+                } else {                                    // ascend
+                    return $out;
+                }
+                $cnt++;
+            }
+            $i++;
+        }
+        return $out;
+    } // _renderCheckList
+
+
+
+
+    // ---------------------------------------------------------------
     protected function identifyDefinitionList($line, $lines, $current)
     {
         // if next line starts with ': ', it's a dl:
@@ -387,7 +495,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             'content' => [],
         ];
 
-        // consume all lines until empty line
+        // consume all lines until 2 empty line
         $nEmptyLines = 0;
         for($i = $current, $count = count($lines); $i < $count; $i++) {
             if (!preg_match('/\S/', $lines[$i])) {
@@ -417,7 +525,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $out .= "\n";
 
             } else {                                        // new dt block starts
-                $out .= "\t\t<dt>$line</dt>\n";
+                $out .= "\n\t\t<dt>$line</dt>\n";
                 $out .= "\t\t<dd>\n";
             }
         }

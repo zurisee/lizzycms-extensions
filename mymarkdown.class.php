@@ -27,7 +27,6 @@ class MyMarkdown
 		'\bNL\b'            => '<br>&nbsp;',
 		'\bSPACE\b'         => '&nbsp;&nbsp;&nbsp;&nbsp;',
 		'(?<![\-\\\])sS'    => 'ß',
-//		'\[_\]'             => '&nbsp;&nbsp;&nbsp;&nbsp;',
 		'CLEAR'             => '<div style="clear:both;"></div>',
 	);
 
@@ -80,8 +79,8 @@ class MyMarkdown
 				return $this->page;
 			}
 
-			$this->md = new MyExtendedMarkdown($page);
-			$str = $this->md->parse($str);
+            $this->md = new MyExtendedMarkdown($this, $page);
+            $str = $this->md->parse($str);
 			$str = $this->postprocess($str);
 			
 			$str = $this->doReplaces($str);
@@ -100,7 +99,7 @@ class MyMarkdown
     {
         $str = $this->preprocess($str);
 
-        $this->md = new MyExtendedMarkdown($page);
+        $this->md = new MyExtendedMarkdown($this, $page);
         $str = $this->md->parse($str);
         $str = $this->postprocess($str);
 
@@ -483,19 +482,22 @@ class MyMarkdown
 
 
 	//....................................................
-	private function postprocessInlineStylings($line)    // [[ xy ]]
+	public function postprocessInlineStylings($line, $returnElements = false)    // [[ xy ]]
 	{
 	    if (strpos($line, '[[') === false) {
             $line = str_replace('@/@[@\\@', '[[', $line);
             return $line;
         }
 
-		while (preg_match('/([^\[]*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
-			$head = $m[1];
-			$args = trim($m[2]);
-			$tail = $m[3];
-			$span = '';
+		if (!preg_match('/(.*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
+            return $line;
+        }
+        $head = $m[1];
+        $args = trim($m[2]);
+        $tail = $m[3];
+        $span = '';
 
+		if ($args) {
 			$c1 = $args{0};
 			if ($c1 == '"') {		                                                        // span
                 if (preg_match('/([^"]*)"([^"]*)"(.*)/', $args, $mm)) {	// "
@@ -508,7 +510,7 @@ class MyMarkdown
                     $args = $mm[1] . $mm[3];
                 }
             }
-            list($tag, $attr, $lang, $comment, $literal, $mdCompile) = parseInlineBlockArguments($args);
+            list($tag, $id, $class, $attr) = parseInlineBlockArguments($args, true);
 
 			if ($span) {
                 $head .= "<span $attr>$span</span>";
@@ -521,7 +523,11 @@ class MyMarkdown
 
 		$line = str_replace('@/@[@\\@', '[[', $line);
 
-		return $line;
+		if ($returnElements) {
+		    return [$line, $tag, $id, $class, $attr];
+        } else {
+            return $line;
+        }
 	} // postprocessInlineStylings
 
 
