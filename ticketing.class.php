@@ -56,9 +56,15 @@ class Ticketing
 
 
 
-    public function findTicket($ticketHash)
+    public function findTicket($value, $key = false)
     {
-        return $this->ds->findRec($ticketHash);
+        // finds a ticket that matches the given hash
+        // if $key is provided, it finds a ticket that contains given data (i,e, key and value match)
+        if ($key) {
+            return $this->ds->findRec($key, $value, true);
+        } else {
+            return $this->ds->read($value); // $value assumed to be the hash
+        }
     } // findTicket
 
 
