@@ -393,15 +393,22 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
-    public function findRec($key, $value)
+    public function findRec($key, $value, $returnKey = false)
     {
+        // find rec for which key AND value match
+        // returns the record unless $returnKey is true, then it returns the key
         //TODO: extend for 2D data
         $data = &$this->data;
 
         foreach ($data as $datakey => $rec) {
             foreach ($rec as $k => $v) {
-                if (($key == $k) && ($value == $v)) {
-                    return $datakey;
+                if (($key === $k) && ($value === $v)) {
+                    if ($returnKey) {
+                        return $datakey;
+                    } else {
+                        $rec = $this->read($datakey);
+                        return $rec;
+                    }
                 }
             }
         }
