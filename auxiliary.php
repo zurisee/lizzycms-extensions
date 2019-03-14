@@ -107,7 +107,7 @@ function parseArgumentStr($str, $delim = ',')
 
 
 
-function parseInlineBlockArguments($str)
+function parseInlineBlockArguments($str, $returnElements = false)
 {
     // Example: article  #my-id  .my-class  color:orange .class2 aria-expanded=false line-height: '1.5em;' !off .class3 aria-hidden= 'true' lang=de-CH literal=true md-compile=false
     $tag = $id = $class = $style = $attr = $lang = $comment = '';
@@ -129,7 +129,7 @@ function parseInlineBlockArguments($str)
         }
         $str = str_replace($m[0], '', $str);
     }
-    if ($style) {
+    if (!$returnElements && $style) {
         $style = ' style="'. trim($style) .'"';
     }
 
@@ -170,8 +170,12 @@ function parseInlineBlockArguments($str)
     if (preg_match('/(.*) \#([\w-]+) (.*)/x', $str, $m)) {      // #id
         if ($m[2]) {    // found
             $str = $m[1].$m[3];
-            $id = " id='{$m[2]}'";
-            $comment = "#{$m[2]}";
+            if (!$returnElements) {
+                $id = " id='{$m[2]}'";
+            } else {
+                $id = $m[2];
+            }
+            $comment = "#{$m[2]}"; //??? where used???
         }
     }
 
@@ -180,7 +184,7 @@ function parseInlineBlockArguments($str)
         $str = str_replace($m[0], '', $str);
         $comment .= '.'.str_replace(' ', '.', $class);
     }
-    if ($class) {
+    if (!$returnElements && $class) {
         $class = ' class="'. trim($class) .'"';
     }
 
@@ -188,8 +192,12 @@ function parseInlineBlockArguments($str)
         $tag = $m[1];
     }
 
-    $str = "$id$class$style$attr";
-    return [$tag, $str, $lang, $comment, $literal, $mdCompile];
+    if ($returnElements) {
+        return [$tag, $id, $class, $attr];
+    } else {
+        $str = "$id$class$style$attr";
+        return [$tag, $str, $lang, $comment, $literal, $mdCompile];
+    }
 } // parseInlineBlockArguments
 
 
