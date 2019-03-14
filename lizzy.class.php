@@ -276,11 +276,7 @@ class Lizzy
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
 
-        if ($this->config->feature_touchDeviceSupport) {
-            $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
-        } else {
-            $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
-        }
+        $this->handleConfigFeatures();
 
 
         // now, compile the page from all its components:
@@ -1912,7 +1908,57 @@ EOT;
         $html = $accForm->renderLoginForm($this->auth->message, false, true);
         $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
         $this->page->addModules('PANELS');
-    } // setLocale
+    } // renderLoginForm
+
+
+
+    private function handleConfigFeatures(): void
+    {
+        if ($this->config->feature_touchDeviceSupport) {
+            $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
+        } else {
+            $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
+        }
+
+
+        if ($this->config->feature_enableIFrameResizing) {
+            $this->page->addModules('IFRAME_RESIZER,POPUPS');
+            $jq = <<<EOT
+    if ( window.location !== window.parent.location ) { // page is being iframe-embedded:
+        $('body').addClass('lzy-iframe-resizer-active');
+        setTimeout(function() {
+            if (typeof window.parent.iframeResizerLoaded === 'undefined') {
+                console.log('iframe support');
+                $('#iframe-info').popup('show');
+            }
+        }, 500);
+    }
+EOT;
+            $this->page->addJq($jq);
+            $pgUrl = $GLOBALS["globalParams"]["pageUrl"];
+            $jsUrl = rtrim($GLOBALS["globalParams"]["host"], '/') . $GLOBALS["globalParams"]["appRoot"];
+            $lt = '&#60;';
+            $html = <<<EOT
+<div id="iframe-info" style="display: none">
+    <h1>iFrame Embedding</h1>
+    <p>Are you trying to embed this page using {$lt}iframe>?<br />
+    For best results, use the following code to embed this page:</p>
+    <div style="border: 1px solid #ddd; padding: 0 5px; overflow: auto">
+    <pre>
+<code>{$lt}iframe id="thisIframe" src="$pgUrl" style="width: 1px; min-width: 100%; border: none;">{$lt}/iframe>
+{$lt}script src='{$jsUrl}_lizzy/third-party/iframe-resizer/iframeSupport.js'>{$lt}/script>
+{$lt}script>
+  iFrameResize({}, '#thisIframe' );
+{$lt}/script></code></pre>
+    </div>
+</div>
+EOT;
+
+            $this->page->addPopup(['contentFrom' => '#iframe-info', 'triggerSource' => 'none']);
+            $this->page->addCss("#iframe-info {max-width: 90vw; max-height: 90vh; overflow:auto;}");
+            $this->page->addBodyEndInjections($html);
+        }
+    } // handleConfigFeatures
 
 } // class WebPage
 
