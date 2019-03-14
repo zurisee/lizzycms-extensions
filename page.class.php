@@ -1046,7 +1046,12 @@ EOT;
             header('Access-Control-Allow-Origin: *');
             return;
         }
-        if (!$allowOrigin || !isset($_SERVER['HTTP_ORIGIN'])) {
+        if (!$allowOrigin) {
+            return;
+        }
+        if (!isset($_SERVER['HTTP_ORIGIN'])) {
+            mylog("allowOrigin : no \$_SERVER['HTTP_ORIGIN' available");
+            header('Access-Control-Allow-Origin: *');
             return;
         }
 
