@@ -48,6 +48,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_autoLoadJQuery'            => [true, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
             'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
             'feature_enableAllowOrigin'         => [false, '[true|false] If true, Lizzy allows to produce a "allow origin" header' ],
+            'feature_enableIFrameResizing'      => [true, '[true|false] If true, includes js code required by other pages to iFrame-enbedd this site' ],
             'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
             'feature_filterRequestString'       => [false, '[true|false] If true, permits only regular text in requests. Special characters and anything enclosed by them will be discarded.' ],
             'feature_frontmatterCssLocalToSection' => [false, '[true|false] If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
@@ -163,6 +164,7 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js, css/slideshow_support.css', 'weight' => 32);
         $this->loadModules['PAGE_SWITCHER']         = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']                = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
+        $this->loadModules['IFRAME_RESIZER']        = array('module' => 'third-party/iframe-resizer/iframeResizer.contentWindow.min.js', 'weight' => 19);
 
 
         $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js, css/user_admin.css', 'weight' => 5);

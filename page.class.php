@@ -1046,13 +1046,19 @@ EOT;
             header('Access-Control-Allow-Origin: *');
             return;
         }
-        if (!$allowOrigin || !isset($_SERVER['HTTP_ORIGIN'])) {
+        if (!$allowOrigin) {
+            return;
+        }
+        if (!isset($_SERVER['HTTP_ORIGIN'])) {
+            mylog("allowOrigin : no \$_SERVER['HTTP_ORIGIN' available, allowing any");
+            header('Access-Control-Allow-Origin: *');
             return;
         }
 
         $allowedOrigins = str_replace(' ', '', ",$allowOrigin,");
-        $currRequestOrigin = ',' . $_SERVER['HTTP_ORIGIN'] . ',';
-        if (strpos($allowedOrigins, $currRequestOrigin)) {
+        $currRequestOrigin = $_SERVER['HTTP_ORIGIN'];
+        $currRequestOrigin1 = ',' . $currRequestOrigin . ',';
+        if (strpos($allowedOrigins, $currRequestOrigin1) !== false) {
             header('Access-Control-Allow-Origin: ' . $currRequestOrigin);
         }
     } // injectAllowOrigin

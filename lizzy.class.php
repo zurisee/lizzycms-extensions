@@ -276,11 +276,7 @@ class Lizzy
         // Future: optionally enable Auto-Attribute mechanism
         //        $html = $this->executeAutoAttr($html);
 
-        if ($this->config->feature_touchDeviceSupport) {
-            $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
-        } else {
-            $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
-        }
+        $this->handleConfigFeatures();
 
 
         // now, compile the page from all its components:
@@ -1912,7 +1908,52 @@ EOT;
         $html = $accForm->renderLoginForm($this->auth->message, false, true);
         $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
         $this->page->addModules('PANELS');
-    } // setLocale
+    } // renderLoginForm
+
+
+
+    private function handleConfigFeatures(): void
+    {
+        if ($this->config->feature_touchDeviceSupport) {
+            $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
+        } else {
+            $this->page->addJqFiles("AUXILIARY,MAC_KEYS");
+        }
+
+
+        if ($this->config->feature_enableIFrameResizing) {
+            $this->page->addModules('IFRAME_RESIZER');
+            $jq = <<<EOT
+    if ( window.location !== window.parent.location ) { // page is being iframe-embedded:
+        $('body').addClass('lzy-iframe-resizer-active');
+    }
+EOT;
+            $this->page->addJq($jq);
+
+            if (isset($_GET['iframe'])) {
+                $pgUrl = $GLOBALS["globalParams"]["pageUrl"];
+                $host = $GLOBALS["globalParams"]["host"];
+                $jsUrl = $host . $GLOBALS["globalParams"]["appRoot"];
+                $html = <<<EOT
+
+<div id="iframe-info">
+    <h1>iFrame Embedding</h1>
+    <p>Use the following code to embed this page:</p>
+    <div style="border: 1px solid #ddd; padding: 15px; overflow: auto">
+    <pre>
+<code>&lt;iframe id="thisIframe" src="$pgUrl" style="width: 1px; min-width: 100%; border: none;">&lt;/iframe>
+&lt;script src='{$jsUrl}_lizzy/third-party/iframe-resizer/iframeResizer.min.js'>&lt;/script>
+&lt;script>
+  iFrameResize({checkOrigin: '$host'}, '#thisIframe' );
+&lt;/script></code></pre>
+    </div>
+</div>
+
+EOT;
+                $this->page->addOverride($html, false, false);
+            }
+        }
+    } // handleConfigFeatures
 
 } // class WebPage
 
