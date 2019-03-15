@@ -20,6 +20,7 @@ class Ticketing
         $this->defaultType = isset($options['defaultType']) ? $options['defaultType'] : 'generic';
         $this->unambiguous = isset($options['unambiguous']) ? $options['unambiguous'] : false;
         $this->defaultValidityPeriod = isset($options['defaultValidityPeriod']) ? $options['defaultValidityPeriod'] : DEFAULT_TICKET_VALIDITY_TIME;
+        $this->defaultMaxConsumptionCount = isset($options['defaultMaxConsumptionCount']) ? $options['defaultMaxConsumptionCount'] : 1;
         $this->ds = new DataStorage($dataSrc, '', true);
         $this->purgeExpiredTickets();
     } // __construct
@@ -27,10 +28,10 @@ class Ticketing
 
 
 
-    public function createTicket($rec, $maxConsumptionCount = 1, $validityPeriod = null, $type = false)
+    public function createTicket($rec, $maxConsumptionCount = false, $validityPeriod = null, $type = false)
     {
         $ticket = $rec;
-        $ticket['lzy_maxConsumptionCount'] = $maxConsumptionCount;
+        $ticket['lzy_maxConsumptionCount'] = ($maxConsumptionCount !== false) ?$maxConsumptionCount : $this->defaultMaxConsumptionCount;
         $ticket['lzy_ticketType'] = $type ? $type : $this->defaultType;
 
         if ($validityPeriod === null) {
