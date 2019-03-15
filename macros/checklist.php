@@ -11,10 +11,10 @@ $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');
-    $selector = $this->getArg($macroName, 'selector', '', '');
-    $dataStorage = $this->getArg($macroName, 'dataStorage', '', '');
+    $selector = $this->getArg($macroName, 'selector', 'A CSS selector that identifies the associated checklist, e.g. "#mychkecklist".', '');
+    $dataStorage = $this->getArg($macroName, 'dataStorage', 'Name of a file (local to current page) where to store checklist states, e.g. "mychecklist.json".', '');
     $dataStorage = resolvePath($dataStorage, true);
-    $scope = $this->getArg($macroName, 'scope', '', '');
+    $scope = $this->getArg($macroName, 'scope', '[all|user] Defines who will see changes, only the user or everybody visiting the web-page. (Default: all)', '');
 
     require_once SYSTEM_PATH.'ticketing.class.php';
     $ticketing = new Ticketing(['hashSize' => 6, 'defaultType' => 'checklist', 'defaultMaxConsumptionCount' => 999999999, 'defaultValidityPeriod' => 999999999]);
