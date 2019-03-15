@@ -543,7 +543,8 @@ class Page
             $file = resolvePath($overlay['fromFile'], true);
             if (file_exists($file)) {
                 $text = getFile($file);
-                if (!isset($overlay['mdCompile']) || $overlay['mdCompile'] || $this->mdCompileModifiedContent) {
+//                if (!isset($overlay['mdCompile']) || $overlay['mdCompile'] || $this->mdCompileModifiedContent) {
+                if ((isset($overlay['mdCompile']) && $overlay['mdCompile']) || $this->mdCompileModifiedContent) {
                     $text = compileMarkdownStr($text);
                 }
             }
@@ -551,7 +552,8 @@ class Page
         } elseif (isset($overlay['text'])) {
             $text = $overlay['text'];
 
-            if (!isset($overlay['mdCompile']) || $overlay['mdCompile'] || $this->mdCompileModifiedContent) {
+//            if (($overlay['mdCompile'] === true) || $this->mdCompileModifiedContent) {
+            if ((isset($overlay['mdCompile']) && $overlay['mdCompile']) || $this->mdCompileModifiedContent) {
                 $text = compileMarkdownStr($text);
             }
         }
