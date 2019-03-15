@@ -389,7 +389,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         for($i = $current, $count = count($lines); $i < $count; $i++) {
             $line = $lines[$i];
             if (!preg_match('/\S/', $line)) {                               // line empty
-                if ($nEmptyLines++ > 1) {                                           // already second empty line
+                if ($nEmptyLines++ > 0) {                                           // already second empty line
                     break;
                 }
                 continue;
@@ -499,7 +499,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $nEmptyLines = 0;
         for($i = $current, $count = count($lines); $i < $count; $i++) {
             if (!preg_match('/\S/', $lines[$i])) {
-                if ($nEmptyLines++ > 1) {
+                if ($nEmptyLines++ > 0) {
                     break;
                 }
             }
