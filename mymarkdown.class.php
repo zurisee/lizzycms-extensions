@@ -486,11 +486,19 @@ class MyMarkdown
 	{
 	    if (strpos($line, '[[') === false) {
             $line = str_replace('@/@[@\\@', '[[', $line);
-            return $line;
+            if ($returnElements) {
+                return [$line, null, null, null, null];
+            } else {
+                return $line;
+            }
         }
 
 		if (!preg_match('/(.*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
-            return $line;
+            if ($returnElements) {
+                return [$line, null, null, null, null];
+            } else {
+                return $line;
+            }
         }
         $head = $m[1];
         $args = trim($m[2]);
