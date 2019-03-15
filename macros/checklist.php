@@ -17,7 +17,7 @@ $this->addMacro($macroName, function () {
     $scope = $this->getArg($macroName, 'scope', '', '');
 
     require_once SYSTEM_PATH.'ticketing.class.php';
-    $ticketing = new Ticketing(['hashSize' => 6, 'defaultType' => 'checklist', 'defaultValidityPeriod' => 999999999]);
+    $ticketing = new Ticketing(['hashSize' => 6, 'defaultType' => 'checklist', 'defaultMaxConsumptionCount' => 999999999, 'defaultValidityPeriod' => 999999999]);
 
     $ticket = $ticketing->findTicket($selector, 'selector');
     if (!$ticket) {

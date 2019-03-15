@@ -1,6 +1,6 @@
-  /* Lizzy Basic CSS */
+/* Lizzy Basic CSS */
 
-  /* === General =============================== */
+/* === General =============================== */
 body, main {
 	position: relative;
 }
@@ -484,6 +484,49 @@ footer a {
 	background: #ddd;
 	font-weight: bold;
 }
+
+/* --- Checklists ---------------- */
+.lzy-checklist {
+    padding: 0;
+}
+.lzy-checklist li {
+    list-style: none;
+}
+.lzy-checklist-input {
+    margin-right: 0.5em;
+}
+.lzy-checklist {
+    .lzy-checklist-elem > input,
+    .lzy-checklist-elem > span {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .lzy-checklist-elem > input::before {
+        vertical-align: top;        
+    }
+    input[type=checkbox]:not([disabled]) {
+      cursor: pointer;
+    }
+    input[type=checkbox]:checked::before {
+      content: "\2713";
+    }
+    input[type=checkbox]::before {
+      content: "\202A";
+      background: #ffffff;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, .2);
+      text-align: center;
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      border: 1px solid #cdcdcd;
+      border-radius: 4px;
+      text-indent: 1px;
+    }
+    input[type=checkbox]:focus::before {
+        box-shadow: 0 0 5px 2px magenta;
+    }
+}
+
 
 /* --- Misc --------------------- */
 #debugInfo {
