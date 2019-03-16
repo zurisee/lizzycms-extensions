@@ -46,14 +46,18 @@ $this->addMacro($macroName, function () {
 
 
     // Preset modes:
-    if ($mode && ($mode != 'auto')) {
-        $this->page->addJq("$('$widgetSelector').addClass('$mode');");
+    if ($mode == 'accordion') {
+        $this->page->addJq("$('$widgetSelector').addClass('lzy-accordion'); setMode();\n");
+
+    } elseif ($mode == 'tabs') {
+        $this->page->addJq("$('$widgetSelector').addClass('lzy-tabs'); setMode();\n");
     }
+
     if ($tilted) {
-        $this->page->addJq("$('$widgetSelector').addClass('lzy-tilted');");
+        $this->page->addJq("$('$widgetSelector').addClass('lzy-tilted');\n");
     }
     if ($oneOpenOnly) {
-        $this->page->addJq("$('$widgetSelector').addClass('one-open-only');");
+        $this->page->addJq("$('$widgetSelector').addClass('one-open-only');\n");
     }
 
     // prepare CSS that depends on settings:
