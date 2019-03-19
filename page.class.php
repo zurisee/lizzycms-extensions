@@ -490,7 +490,6 @@ class Page
 
         } else {
             if (isset($this->mdCompileModifiedContent) && ($this->mdCompileModifiedContent || ($this->mdCompileModifiedContent === null) )) {
-//            if ((isset($override['mdCompile']) && $override['mdCompile']) || $this->mdCompileModifiedContent) {
                 $override['mdCompile'] = true;
             }
             $text = '';
@@ -504,7 +503,6 @@ class Page
                     $text .= getFile($file);
                 }
             }
-//            if (!isset($override['mdCompile']) || $override['mdCompile'] || $this->mdCompileModifiedContent) {
             if ((isset($override['mdCompile']) && $override['mdCompile']) || $this->mdCompileModifiedContent) {
                 $text = compileMarkdownStr($text);
             }
