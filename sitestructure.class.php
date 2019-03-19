@@ -172,12 +172,20 @@ class SiteStructure
 			$line = rtrim($line);
 			if (preg_match('/^\s*$/', $line) || preg_match('/^\s*#/', $line)) {continue;}
 			$i++;
+
+			if (preg_match('/^ \{\{ ([^\}]+) \}\} (.*)/x', $line, $m)) {
+			    $transName = "{{ {$m[1]} }}";
+			    $line = $m[1].$m[2];
+            } else {
+			    $transName = false;
+            }
+
 			if (preg_match('/^(\s*)([^:\{]+)(.*)/', $line, $m)) {
 				$indent = $m[1];
 				$name = trim($m[2]);
 				$args = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);;
 
-				$rec['name'] = $name;
+				$rec['name'] = $transName ? $transName : trim($m[2]);
 				if (strlen($indent) == 0) {
                     $level = 0;
                 } else {
