@@ -1,5 +1,17 @@
 <?php
 
+/*
+ * todo
+
+- datatable options
+
+- class UserData
+
+- visibleTo / modifiableBy  [all,user,session]
+
+
+ */
+
 
 class HtmlTable
 {
@@ -24,6 +36,7 @@ class HtmlTable
         $this->cellIds 	            = $this->getOption('cellIds', '(optional) If true, each cell gets an ID which is derived from the cellClass');
         $this->nRows 		        = $this->getOption('nRows', '(optional) Number of rows: if set the table is forced to this number of rows');
         $this->nCols 		        = $this->getOption('nCols', '(optional) Number of columns: if set the table is forced to this number of columns');
+        $this->interactive          = $this->getOption('interactive', '[true|false] If true, module "Datatables" is activated, providing for interactive features such as sorting, searching etc.');
         $this->excludeColumns       = $this->getOption('excludeColumns', '(optional) Allows to exclude specific columns, e.g. "excludeColumns:2,4-5"');
         $this->sort 		        = $this->getOption('sort', '(optional) Allows to sort the table on a given columns, e.g. "sort:3"');
         $this->sortExcludeHeader    = $this->getOption('sortExcludeHeader', '(optional) Allows to exclude the first row from sorting');
@@ -86,7 +99,7 @@ class HtmlTable
         }
 
         $data = &$this->data;
-        if ($this->headers) {
+        if (($this->headers) && ($this->headers !== true)) {
             $headers = $this->extractList($this->headers, true);
             $headers = array_pad ( $headers , sizeof($data[0]) , '' );
 
@@ -103,6 +116,7 @@ class HtmlTable
         }
         return;
     } // applyHeaders
+
 
 
 
@@ -124,7 +138,6 @@ class HtmlTable
                     $thead .= "\t\t\t<th class='lzy-table-row-nr'></th>\n";
                 }
                 for ($c = 0; $c < $nCols; $c++) {
-                    $c1 = $c + 1;
                     $cell = $this->getDataElem($r, $c, 'th');
                     $thead .= "\t\t\t$cell\n";
                 }
@@ -140,7 +153,6 @@ class HtmlTable
                     $tbody .= "\t\t\t<td class='lzy-table-row-nr'>$n</td>\n";
                 }
                 for ($c = 0; $c < $nCols; $c++) {
-                    $c1 = $c + 1;
                     $cell = $this->getDataElem($r, $c);
                     $tbody .= "\t\t\t$cell\n";
                 }
@@ -220,25 +232,28 @@ EOT;
 
     private function applyProcessingToData()
     {
-        if (!$this->instructionSet) {
+        if (!$this->processingInstructions) {
             return;
         }
-        foreach ($this->instructionSet as $type => $instructions) {
+        foreach ($this->processingInstructions as $type => $cellInstructions) {
+            if (is_int($type) && isset($cellInstructions['action'])) {
+                $type = $cellInstructions['action'];
+            }
             switch ($type) {
                 case 'addCol':
-                    $this->addCol($instructions);
+                    $this->addCol($cellInstructions);
                     break;
                 case 'removeCols':
-                    $this->removeCols($instructions);
+                    $this->removeCols($cellInstructions);
                     break;
                 case 'modifyCol':
-                    $this->modifyCol($instructions);
+                    $this->modifyCol($cellInstructions);
                     break;
                 case 'addRow':
-                    $this->addRow($instructions);
+                    $this->addRow($cellInstructions);
                     break;
                 case 'modifyCells':
-                    $this->modifyCells($instructions);
+                    $this->modifyCells($cellInstructions);
                     break;
             }
         }
@@ -252,29 +267,35 @@ EOT;
         $data = &$this->data;
         $this->instructions = $cellInstructions;
 
-        $newCol = $this->getArg('column');
+        $newCol = $this->getArg('column'); // starting at 1
+        if (!$newCol) {
+            $newCol = sizeof($data)+1;
+        }
+        $_newCol = $newCol - 1;     // starting at 0
         $content = $this->getArg('content');
-        $header = $this->getArg('headerTop');
+        $header = $this->getArg('header');
         $class = $this->getArg('class');
-        $instructions = $this->getArg('instructions');
+        $phpExpr = $this->getArg('phpExpr');
 
+        $header1 = '';
         if ($class) {
             $content .= " @@$class@@";
-            $header .= " @@$class@@";
+            $header1 = "$header @@$class@@";
         }
 
         foreach ($data as $i => $row) {
-            array_splice($data[$i], $newCol, 0, $content);
+            array_splice($data[$i], $_newCol, 0, $content);
         }
         $this->nCols++;
 
-        if ($instructions) {
-            $this->applyinstructionsToColumn($newCol, $instructions);
+        if ($phpExpr) {
+            $this->applyCellInstructionsToColumn($_newCol, $phpExpr, !$header, $class);
         }
-        if ($header) {
-            $data[0][$newCol] = $header;
+        if ($header1) {
+            $data[0][$_newCol] = $header1;
         }
     } // addCol
+
 
 
 
@@ -285,26 +306,44 @@ EOT;
 
         $content = $this->getArg('content');
         $class = $this->getArg('class');
-        $instructions = $this->getArg('instructions');
+        $phpExpr = $this->getArg('phpExpr');
 
+        $contents = false;
+        if (is_array($content)) {
+            $contents = $content;
+            $content = '';
+        }
         if ($class) {
             $content .= " @@$class@@";
         }
 
-        $instructions = $this->compileInstructions($instructions);
         $row = [];
-        $newCellVal = '';
-        for ($c = 0; $c < sizeof($data[0]); $c++) {
-            if ($instructions) {
+
+        for ($_c = 0; $_c < sizeof($data[0]); $_c++) {
+            $newCellVal = '';
+            if ($this->phpExpr[$_c]) {
+                $phpExpr1 = $this->precompilePhpExpr($this->phpExpr[$_c], $_c);
                 try {
-                    $newCellVal = eval( $instructions );
+                    $newCellVal = eval($phpExpr1);
                 } catch (Throwable $t) {
                     print_r($t);
                     exit;
                 }
-
+            } elseif ($phpExpr) {
+                $phpExpr1 = $this->precompilePhpExpr($phpExpr, $_c);
+                try {
+                    $newCellVal = eval($phpExpr1);
+                } catch (Throwable $t) {
+                    print_r($t);
+                    exit;
+                }
             }
-            $row[$c] = $content.$newCellVal;
+            if ($contents && isset($contents[$_c])) {
+                $row[$_c] = $content.$contents[$_c].$newCellVal;
+
+            } else {
+                $row[$_c] = $content . $newCellVal;
+            }
         }
         $data[] = $row;
     } // addRow
@@ -339,23 +378,27 @@ EOT;
         $this->instructions = $instructions;
 
         $col = $this->getArg('column');
+        if (!$col) {
+            die("Error: modifyCol() requires 'column' argument to be set.");
+        }
+        $_col = $col - 1;     // starting at 0
         $content = $this->getArg('content');
         $header = $this->getArg('header');
         $class = $this->getArg('class');
-        $instructions = $this->getArg('instructions');
-        $inclHead = $this->getArg('includeHead');
+        $phpExpr = $this->getArg('phpExpr');
+        $inclHead = !(isset($this->headers) && $this->headers);
 
         if ($content) {
-            $this->applyContentToColumn($col, $content, $inclHead);
+            $this->applyContentToColumn($_col, $content, $inclHead);
         }
-        if ($instructions) {
-            $this->applyinstructionsToColumn($col, $instructions, $inclHead);
+        if ($phpExpr) {
+            $this->applyCellInstructionsToColumn($_col, $phpExpr, $inclHead, $class);
         }
         if ($class) {
-            $this->applyClassToColumn($col, $class, $inclHead);
+            $this->applyClassToColumn($_col, $class, $inclHead);
         }
         if ($header) {
-            $data[0][$col - 1] = $header;
+            $data[0][$_col] = $header;
         }
     } // modifyCol
 
@@ -373,21 +416,23 @@ EOT;
             $header = $this->getArg('headers');
         }
         $class = $this->getArg('class');
-        $instructions = $this->getArg('instructions');
-        $inclHead = $this->getArg('includeHead');
+        $phpExpr = $this->getArg('phpExpr');
+        $inclHead = !(isset($this->headers) && $this->headers);
 
-        for ($col = 1; $col < sizeof($data[0]); $col++) {
+        $nCols = sizeof($data[0]);
+        $_col = (isset($this->headersLeft) && $this->headersLeft) ? 1 : 0;
+        for (; $_col < $nCols; $_col++) {
             if ($content) {
-                $this->applyContentToColumn($col, $content, $inclHead);
+                $this->applyContentToColumn($_col, $content, $inclHead);
             }
-            if ($instructions) {
-                $this->applyinstructionsToColumn($col, $instructions, $inclHead);
+            if ($phpExpr) {
+                $this->applyCellInstructionsToColumn($_col, $phpExpr, $inclHead, $class);
             }
             if ($class) {
-                $this->applyClassToColumn($col, $class, $inclHead);
+                $this->applyClassToColumn($_col, $class, $inclHead);
             }
-            if ($header && isset($header[$col-1])) {
-                $data[0][$col-1] = trim($header[$col-1]);
+            if ($header && isset($header[$_col])) {
+                $data[0][$_col] = trim($header[$_col]);
             }
         }
     } // modifyCells
@@ -414,7 +459,7 @@ EOT;
 
     private function applyClassToColumn($column, $class, $inclHead = false)
     {
-        $c = $column - 1;
+        $c = $column;
         $data = &$this->data;
         $nCols = sizeof($data[0]);
         $class = $class ? " @@$class@@" : '';
@@ -432,19 +477,17 @@ EOT;
 
     private function applyContentToColumn($column, $content, $inclHead = false)
     {
-        $c = $column - 1;
         $data = &$this->data;
-        $nCols = sizeof($data[0]);
 
         foreach ($data as $r => $row) {
             if (!$inclHead && ($r == 0)) {
                 continue;
             }
             if (is_array($content)) {
-                $data[$r][$c] = (isset($content[$r]) ? $content[$r] : '');
+                $data[$r][$column] = (isset($content[$r]) ? $content[$r] : '');
 
             } else {
-                $data[$r][$c] = $content;
+                $data[$r][$column] = $content;
             }
         }
     } // applyContentToColumn
@@ -452,16 +495,18 @@ EOT;
 
 
 
-    private function applyinstructionsToColumn($column, $cellInstructions, $inclHead = false)
+    private function applyCellInstructionsToColumn($column, $phpExpr, $inclHead = false, $class = '')
     {
-        if (!$cellInstructions) {
+        if (!$phpExpr) {
             return;
         }
-        $c = $column - 1;
+        if ($class) {
+            $class = "@@$class@@";
+        }
+        $c = $column;
         $data = &$this->data;
-        $nCols = sizeof($data[0]);
 
-        $cellInstructions = $this->compileInstructions($cellInstructions);
+        $phpExpr = $this->precompilePhpExpr($phpExpr);
 
         // iterate over rows and apply cell-instructions:
         foreach ($data as $r => $row) {
@@ -469,28 +514,28 @@ EOT;
                 continue;
             }
             try {
-                $newCellVal = eval( $cellInstructions );
+                $newCellVal = eval( $phpExpr );
             } catch (Throwable $t) {
                 print_r($t);
                 exit;
             }
-            $data[$r][$c] .= $newCellVal;
+            $data[$r][$c] = $newCellVal.$class;
         }
-    } // applyinstructionsToColumn
+        return;
+    } // applyCellInstructionsToColumn
 
 
 
 
-    private function compileInstructions($cellInstructions)
+    private function precompilePhpExpr($phpExpr, $_col = false)
     {
-        if (!$cellInstructions) {
+        if (!$phpExpr) {
             return '';
         }
         $data = &$this->data;
-        $nCols = sizeof($data[0]);
         $headers = $data[0];
 
-        if (preg_match_all('/( (?<!\\\) \[\[ [^\]]* \]\] )/x', $cellInstructions, $m)) {
+        if (preg_match_all('/( (?<!\\\) \[\[ [^\]]* \]\] )/x', $phpExpr, $m)) {
             foreach ($m[1] as $cellRef) {
                 $cellRef0 = $cellRef;
                 $cellRef = trim(str_replace(['[[', ']]'], '', $cellRef));
@@ -515,23 +560,49 @@ EOT;
                     $c = $i;
 
                 } elseif (intval($cellRef)) { // numerical index
-                    $c = intval($cellRef) - 1;
+                    $c = min(intval($cellRef) - 1, sizeof($this->data[0]) - 1);
 
                 } else {
                     $cellVal = $cellRef;    // literal content
                 }
 
                 $cellVal = $cellVal ? $cellVal : "\$data[\$r][$c]";
-                $cellInstructions = str_replace($cellRef0, $cellVal, $cellInstructions);
+                $phpExpr = str_replace($cellRef0, $cellVal, $phpExpr);
             }
         }
-        $cellInstructions = preg_replace('/^ \\\ \[ \[/x', '[[', $cellInstructions);
+        $phpExpr = preg_replace('/^ \\\ \[ \[/x', '[[', $phpExpr);
 
-        if (strpos($cellInstructions, 'return') === false) {
-            $cellInstructions = "return $cellInstructions;";
+        if ($_col !== false) {
+            $r = (isset($this->headers) && $this->headers) ? 1 : 0;
+            if (strpos($phpExpr, 'sum()') !== false) {
+                $sum = 0;
+                for (; $r<sizeof($data); $r++) {
+                    $val = $data[$r][$_col];
+                    if (preg_match('/^([\d\.]+)/', $val, $m)) {
+                        $val = floatval($m[1]);
+                        $sum += $val;
+                    }
+                }
+                $phpExpr = str_replace('sum()', $sum, $phpExpr);
+
+            }
+            if (strpos($phpExpr, 'count()') !== false) {
+                $count = 0;
+                for (; $r<sizeof($data); $r++) {
+                    $val = $data[$r][$_col];
+                    if (preg_match('/\S/', $val)) {
+                        $count++;
+                    }
+                }
+                $phpExpr = str_replace('count()', $count, $phpExpr);
+            }
         }
-        return $cellInstructions;
-    } // compileInstructions
+
+        if (strpos($phpExpr, 'return') === false) {
+            $phpExpr = "return $phpExpr;";
+        }
+        return $phpExpr;
+    } // precompilePhpExpr
 
 
 
@@ -550,16 +621,31 @@ EOT;
             $this->helpText[] = ['option' => $name, 'text' => $helpText];
         }
         return $value;
-    } // getArg
+    } // getOption
 
 
 
 
     private function getArg( $name )
     {
+        if ($name === 'phpExpr') {
+            $this->phpExpr = [];
+            for ($c = 1; $c <= sizeof($this->data[0]); $c++) {
+                if (isset($this->instructions["phpExpr[$c]"])) {
+                    $this->phpExpr[$c-1] = $this->instructions["phpExpr[$c]"];
+                } else {
+                    $this->phpExpr[$c-1] = false;
+                }
+            }
+        }
+
         if (!isset($this->instructions[$name])) {
-            $this->errMsg .= "Argument '$name' missing\n";
-            return '';
+            if (($name === 'columns') && isset($this->instructions['column'])) {
+                $name = 'column';
+            } else {
+                $this->errMsg .= "Argument '$name' missing\n";
+                return '';
+            }
         }
         $value = $this->instructions[$name];
         $value = $this->extractList($value);
@@ -568,24 +654,24 @@ EOT;
 
 
 
-    private function getData()
-    {
-        $this->dataFile = $this->dataSource;
-        if ($this->dataFile) {
-            $ds = new DataStorage($this->dataFile);
-        } else {
-            $ds = new DataStorage('~page/'.$this->id.'.yaml');
-        }
-
-        $this->data = $ds->read();
-        if (!$this->data) {
-            return "<p>{{ no data found for }} '$this->id'</p>";
-        }
-        if (!isset($this->data[0])) {
-            return '';
-        }
-        return true;
-    } // getData
+//    private function getData()
+//    {
+//        $this->dataFile = $this->dataSource;
+//        if ($this->dataFile) {
+//            $ds = new DataStorage($this->dataFile);
+//        } else {
+//            $ds = new DataStorage('~page/'.$this->id.'.yaml');
+//        }
+//
+//        $this->data = $ds->read();
+//        if (!$this->data) {
+//            return "<p>{{ no data found for }} '$this->id'</p>";
+//        }
+//        if (!isset($this->data[0])) {
+//            return '';
+//        }
+//        return true;
+//    } // getData
 
 
 
@@ -621,28 +707,6 @@ EOT;
 
 
 
-    private function handleDatatableOption($page)
-    {
-        if (strpos($this->tableClass, 'datatables') !== false) {
-            $page->addModules('DATATABLES');
-            $order = '';
-            if ($this->sort) {
-                $sortCols = csv_to_array($this->sort);
-                $headers = $this->data[0];
-                foreach ($sortCols as $sortCol) {
-                    $sortCol = alphaIndexToInt($sortCol, $headers) - 1;
-                    $order .= "[ $sortCol, 'asc' ],";
-                }
-                $order = rtrim($order, ',');
-                $order = " 'order': [$order],";
-            }
-            $page->addJq("\t\$('.datatables').DataTable({ 'language':{'search':'{{QuickSearch}}:', 'info': '_TOTAL_ {{Records}}'}, $order {$this->paging}{$this->searching} });\n");
-        }
-    } // handleDatatableOption
-
-
-
-
     private function handleCaption($tableCounter)
     {
         if ($this->caption) {
@@ -665,6 +729,40 @@ EOT;
         }
         return $tableCounter;
     } // handleCaption
+
+
+
+
+    private function handleDatatableOption($page)
+    {
+        if ($this->interactive) {
+            $page->addModules('DATATABLES');
+            $this->tableClass = trim($this->tableClass.' lzy-datatable');
+            $order = '';
+            if ($this->sort) {
+                $sortCols = csv_to_array($this->sort);
+                $headers = $this->data[0];
+                foreach ($sortCols as $sortCol) {
+                    $sortCol = alphaIndexToInt($sortCol, $headers) - 1;
+                    $order .= "[ $sortCol, 'asc' ],";
+                }
+                $order = rtrim($order, ',');
+                $order = " 'order': [$order],";
+            }
+            $jq = <<<EOT
+$('.lzy-datatable').DataTable({
+    'language':{'search':'{{QuickSearch}}:', 'info': '_TOTAL_ {{Records}}'},
+    $order
+});
+EOT;
+            // $order {$this->paging}{$this->searching}
+
+            $page->addJq($jq);
+            if (!$this->headers) {
+                $this->headers = true;
+            }
+        }
+    } // handleDatatableOption
 
 
 
@@ -704,12 +802,12 @@ EOT;
     private function loadProcessingInstructions()
     {
         if ($this->process && isset($this->page->frontmatter[$this->process])) {
-            $this->instructionSet = $this->page->frontmatter[$this->process];
+            $this->processingInstructions = $this->page->frontmatter[$this->process];
         } elseif ($this->processInstructionsFile) {
             $file = resolvePath($this->processInstructionsFile, true);
-            $this->instructionSet = getYamlFile($file);
+            $this->processingInstructions = getYamlFile($file);
         } else {
-            $this->instructionSet = false;
+            $this->processingInstructions = false;
         }
     } // loadProcessingInstructions
 
@@ -743,7 +841,7 @@ EOT;
         }
         if (is_string($value) && preg_match('/^(?<!\\\) \[ (?!\[) (.*) \] $/x', "$value", $m)) {
             $value = $m[1];
-            $ch1 = $value[1];
+            $ch1 = isset($value[1]) ? $value[1] : '';
             if (!($ch1 == ',') && !($ch1 == '|')) {
                 $ch1  = false;
                 $comma = substr_count($value, ',');
