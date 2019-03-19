@@ -844,6 +844,9 @@ function parseNumbersetDescriptor($descr, $minValue = 1, $maxValue = 9, $headers
 // extract patterns such as '1,3, 5-8', or '-3, 5, 7-'
 // don't parse if pattern contains ':' because that means it's a key:value
 {
+    if (!$descr) {
+        return [];
+    }
     $names = false;
     $descr = str_replace(['&#34;', '&#39;'], ['"', "'"], $descr);
 	$set = parseArgumentStr($descr);
@@ -1564,7 +1567,7 @@ function compileMarkdownStr($mdStr, $removeWrappingPTags = false)
     $md = new MyMarkdown();
     $str = $md->parseStr($mdStr);
     if ($removeWrappingPTags) {
-        $str = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $str);
+        $str = preg_replace('/^\<p>(.*)\<\/p>(\s*)$/ms', "$1$2", $str);
     }
     return $str;
 } // compileMarkdownStr
