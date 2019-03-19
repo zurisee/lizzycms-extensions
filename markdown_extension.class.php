@@ -442,8 +442,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $indent = intval(strlen($lead) / 4) + 1;
                 $indentStr = str_pad('', $indent * 4);
                 $cls = "lzy-checklist-elem-$indent";
-                $inpName = str_pad('', $indent, '_') . str_replace(' ', '_', trim($elem));
-                $input = "\t$indentStr  <input type='checkbox' class='lzy-checklist-input lzy-checklist-input-$cnt' name='cb-$inx$inpName'$checked disabled />";
+                $inpName = str_pad('', $indent, '_') . str_replace(['.',' '], '_', trim($elem));
+                $input = "\t$indentStr  <input type='checkbox' class='lzy-checklist-input lzy-checklist-input-$cnt' name='cb_$inx$inpName'$checked disabled />";
                 $elem = "\t$indentStr  <span>$elem</span>";
 
                 if ($indent0 == $indent) {                  // same level -> add elem
