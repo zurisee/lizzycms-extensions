@@ -498,7 +498,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         // consume all lines until 2 empty line
         $nEmptyLines = 0;
         for($i = $current, $count = count($lines); $i < $count; $i++) {
-            if (!preg_match('/\S/', $lines[$i])) {
+            if (!preg_match('/\S/', $lines[$i])) {  // empty line
                 if ($nEmptyLines++ > 0) {
                     break;
                 }
