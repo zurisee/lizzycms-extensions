@@ -173,9 +173,9 @@ class SiteStructure
 			if (preg_match('/^\s*$/', $line) || preg_match('/^\s*#/', $line)) {continue;}
 			$i++;
 
-			if (preg_match('/^ \{\{ ([^\}]+) \}\} (.*)/x', $line, $m)) {
-			    $transName = "{{ {$m[1]} }}";
-			    $line = $m[1].$m[2];
+			if (preg_match('/^(\s*) \{\{ ([^\}]+) \}\} (.*)/x', $line, $m)) {   // catch {{}}
+			    $transName = "{{ {$m[2]} }}";
+			    $line = $m[1].ltrim($m[2]).$m[3];
             } else {
 			    $transName = false;
             }
