@@ -490,6 +490,7 @@ class Page
 
         } else {
             if (isset($this->mdCompileModifiedContent) && ($this->mdCompileModifiedContent || ($this->mdCompileModifiedContent === null) )) {
+//            if ((isset($override['mdCompile']) && $override['mdCompile']) || $this->mdCompileModifiedContent) {
                 $override['mdCompile'] = true;
             }
             $text = '';
@@ -503,7 +504,8 @@ class Page
                     $text .= getFile($file);
                 }
             }
-            if (!isset($override['mdCompile']) || $override['mdCompile'] || $this->mdCompileModifiedContent) {
+//            if (!isset($override['mdCompile']) || $override['mdCompile'] || $this->mdCompileModifiedContent) {
+            if ((isset($override['mdCompile']) && $override['mdCompile']) || $this->mdCompileModifiedContent) {
                 $text = compileMarkdownStr($text);
             }
             $this->addContent($text, true);
@@ -543,7 +545,6 @@ class Page
             $file = resolvePath($overlay['fromFile'], true);
             if (file_exists($file)) {
                 $text = getFile($file);
-//                if (!isset($overlay['mdCompile']) || $overlay['mdCompile'] || $this->mdCompileModifiedContent) {
                 if ((isset($overlay['mdCompile']) && $overlay['mdCompile']) || $this->mdCompileModifiedContent) {
                     $text = compileMarkdownStr($text);
                 }
@@ -552,7 +553,6 @@ class Page
         } elseif (isset($overlay['text'])) {
             $text = $overlay['text'];
 
-//            if (($overlay['mdCompile'] === true) || $this->mdCompileModifiedContent) {
             if ((isset($overlay['mdCompile']) && $overlay['mdCompile']) || $this->mdCompileModifiedContent) {
                 $text = compileMarkdownStr($text);
             }
