@@ -486,7 +486,7 @@ class MyMarkdown
 
         $out = $this->postprocessLiteralBlock($out); // ::: .box!
 
-        $out = htmlspecialchars_decode($out);
+        // $out = htmlspecialchars_decode($out); // conflicts with content like '&lt;x>'
         $out = str_replace(['@/@\\lt@\\@', '@/@\\gt@\\@'], ['&lt;', '&gt;'], $out); // shielded < and > (source: \< \>)
 
 		return $out;
