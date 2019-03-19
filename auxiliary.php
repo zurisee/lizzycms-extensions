@@ -15,6 +15,10 @@ function parseArgumentStr($str, $delim = ',')
     if (!($str = trim($str))) {
         return false;
     }
+    if (preg_match('/^\s*\{\{ .* \}\} \s* $/x', $str)) {    // skip '{{ ... }}' to avoid conflict with '{ ... }'
+        return [ $str ];
+    }
+
     $options = [];
 
     // for compatibility with Yaml, the argument list may come enclosed in { }
