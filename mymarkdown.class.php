@@ -41,7 +41,11 @@ class MyMarkdown
             'scroll', 'tab', 'table', 'text', 'top', 'transform', 'transition', 'unicode', 'user',
             'vertical', 'visibility', 'white', 'widows', 'width', 'word', 'writing', 'z-index'];
 
-
+    private $blockLevelElements =
+        ['address', 'article', 'aside', 'audio', 'video', 'blockquote', 'canvas', 'dd', 'div', 'dl',
+            'fieldset', 'figcaption', 'figure', 'figcaption', 'footer', 'form',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'noscript', 'ol', 'output',
+            'p', 'pre', 'section', 'table', 'tfoot', 'ul'];
 
 	public function __construct($trans = false)
     {
@@ -439,6 +443,10 @@ class MyMarkdown
 		$preCode = false;
 		$olStart = false;
 		foreach ($lines as $l) {
+		    if (!$l) {
+		        $out .= "\n";
+		        continue;
+            }
 			$l = $this->postprocessInlineStylings($l);
 			if ($preCode && preg_match('|\</code\>\</pre\>|', $l)) {
 				$preCode = false;
@@ -450,11 +458,18 @@ class MyMarkdown
             if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
                 $l = $m[1];
             }
-            if (preg_match('|^<p>(<.*)|', $l, $m)) { // remove <p> before pure HTML
-                $l = $m[1];
+            if (preg_match('|^<p> \s* ( < ([^>\s]*) .* )|x', $l, $m)) { // remove <p> before pure HTML
+                $tag = $m[2];
+                if (in_array($tag, $this->blockLevelElements)) {
+                    $l = $m[1];
+                }
             }
-            if (preg_match('|(.*>)</p>$|', $l, $m)) { // remove <p> after pure HTML
-                $l = $m[1];
+
+            if (preg_match('|^( .* </ ([^>]*) > ) </p>\s*$|x', $l, $m)) { // remove <p> before pure HTML
+                $tag = $m[2];
+                if (in_array($tag, $this->blockLevelElements)) {
+                    $l = $m[1];
+                }
             }
 
             // if enum-list was marked with ! meaning set start value:
