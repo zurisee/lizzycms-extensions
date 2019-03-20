@@ -30,30 +30,27 @@ $this->addMacro($macroName, function () {
     $galleryPath = makePathDefaultToPage($galleryPath);
 
     $fullsizeImagePath = $this->getArg($macroName, 'fullsizeImagePath', '(optional) If you want to make images in full size accessible, add this path.', '');
-    $imagePath = $this->getArg($macroName, 'imagePath', '', '');
-    $thumbsPath = $this->getArg($macroName, 'thumbsPath', '', '');
-    $thumbsSize = $this->getArg($macroName, 'thumbsSize', '', '');
+    $imagePath = $this->getArg($macroName, 'imagePath', '(optional) Path to the image folder', '');
+    $previewImgPath = $this->getArg($macroName, 'previewImgPath', '(optional) Path to preview images (default: thumbs/)', 'thumbs/');
+    $previewImgSize = $this->getArg($macroName, 'previewImgSize', '(optional) Size of preview images (default: 512x384)', '512x384');
 
-
-    $thumbsPath = ($thumbsPath) ? correctPath($thumbsPath) : 'thumbs/';
-	$thumbsSize = ($thumbsSize) ? correctPath($thumbsSize) : '512x384';
-	
+    
 	if ($fullsizeImagePath) {
-		$imagePath = ($imagePath) ? correctPath($imagePath) : 'images/';
+		$imagePath = ($imagePath) ? fixPath($imagePath) : 'images/';
 		$options = [
-			'sourcePath' 	=> correctPath($fullsizeImagePath),
+			'sourcePath' 	=> $fullsizeImagePath,
 			'imageMaxSize' 	=> '1600x1200',
 			'imagePath' 	=> $imagePath,
-			'thumbnailPath'	=> $thumbsPath,
-			'thumbnailSize'	=> $thumbsSize,
+			'thumbnailPath'	=> $previewImgPath,
+			'thumbnailSize'	=> $previewImgSize,
 		];
 	} else {
 		$options = [
 			'sourcePath' 	=> '',
 			'imageMaxSize' 	=> false,
 			'imagePath' 	=> $imagePath,
-			'thumbnailPath'	=> $thumbsPath,
-			'thumbnailSize'	=> $thumbsSize,
+			'thumbnailPath'	=> $previewImgPath,
+			'thumbnailSize'	=> $previewImgSize,
 		];
 	}
 	$id = 'gallery'.$inx;

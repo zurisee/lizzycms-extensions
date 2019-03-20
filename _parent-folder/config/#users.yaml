@@ -1,18 +1,57 @@
 # Access Restrictions
 
-# The standard password is 'insecure-pw' - please change immediately!
+#--------------------------------------------------------------------------------------
+# See https://getlizzy.net/misc/access_control/ for reference
+# Options:
+# ========
+# password:
+#       A hash code of the password is stored, not the original password.
+# groups:
+#       Only members of a group here get access. Predefined groups: admins, editors. 
+#       In the sitemap file (config/sitemap.txt) pages may be designated as 
+#       restricted:group
+# email:
+#       (optional) permits logging in withough a password: the user enters that (or 
+#       the username) and Lizzy will a one-time access code to that address. Clicking 
+#       on the contained link will log the user in.
+# emailList:
+#       (optional) points to a file containing a list of email-address. Owners of these 
+#       addresses are permitted to log in using the one-time access code mechanism.
+# displayName:
+#       (optional) if set, that name will be shown in the webpage (e.g. in the 
+#       'Logged in as…' link)
+# maxSessionTime:
+#       (optional), if set, it defines the time in seconds that the user can access 
+#       the page without logging in again.
+# accessCodeEnabled:
+#       (optional) permits to disable the one-time access code mechanism for a 
+#       particular user.
+# accessCodeValidyTime:
+#       (optional) defines the time during whith a one-time access code (or link) 
+#       is valid. Maximum time possible is 60 minutes.
+# accessCode:
+#       (optional) hash of a string that can be used to build a custom link: append 
+#       to the URL like an additional subfolder. Any user who knows this link can 
+#       automatically log in and access the corresponding page. 
+#       Not very secure but convenient.
+# accessCodeValidUntil:
+#       (optional) defines the date and time until an accessCode (see above) expires.
+#--------------------------------------------------------------------------------------
+
+
+# The sample password below is 'insecure-pw' - do not use in production!
 
 #admin:
-#	password:	$2y$10$koBJgyhl0QgBwmiE/.MdXOXR0mrTG29bjq37VHxBdZJJTDY2GE/n2
-#	group:		admins
+#	password:	$2a$10$nvgug7wDF/.ErP5lVzKnY.977FaZP0kedf4UQkwk7BCpVCrgZrHD6
+#	groups:		admins
 #	validity-period: 600
 
 
 #author:
-#	password:	$2y$10$Pnfo9Rp1AQxWn8MiYY./xeSQzy.zrDZZOLGOsPKt/ycakhkYjwzaK
-#	group:		editors
+#	password:	$2a$10$nvgug7wDF/.ErP5lVzKnY.977FaZP0kedf4UQkwk7BCpVCrgZrHD6
+#	groups:		editors
 
 
 #user:
-#	password:	$2y$10$Si6sdFALvmIS2J2XoN4EquZoAwV4nuidOIk3ukW0nqOjm4jLmnlP.
-#	group:		testgroup
+#	password:	$2a$10$nvgug7wDF/.ErP5lVzKnY.977FaZP0kedf4UQkwk7BCpVCrgZrHD6
+#	groups:		testgroup

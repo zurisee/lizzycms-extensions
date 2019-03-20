@@ -1,5 +1,6 @@
 <?php
 
+date_default_timezone_set('CET');
 
 error_reporting(E_ALL | E_STRICT);
 require('UploadHandler.php');
@@ -42,6 +43,20 @@ $options = array(
 		'upload_dir' => $absAppRoot.$dataPath,
 		'upload_url' => $appRootUrl.$dataPath,
 	);
+
+$reqMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : false;
+if ($reqMethod == 'DELETE') {
+    $filename = isset($_GET['file']) ? $_GET['file'] : '';
+    $file = $absAppRoot.$dataPath.$filename;
+    $dest = $absAppRoot.$dataPath.'.#recycleBin/';
+    if (!file_exists($dest)) {
+        mkdir($dest, 0777, true);
+    }
+    $timestamp = date('Y-m-d_H.i.s_');
+    copy($file, $dest.$timestamp.$filename);
+    mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r($options));
+//    exit;
+}
 
 mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r($options));
 $upload_handler = new UploadHandler($options);

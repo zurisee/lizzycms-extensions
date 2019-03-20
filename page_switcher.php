@@ -5,7 +5,8 @@
  *	Page Switcher: Links and Keyboard Events
 */
 
-if (!$GLOBALS['globalParams']['legacyBrowser']) {
+if (!$this->config->isLegacyBrowser) {
+//if (!$GLOBALS['globalParams']['legacyBrowser']) {
     $this->page->addJsFiles("HAMMERJS");
     if ($this->config->feature_touchDeviceSupport) {
         $this->page->addJqFiles(["HAMMERJQ", "TOUCH_DETECTOR", "PAGE_SWITCHER", "JQUERY"]);
@@ -25,4 +26,4 @@ $str = <<<EOT
     </div>
 
 EOT;
-$this->page->addBody_end_injections($str);
+$this->page->addBodyEndInjections($str);

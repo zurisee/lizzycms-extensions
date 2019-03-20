@@ -11,21 +11,23 @@ class Defaults
 // User configurable Settings -> config/config.yaml:
 private $userConfigurableSettingsAndDefaults      = [
             'admin_activityLogging'             => [true, 'If true, logs activities to file '.LOG_FILE.'.' ],
+            'admin_allowDisplaynameForLogin'    => [false, 'If true, logs activities to file '.LOG_FILE.'.' ],
             'admin_autoAdminOnLocalhost'        => [false, 'If true, on local host user has admin privileges without login.' ],
             'admin_enableAccessLink'            => [true, 'Activates one-time-access-link login mechanism.' ],
             'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
             'admin_defaultGuestGroup'           => ['guest', 'Name of default group for self-registration.' ],
             'admin_defaultLoginValidityPeriod'  => [86400, 'Defines how long a user can access the page since the last login.' ],
-//            'admin_enableAutoCreateAccount'     => [false, '[false|true] If true, lets users create their accounts with admin intervention.' ],
             'admin_enableDailyUserTask'         => [true, '[false|true] If true, looks for "code/user-daily-task.php" and executes it.' ],
             'admin_enableEditing'               => [true, '[true|false] enables online editing' ],
             'admin_hideWhileEditing'            => [false, 'List of CSS-selectors which shall be hidden while online editing is active, e.g. [#menu, .logo]' ],
             'admin_logClientAccesses'           => [false, 'Activates logging of user accesses.' ],
+            'admin_useRequestRewrite'           => [true, '[true|false] If true, assumes web-server supports request-rewrite (e.g. .htaccess).' ],
+            'admin_userAllowSelfAdmin'          => [true, 'If true, user can modify their account after they logged in' ],
             'admin_webmasterEmail'              => [true, 'E-mail address of webmaster' ],
 
             'custom_permitUserCode'             => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],
             'custom_permitUserInitCode'         => [false, "[true|false] Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'" ],
-            'custom_permitUserVarDefs'          => ['sandboxed', '[\'sandboxed\'|true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
+            'custom_permitUserVarDefs'          => [false, '[true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
             'custom_wrapperTag'                 => [false, 	'The HTML tag in which MD-files are wrapped (default: section)' ],
 
             'debug_allowDebugInfo'              => [false, '[false|true|group] If true, debugging Info can be activated: log in as admin and invoke URL-cmd "?debug"' ],
@@ -43,10 +45,13 @@ private $userConfigurableSettingsAndDefaults      = [
 
             //'feature_autoAttrFile'              => [false, 'Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.' ],
             'feature_autoLoadClassBasedModules' => [true, '[false|true] If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
-            'feature_autoLoadJQuery'            => [false, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
+            'feature_autoLoadJQuery'            => [true, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
             'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
+            'feature_enableAllowOrigin'         => [false, '[true|false] If true, Lizzy allows to produce a "allow origin" header' ],
+            'feature_enableIFrameResizing'      => [false, '[true|false] If true, includes js code required by other pages to iFrame-enbedd this site' ],
             'feature_enableSelfSignUp'          => [false, '[true|false] If true, visitors can create a guest account on their own.' ],
             'feature_filterRequestString'       => [false, '[true|false] If true, permits only regular text in requests. Special characters and anything enclosed by them will be discarded.' ],
+            'feature_frontmatterCssLocalToSection' => [false, '[true|false] If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
             'feature_jQueryModule'              => ['JQUERY', 'One of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
             'feature_loadFontAwesome'           => [false, '[true|false] loads Font-Awesome support' ],
             'feature_pageSwitcher'              => [false, '[true|false] whether code should be added to support page switching (by arrow-keys or swipe gestures)' ],
@@ -54,6 +59,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_quickview'                 => [true, '[true|false] enables automatic Quickview of images' ],
             'feature_ImgDefaultMaxDim'          => ['1600x1200', 'Defines the max dimensions ("WxH") to which Lizzy automatically converts images which it finds in the pages folders.' ],
             'feature_SrcsetDefaultStepSize'     => [300, 'Defines the step size when Lizzy creates srcsets for images.' ],
+            'feature_preloadLoginForm'          => [false, '[true|false] If true, code for login popup is preloaded and opens without page load.' ],
             'feature_renderTxtFiles'            => [false, '[true|false] If true, all .txt files in the pages folder are rendered (in &lt;pre>-tags, i.e. as is). Otherwise they are ignored.' ],
             'feature_screenSizeBreakpoint'      => [480, '[px] Determines the point where Lizzy switches from small to large screen mode.' ],
             'feature_selflinkAvoid'             => [true, '[true|false] If true, the nav-link of the current page is replaced with a local page link (to improve accessibility).' ],
@@ -67,11 +73,17 @@ private $userConfigurableSettingsAndDefaults      = [
             'path_stylesPath'                   => ['css/', 'Name of folder in which style sheets reside' ],
             'path_userCodePath'                 => ['code/', 'Name of folder in which user-provided PHP-code must reside.' ],
 
+            'site_compiledStylesFilename'       => ['__styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
+            'site_dataPath'                     => ['data/', 'Path to data/ folder (default: "~/data/").' ],
             'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
-            'site_enableCaching'                => [false, '[true|false] whether caching should be active.' ],
+            'site_defaultLocale'                => ['en_US', 'Default local, e.g. "en_US" or "de_CH"' ],
+            'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
+            'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
+            'site_robots'                       => [false, '[true|false] If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],
             'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
+            'site_timeZone'                     => [false, 'Name of timezone, e.g. "UTC" or "CET". If false, attempts to set it automatically.' ],
             'site_supportedLanguages'           => ['', 'Comma-separated list of language-codes. E.g. "en, de, fr"' ],
 
 ];
@@ -88,6 +100,7 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->userInitCodeFile         = USER_INIT_CODE_FILE;
         $this->cachePath                = CACHE_PATH;
         $this->cacheFileName            = CACHE_FILENAME;
+        $this->cachingActive            = false;
         $this->siteIdententation        = MIN_SITEMAP_INDENTATION;
 
 
@@ -108,7 +121,8 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['JQUERY2']               = array('module' => 'third-party/jquery/jquery-2.2.4.min.js', 'weight' => $this->jQueryWeight);
         $this->loadModules['JQUERY1']               = array('module' => 'third-party/jquery/jquery-1.12.4.min.js', 'weight' => $this->jQueryWeight);
 
-        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js', 'weight' => 140);
+        $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js, '.
+                                                            'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
         $this->loadModules['JQUERYUI_CSS']          = array('module' => 'third-party/jqueryui/jquery-ui.min.css', 'weight' => 140);
 
         $this->loadModules['MOMENT']                = array('module' => 'third-party/moment/moment.min.js', 'weight' => $this->jQueryWeight + 9);
@@ -121,18 +135,20 @@ private $userConfigurableSettingsAndDefaults      = [
 
         $this->loadModules['TABBABLE']              = array('module' => 'third-party/tabbable/jquery.tabbable.min.js', 'weight' => 126);
         $this->loadModules['NAV']                   = array('module' => 'js/nav.js', 'weight' => 125);
-        $this->loadModules['NAV_CSS']               = array('module' => 'css/_nav.css', 'weight' => 125);
 
-        $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js', 'weight' => 120);
-        $this->loadModules['EDITABLE_CSS']          = array('module' => 'extensions/editable/css/editable.css', 'weight' => 120);
+        $this->loadModules['EDITABLE']              = array('module' => 'extensions/editable/js/editable.js,'.
+                                                            'extensions/editable/css/editable.css', 'weight' => 120);
 
-        $this->loadModules['PANELS']                = array('module' => 'js/panels.js', 'weight' => 110);
-        $this->loadModules['PANELS_CSS']            = array('module' => 'css/panels.css', 'weight' => 110);
+        $this->loadModules['PANELS']                = array('module' => 'js/panels.js, css/panels.css', 'weight' => 110);
 
-        $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js', 'weight' => 92);
-        $this->loadModules['QUICKVIEW_CSS']         = array('module' => 'css/quickview.css', 'weight' => 92);
+        $this->loadModules['QUICKVIEW']     	    = array('module' => 'js/quickview.js, css/quickview.css', 'weight' => 92);
 
-        $this->loadModules['POPUPS']                = array('module' => 'js/popup.js', 'weight' => 85);
+        $this->loadModules['POPUP']  = // POPUP is synonym for POPUPS
+        $this->loadModules['POPUPS']                = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
+                                                                        'css/popup.css', 'weight' => 85);
+
+        $this->loadModules['TOOLTIPS']              = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
+                                                                        'js/tooltips.js, css/tooltips.css', 'weight' => 84);
 
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 
@@ -140,27 +156,26 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['HAMMERJQ']              = array('module' => 'third-party/hammerjs/jquery.hammer.js', 'weight' => 70);
         $this->loadModules['PANZOOM']               = array('module' => 'third-party/panzoom/jquery.panzoom.min.js', 'weight' => 60);
 
-        $this->loadModules['DATATABLES_CSS']        = array('module' => 'third-party/datatables/datatables.min.css', 'weight' => 50);
-        $this->loadModules['DATATABLES']            = array('module' => 'third-party/datatables/datatables.min.js', 'weight' => 50);
+        $this->loadModules['DATATABLES']            = array('module' => 'third-party/datatables/datatables.min.js,'.
+                                                                        'third-party/datatables/datatables.min.css', 'weight' => 50);
 
         $this->loadModules['ZOOM_TARGET']           = array('module' => 'third-party/zoomooz/jquery.zoomooz.min.js', 'weight' => 45);
         $this->loadModules['TOUCH_DETECTOR']        = array('module' => 'js/touch_detector.js', 'weight' => 40);
-        $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js', 'weight' => 32);
-        $this->loadModules['SLIDESHOW_SUPPORT_CSS'] = array('module' => 'css/slideshow_support.css', 'weight' => 32);
+        $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js, css/slideshow_support.css', 'weight' => 32);
         $this->loadModules['PAGE_SWITCHER']         = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']                = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
+        $this->loadModules['IFRAME_RESIZER']        = array('module' => 'third-party/iframe-resizer/iframeResizer.contentWindow.min.js', 'weight' => 19);
 
 
-        $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js', 'weight' => 5);
-        $this->loadModules['USER_ADMIN_CSS']        = array('module' => 'css/user_admin.css', 'weight' => 5);
+        $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js, css/user_admin.css', 'weight' => 5);
 
 
 
         // elementes that shall be loaded when corresponding classes are found anywhere in the page:
         //   elements: can be any of cssFiles, css, js, jq etc.
         $this->classBasedModules = [
-            'editable' => ['cssFiles' => 'EDITABLE_CSS', 'jqFiles' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
-            'panels_widget' => ['cssFiles' => 'PANELS_CSS', 'jqFiles' => 'PANELS'],
+            'editable' => ['modules' => 'EDITABLE', 'jq' => "\$('.lzy-editable').editable();"],
+            'panels_widget' => ['modules' => 'PANELS'],
             'zoomTarget' => ['jsFiles' => 'ZOOM_TARGET'],
         ];
 
@@ -171,7 +186,7 @@ private $userConfigurableSettingsAndDefaults      = [
             unset($this->userConfigurableSettingsAndDefaults);
         }
         return $this;
-    }
+    } // __construct
 
 
     //....................................................
@@ -184,8 +199,10 @@ private $userConfigurableSettingsAndDefaults      = [
             if (isset($configValues[$key])) {
                 $val = $configValues[$key];
                 if (stripos($key, 'Path') !== false) {
-                    $val = preg_replace('|/\.\.+|', '', $val);
-                    $val = fixPath(str_replace('/', '', $val));
+                    if ($key !== 'site_dataPath') { // site_dataPath is the only exception that is allowed to use ../
+                        $val = preg_replace('|/\.\.+|', '', $val);  // disallow ../
+                        $val = fixPath(str_replace('/', '', $val));
+                    }
                 } elseif (stripos($key, 'File') !== false) {
                     $val = str_replace('/', '', $val);
                 }

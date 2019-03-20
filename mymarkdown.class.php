@@ -18,22 +18,34 @@ class MyMarkdown
 	private $variable;
 	
 	private $replaces = array(
-		'\-\>' => '&rarr;',
-		'\-&rarr;' => '-->',	// in case it was an HTML comment '-->'
-		'\=\>' => '&rArr;',
-		' \-\- ' => ' &ndash; ',
+		'(?<![\-\\\])\-\>'  => '&rarr;', // unless it's '-->'
+		'\=\>'              => '&rArr;',
+		' \-\- '            => ' &ndash; ',
 		'(?<!\.)\.\.\.(?!\.)' => '&hellip;',
-		'\bEURO\b' => '&euro;',
-		'\bBR\b' => '<br>',
-		'\bNL\b' => '<br>&nbsp;',
-		'\bSPACE\b' => '&nbsp;',
-		'sS' => 'ß',
-		'\[_\]' => '&nbsp;&nbsp;&nbsp;&nbsp;',
-		'CLEAR' => '<div style="clear:both;"></div>',
+		'\bEURO\b'          => '&euro;',
+		'\bBR\b'            => '<br>',
+		'\bNL\b'            => '<br>&nbsp;',
+		'\bSPACE\b'         => '&nbsp;&nbsp;&nbsp;&nbsp;',
+		'(?<![\-\\\])sS'    => 'ß',
+		'CLEAR'             => '<div style="clear:both;"></div>',
 	);
 
+    private $cssAttrNames =
+        ['align', 'all', 'animation', 'backface', 'background', 'border', 'bottom', 'box',
+            'break', 'caption', 'caret', 'charset', 'clear', 'clip', 'color', 'column', 'columns',
+            'content', 'counter', 'cursor', 'direction', 'display', 'empty', 'filter', 'flex',
+            'float', 'font', 'grid', 'hanging', 'height', 'hyphens', 'image', 'import', 'isolation',
+            'justify', 'keyframes', 'left', 'letter', 'line', 'list', 'margin', 'max', 'media', 'min',
+            'mix', 'object', 'opacity', 'order', 'orphans', 'outline', 'overflow', 'Specifies',
+            'padding', 'page', 'perspective', 'pointer', 'position', 'quotes', 'resize', 'right',
+            'scroll', 'tab', 'table', 'text', 'top', 'transform', 'transition', 'unicode', 'user',
+            'vertical', 'visibility', 'white', 'widows', 'width', 'word', 'writing', 'z-index'];
 
-
+    private $blockLevelElements =
+        ['address', 'article', 'aside', 'audio', 'video', 'blockquote', 'canvas', 'dd', 'div', 'dl',
+            'fieldset', 'figcaption', 'figure', 'figcaption', 'footer', 'form',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'noscript', 'ol', 'output',
+            'p', 'pre', 'section', 'table', 'tfoot', 'ul'];
 
 	public function __construct($trans = false)
     {
@@ -47,7 +59,8 @@ class MyMarkdown
 	public function parse($str, $page)
 	{
 		$this->page = $page;
-		$this->variable = array();
+        $this->addReplacesFromFrontmatter($page);
+        $this->variable = array();
 
 		$str = $this->doMDincludes($str);
 		
@@ -70,8 +83,8 @@ class MyMarkdown
 				return $this->page;
 			}
 
-			$this->md = new MyExtendedMarkdown($page);
-			$str = $this->md->parse($str);
+            $this->md = new MyExtendedMarkdown($this, $page);
+            $str = $this->md->parse($str);
 			$str = $this->postprocess($str);
 			
 			$str = $this->doReplaces($str);
@@ -90,7 +103,7 @@ class MyMarkdown
     {
         $str = $this->preprocess($str);
 
-        $this->md = new MyExtendedMarkdown($page);
+        $this->md = new MyExtendedMarkdown($this, $page);
         $str = $this->md->parse($str);
         $str = $this->postprocess($str);
 
@@ -150,8 +163,22 @@ class MyMarkdown
 	//....................................................
 	private function doReplaces($str)
 	{
+	    // prepare modified patterns if it contains look-behind:
+	    if (!isset($this->replaces2)) {
+            foreach ($this->replaces as $key => $value) {
+                if ($key{0} == '(') {
+                    $k = str_replace('\\', '', substr($key, strpos($key, ')')+1));
+                    $this->replaces2[$key] = $k;
+                }
+            }
+        }
 		foreach ($this->replaces as $key => $value) {
 			$str = preg_replace("/$key/", $value, $str);
+
+			if (isset($this->replaces2[$key])) {    // modified pattern exists:
+			    $k = $this->replaces2[$key];
+                $str = preg_replace("/\\\\$k/", $k, $str);  // remove shielding '\'
+            }
 		}
 		return $str;
 	} //doReplaces
@@ -288,35 +315,6 @@ class MyMarkdown
 
 
 	//....................................................
-	private function handleFrontmatter($lines)
-	{
-		$yaml = '';
-		$i = 0;
-		while ($i < sizeof($lines)) {
-			$l = $lines[$i];
-			if (!preg_match('/^\s*$/', $l)) {
-				break;
-			}
-			$i++;
-		}
-		if (!preg_match('/^---/', $l)) {
-			return $lines;
-		}
-		$i++;
-		$l = $lines[$i];
-		while (($i < sizeof($lines)) && (!preg_match('/---/', $l))) {
-			$yaml .= $l."\n";
-			$i++;
-			$l = $lines[$i];
-		}
-		$hdr = convertYaml($yaml);
-		$lines = array_slice($lines, $i+1);
-		return $lines;
-	} // handleFrontmatter
-
-
-
-	//....................................................
 	private function handleVariables($str)
 	{
 		$out = '';
@@ -424,7 +422,6 @@ class MyMarkdown
 					$l2             = substr($l2, 2);
 				}
 				$str = str_replace("\n", ' ', $str);
-				$str = "{[{[$str]}]}";
 				$l   = $l1 . $str . $l2;
 				$str = $this->variable[$sym];
 			
@@ -446,6 +443,10 @@ class MyMarkdown
 		$preCode = false;
 		$olStart = false;
 		foreach ($lines as $l) {
+		    if (!$l) {
+		        $out .= "\n";
+		        continue;
+            }
 			$l = $this->postprocessInlineStylings($l);
 			if ($preCode && preg_match('|\</code\>\</pre\>|', $l)) {
 				$preCode = false;
@@ -456,6 +457,19 @@ class MyMarkdown
 
             if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
                 $l = $m[1];
+            }
+            if (preg_match('|^<p> \s* ( < ([^>\s]*) .* )|x', $l, $m)) { // remove <p> before pure HTML
+                $tag = $m[2];
+                if (in_array($tag, $this->blockLevelElements)) {
+                    $l = $m[1];
+                }
+            }
+
+            if (preg_match('|^( .* </ ([^>]*) > ) </p>\s*$|x', $l, $m)) { // remove <p> before pure HTML
+                $tag = $m[2];
+                if (in_array($tag, $this->blockLevelElements)) {
+                    $l = $m[1];
+                }
             }
 
             // if enum-list was marked with ! meaning set start value:
@@ -472,7 +486,7 @@ class MyMarkdown
 
         $out = $this->postprocessLiteralBlock($out); // ::: .box!
 
-        $out = htmlspecialchars_decode($out);
+        // $out = htmlspecialchars_decode($out); // conflicts with content like '&lt;x>'
         $out = str_replace(['@/@\\lt@\\@', '@/@\\gt@\\@'], ['&lt;', '&gt;'], $out); // shielded < and > (source: \< \>)
 
 		return $out;
@@ -480,66 +494,63 @@ class MyMarkdown
 
 
 
+
+
 	//....................................................
-	private function postprocessInlineStylings($line)    // [[ xy ]]
+	public function postprocessInlineStylings($line, $returnElements = false)    // [[ xy ]]
 	{
 	    if (strpos($line, '[[') === false) {
             $line = str_replace('@/@[@\\@', '[[', $line);
-            return $line;
+            if ($returnElements) {
+                return [$line, null, null, null, null];
+            } else {
+                return $line;
+            }
         }
 
-		while (preg_match('/([^\[]*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
-			$s1 = $m[1];
-			$s2 = trim($m[2]);
-			$id = '';
-			$class = '';
-			$style = '';
-			$span = '';
+		if (!preg_match('/(.*) \[\[ ([^\]]*) \]\] (.*)/x', $line, $m)) {
+            if ($returnElements) {
+                return [$line, null, null, null, null];
+            } else {
+                return $line;
+            }
+        }
+        $head = $m[1];
+        $args = trim($m[2]);
+        $tail = $m[3];
+        $span = '';
 
-			if (preg_match('/([^"]*)"([^"]*)"(.*)/', $s2, $mm)) {			// span
-				$span = $mm[2];
-				$s2 = $mm[1] . $mm[3];
-			}
-
-
-			if (preg_match('/([^\.]*)\.([\w_\-\.]+)(.*)/', $s2, $mm)) {		// class
-				$class = str_replace('.', ' ', $mm[2]);
-				$class = " class='$class'";
-				$s2 = $mm[1].$mm[3];
-			}
-
-			if (preg_match('/([^\#]*)\#([\w_\-]+)(.*)/', $s2, $mm)) {		// id
-				$id = $mm[2];
-				$id = " id='$id'";
-				$s2 = $mm[1].$mm[3];
-			}
-
-			if (preg_match_all('/([\w\-]+):\s*([^;]*);?/', $s2, $mm)) {		// styles
-				foreach ($mm[0] as $s2) {
-					$s2 = str_replace(' ', '', $s2);
-					$style .= rtrim($s2, ';').';';
-				}
-				$style = " style='$style'";
-			}
+		if ($args) {
+			$c1 = $args{0};
+			if ($c1 == '"') {		                                                        // span
+                if (preg_match('/([^"]*)"([^"]*)"(.*)/', $args, $mm)) {	// "
+                    $span = $mm[2];
+                    $args = $mm[1] . $mm[3];
+                }
+            } elseif ($c1 == "'") {
+                if (preg_match("/([^ ']*)'([^']*)'(.*)/", $args, $mm)) {	 // '
+                    $span = $mm[2];
+                    $args = $mm[1] . $mm[3];
+                }
+            }
+            list($tag, $id, $class, $attr) = parseInlineBlockArguments($args, true);
 
 			if ($span) {
-				$span = "<span$id$class$style>$span</span>";
-				$id = '';
-				$class = '';
-				$style = '';
-			}
+                $head .= "<span $attr>$span</span>";
 
-			if (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $s1, $mm)) {	// now insert into preceding tag
-				$s1 = $mm[1] . "$id$class$style>" . $mm[2] . $span;
-			} else {
-				$s1 .= $span;
+			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $m)) {	// now insert into preceding tag
+				$head = $m[1] . "$attr>" . $m[2] . $span;
 			}
-			$line = $s1.$m[3];
+			$line = $head.$tail;
 		}
-		
+
 		$line = str_replace('@/@[@\\@', '[[', $line);
 
-		return $line;
+		if ($returnElements) {
+		    return [$line, $tag, $id, $class, $attr];
+        } else {
+            return $line;
+        }
 	} // postprocessInlineStylings
 
 
@@ -564,15 +575,53 @@ class MyMarkdown
     {
         $p1 = strpos($str, 'data-lzy-literal-block');
         while ($p1) {
-            $p2 = strpos($str, '</div>', $p1);
-            $literal = substr($str, $p1 + 34, $p2 - $p1 - 39);
-            $literal = base64_decode($literal);
-            $str = substr($str, 0, $p1) . '>' . $literal . substr($str, $p2);
-            $p1 = strpos($str, 'data-lzy-literal-block');
+            $p1 = strpos($str, '>', $p1);
+            $tmp = ltrim(substr($str, $p1+1));
+            if (preg_match('|\<p\> ([^\<]+) \</p\>(.*)|xms', $tmp, $m)) {
+                $head = substr($str, 0, $p1+1);
+                $literal = $m[1];
+                $literal = base64_decode($literal);
+                $tail = $m[2];
+                $str = "$head\n$literal\n$tail";
+                $p2 = $p1 + strlen($literal);
+
+            } elseif (preg_match('|([^\<]+)(.*)|xms', $tmp, $m)) {
+                $head = substr($str, 0, $p1+1);
+                $literal = $m[1];
+                $literal = base64_decode($literal);
+                $tail = $m[2];
+                $str = "$head\n$literal\n\n\t\t$tail";
+                $p2 = $p1 + strlen($literal);
+
+            } else {
+                break;  // this case should be impossible
+            }
+            $p1 = strpos($str, 'data-lzy-literal-block', $p2);
         }
         return $str;
     } // handleLiteralBlock
 
-    
+
+
+    private function isCssProperty($str)
+    {
+        $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
+        return (sizeof($res) > 0);
+    } // isCssProperty
+
+
+
+    private function addReplacesFromFrontmatter($page)
+    {
+        if (isset($page->replace)) {
+            $newReplaces = [];
+            foreach ($page->replace as $pattern => $value) {
+                $newReplaces[preg_quote($pattern)] = $value;
+            }
+            $this->replaces = array_merge($newReplaces, $this->replaces);
+        }
+    } // addReplacesFromFrontmatter
+
+
 } // class MyMarkdown
 

@@ -1,0 +1,71 @@
+/* === popup  =================== */
+
+.lzy-popup-button {
+    padding: 4px 10px;
+    background: #ddd;
+    border: 1px solid #888;
+    border-radius: 4px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+.lzy-popup-buttons {
+    padding: 5px 0;
+    display: flex;
+    justify-content: flex-end;
+}
+.lzy-popup-close-btn,
+.popup_close {
+    position: absolute;
+    top: 0; right: 0;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    vertical-align: top;
+}
+.popup_close span {
+    position: absolute;
+    top:0;
+    right:7px;
+    color: gray;
+}
+.popup_close:hover span {
+    color: black;
+}
+.popup_content.lzy-close-button,
+.lzy-popup.lzy-close-button {
+    padding-top: 2em;
+/*    padding-right: 2em;*/
+}
+
+.lzy-popup,
+.lzy-popup a,
+.lzy-popup * {
+    color: black;
+}
+.lzy-popup {
+    background: #eee;
+    padding: 1em 1em 0.6em 1em;
+    /*padding: 1em 1em 0 1em;*/
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 0 15px black;
+    min-width: 12em;
+    transform: scale(0.5);
+}
+.lzy-popup-confirm .popup_content {
+    padding: 2em 2em 1em 2em;
+}
+/*.popup_content[aria-hidden="false"] {*/
+.lzy-popup[aria-hidden="false"] {
+    transform: scale(1);
+}
+
+.popup_wrapper h1 {
+    margin: 0 0 0.5em;
+    font-size: 14pt;
+}

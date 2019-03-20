@@ -8,11 +8,11 @@ nextPageLabel: "<span class='nextLinkArrow' title='{{ to next page }}'></span>"
 prevPageLabel: "<span class='prevLinkArrow' title='{{ to prev page }}'></span>"
 to next page:
     de: zur nächsten Seite
-    en: to next page
+    _: to next page
 
 to prev page:
     de: zur vorherigen Seite
-    en: to previous page
+    _: to previous page
 
 
 
@@ -26,6 +26,9 @@ key: value
 
 # Variables with language variants:
 key:
-    de: Wert
-    en: Value
+    de: german text
+    en: english text
+    _: default text - used when requested language resource is not available 
 
+
+# Note: values for default language and supported languages are defined in config/config.yaml

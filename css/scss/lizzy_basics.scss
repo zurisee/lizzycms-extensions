@@ -1,0 +1,680 @@
+/* Lizzy Basic CSS */
+
+/* === General =============================== */
+body, main {
+	position: relative;
+}
+
+
+html body, section {
+	position: relative;
+	padding: 0;
+}
+div {
+	box-sizing: border-box;
+}
+
+p {
+	padding: 0;
+	margin: 0.2em 0 0.5em 0;
+	line-height: 1.4em;
+}
+li {
+	padding: 0;
+	margin: 0.2em 0 0.2em 0;
+	line-height: 1.4em;
+}
+li > p {
+	margin: 0;
+}
+
+
+a {
+	text-decoration: none;
+	border-bottom: 1px dotted gray;
+}
+a:hover, a:focus {
+	border-bottom: 1px solid gray;
+}
+a:focus {
+	box-shadow: 0 0 5px magenta;
+}
+nav a {
+	border-bottom: none;
+}
+.no-underline,
+figure a:hover,
+figure a {
+	text-decoration: none;
+	border-bottom: none;    
+}
+.sup {
+	 vertical-align: super;
+	 font-size: 60%;
+}
+
+.lzy-right {
+	float:right;
+	margin: 0 0 1em 20px;
+	max-width: 50%;
+}
+.lzy-left {
+	float:left;
+	margin: 0 20px 1em 0;
+	max-width: 50%;
+}
+.lzy-left img {
+	max-width: 100%;
+}
+.dispno,
+.disp-no,
+.disp_no {
+	display: none!important;
+}
+.dispblock {
+	display: block;
+}
+.sr-only,
+.lzy-invisible,
+.invisible,
+.visually-hidden {
+	position: absolute !important;
+	right: 200vw;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	display: inline;
+	clip: rect(1px, 1px, 1px, 1px);
+}
+.skiplinks a {
+	position: absolute;
+	top: 0;
+	right: 100%;
+}
+.skiplinks a:focus {
+	right: auto;
+	left: 5vh;
+	top: 5vh;
+	padding: 1em 2em;
+	text-align: center;
+	z-index: 999;
+	background: #d9ff72;
+}
+//.footnote-ref {
+//	font-size: 70%;
+//	vertical-align: super;
+//}
+.tabulator_wrapper span.c1,
+.tabulator_wrapper span.c2,
+.tabulator_wrapper span.c3,
+.tabulator_wrapper span.c4 {
+	display: inline-block;
+	line-height: 1.4em;
+	vertical-align: top;
+}
+.tabulator_wrapper span:not(:last-child) {
+	width: 6em;
+}
+
+.underline {
+	text-decoration: underline;
+}
+.vgap {
+	height: 0;
+}
+.inline-tabulator {
+	display: inline-block;
+	width: 6em;
+}
+
+.dl-as-table  {
+	--dl-as-table-dt-width: 6em;
+}
+.dl-as-table dl {
+    display: flex;
+    flex-flow: row;
+    flex-wrap: wrap;
+    max-width: 600px;
+    overflow: visible; }
+  .dl-as-table dl dt {
+    flex: 0 0 var(--dl-as-table-dt-width);
+    text-overflow: ellipsis;
+    overflow: hidden; }
+  .dl-as-table dl dd {
+    flex: 0 0 calc(100% - var(--dl-as-table-dt-width));
+    margin-left: auto;
+    text-align: left;
+    text-overflow: ellipsis;
+    overflow: hidden; }
+
+.lzy-h-space {
+	display: inline-block;
+	width: 2em;
+}
+.h-v-centered,
+.v-h-centered {
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* === Module Encapsulation: */
+#lzy .lzy-encapsulated ul,
+#lzy .lzy-encapsulated ol,
+#lzy .lzy-encapsulated li,
+#lzy .lzy-encapsulated div,
+#lzy .lzy-encapsulated a,
+#lzy .lzy-encapsulated img,
+#lzy .lzy-encapsulated label {
+    margin: 0;
+    padding: 0;
+    line-height: initial;
+    border: none;
+    background: transparent;
+    display: block;
+    position: relative;
+    overflow: initial;
+    z-index: initial;
+    width: initial;
+    list-style: initial;
+    box-sizing: border-box;
+}
+
+
+
+/* stretch-wrapping boxes: */
+.lzy-stretch-wrapping-box-container {
+    --box-width: 300px;
+    --grid-gap: 10px;
+    display: grid;
+    grid-gap: var(--grid-gap);
+    grid-template-columns: repeat(auto-fill, minmax(var(--box-width), 1fr));
+    grid-auto-flow: dense;
+    padding: var(--grid-gap);
+}
+
+.lzy-stretch-wrapping-box-container > div {
+    overflow: hidden;
+}
+
+.lzy-stretch-wrapping-box-container > div img {
+    width: 100%;
+    height: auto;
+    margin-bottom:-5px;  /* ??? bug workaround? */
+}
+
+
+/* === adaptive columns ========== */
+/* inspiration: http://www.heydonworks.com/article/the-flexbox-holy-albatross */
+
+body {		// parameters:
+	--lzy-columns-number: 3;
+	--lzy-column-min-width: 10rem;
+	--lzy-columns-gap: 1rem;
+}
+.lzy-columns-container {
+	--lzy-columns-min-width: calc(var(--lzy-columns-number) * var(--lzy-column-min-width) - ((var(--lzy-columns-number) - 1) * var(--lzy-columns-gap)));
+}
+.lzy-2-columns-container {
+	--lzy-columns-number: 2;
+	--lzy-columns-min-width: calc(2 * var(--lzy-column-min-width) - var(--lzy-columns-gap));
+}
+.lzy-3-columns-container {
+	--lzy-columns-number: 3;
+	--lzy-columns-min-width: calc(3 * var(--lzy-column-min-width) - (2 * var(--lzy-columns-gap)));
+}
+.lzy-4-columns-container {
+	--lzy-columns-number: 4;
+	--lzy-columns-min-width: calc(4 * var(--lzy-column-min-width) - (3 * var(--lzy-columns-gap)));
+}
+.lzy-columns-container,
+.lzy-2-columns-container,
+.lzy-3-columns-container,
+.lzy-4-columns-container {
+	display: flex;
+	flex-wrap: wrap;
+	--lzy-columns-flipper: calc((var(--lzy-columns-min-width) - 100%) * 1000);
+	margin: calc(var(--lzy-columns-gap) * -0.5);
+}
+.lzy-columns-container > div,
+.lzy-2-columns-container > div,
+.lzy-3-columns-container > div,
+.lzy-4-columns-container > div {
+	box-sizing: border-box;
+	max-width: 100%;
+	min-width: calc((100% / var(--lzy-columns-number)) - var(--lzy-columns-gap));
+	flex-grow: 1;
+	flex-basis: var(--lzy-columns-flipper);
+	margin: calc(var(--lzy-columns-gap) * 0.5);
+}
+
+
+
+
+.logo a, .logo a:hover {
+	border-bottom: none;
+}
+kbd {
+	padding: 0 3px;
+	background: #ddd;
+	border-radius: 3px;
+}
+samp {
+	padding: 0 3px;
+	background: #efefff;
+	border-radius: 3px;
+}
+var {
+	padding: 2px 4px 0 4px;
+	background: #555;
+	color: #ffb;
+	border-radius: 3px;
+	font-weight: bold;
+	font-style: normal;
+}
+pre {
+	margin: 0;
+}
+
+.missing-img {
+    border: 1px dashed magenta;
+    padding: 2em;
+}
+.authors_directive_tag {
+	display: inline-block;
+	background: #fee;
+	padding: 3px 6px;
+	border: #aff;
+	border-radius: 5px;
+}
+
+
+
+.login_message {
+	color: red;
+	margin: 5px 0;
+}
+
+.CodeMirror-code,
+.editor-toolbar {
+	font-size: 12pt;
+}
+
+
+.lang-selection > span {
+    display: inline-block;
+    padding:  0 3px;
+}
+.lang-selection > span a {
+    border-bottom: none;
+}
+.lang-icon {
+    width: 1.5em;
+    height: 1.5em;
+    margin-top: 3px;
+}
+.layout .menu-link {
+    font-size: 16px;
+}
+
+
+.login-form-icon {
+    height: 14pt;
+    /* width: 24px; */
+}
+.lzy-login-form .lzy-form-show-password input {
+    display: none;
+}
+
+footer div {
+    float: right;
+}
+.lzy-edit-icon {
+    margin-top: 2px;
+}
+footer img {
+    width: 18px;
+}
+footer a {
+	border-bottom: none;
+}
+.toggle-edit-mode {
+    border-right: 1px solid gray;
+    padding-right: 5px;
+}
+
+.debug-mail {
+    border: 1px dashed yellow;
+    background: #ffe;
+    padding: 15px;
+    margin-top: 30px;
+}
+
+
+
+
+.lzy-account-form-wrapper .lzy-delete-profile-popup {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 20em;
+    height: 10em;
+    background: #ffe2c4;
+    border: 1px solid gray;
+    border-radius: 10px;
+    z-index: 999;
+}
+
+/* --- fade out effect --- */
+@-webkit-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+@-moz-keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+.MsgBox,
+.WarningBox {
+	position: fixed!important;
+	top: 5px;
+	right: 0;
+//	right: -80%;
+	max-width: 80%;
+	padding:0.5em 1em;
+	background: #fbfb77;
+	border-radius: 5px;
+	opacity: 0.8;
+	color: black;
+    box-shadow: 0 0 5px grey;
+	z-index: 99;
+//	animation: slide 1s forwards;
+	animation: slide 5s forwards;
+    transform: translateX(100%);
+}
+.MsgBox:hover,
+.WarningBox:hover {
+//	animation: none!important;
+//    transform: translateX(-0%);
+}
+@keyframes slide {
+//  0% { transform: translateX(100%); }
+  10% { transform: translateX(-3%); }
+  90% { transform: translateX(-3%); }
+  100% { transform: translateX(97%); }
+//  10% { right: 5%; }
+//  90% { right: 5%; }
+//  100% { right: -0%; }
+}
+
+#lzy-log:empty {
+  display: none;
+}
+#lzy-log {
+	height: 10vh;
+	background: #edd;
+	margin: 20px 0 0 0;
+	padding: 10px 20px;
+	overflow: auto;
+	border: 1px solid red;
+	position: fixed;
+	width: calc(100vw - 42px);
+	left: 0;
+	bottom: 0;
+}
+#lzy-log h1 {
+	font-size: 11pt;
+	margin: 0 0 0.5em 0;
+}
+#lzy-log p {
+	font-size: 8pt;
+	margin: 0 0 0.5em 0;
+}
+#lzy-log-placeholder {
+	content: " ";
+	position: relative;
+	height: 11vh;
+	margin: 30px 0 0 0;
+}
+
+
+.lzy-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: calc(100vw - 30px);
+	height: calc(100vh - 20px);
+	margin: 10px;
+	padding: 20px;
+	color: black;
+	background: #eee;
+	border: 1px solid red;
+	box-shadow: 0 0 15px 5px #444;
+	box-sizing: border-box;
+	overflow: auto;
+	z-index: 999;
+}
+
+.lzy-close-overlay {
+    float: right;
+    margin: -15px -15px 10px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16pt;
+    width: 2em;
+    height: 2em;
+}
+
+
+/* --- DivTables --------------- */
+.divtable {
+	display: table;
+	border-collapse: collapse;
+}
+.divtable .row {
+	display:table-row;
+	vertical-align: top;
+}
+.divtable .row > div {
+	display: table-cell;
+	min-width: 10em;
+	height: 1.6em;
+	line-height: 1.6em;
+	border: 1px solid #bbb;
+	padding: 5px 10px;
+	margin: 0px;
+}
+.divtable .row > div.hdrCell {
+	background: #ddd;
+	font-weight: bold;
+}
+
+/* --- Checklists ---------------- */
+.lzy-checklist {
+    padding: 0;
+}
+.lzy-checklist li {
+    list-style: none;
+}
+.lzy-checklist-input {
+    margin-right: 0.5em;
+}
+.lzy-checklist {
+    .lzy-checklist-elem > input,
+    .lzy-checklist-elem > span {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .lzy-checklist-elem > input::before {
+        vertical-align: top;        
+    }
+    input[type=checkbox]:not([disabled]) {
+      cursor: pointer;
+    }
+    input[type=checkbox]:checked::before {
+      content: "\2713";
+    }
+    input[type=checkbox]::before {
+      content: "\202A";
+      background: #ffffff;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, .2);
+      text-align: center;
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      border: 1px solid #cdcdcd;
+      border-radius: 4px;
+      text-indent: 1px;
+    }
+    input[type=checkbox]:focus::before {
+        box-shadow: 0 0 5px 2px magenta;
+    }
+}
+
+
+/* --- Misc --------------------- */
+#debugInfo {
+    border: 1px dashed lime;
+    background: #efffef;
+    color: gray;
+    padding: 0 10px;
+    margin-top: 4em;
+    font-size: 10pt;
+    font-family: monospace;
+    overflow: auto;
+}
+#debugInfo > p {
+    font-family: arial;
+}
+#debugInfo > .lzy-log {
+    border: 0.1px solid #c3f1c3;
+    margin-bottom: 1em;
+    padding: 5px;
+    white-space: pre;
+    font-size: 80%;
+    max-height: 10em;
+    overflow:auto;
+}
+
+.mark-undefined-variable {
+    background: #ffb;
+}
+mark {
+    padding: 0 3px;
+}
+.lzy-album-error {
+    background: #fee;
+    border: 1px solid red;
+    padding: 1em 2em;
+}
+.lzy-config-viewer dt strong {
+    color: navy;
+}
+.lzy-config-viewer dt code {
+    color: black;
+}
+.lzy-config-viewer dt code.lzy-config-viewer-hl {
+    color: red;
+}
+
+/* --- Nav --------------- */
+nav ul {
+    padding: 0;
+}
+nav li {
+    list-style-type: none;
+}
+
+
+
+.lzy-button {
+  color: #666;
+  font-family: helvetica, arial, sans-serif;
+  border-radius: 4px;
+  border: 1px solid #bcbcbc;
+  -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  background: -webkit-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+  background: -ms-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+  background: linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+}
+a.lzy-button {
+  padding: 3px 12px;
+}
+
+
+
+/* === Media Queries =================================== */
+@media screen {
+	.print_only, 
+	.print-only {
+		display: none;
+	}
+	.mail_link {
+		background: url("../rsc/mail.gif") no-repeat;
+		padding-left: 14px;
+	}
+	.external_link {
+		background: url("../rsc/popup.png") no-repeat;
+		padding-left: 12px;
+	}
+	.lzy-img-link {
+		background: none;
+		padding-left: 0;
+	}
+
+}
+
+
+
+@media print {
+	body, main, section {
+		padding: 0;
+		margin: 0;
+		font-size: 11pt;
+	}
+	.page {
+		position: relative;
+		width: 21cm;
+		height: 29.7cm;
+		padding: 2cm;
+		margin:0;
+		border: none!important;
+		box-shadow: none!important;
+	}
+	.dont-print,
+    .print_no,
+    .print-no,
+	#lzy-log,
+	.Warning,
+	.MsgBox,
+    #debugInfo, 
+    .debugInfo {
+		display: none!important;
+	}
+	.print-page {
+		page-break-after: always;
+	}
+}
+
+.lzy-login-link-menu {
+    position: relative;
+    clear: both;
+}
+.lzy-login-link-menu div {
+    display: block;
+    clear: both;
+    float: none;
+}
+.lzy-login-menu {
+    width: 14em;
+    clear: both;
+    position: absolute;
+    top: 2em;
+    right: 0;
+    background: #ddd;
+    padding: 1em;
+    text-align: left;
+}
+
+
+.lzy-loading-spinner {
+    width: 24px;
+    height: 24px;
+}

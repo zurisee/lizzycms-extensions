@@ -1,18 +1,58 @@
+.lzy-form {
+    --form-width: 329px;
+    --label-width: 6em;
+    max-width: var(--form-width);
+}
+.lzy-form-field-wrapper {
+    min-height: 2em;
+    vertical-align: middle;
+}
+.lzy-form-field-wrapper label {
+    width: var(--label-width);
+    display: inline-block;
+}
+.lzy-form-field-wrapper input {
+    width: calc(100% - var(--label-width) + -14px);
+    display: inline-block;
+}
+.lzy-form-field-wrapper.lzy-form-field-type-password input {
+    width: calc(100% - var(--label-width) + -18px - 2em);
+}
+.lzy-form-field-wrapper.lzy-form-field-type-password .lzy-form-pw-toggle {
+    width: 2em;
+}
 
+.lzy-form-login-form-icon {
+    max-height: 1.2em;
+}
+.lzy-form-pw-toggle {
+    width: 2em;
+}
+.lzy-form-password-hint {
+    display: none;
+}
 
-.required-marker {
+.lzy-form-showPassword {
+    position: absolute;
+    left: -1000vw;
+}
+
+.lzy-form-field-type-button {
+    text-align: right;
+}
+
+.lzy-form-required-marker {
 	color: red;
 }
-label,
-.radio-label,
-.checkbox-label {
+.lzy-form-radio-label,
+.lzy-form-checkbox-label {
 	display: inline-block;
-	width: 7em;
+	width: var(--label-width);
 }
 legend {
     padding: 0 0.5em;
 }
-.label legend {
+.lzy-form-label legend {
 	display: inline-block;
 	width: 7em;
 	float: left;
@@ -21,16 +61,16 @@ legend {
     padding: 0;
 	top: -3px;
 }
-.radio-elem,
-.checkbox-elem {
+.lzy-form-radio-elem,
+.lzy-form-checkbox-elem {
 	display: inline-block;
 }
-.radio-elem > label,
-.checkbox-elem > label {
+.lzy-form-radio-elem > label,
+.lzy-form-checkbox-elem > label {
 	margin-left: 1em;
 	width: 4em;
 }
-fieldset.label {
+fieldset.lzy-form-label {
 	border: none;
 	padding: 0;
 	margin: 0;
@@ -52,12 +92,12 @@ fieldset.label {
 ::placeholder { /* generic */
   text-align: right;
 }
-.field-wrapper.field-type-button input.form-button,
-.field-wrapper.field-type-button button.form-button {
+.lzy-form-field-wrapper.lzy-form-field-type-button input.lzy-form-form-button,
+.lzy-form-field-wrapper.lzy-form-field-type-button button.lzy-form-form-button {
 	width: 7em;
 	height: 2em;
 }
-.field-wrapper * {
+.lzy-form-field-wrapper * {
     vertical-align: middle;
 }
 
@@ -87,24 +127,24 @@ fieldset.label {
     padding: 5px 15px;
     cursor:  pointer;
 }
-.progress-indicator {
+.lzy-form-progress-indicator {
 	width: 20em;
 }
-.progress-indicator progress {
+.lzy-form-progress-indicator progress {
 	width: calc(100% - 3em);
 	margin-top: 0.2em;
 }
-.progress-indicator progress:not([value]) {
+.lzy-form-progress-indicator progress:not([value]) {
     background: yellow;
 }
-.progress-indicator > div {
+.lzy-form-progress-indicator > div {
 	float: right;
 }
 
-.uploaded {
+.lzy-form-uploaded {
 	margin-top: 1em;
 }
-.uploaded li span {
+.lzy-form-uploaded li span {
     display: inline-block;
     vertical-align: middle;
     padding: 0 15px 0 0;

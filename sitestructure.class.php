@@ -4,7 +4,6 @@
  *
  *  SiteStructure
 */
-use Symfony\Component\Yaml\Yaml;
 
 class SiteStructure
 {
@@ -66,9 +65,9 @@ class SiteStructure
                 'inx' => '0',
                 'urlExt' => '',
                 'active' => false,
-                'hide' => false,
                 'hide!' => false,
                 'hasChildren' => false,
+                'restricted' => false,
                 'parent' => null
             ];
             return;
@@ -76,14 +75,14 @@ class SiteStructure
 
 		if ($currNr < (sizeof($this->list) - 1)) {
 		    $i = 1;
-		    while ($this->list[$currNr + $i]['hide'] && (($currNr + $i) < (sizeof($this->list) - 1))) {
+		    while ($this->list[$currNr + $i]['hide!'] && (($currNr + $i) < (sizeof($this->list) - 1))) {
 		        $i++;
             }
 			$this->nextPage = $this->list[$currNr + $i]['folder'];
 		}
 		if ($currNr > 0) {
             $i = 1;
-            while ($this->list[$currNr - $i]['hide'] && (($currNr - $i) > 0)) {
+            while ($this->list[$currNr - $i]['hide!'] && (($currNr - $i) > 0)) {
                 $i++;
             }
 			$this->prevPage = $this->list[$currNr - $i]['folder'];
@@ -141,7 +140,6 @@ class SiteStructure
                 $rec['inx'] = $i;
                 $rec['urlExt'] = '';
                 $rec['active'] = false;
-                $rec['hide'] = false;
                 $rec['hide!'] = false;
 
                 $i++;
@@ -174,12 +172,20 @@ class SiteStructure
 			$line = rtrim($line);
 			if (preg_match('/^\s*$/', $line) || preg_match('/^\s*#/', $line)) {continue;}
 			$i++;
+
+			if (preg_match('/^(\s*) \{\{ ([^\}]+) \}\} (.*)/x', $line, $m)) {   // catch {{}}
+			    $transName = "{{ {$m[2]} }}";
+			    $line = $m[1].ltrim($m[2]).$m[3];
+            } else {
+			    $transName = false;
+            }
+
 			if (preg_match('/^(\s*)([^:\{]+)(.*)/', $line, $m)) {
 				$indent = $m[1];
 				$name = trim($m[2]);
 				$args = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);;
 
-				$rec['name'] = $name;
+				$rec['name'] = $transName ? $transName : trim($m[2]);
 				if (strlen($indent) == 0) {
                     $level = 0;
                 } else {
@@ -198,7 +204,7 @@ class SiteStructure
 
 				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
 				if ($args) {
-					$args = convertYaml($args, true, $this->site_sitemapFile);
+					$args = parseArgumentStr($args);
 					if (is_array($args)) {
 						foreach($args as $key => $value) {
 							if (($key == 'folder') || ($key == 'showthis') || ($key == 'goto')) {
@@ -209,9 +215,6 @@ class SiteStructure
 
                                 } else {                                // internal link -> fix it if necessary
                                     $folder = fixPath($value);
-//                                    if (substr($folder, 0, 2) == '~/') {
-//                                        $folder = substr($folder, 2);
-//                                    }
                                     if (!$folder) {
                                         $folder = './';
                                     }
@@ -227,16 +230,19 @@ class SiteStructure
 				$rec['inx'] = $i;
 				$rec['urlExt'] = '';
 				$rec['active'] = false;
-				$rec['hide'] = (isset($rec['hide'])) ? $rec['hide'] : false;
-                $rec['hide!'] = (isset($rec['hide!'])) ? $rec['hide!'] : false;;
+
+				// Hide: hide always propagating, therefore we need 'hide!' element
+                if (isset($rec['hide!'])) {
+                    if (isset($rec['hide'])) {
+                        unset($rec['hide']);
+                    }
+                } else {
+                    $rec['hide!'] = (isset($rec['hide'])) ? $rec['hide'] : false;   // always propagate hide attribute
+                    unset($rec['hide']);    // beyond this point hide is permanently replaced by hide!
+                }
 
 				// case: page only visible to privileged users:
-				if (preg_match('/non\-?privileged/i',$rec['hide'])) {
-//				    if ($this->config->isPrivileged) {
-//                        $rec['hide!'] = false;
-//                    } else {
-//                        $rec['hide!'] = true;
-//                    }
+				if (preg_match('/non\-?privileged/i',$rec['hide!'])) {
                     $rec['hide!'] = !$this->config->isPrivileged;
                 }
 
@@ -257,9 +263,6 @@ class SiteStructure
                     $t = strtotime($rec['hidetill']);
                     $rec['hide!'] |= (time() < $t);
                 }
-//                if (isset($rec['hide!'])) {
-//                    unset($rec['hide']);
-//                }
 
                 $list[] = $rec;
             }
@@ -309,7 +312,7 @@ class SiteStructure
 					$list[$i]['folder'] = (strlen($list[$i]['folder']) > 2) ? substr($list[$i]['folder'], 2) : '';
 				}
 				$list[$i]['parent'] = $parent;
-				if (!(isset($list[$i]['hide']) && $list[$i]['hide'] || isset($list[$i]['hide!']) && $list[$i]['hide!'])) {
+				if (isset($list[$i]['hide!']) && $list[$i]['hide!']) {
 					$hasVisibleChildren = true;
 				}
 
@@ -344,7 +347,11 @@ class SiteStructure
 
             if ($r !== null) {
                 foreach ($r as $k => $v) {
-                    if (strpos($k, '!') !== false) {    // item to propagate found
+                    if ($k === 'hide!') { // special case 'hide!'
+                        if ($v) {
+                            $toPropagate1['hide!'] = true;
+                        }
+                    } elseif (strpos($k, '!') !== false) {    // item to propagate found
                         $k1 = str_replace('!', '', $k);
                         $toPropagate1[$k1] = $v;
                         $r[$k1] = $v;
@@ -355,10 +362,10 @@ class SiteStructure
         }
 
         foreach ($subtree as $key => $rec) {
-                if (is_int($key)) {
-                    $this->_propagateProperties($rec, $level + 1, $toPropagate1);
-                }
+            if (is_int($key)) {
+                $this->_propagateProperties($rec, $level + 1, $toPropagate1);
             }
+        }
     } // _propagateProperties
 
 
@@ -369,7 +376,7 @@ class SiteStructure
 	{
 		$this->currPageRec['active'] = true;
 		$rec = &$this->currPageRec;
-		while ($rec['parent']) {
+		while ($rec['parent'] !== null) {
 			$rec = &$this->list[$rec['parent']];
 			$rec['active'] = true;
 		}
@@ -377,21 +384,11 @@ class SiteStructure
 
 
 
-
-//    private function walkTree($tree)
-//    {
-//
-//    }
-
-
-
 	//....................................................
 	public function findSiteElem($str, $returnRec = false)
 	{
-//	    if ($str == '/') {
 	    if (($str == '/') || ($str == './')) {
             $str = '';
-//            $str = './';
         } elseif ((strlen($str) > 0) && ($str{0} == '/')) {
 	        $str = substr($str, 1);
         } elseif ((strlen($str) > 0) && (substr($str,0,2) == '~/')) {
@@ -447,7 +444,7 @@ class SiteStructure
         if ($elem['active']) {
             return true;
         }
-        while ($elem['parent']) {
+        while ($elem['parent'] !== null) {
             $elem = $this->list[$elem['parent']];
             if ($elem['active']) {
                 return true;

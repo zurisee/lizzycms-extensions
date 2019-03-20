@@ -19,22 +19,26 @@ $macroName = basename(__FILE__, '.php');    // macro name normally the same as t
     require_once SYSTEM_PATH.'gallery.class.php';
  *
  * For manipulating the current page, use:
-    $this->page->addHead('');
-    $this->page->addKeywords('');
-    $this->page->addDescription('');
-    $this->page->addCssFiles('');
-    $this->page->addCss('');
-    $this->page->addJsFiles('');
-    $this->page->addJs('');
-    $this->page->addJqFiles('');
-    $this->page->addJq('');
-    $this->page->addBody_end_injections('');
-    $this->page->addMessage('');
-    $this->page->addPageReplacement('');
-    $this->page->addOverride('');
-    $this->page->addOverlay('');
 
-    $this->addVariable('');
+	$this->page->addOverlay();
+	$this->page->addOverride();
+	$this->page->addPageSubstitution();
+	$this->page->addMessage();
+	$this->page->addDebugMsg();
+
+	$this->page->addBodyEndInjections();
+	$this->page->addCssFiles();
+	$this->page->addCss();
+	$this->page->addJsFiles();
+	$this->page->addJs();
+	$this->page->addJqFiles();
+	$this->page->addJq();
+
+	$this->page->addHead();
+	$this->page->addKeywords();
+	$this->page->addDescription();
+
+    $this->addVariable();
 */
 
 

@@ -90,15 +90,17 @@ class NavRenderer
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
         }
 
-        return $this->renderSitemap($options);
+        $this->options = $options;
+        return $this->renderSitemap();
     } // render
 
 
 
 
     //....................................................
-    public function renderSitemap($options)
+    public function renderSitemap()
     {
+        $options = $this->options;
         $type = isset($options[0]) ? $options[0] :  (isset($options['type']) ? $options['type'] : '');
         $navClass = (isset($options['navClass'])) ? $options['navClass']: '';
         $navClass = str_replace('.', ' ', $navClass);
@@ -121,8 +123,18 @@ class NavRenderer
         $this->horizTop = (strpos($navClass, 'lzy-nav-top-horizontal') !== false);
         $this->openCurr = (strpos($navClass, 'lzy-nav-open-current') !== false);
         $this->collapse = (strpos($navClass, 'lzy-nav-collapsed') !== false);
+        $this->currBranch = (strpos($navOptions, 'curr-branch') !== false);
+        $this->currBranchEmpty = true;
+//        $currBranch = false;
+//        if (strpos($navOptions,'curr-branch') !== false) {
+//            $currBranch = true;
+//        }
 
         $nav = $this->_renderSitemap(false, $type, 0, "\t\t", $navOptions);
+
+        if ($this->currBranch && $this->currBranchEmpty) {
+            return null;
+        }
 
         $navClass = trim('lzy-nav '.$navClass);
         $navClass = " class='$navClass'";
@@ -194,7 +206,7 @@ EOT;
             $stop = true;
         }
         $showHidden = false;
-        if (strpos($navOptions,'hidden') !== false) {
+        if ((strpos($navOptions,'hidden') !== false) || (stripos($navOptions,'showall') !== false)) {
             $showHidden = true;
         }
         $currBranch = false;
@@ -294,6 +306,9 @@ EOT;
             if ($currBranch && !$activeAncestor) {
                 continue;
             }
+            if ($level > 1) {
+                $this->currBranchEmpty = false;
+            }
 
             if ($this->listWrapper) {
                 $listWrapper = "$indent\t  <{$this->listWrapper} $aria>\n";
@@ -307,10 +322,7 @@ EOT;
             $btn = "$indent\t  <label for='$btnId'>{$this->arrow}<span>{{ lzy-nav-elem-button }}</span></label>\n".
                    "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
-            if (!isset($elem['hide!'])) {
-                $elem['hide!'] = false;
-            }
-            if (((!$elem['hide']) || $showHidden) && !$elem['hide!']) {
+            if ((!$elem['hide!']) || $showHidden) {
                 if (!$stop && isset($elem[0])) {	// does it have children?
                     $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
                     $liClass = trim($liClass);
@@ -322,9 +334,11 @@ EOT;
                     if ($out1) {
                         $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
                         $out .= $out1;
-                        $out .= "$_listWrapper$indent\t  </$li>\n";
+                        $out .= "$_listWrapper$indent\t</$li>\n";
                         $modif = true;
-                        $hasChildren = true;
+                    } else {
+                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
+                        $modif = true;
                     }
 
                 } else {
@@ -338,14 +352,16 @@ EOT;
 
         if ($modif) {
             $ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
-            if ($level > 1) {
+            $navClass = $this->options['navClass'];
+
+            // apply top-margin for exanding variants: lzy-nav-accordion and lzy-nav-top-horizontal:
+            if (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') !== false) ||
+                    (strpos($navClass, 'lzy-nav-accordion') !== false))) {
                 $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
             } else {
                 $out = "$indent<{$this->listTag}$ulClass>\n".$out;
             }
             $out .= "$indent</{$this->listTag}>\n";
-        } else {
-            $out = '';
         }
         return $out;
     } // _renderSitemap
@@ -414,6 +430,7 @@ EOT;
           #lzy .lzy-nav li label { display: none; }
         </style>
     </noscript>
+
 EOT;
 
         $GLOBALS['globalParams']['noScriptAdded'] = true;

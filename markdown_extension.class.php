@@ -2,8 +2,20 @@
 
 class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 {
-    public function __construct($page = false)
+    private $cssAttrNames =
+        ['align', 'all', 'animation', 'backface', 'background', 'border', 'bottom', 'box',
+            'break', 'caption', 'caret', 'charset', 'clear', 'clip', 'color', 'column', 'columns',
+            'content', 'counter', 'cursor', 'direction', 'display', 'empty', 'filter', 'flex',
+            'float', 'font', 'grid', 'hanging', 'height', 'hyphens', 'image', 'import', 'isolation',
+            'justify', 'keyframes', 'left', 'letter', 'line', 'list', 'margin', 'max', 'media', 'min',
+            'mix', 'object', 'opacity', 'order', 'orphans', 'outline', 'overflow', 'Specifies',
+            'padding', 'page', 'perspective', 'pointer', 'position', 'quotes', 'resize', 'right',
+            'scroll', 'tab', 'table', 'text', 'top', 'transform', 'transition', 'unicode', 'user',
+            'vertical', 'visibility', 'white', 'widows', 'width', 'word', 'writing', 'z-index'];
+
+    public function __construct($mymd, $page = false)
     {
+        $this->mymd = $mymd;
         $this->page = $page;
     } // __construct
     
@@ -64,6 +76,124 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
     // ---------------------------------------------------------------
+    protected function identifyAsciiTable($line, $lines, $current)
+    {
+        // asciiTable starts with '|==='
+        if (strncmp($line, '|===', 4) === 0) {
+            return 'asciiTable';
+        }
+        return false;
+    }
+
+
+
+    protected function consumeAsciiTable($lines, $current)
+    {
+        $block = [
+            'asciiTable',
+            'content' => [],
+            'caption' => false,
+            'header' => false
+        ];
+        $firstLine = $lines[$current];
+        if (preg_match('/^\|===*\s+(.+)$/', $firstLine, $m)) {
+            $a = preg_split('/(?<!\\\)\|/', $m[1]);
+            if (sizeof($a) > 1) {
+                $block['caption'] = str_replace('\|','|', array_shift($a));
+                $block['header'] = $a;
+            } else {
+                $block['caption'] = str_replace('\|','|', $m[1]);
+            }
+        }
+        for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
+            $line = $lines[$i];
+            if (strncmp($line, '|===', 4) !== 0) {
+                $block['content'][] = $line;
+            } else {
+                // stop consuming when code block is over
+                break;
+            }
+        }
+        return [$block, $i];
+    }
+
+
+
+    protected function renderAsciiTable($block)
+    {
+        $table = [];
+        $nCols = 0;
+        $row = 0;
+        $col = -1;
+
+        for ($i = 0; $i < sizeof($block['content']); $i++) {
+            $line = $block['content'][$i];
+
+            if (strncmp($line, '|---', 4) === 0) {  // new row
+                $row++;
+                $col = -1;
+                continue;
+            }
+
+            if (isset($line[0]) && ($line[0] == '|')) {  // next cell starts
+                $line = trim($line, '|');
+                $cells = preg_split('/(?<!\\\)\|/', $line);
+                foreach ($cells as $cell) {
+                    $col++;
+                    $table[$row][$col] = str_replace('\|','|', $cell);
+                }
+
+            } else {
+                $table[$row][$col] .= "\n$line";
+            }
+            $nCols = max($nCols, $col);
+        }
+        $nCols++;
+        $nRows = $row+1;
+
+
+        // now render the table:
+        $out = "\t<table><!-- asciiTable -->\n";
+        if ($block['caption']) {
+            $out .= "\t  <caption>{$block['caption']}</caption>\n";
+        }
+
+        if ($block['header']) {     // table header
+            $out .= "\t  <thead>\n";
+            for ($col = 0; $col < $nCols; $col++) {
+                $th = isset($block['header'][$col]) ? str_replace('\|','|', $block['header'][$col]) : '';
+                $out .= "\t\t\t<th class='th$col'>$th</th>\n";
+            }
+            $out .= "\t  </thead>\n";
+        }
+
+        $out .= "\t  <tbody>\n";
+        for ($row = 0; $row < $nRows; $row++) {
+            $out .= "\t\t<tr>\n";
+            for ($col = 0; $col < $nCols; $col++) {
+                $cell = isset($table[$row][$col]) ? trim($table[$row][$col]) : '';
+                if ($cell) {
+                    $cell = compileMarkdownStr($cell);
+                    $cell = trim($cell);
+                    if (preg_match('|^<p>(.*)</p>$|', $cell, $m)) {
+                        $cell = $m[1];
+                    }
+                }
+                $out .= "\t\t\t<td class='row".($row+1)." col".($col+1)."'>$cell</td>\n";
+            }
+            $out .= "\t\t</tr>\n";
+        }
+
+        $out .= "\t  </tbody>\n";
+        $out .= "\t</table><!-- /asciiTable -->\n";
+
+        return $out;
+    } // AsciiTable
+
+
+
+
+    // ---------------------------------------------------------------
     protected function identifyDivBlock($line, $lines, $current)
     {
         // if a line starts with at least 3 colons it is identified as a fenced code block
@@ -71,7 +201,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             return 'fencedCode';
         }
         return false;
-    }
+    } // identifyDivBlock
     
     protected function consumeDivBlock($lines, $current)
     {
@@ -79,8 +209,9 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $block = [
             'divBlock',
             'content' => [],
-            'class' => '',
-            'id' => '',
+            'tag' => 'div',
+            'attributes' => '',
+            'literal' => false
         ];
         $line = rtrim($lines[$current]);
     
@@ -92,11 +223,14 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             fatalError("Error in Markdown source line $current: $line", 'File: '.__FILE__.' Line: '.__LINE__);
         }
 
-        list($id, $class, $style, $shield) = $this->parseInlineStyling($rest);
-        $block['id'] = $id;
-        $block['class'] = $class;
-        $block['style'] = $style;
-        $block['shield'] = $shield;
+        list($tag, $attr, $lang, $comment, $literal, $mdCompile) = $this->parseInlineStyling($rest);
+
+        $block['tag'] = $tag ? $tag : 'div';
+        $block['attributes'] = $attr;
+        $block['comment'] = $comment;
+        $block['lang'] = $lang;
+        $block['literal'] = $literal;
+        $block['mdcompile'] = $mdCompile;
 
         // consume all lines until :::
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
@@ -116,36 +250,31 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $block['content'][] = $line;
             }
         }
-        if ($shield) {
+        if ($block['literal']) {     // for shielding, we just encode the entire block to hide it from further processing
             $content = implode("\n", $block['content']);
             unset($block['content']);
             $content = str_replace(['@/@lt@\\@', '@/@gt@\\@'], ['<', '>'], $content);
             $block['content'][0] = base64_encode($content);
         }
         return [$block, $i];
-    }
+    } // consumeDivBlock
 
     protected function renderDivBlock($block)
     {
-        $class = ($block['class']) ? ' class="'.$block['class'].'"' : '';
-        $id = ($block['id']) ? " id='{$block['id']}'" : '';
-        $style = ($block['style']) ? " style='{$block['style']}'" : '';
+        $tag = $block['tag'];
+        $attrs = $block['attributes'];
+        $comment = $block['comment'];
+
         $out = implode("\n", $block['content']);
-        $out = \cebe\markdown\Markdown::parse($out);
-        $comment = ($block['id']) ? ' #'.$block['id'] : '';
-        $comment .= ($block['class']) ? ' .'.$block['class'] : '';
-        $comment .= ($block['style']) ? ' '.$block['style'] : '';
 
-
-        if (preg_match('/lang:\s*(\w\w)/', $style, $m)) {   // check language selector
-            $lang = $this->page->config->lang;
-            if ($m[1] != $this->page->config->lang) {
-                return '';
-            }
+        if (!$block['literal'] && $block['mdcompile']) {  // within such a block we need to compile explicitly:
+            $out = \cebe\markdown\Markdown::parse($out);
         }
-        $dataAttr = ($block['shield']) ? ' data-lzy-literal-block="true"' : '';
-        return "<div$id$class$style$dataAttr>\n$out</div><!-- /$comment -->\n\n";
-    }
+        if ($block['literal']) {     // flag block for post-processing
+            $attrs = trim("$attrs data-lzy-literal-block='true'");
+        }
+        return "\t\t<$tag $attrs>\n$out\n\t\t</$tag><!-- /$comment -->\n\n";
+    } // renderDivBlock
 
 
 
@@ -157,7 +286,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             return 'tabulator';
         }
         return false;
-    }
+    } // identifyTabulator
 
 
 
@@ -184,7 +313,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             }
         }
         return [$block, $last];
-    }
+    } // consumeTabulator
 
 
 
@@ -233,7 +362,114 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $out = str_replace(['<p>', '</p>'], '', $out);
         $out = str_replace(['@/@ul@\\@', '@/@ol@\\@'], '', $out);
         return "<$wrapperTag$wrapperAttr class='tabulator_wrapper'>\n$out</$wrapperTag>\n";
-    }
+    } // renderTabulator
+
+
+
+
+    // ---------------------------------------------------------------
+    protected function identifyCheckList($line, $lines, $current)
+    {
+        if (preg_match('/^\s*\[\s?x?\s?\]/', $line)) {
+            return 'checkList';
+        }
+        return false;
+    } // identifyCheckList
+
+
+    protected function consumeCheckList($lines, $current)
+    {
+        // create block array
+        $block = [
+            'checkList',
+            'content' => [],
+        ];
+        // consume all lines until 2 empty line
+        $nEmptyLines = 0;
+        for($i = $current, $count = count($lines); $i < $count; $i++) {
+            $line = $lines[$i];
+            if (!preg_match('/\S/', $line)) {                               // line empty
+                if ($nEmptyLines++ > 0) {                                           // already second empty line
+                    break;
+                }
+                continue;
+            } elseif ($line && !preg_match('/^\s* \[ \s?x?\s? \] /x', $line)) {  // no pattern [] or [x]
+                $i--;
+                break;
+            }
+            $block['content'][] = $lines[$i];
+        }
+        return [$block, $i];
+    } // consumeCheckList
+
+
+    protected function renderCheckList($block)
+    {
+        if (isset($this->mymd->trans->lzy->page->checklist)) {
+            $this->mymd->trans->lzy->page->checklist++;
+        } else {
+            $this->mymd->trans->lzy->page->checklist = 1;
+        }
+        $inx = $this->mymd->trans->lzy->page->checklist;
+        $cnt = 1;
+        $line = $block['content'][0];
+        list($line, $tag, $id, $class, $attr) = $this->mymd->postprocessInlineStylings($line, true);
+        $i=0;
+        if (!$id) {
+            $id = "lzy-checklist-$inx";
+        }
+
+        $this->attr = $attr;
+
+        $block['content'][0] = $line;
+        $out = $this->_renderCheckList($i, $block['content'], $inx, 1, $cnt);
+        $out = "\t<ul id='$id' class='lzy-checklist lzy-checklist-$inx' {$this->attr}>\n$out\t</ul>\n";
+        return $out;
+    } // renderCheckList
+
+
+
+
+    private function _renderCheckList(&$i, $lines, $inx, $indent0, &$cnt)
+    {
+        $out = '';
+        while ($i<sizeof($lines)) {
+            $line = $lines[$i];
+            if (preg_match('/^(\s*) \[ \s?(x?)\s? \]\s (.*) /x', $line, $m)) {
+                $elem = $m[3];
+                $checked = $m[2] ? ' checked': '';
+                $lead = str_replace("\t", '    ', $m[1]);
+                $indent = intval(strlen($lead) / 4) + 1;
+                $indentStr = str_pad('', $indent * 4);
+                $cls = "lzy-checklist-elem-$indent";
+                $inpName = preg_replace('/\W/', '_', substr(trim($elem), 0, 8));
+                $input = "\t$indentStr  <input type='checkbox' class='lzy-checklist-input lzy-checklist-input-$cnt' name='cb_{$inx}_{$cnt}_$inpName'$checked disabled />";
+                $elem = "\t$indentStr  <span>$elem</span>";
+
+                if ($indent0 == $indent) {                  // same level -> add elem
+                    $out .= "\t$indentStr<li class='lzy-checklist-elem $cls'>\n$input\n$elem\n\t$indentStr</li>\n";
+                    $cnt++;
+
+                } elseif ($indent0 < $indent) {             // descend
+                    $indent0 = intval(strlen($lead) / 4);
+                    $indentStr0 = str_pad('', $indent0 * 4);
+                    $out = substr($out, 0, -6)."\n";
+                    $out .= "\t$indentStr0  <ul>\n";
+                    $out .= $this->_renderCheckList($i, $lines, $inx, $indent, $cnt);
+                    $indent = intval(strlen($lead) / 4);
+                    $indentStr = str_pad('', $indent * 4);
+                    $out .= "\t$indentStr0  </ul>\n";
+                    $out .= "\t$indentStr</li>\n";
+                    $i--;
+
+                } else {                                    // ascend
+                    return $out;
+                }
+            }
+            $i++;
+        }
+        return $out;
+    } // _renderCheckList
 
 
 
@@ -241,12 +477,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // ---------------------------------------------------------------
     protected function identifyDefinitionList($line, $lines, $current)
     {
-        // if a line starts with at least 3 colons it is identified as a fenced code block
+        // if next line starts with ': ', it's a dl:
         if (isset($lines[$current+1]) && strncmp($lines[$current+1], ': ', 2) === 0) {
             return 'definitionList';
         }
         return false;
-    }
+    } // identifyDefinitionList
 
 
 
@@ -256,37 +492,63 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         // create block array
         $block = [
             'definitionList',
-            'dt',
-            'dd' => [],
+            'content' => [],
         ];
-        $block['dt'] = rtrim($lines[$current]);   
-    
-        // consume all lines until empty line
-        for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
-            $line = $lines[$i];
-            if (preg_match('/^\:\s+(.*)$/', $line, $m)) {
-                $block['dd'][] = $m[1];
-            } else {
-                // stop consuming when code block is over
-                break;
+
+        // consume all lines until 2 empty line
+        $nEmptyLines = 0;
+        for($i = $current, $count = count($lines); $i < $count; $i++) {
+            if (!preg_match('/\S/', $lines[$i])) {  // empty line
+                if ($nEmptyLines++ > 0) {
+                    break;
+                }
             }
+            $block['content'][] = $lines[$i];
         }
         return [$block, $i];
-    }
+    } // consumeDefinitionList
 
 
 
 
     protected function renderDefinitionList($block)
     {
-        $dt = "\t\t<dt>{$block['dt']}</dt>";
-        $dd = implode("\n", $block['dd']);
-        $dd = \cebe\markdown\Markdown::parse($dd);
-        $dd = str_replace("  \n", "<br>\n", $dd);
-        $dd = preg_replace('|\<p\>(.*)\</p\>\n|ms', "$1", $dd);
-        $out = "\t<dl>\n$dt\n\t\t<dd>$dd</dd>\n\t</dl>\n";
+        $out = '';
+        $md = '';
+        foreach ($block['content'] as $line) {
+            if (!trim($line)) {                             // end of definitin item reached
+                if ($md) {
+                    if (preg_match('/\s\s$/', $md)) { // 2 blanks at end of line -> insert line break
+                        $md .= "<br />\n";
+                    }
+                    $html = compileMarkdownStr($md, true);
+                    $html = "\t\t\t".str_replace("\n", "\n\t\t\t", $html);
+                    $out .= substr($html, 0, -3);
+                    $md = '';
+                }
+                $out .= "\t\t</dd>\n";
+
+            } elseif (preg_match('/^: /', $line)) { // within dd block
+                $md .= substr($line, 2);
+                if (preg_match('/\s\s$/', $md)) { // 2 blanks at end of line -> insert line break
+                    $md .= "<br />\n";
+                }
+
+            } else {                                        // new dt block starts
+                $line = compileMarkdownStr($line, true);
+                $out .= "\n\t\t<dt>$line</dt>\n";
+                $out .= "\t\t<dd>\n";
+            }
+        }
+        if ($md) {
+            $html = compileMarkdownStr($md, true);
+            $html = "\t\t\t".str_replace("\n", "\n\t\t\t", $html);
+            $out .= substr($html, 0, -3);
+        }
+        $out .= "\t\t</dd>\n";
+        $out = "\t<dl>\n$out\t</dl>\n";
         return $out;
-    }
+    } // renderDefinitionList
 
 
 
@@ -505,53 +767,17 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
         if (!$line) {
-            return ['', '', '', false];
-        }
-        $id = '';
-        $class = '';
-        $style = '';
-        $shield = false;
-        if (strpos($line, '!') !== false) {
-            $shield = true;
-            $line = str_replace('!', '', $line);
+            return ['', '', '', '', false, false];
         }
 
-        if (preg_match('/\s* ([\.\#]?) ([\w_\-]+) (.*)/x', $line, $mm)) {        // class or id
-            if (empty($mm[3]) || ($mm[3]{0} != ':')) {
-                if ($mm[1] == '#') {
-                    $id = $mm[2];
-                } else {
-                    $class = $mm[2];
-                }
-                $line = $mm[3];
-            }
-        }
-
-        while ($line) {
-
-            if (preg_match('/([^\#]*) \# ([\w_\-]+)(.*)/x', $line, $mm)) {        // id
-                $id = $mm[2];
-                $line = $mm[1] . $mm[3];
-            } elseif (preg_match('/([^\.]*) \. ([\w_\-\.]+) (.*)/x', $line, $mm)) {        // class
-                $class .= ' '.str_replace('.', ' ', $mm[2]);
-                $line = $mm[1] . $mm[3];
-            } else {
-                break;
-            }
-            $line = trim($line);
-        }
-
-        $styles = parseArgumentStr($line,';');          // styles
-        if ($styles) {
-            foreach ($styles as $key => $val) {
-                if (!is_int($key)) {
-                    $style .= "$key:$val;";
-                }
-            }
-        }
-            $line = '';
-        return [$id, $class, $style, $shield];
+        return parseInlineBlockArguments($line);
     } // parseInlineStyling
 
+
+    private function isCssProperty($str)
+    {
+        $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
+        return (sizeof($res) > 0);
+    }
 
 } // class MyMarkdown

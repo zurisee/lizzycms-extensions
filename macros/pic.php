@@ -33,8 +33,8 @@ $this->addMacro($macroName, function () {
             $imgFullsizeFile = resolvePath($basename.$ext, true);
             if (file_exists($imgFullsizeFile)) {
                 if (!isset($this->page->quickviewLoaded)) {
-                    $this->page->addCssFiles('QUICKVIEW_CSS');
-                    $this->page->addJqFiles('QUICKVIEW');
+//                    $this->page->addCssFiles('QUICKVIEW_CSS');
+                    $this->page->addModules('QUICKVIEW');
                     $this->page->addJq("\t$('img.lzy-quickview').quickview();");
                     $this->page->quickviewLoaded = true;
                 }

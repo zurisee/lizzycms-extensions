@@ -3,8 +3,7 @@
 // @info: Renders a navigation menu.
 require_once SYSTEM_PATH.'nav-renderer.class.php';
 
-$this->page->addJqFiles('NAV');
-$this->page->addCssFiles('NAV_CSS');
+$this->page->addModules('NAV');
 
 
 $macroName = basename(__FILE__, '.php');
@@ -43,7 +42,7 @@ $this->addMacro($macroName, function () {
 
     // -------- in-page
     if ($type == 'in-page') {
-        return inPageNav($this, $inx);
+        return inPageNav($this->page, $options, $inx);
 
     // -------- small-screen-header
     } elseif ($type == 'small-screen-header') {
@@ -88,20 +87,24 @@ function renderSmallScreenHeader($trans, $options)
 
 
 
-function inPageNav($that, $inx)
+
+function inPageNav($page, $options, $inx)
 {
-    $macroName = basename(__FILE__, '.php');
-    $depth = $that->getArg($macroName, 'depth', '', 1);
-    $targetElem = $that->getArg($macroName, 'targetElement', '', false);
-    $listTag = $that->getArg($macroName, 'listTag', '', 'false');
-    $title = $that->getArg($macroName, 'title', '', '');
+
+    $depth = $options['depth'];
+    $targetElem = $options['targetElement'];
+    $listTag = $options['listTag'];
+    $title = $options['title'];
+
     if ($title && (strpos($title, '<') === false)) {
         $title = "<h1>$title</h1>";
     }
+
+    $listElemTag = ($listTag == 'div') ? 'div' : 'li';
     if ($targetElem) {
-        inPageByTargetElement($that, $inx, $targetElem);
+        inPageByTargetElement($page, $inx, $targetElem, $listElemTag);
     } else {
-        inPageHierarchie($that, $inx, $depth);
+        inPageHierarchie($page, $inx, $depth, $listElemTag);
     }
 
     $out = "\t<nav class='lzy-in-page-nav dont-print'>$title<$listTag id='lzy-in-page-nav$inx' class='lzy-in-page-nav'></$listTag></nav>\n";
@@ -110,7 +113,8 @@ function inPageNav($that, $inx)
 
 
 
-function inPageHierarchie($that, $inx, $depth)
+
+function inPageHierarchie($page, $inx, $depth, $listElemTag)
 {
     $depth = intval($depth);
     $hMax = "H$depth";
@@ -118,37 +122,44 @@ function inPageHierarchie($that, $inx, $depth)
 
     $(':header').each(function() {
         var \$this = $(this);
+        if (\$this.closest('.lzy-mobile-page-header').length) {
+            return;
+        }
         var hdrText = \$this.text();
         var id = hdrText.replace(/\s/, '_');
         \$this.attr('id', id);
         var hdrId =  \$this.attr('id');
         var nodeName = this.nodeName;
-        
+
         if (nodeName <= '$hMax') {
-            str = '<li class="'+nodeName+'"><a href="#'+hdrId+'">'+hdrText+'</a></li>';
+            str = '<$listElemTag class="'+nodeName+'"><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
             $('#lzy-in-page-nav$inx').append(str);
         }
     });
 EOT;
-    $that->page->addJQ($jq);
+    $page->addJQ($jq);
 
 }
 
 
-function inPageByTargetElement($that, $inx, $targetElem)
+
+function inPageByTargetElement($page, $inx, $targetElem, $listElemTag)
 {
     $jq = <<<EOT
 
     $('$targetElem').each(function() {
         var \$this = $(this);
+        if (\$this.closest('.lzy-mobile-page-header').length) {
+            return;
+        }
         var hdrText = \$this.text();
         var id = hdrText.replace(/\s/, '_');
         \$this.attr('id', id);
         var hdrId =  \$this.attr('id');
-        str = '<li><a href="#'+hdrId+'">'+hdrText+'</a></li>';
+        str = '<$listElemTag><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
         $('#lzy-in-page-nav$inx').append(str);
     });
 EOT;
-    $that->page->addJQ($jq);
+    $page->addJQ($jq);
 
 }

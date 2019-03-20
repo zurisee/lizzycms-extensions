@@ -6,16 +6,55 @@ Contact
 __END__
 
 Optional Configuration Attributes:
-	showThis:	show other page in this context
-	goto:		show other page in other context, as if that was requested
-	alias:		make page reachable under additional path
+----------------------------------
+folder:
+		folder: foldername/	
+		overrides the natural folder name (which is derived from the page name
 
-	goto: directly open target, as if that was requested
-	folder:
-	file:
-	template:
-	hide:
-	link:
-	alias:
- 
-	md: standard
+file:
+		file: file.html	
+		if set, the specified will be loaded, but no markdown files
+
+template:
+		template: file.html 
+		specifics the template, default is set in '_config/config.yaml'
+
+alias:
+		folder: foldername/ 
+		defines an alternative folder name, under which the page can be reached 
+		Example: ``Site: { alias: website/ } -> now this page may be opened with 
+		the alternative address website/.
+
+showThis:
+		showThis: foldername/show other page in this context
+
+goto:
+		folder: foldername/ 
+		directly open target, as if that was requested 
+		BTW, goto is also the option you can use if you need to link to an 
+		external URL, such as https://github.com.
+
+restricted:
+		restricted: "testgroup, admin"
+		If set, the page can only be accessed after loggin in to an account with 
+		the specified privileges.
+
+hide:
+		hide: true 
+		hides the page from the navigation menu, it's still available, though
+
+hideFrom, hideTill:
+		hideTill: 2018-01-01 
+		defines a point in time when a page will become visible, resp. when it 
+		will disappear. 
+		The page will only disappear from the navigation tree, but can still 
+		be opened if its path is know. 
+		Regarding acceptable formats, see examples below or Date and Time 
+		Formats for reference.
+
+showFrom, showTill:
+		showFrom: 2018-01-01 
+		defines a point in time when a page will become available, resp. 
+		when it will become inavailable. 
+		Unlike with the hideTill-option, the page will be completely inaccessible 
+		outside the defined timeframe, even when the path is know.

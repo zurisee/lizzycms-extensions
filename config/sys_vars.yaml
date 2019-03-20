@@ -1,13 +1,16 @@
 # Transvar Definition File
 # -- generic definitions
 
+
+#--- Login Link ----------------------------------
 space: "&nbsp;&nbsp;"
 
 vgap: "<div class='vgap' style='margin:1em 0;'>&nbsp;</div>\n"
 
 clear: '<div style="clear:both;"></div>'
 
-user_icon: "&#128100;"
+user_icon: '<img src="~sys/rsc/user.svg" />'
+#user_icon: "&#128100;"
 
 
 #--- Forms -----------------------------------------------
@@ -40,8 +43,22 @@ Submit:
     en: Submit
     
 submit:
-    de: Absenden
-    en: Send
+    de: absenden
+    en: send
+
+Confirm:
+    de: Bestätigen
+    en: Confirm
+confirm:
+    de: bestätigen
+    en: confirm
+
+Continue:
+    de: Weiter
+    en: Continue
+Continue_:
+    de: Weiter...
+    en: Continue...
 
 File to upload:
     de: Datei(en) hochladen
@@ -52,6 +69,7 @@ Uploaded file list:
     en: "Uploaded files:"
 
 
+Loading: '<img class="lzy-loading-spinner" src="~sys/rsc/loader.gif" alt="" />'
 
 #--- Links -------------------------------
 opens mail app: 
@@ -113,8 +131,8 @@ lzy-login-username-info-title:
     en: Help
 
 lzy-login-password-info:
-    de: "Geben Sie hier Ihr Kennwort ein. Verwenden Sie 'Anmelden ohne Kennwort', falls Sie ihr Kennwort nicht kennen (oder dieses nicht funktionierte)."
-    en: "Enter your password here. Use <strong>login by e-mail</strong> if you don't have your password available (if that didn't work)."
+    de: "Geben Sie hier Ihr Kennwort ein. Verwenden Sie &#34;Anmelden ohne Kennwort&#34;, falls Sie ihr Kennwort nicht kennen (oder dieses nicht funktionierte)."
+    en: "Enter your password here. Use <strong>login by e-mail</strong> if you don&#39;t have your password available (if that didn&#39;t work)."
 
 login-email-prompt:
     de: Ihre E-Mail Adresse
@@ -153,11 +171,25 @@ LoginLink:
     en: Login
 
 Logged in as:
-    de: Hallo
-    en: Hello
+    de: Angemeldet als
+    _: Logged in as
 #    de: Angemeldet als
 #    en: Logged in as
-   
+
+User account:
+    de: Benutzerkonto
+    _: User account
+
+Open user popup:
+    de: Benutzerkonto
+    _: User account
+
+User account of:
+    de: Angemeldet als
+    _: Logged in as
+#    de: Benutzerkonto von
+#    _: User account of
+
 page requires login:
     de: "Sie müssen angemeldet sein, um die gesuchte Seite sehen zu können."
     en: "You need to be logged in to see the requested page."
@@ -174,6 +206,19 @@ Or request one-time-access-link:
 email required for one-time-access-link:
     de: Eine E-Mail-Adresse wird benötigt, um den einmaligen Zugangs-Link zu senden.
     en: "We need your e-mail address to send you a one-time access link."
+
+lzy-login-successful:
+    de: 'Sie sind jetzt angemeldet.'
+    _: 'You are successfully logged in now.'
+
+lzy-logout-successful:
+    de: 'Sie sind jetzt abgemeldet.'
+    _: 'You are successfully logged out now.'
+
+lzy-login-failed:
+    de: 'Die Anmeldung ist fehlgeschlagen.'
+    _: 'Login failed.'
+
 
 #login with password:
 #    de: Anmeldung mit <br>Kennwort
@@ -210,7 +255,7 @@ email required for one-time-access-link:
 
 un-pw-login-info:
     de: "Geben Sie Ihren Benutzernamen ein.<br>Kontaktieren Sie den {{ Webmaster }}, falls Sie noch keine Zugangsdaten besitzen."
-    en: "Enter your username.<br>Contact the {{ Webmaster }} if you don't have credentials for this website."
+    en: "Enter your username.<br>Contact the {{ Webmaster }} if you don&#39;t have credentials for this website."
 
 #login-password-info:
 login-password-login-info:
@@ -290,8 +335,8 @@ Err empty email:
 
 
 Your Profile:
-    de: Ihr Profil
-    en: Your Profile
+    de: Profil bearbeiten
+    en: Edit Profile
 
 
 
@@ -339,6 +384,10 @@ lzy-popup-close-button: '✕'
 turn edit mode on:
     de: Seite bearbeiten
     en: Edit page
+
+turn edit mode off:
+    de: Seitebearbeitung beenden
+    en: End page editing
 
 
 # Macro Editable()

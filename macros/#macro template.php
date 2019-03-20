@@ -27,7 +27,7 @@ $macroName = basename(__FILE__, '.php');    // macro name normally the same as t
     $this->page->addJs('');
     $this->page->addJqFiles('');
     $this->page->addJq('');
-    $this->page->addBody_end_injections('');
+    $this->page->addBodyEndInjections('');
     $this->page->addMessage('');
     $this->page->addPageReplacement('');
     $this->page->addOverride('');
@@ -61,6 +61,9 @@ $this->addMacro($macroName, function () {
 
     // how to define additional variables within a macro:
     // $this->addVariable('myvar', 'value');
+
+    //
+    // $this->optionAddNoComment = true;
 
     $str = "<!-- sample extension -->\n";
 	return $str;

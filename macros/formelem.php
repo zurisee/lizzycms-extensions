@@ -22,6 +22,7 @@ $jsFloatPath = "{$sys}third-party/floatlabel/";
 
 $page->addCssFiles( [ "{$jsFloatPath}jquery.FloatLabel.css", "{$jsFloatPath}main.css" ]);
 $page->addJqFiles("{$jsFloatPath}jquery.FloatLabel.js");
+/*
 $jq = <<<EOT
 	if ($('body').hasClass('touch') && $('body').hasClass('small-screen')) {
 		$('input').each(function () {
@@ -59,7 +60,7 @@ $jq = <<<EOT
 
 EOT;
 $page->addJq($jq);
-
+*/
 
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');

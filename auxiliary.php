@@ -11,20 +11,26 @@ use Symfony\Component\Yaml\Yaml;
 function parseArgumentStr($str, $delim = ',')
 {
     $str0 = $str;
+    $str = trim($str);
     if (!($str = trim($str))) {
         return false;
     }
+    if (preg_match('/^\s*\{\{ .* \}\} \s* $/x', $str)) {    // skip '{{ ... }}' to avoid conflict with '{ ... }'
+        return [ $str ];
+    }
+
     $options = [];
 
     // for compatibility with Yaml, the argument list may come enclosed in { }
-    if (preg_match('/^\s* (\{? \s*)  (.*)  \} \s* $/x', $str, $m)) {
-        $str = $m[2];
+    if (preg_match('/^\s* \{  (.*)  \} \s* $/x', $str, $m)) {
+        $str = $m[1];
     }
 
     $assoc = false;
     while ($str || $assoc) {
         $str = trim($str, '↵ ');
         $c = (isset($str[0])) ? $str[0] : '';
+        $val = '';
 
         // grab next value, can be bare or enclosed in ' or "
         if ($c == '"') {    // -> "
@@ -49,6 +55,20 @@ function parseArgumentStr($str, $delim = ',')
                 fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
+        } elseif ($c == '{') {    // -> {
+            $p = findNextPattern($str, "}", 1);
+            if ($p) {
+                $val = substr($str, 1, $p - 1);
+                $val = str_replace("\\}", "}", $val);
+
+                $val = parseArgumentStr($val);
+
+                $str = trim(substr($str, $p + 1));
+                $str = preg_replace('/^\s*↵\s*$/', '', $str);
+            } else {
+                fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
+            }
+
         } else {    // -> bare value
             $rest = strpbrk($str, ':'.$delim);
             if ($rest) {
@@ -57,6 +77,13 @@ function parseArgumentStr($str, $delim = ',')
                 $val = $str;
             }
             $str = $rest;
+        }
+        if ($val === 'true') {
+            $val = true;
+        } elseif ($val === 'false') {
+            $val = false;
+        } elseif (is_string($val)) {
+            $val = str_replace(['"', "'"], ['&#34;', '&#39;'], $val);
         }
 
         // now, check whether it's a single value or a key:value pair
@@ -83,6 +110,99 @@ function parseArgumentStr($str, $delim = ',')
 } // parseArgumentStr
 
 
+
+function parseInlineBlockArguments($str, $returnElements = false)
+{
+    // Example: article  #my-id  .my-class  color:orange .class2 aria-expanded=false line-height: '1.5em;' !off .class3 aria-hidden= 'true' lang=de-CH literal=true md-compile=false
+    $tag = $id = $class = $style = $attr = $lang = $comment = '';
+    $literal = false;
+    $mdCompile = true;
+    $elems = [];
+
+    if (preg_match('/(.*) !([\w-]+) (.*)/x', $str, $m)) {      // !arg
+        if ($m[2]) {    // found
+            $str = $m[1].$m[3];
+            $style = ' display:none;';
+        }
+    }
+
+    if (preg_match_all('/([\w-]+\:\s*[^\s,]+)/x', $str, $m)) {  // style:arg
+        foreach ($m[1] as $elem) {
+            $s = str_replace([';', '"', "'"], '', $elem);
+            $style .= " $s;";
+        }
+        $str = str_replace($m[0], '', $str);
+    }
+    if (!$returnElements && $style) {
+        $style = ' style="'. trim($style) .'"';
+    }
+
+    if (preg_match_all('/( [\w-]+ \=\s* " .*? " ) /x', $str, $m)) {  // attr='arg '
+        $elems = $m[1];
+        $str = str_replace($m[1], '', $str);
+    }
+    if (preg_match_all("/( [\w-]+ \=\s* ' .*? ' ) /x", $str, $m)) {  // attr='arg '
+        $elems = array_merge($elems, $m[1]);
+        $str = str_replace($m[1], '', $str);
+    }
+    if (preg_match_all("/( [\w-]+ \=\s* [^\s,]+ ) /x", $str, $m)) {  // attr='arg '
+        $elems = array_merge($elems, $m[1]);
+        $str = str_replace($m[1], '', $str);
+    }
+    foreach ($elems as $elem) {
+        list($name, $arg) = explode('=', $elem);
+        $arg = trim($arg);
+        $ch1 = isset($arg[0]) ? $arg[0]: '';
+        if ($ch1 == '"') {
+            $arg = trim($arg, '"');
+        } elseif ($ch1 == "'") {
+            $arg = trim($arg, "'");
+        }
+
+        if (strtolower($name) == 'lang') {                                  // pseudo-attr: 'lang'
+            $lang = $arg;
+        }
+        if (strtolower($name) == 'literal') {                               // pseudo-attr: 'literal'
+            $literal = stripos($arg, 'true') !== false;
+        } elseif (strtolower($name) == 'md-compile') {                      // pseudo-attr: 'md-compile'
+            $mdCompile = stripos($arg, 'false') === false;
+        } else {
+            $attr .= " $name='$arg'";
+        }
+    }
+
+    if (preg_match('/(.*) \#([\w-]+) (.*)/x', $str, $m)) {      // #id
+        if ($m[2]) {    // found
+            $str = $m[1].$m[3];
+            if (!$returnElements) {
+                $id = " id='{$m[2]}'";
+            } else {
+                $id = $m[2];
+            }
+            $comment = "#{$m[2]}"; //??? where used???
+        }
+    }
+
+    if (preg_match_all('/\.([\w-]+)/x', $str, $m)) {            // .class
+        $class = implode(' ', $m[1]);
+        $str = str_replace($m[0], '', $str);
+        $comment .= '.'.str_replace(' ', '.', $class);
+    }
+    if (!$returnElements && $class) {
+        $class = ' class="'. trim($class) .'"';
+    }
+
+    if (preg_match('/\b(\w+)\b/', trim($str), $m)) {            // tag
+        $tag = $m[1];
+    }
+
+    if ($returnElements) {
+        return [$tag, $id, $class, $attr];
+    } else {
+        $str = "$id$class$style$attr";
+        return [$tag, $str, $lang, $comment, $literal, $mdCompile];
+    }
+} // parseInlineBlockArguments
 
 
 
@@ -135,14 +255,16 @@ function arrayToCsv($array, $quote = '"', $delim = ',')
     $out = '';
     foreach ($array as $row) {
         foreach ($row as $i => $elem) {
-            if (strpbrk($elem, $quote.$delim)) {
+            if (strpbrk($elem, "$quote$delim")) {
                 $row[$i] = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
             }
+            $row[$i] = str_replace(["\n", "\r"], ["\\n", ''], $row[$i]);
         }
         $out .= implode($delim, $row)."\n";
     }
     return $out;
 } // arrayToCsv
+
 
 
 //--------------------------------------------------------------
@@ -235,9 +357,7 @@ function getFile($pat, $removeComments = false)
         return false;
     }
 
-    if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
-        $file = substr($file, 0, $p+1);
-    }
+    $file = zapFileEND($file);
     if ($removeComments === true) {
         $file = removeCStyleComments($file);
     } elseif ($removeComments) {
@@ -248,6 +368,17 @@ function getFile($pat, $removeComments = false)
     }
     return $file;
 } // getFile
+
+
+
+
+function zapFileEND($file)
+{
+    if (($p = strpos($file, "\n__END__")) !== false) {	// must be at beginning of line
+        $file = substr($file, 0, $p+1);
+    }
+    return $file;
+}
 
 
 
@@ -418,7 +549,7 @@ function fileExt($file, $reverse = false)
     } else {
         return pathinfo($file, PATHINFO_EXTENSION);
     }
-} // getDir
+} // fileExt
 
 
 
@@ -547,16 +678,19 @@ function convertFsToHttpPath($path)
     return $path;
 } //convertFsToHttpPath
 
+
+
 //------------------------------------------------------------
 function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 {
     global $globalParams;
 
-    if (!$path) {
+    if (!$path && !$relativeToCurrPage) {
         return '';
     } elseif (preg_match('|^https?\://|i', $path)) {
         return $path;
     }
+    $path = trim($path);
 	if ($relativeToCurrPage) {		// for HTTP Requests
         $path = makePathRelativeToPage($path);
 
@@ -566,24 +700,34 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         }
     }
 
+    $from = [
+        '|~/|',
+        '|~data/|',
+        '|~sys/|',
+        '|~ext/|',
+        '|~page/|',
+    ];
+    $to = [
+        '',
+        $globalParams['dataPath'],
+        SYSTEM_PATH,
+        EXTENSIONS_PATH,
+        $globalParams['pathToPage'],
+    ];
+
+    $pathToRoot = $globalParams['pathToRoot'];
     if (is_string($httpAccess)) {  // http page access:
-        $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
-        $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
-        $path = preg_replace('|~ext/|', $globalParams['pathToRoot'].EXTENSIONS_PATH, $path);
-        $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pagePath'], $path);
+        for ($i=0; $i<4; $i++) {
+            $to[$i] = $pathToRoot.$to[$i];
+        }
+        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
 
     } elseif ($httpAccess) {  // http resource access:
-        $path = preg_replace('|~/|', $globalParams['pathToRoot'], $path);
-        $path = preg_replace('|~sys/|', $globalParams['pathToRoot'].SYSTEM_PATH, $path);
-        $path = preg_replace('|~ext/|', $globalParams['pathToRoot'].EXTENSIONS_PATH, $path);
-        $path = preg_replace('|~page/|', $globalParams['pathToRoot'].$globalParams['pathToPage'], $path);
-
-    } else {            // file access:
-        $path = preg_replace('|~/|', '', $path);
-        $path = preg_replace('|~sys/|', SYSTEM_PATH, $path);
-        $path = preg_replace('|~ext/|', EXTENSIONS_PATH, $path);
-        $path = preg_replace(['|~page/|', '|\^/|'], $globalParams['pathToPage'], $path);
+        for ($i=0; $i<5; $i++) {
+            $to[$i] = $globalParams['pathToRoot'].$to[$i];
+        }
     }
+    $path = preg_replace($from, $to, $path);
     return $path;
 } // resolvePath
 
@@ -618,17 +762,43 @@ function makePathRelativeToPage($path, $forImgRessources = false)
 
 
 //------------------------------------------------------------
-function resolveAllPaths($html)
+function resolveAllPaths( &$html, $requestRewriteActive = true)
 {
 	global $globalParams;
 	$pathToRoot = $globalParams['pathToRoot'];
 
-	$html = preg_replace('|~/|', $pathToRoot, $html);
+    if (!$requestRewriteActive) {
+        resolveHrefs($html);
+    }
+
+    $html = preg_replace('|~/|', $pathToRoot, $html);
+	$html = preg_replace('|~data/|', $pathToRoot.$globalParams['dataPath'], $html);
 	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
 	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
 	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
-	return $html;
 } // resolveAllPaths
+
+
+
+//------------------------------------------------------------
+function resolveHrefs( &$html )
+{
+    $appRoot = $GLOBALS["globalParams"]["appRoot"];
+    $prefix = $appRoot.'?lzy=';
+    $p = strpos($html, '~/');
+    while ($p !== false) {
+        if (substr($html, $p-6, 5) == 'href=') {
+            if (preg_match('|^([\w-/\.]*)|', substr($html, $p + 2, 30), $m)) {
+                $s = $m[1];
+                if (!file_exists($s)) {
+                    $html = substr($html, 0, $p) . $prefix . substr($html, $p + 2);
+                }
+            }
+        }
+        $p = strpos($html, '~/', $p + 2);
+    }
+} // resolveHrefs
+
 
 
 
@@ -678,7 +848,11 @@ function parseNumbersetDescriptor($descr, $minValue = 1, $maxValue = 9, $headers
 // extract patterns such as '1,3, 5-8', or '-3, 5, 7-'
 // don't parse if pattern contains ':' because that means it's a key:value
 {
+    if (!$descr) {
+        return [];
+    }
     $names = false;
+    $descr = str_replace(['&#34;', '&#39;'], ['"', "'"], $descr);
 	$set = parseArgumentStr($descr);
 	if (!isset($set[0])) {
         foreach (array_values($set) as $i => $hdr) {
@@ -778,7 +952,7 @@ function getUrlArg($tag, $stringMode = false, $unset = false)
 
         } else {    // boolean mode
             $arg = $_GET[$tag];
-            $out = (($arg != 'false') && ($arg != '0') && ($arg != 'off') && ($arg != 'no'));
+            $out = (($arg !== 'false') && ($arg != '0') && ($arg != 'off') && ($arg != 'no'));
         }
 		if ($unset) {
 			unset($_GET[$tag]);
@@ -860,7 +1034,7 @@ function getClientIP($normalize = false)
 
 
 //-------------------------------------------------------------------------
-function reloadAgent($target = false)
+function reloadAgent($target = false, $getArg = false)
 {
     global $globalParams;
     if ($target === true) {
@@ -869,6 +1043,13 @@ function reloadAgent($target = false)
         $target = resolvePath($target, false, 'https');
     } else {
         $target = $globalParams['pageUrl'];
+    }
+    if ($getArg) {
+        if (strpos($target, '?') === false) {
+            $target .= "?reload-arg=$getArg";
+        } else {
+            $target .= "&reload-arg=$getArg";
+        }
     }
     header("Location: $target");
     exit;
@@ -910,6 +1091,9 @@ function path_info($file)
 //------------------------------------------------------------
 function preparePath($path)
 {
+    if ($path[0] == '~') {
+        $path = resolvePath($path);
+    }
 	$path = dirname($path.'x');
     if (!file_exists($path)) {
         if (!mkdir($path, MKDIR_MASK2, true)) {
@@ -960,10 +1144,10 @@ function safeStr($str, $permitNL = false)
 	}
 	$str = substr($str, 0, MAX_URL_ARG_SIZE);	// restrict size to safe value
     if ($permitNL) {
-        $str = preg_replace("/[^[:print:]À-ž\n\t]/m", '#', $str);
+        $str = preg_replace("/[^[:print:]À-ž\n\t]/m", ' ', $str);
 
     } else {
-        $str = preg_replace('/[^[:print:]À-ž]/m', '#', $str);
+        $str = preg_replace('/[^[:print:]À-ž]/m', ' ', $str);
     }
 	return $str;
 } // safeStr
@@ -1096,19 +1280,6 @@ function logError($str)
 } // logError
 
 
-//------------------------------------------------------------------------------
-function show_msg($msg, $title = '')
-{
-	if (!$title) {
-		$title = basename(__FILE__, '.php');
-	}
-	$msg = shield_str($msg);
-	echo shell_exec("whoami");
-
-//	shell_exec("/usr/local/bin/terminal-notifier -message \"$msg\" -title \"$title\"");
-} // show_msg
-
-
 
 //------------------------------------------------------------------------------
 function shield_str($s)
@@ -1144,7 +1315,7 @@ function createWarning($msg) {
 //------------------------------------------------------------------------------
 function createDebugOutput($msg) {
 	if ($msg) {
-		return "\t\t<div id='log'>$msg</div>\n";
+		return "\t\t<div id='lzy-log'>$msg</div>\n";
 	} else {
 		return '';
 	}
@@ -1237,10 +1408,10 @@ function stripNewlinesWithinTransvars($str)
 //-----------------------------------------------------------------------------
 function checkBracesBalance($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 {
-    $shieldedOpening = substr_count($str, '\\'.$pat1);
-    $opening = substr_count($str, $pat1) - $shieldedOpening;
-    $shieldedClosing = substr_count($str, '\\'.$pat2);
-    $closing = substr_count($str, $pat2) - $shieldedClosing;
+    $shieldedOpening = substr_count($str, '\\' . $pat1, $p0);
+    $opening = substr_count($str, $pat1, $p0) - $shieldedOpening;
+    $shieldedClosing = substr_count($str, '\\' . $pat2, $p0);
+    $closing = substr_count($str, $pat2, $p0) - $shieldedClosing;
     if ($opening > $closing) {
         fatalError("Error in source: unbalanced number of &#123;&#123; resp }}");
     }
@@ -1252,6 +1423,9 @@ function checkBracesBalance($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 function strPosMatching($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
 {	// returns positions of opening and closing patterns, ignoring shielded patters (e.g. \{{ )
 
+    if (!$str) {
+        return [false, false];
+    }
     checkBracesBalance($str, $pat1, $pat2, $p0);
 
 	$d = strlen($pat2);
@@ -1369,7 +1543,9 @@ function trunkPath($path, $n = 1, $leaveNotRemove = true)
 
 
 //-----------------------------------------------------------------------------
-function rrmdir($src) {
+function rrmdir($src)
+{
+    // remove dir recursively
     $src = rtrim($src, '/');
     $dir = opendir($src);
     while(false !== ( $file = readdir($dir)) ) {
@@ -1388,13 +1564,14 @@ function rrmdir($src) {
 } // rrmdir
 
 
+
 //-----------------------------------------------------------------------------
 function compileMarkdownStr($mdStr, $removeWrappingPTags = false)
 {
     $md = new MyMarkdown();
     $str = $md->parseStr($mdStr);
     if ($removeWrappingPTags) {
-        $str = preg_replace('/^\<p>(.*)\<\/p>\n$/', "$1", $str);
+        $str = preg_replace('/^\<p>(.*)\<\/p>(\s*)$/ms', "$1$2", $str);
     }
     return $str;
 } // compileMarkdownStr
@@ -1406,7 +1583,7 @@ function shieldMD($md)
 {
     $md = str_replace('#', '&#35;', $md);
     return $md;
-} //
+} // shieldMD
 
 
 
@@ -1430,10 +1607,14 @@ function isLocalCall()
 
 
 //------------------------------------------------------------
-function getGitTag()
+function getGitTag($shortForm = true)
 {
     $str = shell_exec('cd _lizzy; git describe --tags --abbrev=0; git log --pretty="%ci" -n1 HEAD');
-    return str_replace("\n", ' ', $str);
+    if ($shortForm) {
+        return preg_replace("/\n.*/", '', $str);
+    } else {
+        return str_replace("\n", ' ', $str);
+    }
 } // getGitTag
 
 
@@ -1480,11 +1661,11 @@ function fatalError($msg, $origin = '', $offendingFile = '')
 
 
 
+
 //-------------------------------------------------------------
 function sendMail($to, $from, $subject, $message)
 {
-    $headers = "From: $from\r\n" .
-        'X-Mailer: PHP/' . phpversion();
+    $headers = "From: $from\r\n" . 'X-Mailer: PHP/' . phpversion();
 
     if (!mail($to, $subject, $message, $headers)) {
         fatalError("Error: unable to send e-mail", 'File: '.__FILE__.' Line: '.__LINE__);
@@ -1507,6 +1688,7 @@ function handleFatalPhpError() {
 //....................................................
 function parseDimString($str, $imageFile = false, $aspectRatio = false)
 {
+    // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
     if (strpos($str, 'x') === false) {
         if (!$str) {
             $w = $h = $aspectRatio = 0;
@@ -1585,3 +1767,75 @@ function parseFileName($filename)
     $path = convertFsToHttpPath($path);
     return [$filename, $path, $basename, $ext, $w, $h, $aspectRatio, $dimFound];
 } // parseFileName
+
+
+
+
+function registerFileDateDependencies($list)
+{
+    if (!$GLOBALS['globalParams']['cachingActive']) {
+        return;
+    }
+
+    $depFileName = $GLOBALS['globalParams']['pathToPage'].CACHE_DEPENDENCY_FILE;
+    if (file_exists($depFileName)) {
+        $dependencies = file($depFileName, FILE_IGNORE_NEW_LINES);
+        if (is_array($list)) {
+            foreach ($list as $item) {
+                if (!in_array($item, $dependencies)) {
+                    $dependencies[] = $item;
+                }
+            }
+
+        } else {
+            if (!in_array($list, $dependencies)) {
+                $dependencies[] = $list;
+            }
+        }
+    } else {
+        if (is_array($list)) {
+            $dependencies = $list;
+        } else {
+            $dependencies = [$list];
+        }
+    }
+    file_put_contents($depFileName, implode("\n", $dependencies));
+} // registerFileDateDependencies
+
+
+
+
+function writeToCache($obj, $cacheFileName = CACHE_FILENAME)
+{
+    global $globalParams;
+
+    $cacheFile = $globalParams['pathToPage'].$cacheFileName;
+    file_put_contents($cacheFile, serialize($obj));
+} // writeToCache
+
+
+
+
+function readFromCache($cacheFileName = CACHE_FILENAME)
+{
+    global $globalParams;
+
+    $cacheFile = $globalParams['pathToPage'].$cacheFileName;
+    if (!file_exists($cacheFile)) {
+        return false;
+    }
+    $pageCacheDependencies = $globalParams['pathToPage'].CACHE_DEPENDENCY_FILE;
+    if (!file_exists($pageCacheDependencies)) {
+        return false;
+    }
+    $srcFiles = file($pageCacheDependencies, FILE_IGNORE_NEW_LINES);
+
+    $fTime = filemtime($cacheFile);
+    foreach($srcFiles as $f) {
+        if (file_exists($f) && ($fTime < filemtime($f))) {
+            return false;
+        }
+    }
+
+    return unserialize(file_get_contents($cacheFile));
+} // readFromCache

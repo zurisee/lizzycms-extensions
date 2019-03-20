@@ -17,7 +17,7 @@ class FileUpload
     {
         $this->page->addCssFiles([
             //	<!-- Bootstrap styles -->
-            '//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css',
+            //'//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css',
             //	<!-- Generic page styles -->
             '~sys/third-party/jquery-upload/css/style.css',
             //'~sys/third-party/jquery-upload/css/blueimp-gallery.min.css',
@@ -27,29 +27,28 @@ class FileUpload
 
         $html = <<<EOT
 
+<div class="lzy-file-uploader-wrapper" style="display: none;">
 <div class="lzy-file-uploader container">
-    <button id='lzy-show-files-btn'>Show Files</button>
     <!-- The file upload form used as target for the file upload widget -->
     <form id="lzy-fileupload" action="" method="POST" enctype="multipart/form-data" data-upload-path="$filePath">
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
         <div class="row lzy-fileupload-buttonbar">
             <div class="col-lg-7">
                 <!-- The fileinput-button span is used to style the file input field as button -->
+                <button type="button" class="btn btn-success new">
+                    <span>New file</span>
+                </button>
                 <span class="btn btn-success fileinput-button">
-                    <i class="glyphicon glyphicon-plus"></i>
                     <span>Add files...</span>
                     <input type="file" name="files[]" multiple>
                 </span>
                 <button type="submit" class="btn btn-primary start">
-                    <i class="glyphicon glyphicon-upload"></i>
                     <span>Start upload</span>
                 </button>
                 <button type="reset" class="btn btn-warning cancel">
-                    <i class="glyphicon glyphicon-ban-circle"></i>
                     <span>Cancel upload</span>
                 </button>
                 <button type="button" class="btn btn-danger delete">
-                    <i class="glyphicon glyphicon-trash"></i>
                     <span>Delete</span>
                 </button>
                 <input type="checkbox" class="toggle">
@@ -71,6 +70,27 @@ class FileUpload
     </form>
     <br>
 </div>
+</div> <!-- /lzy-file-uploader-wrapper -->
+
+
+<div id="lzy-edit-new-filename-container" style="display: none;">
+    <h1>New File:</h1>
+    <label for="lzy-edit-new-filename">Name of new file:</label>
+    <input type="text" id="lzy-edit-new-filename" />
+    <button id="lzy-edit-new-filename-confirm" class='lzy-popup-confirm lzy-popup-button'>Ok</button>
+</div> <!-- /lzy-edit-new-filename-container -->
+
+
+<div id="lzy-edit-rename-file-container" style="display: none">
+      <h1>Rename File:</h1>
+<div>
+    <label for="lzy-edit-rename-file">New filename:</label>
+    <input type="text" id="lzy-edit-rename-file" />
+    <div id="lzy-edit-rename-file-confirm" class='lzy-popup-confirm lzy-popup-button'>Ok</div>
+  </div>
+</div> <!-- /lzy-edit-new-filename-container -->
+
+
 <!-- The blueimp Gallery widget -->
 <div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls" data-filter=":even">
     <div class="slides"></div>
@@ -143,6 +163,8 @@ class FileUpload
         </td>
         <td>
             {% if (file.deleteUrl) { %}
+                <!--<button class='btn btn-success lzy-btn-rename-file'>Rename</button>-->
+                <div class='btn btn-success lzy-btn-rename-file'>Rename</div>
                 <button class="btn btn-danger delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields='{"withCredentials":true}'{% } %}>
                     <i class="glyphicon glyphicon-trash"></i>
                     <span>Delete</span>

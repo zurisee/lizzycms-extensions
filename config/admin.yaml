@@ -2,87 +2,103 @@
 
 # Login by password:
 
-
-
+lzy-email-change-successful:
+    de: 'Ihre neue E-Mail Adresse wurde gespeichert'
+    _:  'Your new e-mail address has been stored successfully'
 
 # Login / onetime-link:
-lzy-onetimelogin-email-prompt:
+lzy-onetimelogin-request-prompt:
     de: 'E-Mail Adresse'
-    en: 'E-mail address'
+    _:  'E-mail address'
     
-lzy-info-onetimelogin-title:
+lzy-onetimelogin-request-title:
     de: "Hilfe: Zugang per E-Mail"
-    en: "Help on access by e-mail"
+    _:  "Help on access by e-mail"
 
-lzy-onetimelogin-info-title:
+lzy-onetimelogin-request-info-title:
     de: "Hilfe: Zugang per E-Mail"
-    en: "Help on access by e-mail"
+    _:  "Help on access by e-mail"
 
-lzy-onetimelogin-info-text:
+lzy-onetimelogin-request-info-text:
     de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
     <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
     <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
-    en: "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
+    _:  "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
     <p>This Link contains an <strong>access code</strong>. This code is only valid one time and within the next 15 minutes.</p>
     <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
 
 lzy-onetime-link-send:
     de: 'Zugangscode senden'
-    en: 'Send access code'
+    _:  'Send access code'
 
+lzy-login-user-unknown:
+    de: 'Keinen entsprechenden Benutzer gefunden.'
+    _:  'No matching user found.'
+
+lzy-login-email-unknown:
+    de: 'Kein Benutzer mit dieser E-Mailadresse gefunden.'
+    _:  'No user by this e-mail address found.'
 
 lzy-email-access-link-subject:
     de: "Zugangslink für"
-    en: "Access Link for"
+    _:  "Access Link for"
 
-lzy-email-access-link1:
-    de: "Guten Tag\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
-    en: "Hello\n\nHere is the link with which you can access the webpage: \n\n\t"
+lzy-email-access-link0:
+    de: "Guten Tag "
+    _:  "Hello "
     
+lzy-email-access-link1:
+    de: "\n\nFür Ihre E-Mail Adresse wurde ein Zugangscode angefordert.\nFalls Sie nichts davon wissen, können Sie diese Nachricht ignorieren.\n\nHier ist der Zugangs-Link, mit dem Sie die Webseite ansprechen können: \n\n\t"
+    _:  "\n\nSomebody requested an access code using your e-mail address.\nIf you know nothing about it, please ignore this message.\n\nHere is the link with which you can access the webpage: \n\n\t"
+
 lzy-email-access-link2:
     de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
-    en: "\n\nOr you can enter the following code into the entry field in the webpage:"
+    _:  "\n\nOr you can enter the following code into the entry field in the webpage:"
 
 lzy-email-access-link3:
     de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nBeste Grüsse, Ihre Lizzy\n"
-    en: "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
+    _:  "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
 
+lzy-username-changed-error-illegal-name:
+    de: "Ungültiger Benutzername.<br />Der Benutzername muss as mindestens 2 und maximal 15 Buchstaben bestehen. Er darf keine Leerzeichen und andere Sonderzeichen enthalten"
+    _: "Invalid user name. <br />A valid user name must consist of at least 2 and at most 15 characters. It must not contain any space or other special characters."
 
-
-
+lzy-username-changed-error-name-taken:
+    de: "Dieser Benutzername bereits belegt."
+    _: "This user name is already taken"
 
 # Self-Signup:
 lzy-self-signup-email-prompt:
     de: 'Ihre E-Mail Adresse'
-    en: 'Your e-mail address'
+    _:  'Your e-mail address'
 
 lzy-self-signup-email-info-title:
     de: Hilfe zur Selbstregistrierung
-    en: Help on self registration
+    _:  Help on self registration
 
 lzy-self-signup-email-info-text:
     de: "Sie können sich bei dieser Website selbständig registerien, d.h. ein Profil eröffnen. Geben Sie zunächst Ihre E-Mail Adresse bekannt. Sie werden daraufhin eine E-Mail erhalten. Öffnen Sie diese und folgen Sie den Anweisungen."
-    en: "You can register with this website (i.e. create a profile). Enter your e-mail address here. You will then receive an e-mail. Open it and follow the instructions."
+    _:  "You can register with this website (i.e. create a profile). Enter your e-mail address here. You will then receive an e-mail. Open it and follow the instructions."
 
 lzy-self-signup-send:
     de: Registrierungs-E-Mail senden
-    en: Send registration e-mail
+    _:  Send registration e-mail
 
 lzy-email-sign-up-subject:
     de: "Anmeldelink für"
-    en: "Sign-up Link for"
+    _:  "Sign-up Link for"
 
 lzy-email-sign-up1:
     de: "Guten Tag\n\nHier ist der Link, mit dem Sie sich bei der Webseite registrieren können: \n\n\t"
-    en: "Hello\n\nHere is the link with which you can sign-up to the webpage: \n\n\t"
+    _:  "Hello\n\nHere is the link with which you can sign-up to the webpage: \n\n\t"
     
 lzy-email-sign-up2:
     de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
-    en: "\n\nOr you can enter the following code into the entry field in the webpage:"
+    _:  "\n\nOr you can enter the following code into the entry field in the webpage:"
 
 lzy-email-sign-up3:
     de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nBeste Grüsse, Ihre Lizzy\n"
-    en: "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
+    _:  "\n\nPlease note that this link and this code only works once within the next 15 minutes.\n\nCheers, \nLizzy\n "
 
 
 lzy-sign-up-link sent:
@@ -90,299 +106,303 @@ lzy-sign-up-link sent:
     <p>Wir haben Ihnen eine E-Mail gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
     &rarr; Klicken Sie auf diesen Link, um sich bei unserer Website zu registrieren. </p>
     <p><br />Stattdessen können Sie auch den Code aus der E-Mail kopieren und hier einfügen:</p>"
-    en: "<h1>Sign-up Link Sent</h1>
+    _:  "<h1>Sign-up Link Sent</h1>
     <p>We have sent you an e-mail. It contains a <strong>link</strong>.<br />
     &rarr; Click on this link to create a user account at our website. </p>
     <p><br />Alternatively you can copy the code from the e-mail to the entry field below:</p>"
 
 lzy-sign-up-link sent2:
     de: "Link und Code können nur verwendet werden bis:"
-    en: "This link and this code only work once and only until:"
+    _:  "This link and this code only work once and only until:"
     
 lzy-sign-up-link sent3:
     de: "<br />Sobald die Registrierung abgeschlossen ist, können Sie sich bei unserer Website mir Ihrer E-Mail Adresse anmelden.<br />
         Sie benötigen keinen Benutzernamen, aber Sie können einen festlegen, falls Sie möchten."
-    en: "<br />After registration is completed you can use your e-mail address to log into our website.<br />
+    _:  "<br />After registration is completed you can use your e-mail address to log into our website.<br />
         You don't need a user-name, but you can define one if you like."
 
 #sign-up further info: 
 #    de: "<p>Weitere Informationen finden Sie unter: <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
-#    en: "<p>For further information goto:  <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
+#    _:  "<p>For further information goto:  <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
     
 
 
 
-/* renderEditProfileForm(): */
+# renderEditProfileForm():
 lzy-edit-profile:
     de: 'Profil bearbeiten'
-    en: 'Edit Profile'
+    _:  'Edit Profile'
 
 lzy-change-name:
     de: 'Benutzername ändern'
-    en: 'Change username'
+    _:  'Change username'
 
 lzy-change-user-name:
     de: 'Neuer Benutzername'
-    en: 'New username'
+    _:  'New username'
 
 lzy-change-e-mail:
     de: 'E-Mail Adresse ändern'
-    en: 'Change e-mail address'
+    _:  'Change e-mail address'
 
 lzy-delete-profile:
     de: 'Profil löschen'
-    en: 'Delete Profile'
+    _:  'Delete Profile'
 
 lzy-login-problems:
     de: Probleme beim Anmelden
-    en: Login problems
+    _:  Login problems
 
 lzy-forgot-password1:
     de: "<a href='mailto:"
-    en: "<a href='mailto:"
+    _:  "<a href='mailto:"
 
 lzy-forgot-password2:
     de: "'>Kennwort funktioniert nicht oder vergessen...</a>"
-    en: "'>Password not working or forgotten...</a>"
+    _:  "'>Password not working or forgotten...</a>"
 
 lzy-login-with-choice:
     de: Anmeldung
-    en: Log in
+    _:  Log in
 
 
 lzy-login-with-password:
-    de: mit <br>Kennwort
-    en: by <br>password
+    de: 'Per Benutzername &amp; Kennwort'
+    _:  'By Username &amp; Password'
 
 lzy-login-without-password:
-    de: ohne <br>Kennwort
-    en: by <br>e-mail
+    de: 'Per E-Mail'
+    _:  'By E-Mail'
 
 lzy-add-user-group-is:
     de: Gruppe
-    en: Group
+    _:  Group
 
 lzy-login-show-password:
     de: Kennwort offen anzeigen
-    en: Show password in plain text
+    _:  Show password in plain text
 
 
 # Change PW Form:
 lzy-change-password-prompt:
     de: Neues Kennwort
-    en: Enter new password
+    _:  Enter new password
 
 lzy-change-password2-prompt:
     de: Neues Kennwort bestätigen
-    en: Confirm your new password
+    _:  Confirm your new password
 
 lzy-change-password-info-title:
     de: 'Hilfe: zum Kennwort'
-    en: 'Help on password'
+    _:  'Help on password'
 
 lzy-change-password-info:
     de: Das Kennwort muss mindestens 8 Zeichen lang sein und Grossbuchstaben, Ziffern und Sonderzeichen enthalten.
-    en: The password must be at least 8 characters long and must contain uppercase letters, digits and special characters.
+    _:  The password must be at least 8 characters long and must contain uppercase letters, digits and special characters.
 
 
 lzy-change-password2-info-title:
     de: 'Hilfe: zur Kennwortbestätigung'
-    en: 'Help on password confirmation'
+    _:  'Help on password confirmation'
 
 lzy-change-password2-info:
     de: Geben Sie das selbe Kennwort nochmals ein, um sicher zu sein, dass Sie sich nicht vertippt haben. <br /><br />Klicken Sie auf das Auge-Symbol, um die Kennwörter zu sehen.
-    en: Repeat the password to exclude typos. <br /><br />Click on the eye-symbol to view the entered passwords in plain text.
+    _:  Repeat the password to exclude typos. <br /><br />Click on the eye-symbol to view the entered passwords in plain text.
 
 
 # Change UN form:
 lzy-change-user-username-prompt:
     de: 'Neuer Benutzername'
-    en: 'New username'
+    _:  'New username'
 
 lzy-change-user-info-title:
     de: Hilfe
-    en: Help
+    _:  Help
 
 lzy-change-user-username-login-info:
     de: 'Den Benutzernamen können Sie verwenden, um sich anzumelden. Alternativ geht auch die E-Mail Adresse.'
-    en: 'You can use the username to log in. Alternatively, you can use your e-mail address.'
+    _:  'You can use the username to log in. Alternatively, you can use your e-mail address.'
 
 lzy-change-user-displayname-login-info:
     de: 'Diese Eingabe ist optional - dieser Name wird anstelle des Benutzernamens dargestellt. Sie können diesen nicht verwenden, um sich anzumelden.'
-    en: 'The display name is optional - it will be shown instead of the username. But you cannot use it to log in.'
+    _:  'The display name is optional - it will be shown instead of the username. But you cannot use it to log in.'
 
 lzy-change-user-displayname-prompt:
     de: 'Neuer Anzeige-Name'
-    en: 'New display name'
+    _:  'New display name'
 
-lzy-change-user-email-prompt:
+lzy-change-user-request-prompt:
     de: 'Neue E-Mail Adresse'
-    en: 'New e-mail address'
+    _:  'New e-mail address'
 
+lzy-username-change-illegal-name-response:
+    de: 'Benutzername entspricht nicht den Mindestanforderungen'
+    _: 'User name does not meet requirements'
 
+lzy-username-change-illegal-displayname-response:
+    de: 'Anzeige-Name bereits belegt.'
+    _: 'Display name already in use.'
+
+lzy-username-change-no-change-response:
+    de: 'Benutzername unverändert'
+    _: ' User name not changed'
 
 lzy-change-password-send:
     de: Speichern
-    en: Save
+    _:  Save
+
+lzy-admin-cancel-button:
+    de: Abbrechen
+    _:  Abort
 
 lzy-change-password-not-equal-response:
     de: Die eingegebenen Kennwörter stimmten nicht überein.
-    en: The entered passwords were not identical.
+    _:  The entered passwords were not identical.
 
 lzy-change-password-too-short-response:
     de: Die eingegebenen Kennwörter waren zu kurz, sie müssen mindestens 8 Zeichen lang sein.
-    en: The entered passwords were too short, they must be at least 8 characters long.
+    _:  The entered passwords were too short, they must be at least 8 characters long.
 
 lzy-change-password-insufficient-response:
     de: "Das neue Kennwort entsprecht nicht den Minimalanforderungen: <br /><br />
-        Sie müssen mindestens 8 Zeichen lang sein und <br />Grossbuchstaben, Ziffern und Sonderzeichen enthalten."
-    en: "The new password does not meet our security requirements:<br /><br />
-        They must be at least 8 characters long and <br />must contain uppercase letters, digits and special characters."
+        Es muss mindestens 8 Zeichen lang sein und <br />Grossbuchstaben, Ziffern und Sonderzeichen enthalten."
+    _:  "The new password does not meet our security requirements:<br /><br />
+        It must be at least 8 characters long and <br />must contain uppercase letters, digits and special characters."
 
 lzy-error-email-required:
     de: 'Eingabe einer E-Mail Adresse ist notwendig'
-    en: 'Entering an e-mail address is mandatory'
+    _:  'Entering an e-mail address is mandatory'
 
+lzy-email-change-mail-unchanged:
+    de: 'E-Mail Adresse unverändert'
+    _: 'E-mail address unchanged'
 
-/* SignUp Form: */
+lzy-email-changed-email-invalid:
+    de: 'Ungültige E-Mail Adresse'
+    _: 'Invalid e-mail address'
+
+lzy-email-changed-email-in-use:
+    de: 'E-Mail Adresse bereits belegt'
+    _: 'E-mail address already in use'
+
+# SignUp Form:
 lzy-self-sign-up:
     de: Registrierung
-    en: Sign Up
+    _:  Sign Up
 
 lzy-add-user:
     de: Benutzer hinzufügen
-    en: Add user
+    _:  Add user
 
 lzy-add-users-to-group:
     de: Benutzer hinzufügen zur Gruppe
-    en: Add user(s) to group
+    _:  Add user(s) to group
 
 lzy-change-password:
     de: Kennwort ändern
-    en: Change Password
+    _:  Change Password
 
 
 
-/* One-time access link/code form and email */
+# One-time access link/code form and email
 lzy-onetime access link sent:
     de: "<h1>Zugangs-Link versendet</h1>
     <p>Wir haben eine E-Mail an Sie gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
     &rarr; Klicken Sie auf diesen Link. So gelangen Sie zurück zu dieser Seite. </p>"
-    en: "<h1>Access Link sent</h1>
+    _:  "<h1>Access Link sent</h1>
     <p>We have sent an e-mail to you. It contains a <strong>link</strong>.<br />
     &rarr; Click on this link to access the web-page you wanted to see. </p>"
 
 lzy-enter onetime code:
     de: "Code aus zugesandter E-Mail:"
-    en: "One-time code from e-mail:"
+    _:  "One-time code from e-mail:"
 
 lzy-onetime access link sent2:
     de: "Link und Code können nur verwendet werden bis:"
-    en: "This link and this code only work until:"
+    _:  "This link and this code only work until:"
     
 lzy-onetime access link sent3:
     de: "<p><br />Alternativ können Sie sich auch mit Benutzername und Kennwort anmelden.</p>"
-    en: "<p><br />Alternatively, if you have a valid username and password you may log in directly.</p>"
+    _:  "<p><br />Alternatively, if you have a valid username and password you may log in directly.</p>"
 
 lzy-sign-up further info:
-    de: "<p>Weitere Informationen finden Sie unter: <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
-    en: "<p>For further information goto:  <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p>"
+    de: "<p>Weitere Informationen finden Sie unter: <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p><p><br />(Mit der Taste ESC dieses Overlay schliessen)</p>"
+    _:  "<p>For further information goto:  <a href='https://getlizzy.net' target='_blank'>getlizzy.net</a></p><p><br />(Press ESC to remove overlay)</p>"
 
 
 
-/* Change Password */
+# Change Password:
 lzy-password-changed-response:
     de: Ihr neues Kennwort wurde gespeichert.
-    en: Your new password has been saved.
+    _:  Your new password has been saved.
 
 lzy-change-password-not-logged-in-response:
     de: Wenn Sie Ihr Kennwort ändern möchten, müssen sich zuerst anmelden.
-    en: If you want to change your password you need to log in first.
+    _:  If you want to change your password you need to log in first.
 
-/* Add User */
+# Add User:
 lzy-add-user-response:
     de: Benutzer erfolgreich hinzugefügt
-    en: User has been added successfully
+    _:  User has been added successfully
 
 
-/* Add Users */
+# Add Users:
 lzy-add-users-response:
     de: Folgende Benutzer wurden zur Gruppe
-    en: Following users added to group
+    _:  Following users added to group
 
 lzy-add-users-response2:
     de: hinzugefügt
-    en: ''
+    _:  ''
 
 lzy-add-users-none-added:
     de: Es wurden keine Benutzer zur Gruppe
-    en: No users added to group
+    _:  No users added to group
 
 lzy-add-users-none-added2:
     de: hinzugefügt
-    en: ''
+    _:  ''
 
 
-/* Change Username */
+# Change Username:
 lzy-change-username-send:
     de: Speichern
-    en: Save
+    _:  Save
 
 
 lzy-username-changed-response:
-    de: Ihr neueBenutzername wurde gespeichert
-    en: Your new username has been registered
+    de: "Ihr neuer Benutzername wurde gespeichert."
+    _:  "Your new username has been registered."
 
 
-/* Change E-Mail Address */
+# Change E-Mail Address:
 lzy-change-user-email-send:
     de: Speichern
-    en: Save
+    _:  Save
 
-lzy-change-user-email-info-title:
+lzy-change-user-request-info-title:
     de: Hilfe
-    en: Help
+    _:  Help
 
-lzy-change-user-email-info-text:
+lzy-change-user-request-info-text:
     de: 'Hier können Sie Ihre E-Mail Adresse ändern. Diese benötigen Sie, um sich anzumelden.'
-    en: 'Here you can change your e-mail address. You need it to log in.'
+    _:  'Here you can change your e-mail address. You need it to log in.'
 
 lzy-email-change-mail-subject:
     de: "Bestätigungslink für"
-    en: "Confirmation Link for"
+    _:  "Confirmation Link for"
 
 lzy-email-change-mail-up1:
     de: "Guten Tag\n\nSie haben bei der Website ??? die Änderung Ihrer E-Mail Adresse beantragt. Bitte bestätigen Sie jetzt Ihre neue E-Mail Adresse. Klicken Sie hierzu auf folgenden Link: \n\n\t"
-    en: "Hello\n\nYou have requested to register a new e-mail address at website ???.\n\nPlease click on this link to confirm your e-mail address: \n\n\t"
+    _:  "Hello\n\nYou have requested to register a new e-mail address at website ???.\n\nPlease click on this link to confirm your e-mail address: \n\n\t"
     
 lzy-email-change-mail-up2:
     de: "\n\nSie können auch den folgenden Code ins Eigabefeld in der Website eintragen:"
-    en: "\n\nOr you can enter the following code into the entry field in the webpage:"
+    _:  "\n\nOr you can enter the following code into the entry field in the webpage:"
 
 lzy-email-change-mail-up3:
     de: "\n\nBitte beachten Sie, dass der Link und der Code nur einmal innerhalb der nächsten 15 Minuten funktioniert.\n\nSollten nicht Sie die Änderung Ihrer E-Mail Adresse beantragt haben, ignorieren Sie diese Mail.\n\nBeste Grüsse, Ihre Lizzy"
-    en: "\n\nPlease note that this link and this code only works once within the next 15 minutes. In case it wasn't you who requested this modification, you may ignore this e-mail.\n\nCheers, \nLizzy\n "
-
-
-lzy-sign-up-link sent:
-    de: "<h1>Registrierungs-Link versendet</h1>
-    <p>Wir haben Ihnen eine E-Mail gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
-    &rarr; Klicken Sie auf diesen Link, um sich bei unserer Website zu registrieren. </p>
-    <p><br />Stattdessen können Sie auch den Code aus der E-Mail kopieren und hier einfügen:</p>"
-    en: "<h1>Sign-up Link Sent</h1>
-    <p>We have sent you an e-mail. It contains a <strong>link</strong>.<br />
-    &rarr; Click on this link to create a user account at our website. </p>
-    <p><br />Alternatively you can copy the code from the e-mail to the entry field below:</p>"
-
-lzy-sign-up-link sent2:
-    de: "Link und Code können nur verwendet werden bis:"
-    en: "This link and this code only work once and only until:"
-    
-lzy-sign-up-link sent3:
-    de: "<br />Sobald die Registrierung abgeschlossen ist, können Sie sich bei unserer Website mir Ihrer E-Mail Adresse anmelden.<br />
-        Sie benötigen keinen Benutzernamen, aber Sie können einen festlegen, falls Sie möchten."
-    en: "<br />After registration is completed you can use your e-mail address to log into our website.<br />
-        You don't need a user-name, but you can define one if you like."
+    _:  "\n\nPlease note that this link and this code only works once within the next 15 minutes. In case it wasn't you who requested this modification, you may ignore this e-mail.\n\nCheers, \nLizzy\n "
 
 
 lzy-change-mail-link sent :
@@ -390,39 +410,43 @@ lzy-change-mail-link sent :
     <p>Wir haben Ihnen eine E-Mail gesendet. Diese enthält einen <strong>Link</strong>.<br /> 
     &rarr; Klicken Sie auf diesen Link, um Ihre neue E-Mail Adresse zu bestätigen. </p>
     <p><br />Stattdessen können Sie auch den Code aus der E-Mail kopieren und hier einfügen:</p>"
-    en: "<h1>Sign-up Link Sent</h1>
+    _:  "<h1>Sign-up Link Sent</h1>
     <p>We have sent you an e-mail. It contains a <strong>link</strong>.<br />
     &rarr; Click on this link to confirm your new e-mail address. </p>
     <p><br />Alternatively you can copy the code from the e-mail to the entry field below:</p>"
 
 lzy-change-mail-link sent2:
     de: "Link und Code können nur verwendet werden bis:"
-    en: "This link and this code only work once and only until:"
+    _:  "This link and this code only work once and only until:"
     
 lzy-change-mail-link sent3:
     de: "<br />Sobald die Bestätigung erfolgt ist, können Sie sich bei unserer Website mir Ihrer neuen E-Mail Adresse anmelden.<br />
         Sie benötigen keinen Benutzernamen, aber Sie können einen festlegen, falls Sie möchten."
-    en: "<br />After confirmation of your new e-mail address is completed you can use this new e-mail address to log into our website.<br />
+    _:  "<br />After confirmation of your new e-mail address is completed you can use this new e-mail address to log into our website.<br />
         You don't need a user-name, but you can define one if you like."
 
 
-/* delete user account */
+# delete user account:
 lzy-delete-profile-text:
     de: Hier können Sie Ihr Benutzerprofil löschen.
-    en: Here you can delete your user profile.
+    _:  Here you can delete your user profile.
 
 lzy-delete-profile-request-button:
     de: Profil löschen
-    en: Delete profile
+    _:  Delete profile
 
 lzy-delete-profile-confirm-header:
     de: Bestätigung
-    en: Confirmation
+    _:  Confirmation
 
 lzy-delete-profile-confirm-text:
     de: Sind Sie sicher, dass Sie Ihr Benutzerprofil löschen wollen?
-    en: Are you sure that you want to delete your user profile?
+    _:  Are you sure that you want to delete your user profile?
 
-lzy-delete-profile-confirm-button:
-    de: Profil jetzt löschen
-    en: Delete profile now
+lzy-delete-profile-confirm-prompt:
+    de: 'Sind Sie sicher, dass Sie ihr Profil löschen wollen?'
+    _:  'Are you sure that you want to delete your profile?'
+
+lzy-delete-account-success-response:
+    de: 'Ihre Profil ist jetzt gelöscht.'
+    _: 'Your profile is now deleted.'
