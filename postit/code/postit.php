@@ -30,12 +30,22 @@ $this->addMacro($macroName, function () {
 	$sys = '~/'.$this->config->systemPath;
 
     $text = $this->getArg($macroName, 'text', 'Text to be displayed on the Post-it', '');
+    $contentFrom = $this->getArg($macroName, 'contentFrom', 'CSS-Selector from which to import text', '');
     $left = $this->getArg($macroName, 'left', 'Where to place measured from left', false);
     $right = $this->getArg($macroName, 'right', 'Where to place measured from right', '50');
     $top = $this->getArg($macroName, 'top', 'Where to place measured from top ', false);
     $bottom = $this->getArg($macroName, 'bottom', 'Where to place measured from bottom ', false);
     $angle = $this->getArg($macroName, 'angle', 'Angle by which the Post-it is tilted', '');
     $color = $this->getArg($macroName, 'color', 'Background-color for Post-it', '');
+
+    if ($contentFrom) {
+        $text .= "<div id='lzy-postit-wrapper$inx'></div>\n";
+        $jq = <<<EOT
+var html = $('$contentFrom').html();
+$('#lzy-postit-wrapper$inx').append( html );
+EOT;
+        $this->page->addJq($jq);
+    }
 
     $style = '';
 	$style_content = '';
