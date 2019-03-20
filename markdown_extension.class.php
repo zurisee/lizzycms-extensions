@@ -442,12 +442,13 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 $indent = intval(strlen($lead) / 4) + 1;
                 $indentStr = str_pad('', $indent * 4);
                 $cls = "lzy-checklist-elem-$indent";
-                $inpName = str_pad('', $indent, '_') . str_replace(['.',' '], '_', trim($elem));
-                $input = "\t$indentStr  <input type='checkbox' class='lzy-checklist-input lzy-checklist-input-$cnt' name='cb_$inx$inpName'$checked disabled />";
+                $inpName = preg_replace('/\W/', '_', substr(trim($elem), 0, 8));
+                $input = "\t$indentStr  <input type='checkbox' class='lzy-checklist-input lzy-checklist-input-$cnt' name='cb_{$inx}_{$cnt}_$inpName'$checked disabled />";
                 $elem = "\t$indentStr  <span>$elem</span>";
 
                 if ($indent0 == $indent) {                  // same level -> add elem
                     $out .= "\t$indentStr<li class='lzy-checklist-elem $cls'>\n$input\n$elem\n\t$indentStr</li>\n";
+                    $cnt++;
 
                 } elseif ($indent0 < $indent) {             // descend
                     $indent0 = intval(strlen($lead) / 4);
@@ -464,7 +465,6 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 } else {                                    // ascend
                     return $out;
                 }
-                $cnt++;
             }
             $i++;
         }
