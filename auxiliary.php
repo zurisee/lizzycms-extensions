@@ -465,8 +465,7 @@ function dir_name($path)
         return $path;
     }
     $path = preg_replace('/[\#\?].*/', '', $path);
-//    if (strpos($path, '.') !== false) {  // contains a '.'
-    if (strpos(basename($path), '.') !== false) {  // contains a '.'
+    if (strpos(basename($path), '.') !== false) {  // if it contains a '.' we assume it's a file
         return dirname($path).'/';
     } else {
         return rtrim($path, '/').'/';
