@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<title>{{ page_title }}</title>
 	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
-    <meta name="generator" content="Lizzy v{{ lzy-version }}" />
+    <meta name="generator" content="Lizzy {{ lzy-version }}" />
 	<link href="~sys/css/normalize.min.css" rel="stylesheet" />
 	<link href="~sys/css/_lizzy.css" rel="stylesheet" />
 	<link href="~/css/__styles.css" rel="stylesheet" />
@@ -16,15 +16,17 @@
   <div class='page'>
 
 		<header class='header'>
+
 {{^ header }}
-{{ nav( top ) }}
+{{^ nav( top ) }}
 
 		</header>
 
 
 <!-- === page content =============== -->
 		<main class='main'>
-{{ nav( breadcrumb ) }}
+{{^ nav( breadcrumb ) }}
+
 {{ content }}
 		</main>
 <!-- === /page content =============== -->
@@ -32,11 +34,13 @@
 
 
 		<footer class='footer'>
+
 {{^ footer }}
-			<div id='loggedInUser'>{{  toggle-edit-mode }}{{ Log-in }}</div>
+
+            <div id='loggedInUser'>{{  toggle-edit-mode }}{{ Log-in }}</div>
 		</footer>
 
-{{ nav( small-screen-header ) }}
+{{^ nav( small-screen-header ) }}
   </div><!-- /.page -->
 
 

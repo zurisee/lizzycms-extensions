@@ -94,7 +94,6 @@ class AjaxServer
         if (!isset($_SESSION['lizzy']['pagePath'])) {
 		    die('Fatal Error: $_SESSION[\'lizzy\'][\'pagePath\'] not defined');
         }
-        $pagePath = isset($_REQUEST['pg']) ? $_REQUEST['pg'] : $_SESSION['lizzy']['pagePath'];
 
         $this->db = false;
         $this->user = '';
@@ -258,9 +257,9 @@ EOT;
 
 
 	//---------------------------------------------------------------------------
-	private function update($upd) {
-		exit($this->prepareClientData($upd).'#update');
-	} // get
+    //	private function update($upd) {
+    //		exit($this->prepareClientData($upd).'#update');
+    //	} // get
 
 
 

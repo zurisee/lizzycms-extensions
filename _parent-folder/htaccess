@@ -1,3 +1,6 @@
+# Lizzy .htaccess
+#   redirects page requests to index.php
+
 RewriteEngine on
 
 ## Preventive Measures:
