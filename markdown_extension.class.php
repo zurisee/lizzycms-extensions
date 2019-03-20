@@ -347,7 +347,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $parts = explode('@@tab@@', $l);
             $line = '';
             foreach ($parts as $n => $elem) {
-                if (preg_match('/(.*)@@(\w*)$/', $elem, $m)) {
+                if (preg_match('/(.*)@@([\w\.]*)$/', $elem, $m)) {
                     $elem = $m[1];
                     if ($m[2]) {
                         $width[$n] = $m[2];
