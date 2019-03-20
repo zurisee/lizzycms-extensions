@@ -45,8 +45,12 @@ lzy-add-user-username-prompt:
     de: 'Benutzername (optional)'
     en: 'Username (optional)'
 
+lzy-add-user-password-prompt:
+    de: 'Kennwort (optional)'
+    en: 'Password (optional)'
+
 lzy-add-user-displayname-prompt:
-    de: 'Ganzer Name (optional)'
+    de: 'Anzeigename (optional)'
     en: 'Display name (optional)'
 
 lzy-add-user-group-prompt:

@@ -385,6 +385,8 @@ EOT;
         $email = $this->renderEMailInput('lzy-add-user-', true,true);
         $username = $this->renderTextlineInput('lzy-add-user-', 'username');
         $this->inx++;
+        $password = $this->renderPasswordInput('lzy-add-user-password-', false);
+        $this->inx++;
         $displayName = $this->renderTextlineInput('lzy-add-user-', 'displayname');
         $this->inx++;
         if ($group) {
@@ -407,6 +409,7 @@ $message
 $notification
 $email
 $username
+$password
 $displayName
 $groupField
 $emailList
