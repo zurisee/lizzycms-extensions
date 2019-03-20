@@ -27,7 +27,7 @@ private $userConfigurableSettingsAndDefaults      = [
 
             'custom_permitUserCode'             => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],
             'custom_permitUserInitCode'         => [false, "[true|false] Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'" ],
-            'custom_permitUserVarDefs'          => ['sandboxed', '[\'sandboxed\'|true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
+            'custom_permitUserVarDefs'          => [false, '[true|false] Only if true, "_code/user-var-defs.php" will be executed.' ],
             'custom_wrapperTag'                 => [false, 	'The HTML tag in which MD-files are wrapped (default: section)' ],
 
             'debug_allowDebugInfo'              => [false, '[false|true|group] If true, debugging Info can be activated: log in as admin and invoke URL-cmd "?debug"' ],

@@ -266,7 +266,7 @@ class Lizzy
         if ($accessGranted) {
             $this->injectEditor();
 
-            $this->trans->doUserComputedVariables();
+            $this->trans->loadUserComputedVariables();
         }
 
         $this->appendLoginForm();   // sleeping code for popup population

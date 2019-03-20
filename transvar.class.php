@@ -595,13 +595,13 @@ class Transvar
 
 
     //....................................................
-    public function doUserComputedVariables()
+    public function loadUserComputedVariables()
     {
         $code = $this->config->path_userCodePath.$this->config->custom_computedVariablesFile;
-        if (file_exists($code)) {
+        if ($this->config->custom_permitUserVarDefs && file_exists($code)) {
             $this->doUserCode( basename($code, '.php'), $this->config->custom_permitUserVarDefs );
         }
-    } // doUserComputedVariable
+    } // loadUserComputedVariables
 
 
 
