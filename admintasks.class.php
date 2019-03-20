@@ -33,12 +33,15 @@ class AdminTasks
         } elseif ($requestType == 'add-user') {           // admin is adding a user
             if (!$this->auth->isAdmin()) { return false; }
             $email = get_post_data('lzy-add-user-email');
+            $pw = get_post_data('lzy-add-user-password-password');
+            $pw = password_hash($pw, PASSWORD_DEFAULT);
             $un = get_post_data('lzy-add-user-username');
             $key = ($un) ? $un : $email;
             $rec[$key] = [
                 'email' => $email,
                 'groups' => get_post_data('lzy-add-user-group'),
                 'username' => $un,
+                'password' => $pw,
                 'displayName' => get_post_data('lzy-add-user-displayname'),
                 'emaillist' => get_post_data('lzy-add-user-emaillist')
             ];
