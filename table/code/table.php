@@ -22,7 +22,13 @@ $this->addMacro($macroName, function () {
         return renderHelp($this, $macroName);
     }
 
-    $dataTable = new HtmlTable($this, $inx, $options);
+    $dataSource = $this->getArg($macroName, 'dataSource', '', '');
+    $file = resolvePath($dataSource, true);
+    if ($dataSource && !file_exists($file)) {
+        return "<div>Error: Datasource-File '$dataSource' not found.</div>\n";
+    }
+
+    $dataTable = new HtmlTable($this->page, $inx, $options);
 	$table = $dataTable->render();
 	
 	return $table;
