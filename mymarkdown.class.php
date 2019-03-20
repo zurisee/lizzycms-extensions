@@ -19,7 +19,9 @@ class MyMarkdown
 	
 	private $replaces = array(
 		'(?<![\-\\\])\-\>'  => '&rarr;', // unless it's '-->'
+		'(?<![\-\\\])\-&gt;'  => '&rarr;', // unless it's '-->'
 		'\=\>'              => '&rArr;',
+		'\=&gt;'              => '&rArr;',
 		' \-\- '            => ' &ndash; ',
 		'(?<!\.)\.\.\.(?!\.)' => '&hellip;',
 		'\bEURO\b'          => '&euro;',
