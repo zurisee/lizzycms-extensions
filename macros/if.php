@@ -52,9 +52,9 @@ $this->addMacro($macroName, function () {
             $res = file_exists($file);
         } elseif ($op == 'empty') {
             $res = (file_exists($file) && (filesize($file) == 0));
-        } elseif (($op == 'lt') || ($op == '<')) {
+        } elseif (($op == '&lt;') || ($op == 'lt') || ($op == '<')) {
             $res = (!file_exists($file) || (filesize($file) < intval($arg)));
-        } elseif (($op == 'gt') || ($op == '>')) {
+        } elseif (($op == '&gt;') || ($op == 'gt') || ($op == '>')) {
             $res = (file_exists($file) && (filesize($file) > intval($arg)));
         }
 
