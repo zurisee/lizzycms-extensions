@@ -319,24 +319,27 @@ EOT;
             }
 
             $btnId = "lzy-nav-el-{$this->inx}$level$n";
-            $btn = "$indent\t  <label for='$btnId'>{$this->arrow}<span>{{ lzy-nav-elem-button }}</span></label>\n".
+            $btn = "$indent\t  <label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>\n".
                    "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
             if ((!$elem['hide!']) || $showHidden) {
                 if (!$stop && isset($elem[0])) {	// does it have children?
-                    $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
-                    $liClass = trim($liClass);
-                    $liClass = ($liClass) ? " class='$liClass'" : '';
 
                     // --- recursion:
                     $out1 = $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $navOptions);
 
                     if ($out1) {
+                        $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
+                        $liClass = trim($liClass);
+                        $liClass = ($liClass) ? " class='$liClass'" : '';
                         $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
                         $out .= $out1;
                         $out .= "$_listWrapper$indent\t</$li>\n";
                         $modif = true;
                     } else {
+                        $liClass .= ' '.$liClassOpen;
+                        $liClass = trim($liClass);
+                        $liClass = ($liClass) ? " class='$liClass'" : '';
                         $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
                         $modif = true;
                     }
