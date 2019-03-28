@@ -19,7 +19,9 @@ class MyMarkdown
 	
 	private $replaces = array(
 		'(?<![\-\\\])\-\>'  => '&rarr;', // unless it's '-->'
+		'(?<![\-\\\])\-&gt;'  => '&rarr;', // unless it's '-->'
 		'\=\>'              => '&rArr;',
+		'\=&gt;'              => '&rArr;',
 		' \-\- '            => ' &ndash; ',
 		'(?<!\.)\.\.\.(?!\.)' => '&hellip;',
 		'\bEURO\b'          => '&euro;',
@@ -243,12 +245,12 @@ class MyMarkdown
         // -> shield '-' and '1.' (and '1!.')
         $lines = explode(PHP_EOL, $str);
         foreach ($lines as $i => $l) {
-            if (preg_match('/\{\{ \s* tab\b [^\}]* \s* \}\}/x', $l)) {
-                if (preg_match('/^[-\*]\s/', $l)) { // contains - or *
+            if (preg_match('/\{\{ \s* tab\b [^\}]* \s* \}\}/x', $l)) { // tab present?
+                if (preg_match('/^[-\*]\s/', $l)) { // UL?  (begins with - or *)
                     $l = substr($l, 2);
                     $lines[$i] = "@/@ul@\\@$l";
 
-                } elseif (preg_match('/^(\d+)(!)? \. \s+ (.*)/x', $l, $m)) {
+                } elseif (preg_match('/^(\d+)(!)? \. \s+ (.*)/x', $l, $m)) { // OL??  (begins with digit.)
                     $l = $m[3];
                     if ($m[2]) {
                         $lines[$i] = "@/@ol@\\@!{$m[1]}@$l";
@@ -603,11 +605,11 @@ class MyMarkdown
 
 
 
-    private function isCssProperty($str)
-    {
-        $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
-        return (sizeof($res) > 0);
-    } // isCssProperty
+    //    private function isCssProperty($str)
+    //    {
+    //        $res = array_filter($this->cssAttrNames, function($attr) use ($str) {return (substr_compare($attr, $str, 0, strlen($attr)) == 0); });
+    //        return (sizeof($res) > 0);
+    //    } // isCssProperty
 
 
 
