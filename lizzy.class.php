@@ -1286,7 +1286,7 @@ EOT;
         height: 2.5em;
         line-height: 2.5em;
         padding-left: 0.5em;
-        width: 40em;
+        width: 46em;
     }
     .lzy-password-converter button {
         height: 1.8em;
