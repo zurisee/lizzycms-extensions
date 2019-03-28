@@ -220,16 +220,25 @@ EOT;
     private function renderRadio()
     {
         $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
+        if (isset($this->currRec->valueNames)) {
+            $valueNames = preg_split('/\s*\|\s*/', $this->currRec->valueNames);
+        } else {
+            $valueNames = $values;
+        }
         $groupName = translateToIdentifier($this->currRec->label);
 		$checkedElem = (isset($this->userSuppliedData[$groupName])) ? $this->userSuppliedData[$groupName] : false;
         $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-radio-label'><legend>{$this->currRec->label}</legend>\n";
-        foreach($values as $value) {
+        foreach($values as $i => $value) {
             $val = translateToIdentifier($value);
-            $id = "fld_$val";
-            
+            $name = $valueNames[$i];
+//            $name = translateToIdentifier($valueNames[$i]);
+            $id = "fld_$name";
+//            $id = "fld_$val";
+
 			$checked = ($checkedElem && ($val == $checkedElem)) ? ' checked' : '';
             $out .= "\t\t\t<div class='$id lzy-form-radio-elem lzy-form-choice-elem'>\n";
-            $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$val'$checked /><label for='$id'>$value</label>\n";
+            $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$name'$checked /><label for='$id'>$value</label>\n";
+//            $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$val'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
         $out .= "\t\t\t</fieldset>\n";
@@ -376,7 +385,6 @@ EOT;
         if ($autoClass || $this->currRec->class) {
             $class = " class='$autoClass{$this->currRec->class} lzy-form-fieldset'";
         } else {
-//            $class = "$autoClass lzy-form-fieldset";
             $class = " class='$autoClass lzy-form-fieldset'";
         }
         $out = "\t\t\t<fieldset$class>\n$legend";
