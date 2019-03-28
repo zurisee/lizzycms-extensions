@@ -118,7 +118,7 @@ class NavRenderer
 
         $this->ulClass = $ulClass;
         $this->liClass = $liClass;
-        $this->hasChildrenClass = ($hasChildrenClass) ? $hasChildrenClass : 'has-children';
+        $this->hasChildrenClass = ($hasChildrenClass) ? $hasChildrenClass : 'lzy-has-children';
         $this->aClass  = $aClass;
         $this->horizTop = (strpos($navClass, 'lzy-nav-top-horizontal') !== false);
         $this->openCurr = (strpos($navClass, 'lzy-nav-open-current') !== false);
@@ -428,7 +428,7 @@ EOT;
         $noscript = <<<EOT
     <noscript>
         <style>
-          #lzy .lzy-nav-accordion li.has-children ol { margin-top: 0!important; }
+          #lzy .lzy-nav-accordion li.lzy-has-children ol { margin-top: 0!important; }
           #lzy .lzy-nav-top-horizontal li:focus-within ol { margin-top: 0!important; }
           #lzy .lzy-nav li label { display: none; }
         </style>

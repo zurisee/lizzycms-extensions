@@ -99,7 +99,7 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
         overflow: hidden;
         text-overflow: ellipsis;    }
 
-    li.has-children {
+    li.lzy-has-children {
         cursor: s-resize;
         display: block;
         > div {
@@ -152,13 +152,13 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
     .lzy-lvl2 ol {
         margin-top: 0 !important;
     }
-    li.has-children > input:checked + div > ol { // open next level
+    li.lzy-has-children > input:checked + div > ol { // open next level
         margin-top: 0 !important;
     }
 }
 
 // open
-.lzy-nav.lzy-nav-collapsed li.has-children.open > div > ol {
+.lzy-nav.lzy-nav-collapsed li.lzy-has-children.open > div > ol {
     margin-top: 0 !important;
 }
 
@@ -166,12 +166,12 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
 
 // hover
 #lzy .lzy-nav-hover {
-    li.has-children:hover > div > ol { // open next level
+    li.lzy-has-children:hover > div > ol { // open next level
         margin-top: 0 !important;
     }
 }
 #lzy .lzy-nav-hover.lzy-nav-animation-active {
-    li.has-children:not(:hover) > div > ol { // open next level
+    li.lzy-has-children:not(:hover) > div > ol { // open next level
         margin-top: inherit;
         transition-delay: 0.4s;
     }
@@ -202,7 +202,7 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
 
 // animation:
 #lzy .lzy-nav-animation-active {
-    li.has-children {
+    li.lzy-has-children {
         > div > ol {
             transition: margin-top var(--lzy-nav-accordion-trans-speed);
         }
@@ -355,7 +355,7 @@ body:not(lzy-small-screen) {
         > ol > li:last-child {
             margin-right: 0;
         }
-        > ol > li.has-children > div {
+        > ol > li.lzy-has-children > div {
             position: absolute;
             top: 100%; // push below top level elem
             left: 0;
@@ -379,7 +379,7 @@ body:not(lzy-small-screen) {
             transform: rotate(90deg) !important;
         }
 
-        .lzy-lvl1.has-children > a {
+        .lzy-lvl1.lzy-has-children > a {
             padding-left: $slidedownX1;
         }
         .lzy-lvl1 > a {

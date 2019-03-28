@@ -17,11 +17,11 @@
     });
 
     // open/close sub-nav:
-    $('#lzy .lzy-nav .has-children > label').click(function(e) {        // double click
+    $('#lzy .lzy-nav .lzy-has-children > label').click(function(e) {        // double click
         var $parentLi = $(this).parent();
         toggleAccordion($parentLi);
     });
-    $('#lzy .lzy-nav .has-children > label').dblclick(function(e) {        // double click
+    $('#lzy .lzy-nav .lzy-has-children > label').dblclick(function(e) {        // double click
         e.stopPropagation();
         var $parentLi = $(this).parent();
         toggleAccordion($parentLi, true, true);
@@ -78,7 +78,7 @@ function toggleAccordion($parentLi, newState, deep) {
         if ((typeof deep != 'undefined') && deep) {
             $nextDivs.attr({'aria-expanded': 'true', 'aria-hidden':'false' });        // next div
             $parentLi.addClass('open').css('cursor', 'n-resize');    // parent li
-            $( 'li.has-children', $parentLi ).addClass('open');            // all li below parent li
+            $( 'li.lzy-has-children', $parentLi ).addClass('open');            // all li below parent li
             $('a', $parentLi).attr('tabindex', '0');            // make un-focusable
             $('input', $parentLi).prop('checked', true);            // un-check checkbox
         } else {
@@ -115,7 +115,7 @@ function operateMobileMenuPane( newState ) {
 
 
 function setHightOnHiddenElements() {
-    $('#lzy .lzy-nav-accordion .has-children, #lzy .lzy-nav-top-horizontal .has-children, #lzy .lzy-nav-collapsed .has-children').each(function() {
+    $('#lzy .lzy-nav-accordion .lzy-has-children, #lzy .lzy-nav-top-horizontal .lzy-has-children, #lzy .lzy-nav-collapsed .lzy-has-children').each(function() {
         var h = $('>div>ol', this).height() + 20;                // set height to optimize animation
         $('>div>ol', this).css('margin-top', '-'+h+'px');
     });
