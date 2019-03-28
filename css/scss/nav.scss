@@ -131,6 +131,8 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
         line-height: var(--lzy-arrow-size);
         top: calc((var(--lzy-nav-elem-line-height) - var(--lzy-arrow-size)) / 2);
 
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 95%;
         text-align: center;
         color: var(--lzy-nav-txt-color);
         cursor: s-resize;

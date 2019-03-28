@@ -403,7 +403,7 @@ EOT;
         }
 
         $out = <<<EOT
-    <nav aria-label="breadcrumbs">
+    <nav aria-label="breadcrumbs" class="lzy-nav-breadcrumb">
       <ol class='lzy-nav-breadcrumb'>$out</ol>
     </nav>
 EOT;
