@@ -5,34 +5,23 @@
 */
 
 
-if (typeof window.widthThreshold == 'undefined') {
+if (typeof window.widthThreshold === 'undefined') {
     window.widthThreshold = 480;
 }
 panelWidgetInstance = 1;    // instance number
-
-$( document ).ready(function() {
-
-    initPanels();
-    setPanelHeights();
-    setupEvents();
-    openRequestedPanel();
-
-    $( window ).resize( onResize );
-    onResize( true );
-
-    scrollToWidget();
-});
+panelsInitialized = [];
 
 
-
-
-
-function initPanels()
+function initializePanel( widgetSelector, preOpen )
 {
-    var $widgets = $('.lzy-panels-widget');
+    var $widgets = $( widgetSelector );
     $widgets.each(function () {
-        $this = $( this );
-        $this.attr('id', 'lzy-panels-widget' + panelWidgetInstance);
+        var $this = $( this );
+        if (widgetSelector.substr(0,1) !== '#') {
+            $this.attr('id', 'lzy-panels-widget' + panelWidgetInstance);
+        } else {
+            $this.addClass('lzy-panels-widget');
+        }
         $this.addClass('lzy-panels-widget' + panelWidgetInstance);
 
         var panels = [];
@@ -54,7 +43,7 @@ function initPanels()
         for (i = 1; i <= panels.length; ++i) {
             var panel = panels[i-1];
             var i1 = panelWidgetInstance*100 + i;
-            var tabindex = (i == 1) ? '0' : '-1';
+            var tabindex = (i === 1) ? '0' : '-1';
             var aria = ' aria-setsize="' + panels.length + '" aria-posinset="' + i + '" aria-selected="false" aria-controls="lzy-panel-id' + i1 + '"';
 
             header += '\t\t<li id="lzy-tabs-mode-panel-header-id' + i1 + '" class="lzy-tabs-mode-panel-header" role="tab" tabindex="'+ tabindex +'"' + aria + '>' + panel.hdrText + '</li>\n';
@@ -70,13 +59,20 @@ function initPanels()
         }
         header = '\n\n<!-- === lzy-tabs-mode headers ==== -->\n\t<ul class="lzy-tabs-mode-panels-header-list" role="tablist">\n' + header + '\t</ul>\n\n';
 
-        $(this).html(header + body);
+        $this.html(header + body);
         $('.lzy-panel-page', $(this)).first().attr('aria-hidden', 'false');
         $('.lzy-tabs-mode-panel-header:first-child', $(this)).attr('aria-selected', 'true');
-
+        $this.show();
+        if (preOpen) {
+            openPanel( '#lzy-panel-id' + (panelWidgetInstance*100 + parseInt(preOpen)));
+        }
+        if ($this.hasClass('lzy-accordion')) {
+            $('.lzy-panel-inner-wrapper', $this).css('transition-duration', '0.4s');
+        }
         panelWidgetInstance++;
     });
-}
+} // initializePanel
+
 
 
 
@@ -120,10 +116,12 @@ function setupAccordionHeaderEvents()
         e.preventDefault();
         mousedown = false;
         var id = $('a', $( this )).attr('href');
-        // console.log('acc click event: '+id);
         operatePanel( id, false);
     });
 }
+
+
+
 
 function operatePanel( id, tabClicked)
 {
@@ -305,7 +303,6 @@ function setupKeyboardEvents()
         id = id.substr(0, id.length-2);
         var idN = parseInt($( this ).attr('id').substr(-2));
 
-        // console.log('id: ' + id + ' idN: ' + idN  + ' keyCode: ' + keyCode);
         if (keyCode == 39) {    // right arrow
             event.preventDefault();
             var idN1 = (idN + 1);
@@ -314,7 +311,6 @@ function setupKeyboardEvents()
             if (!$( id1 ).length) {
                 id1 = id + '01';
             }
-            // console.log( id1 );
             openPanel( id1 );
             $( id1.replace(/lzy-panel-/, 'lzy-tabs-mode-panel-header-')).focus();
 
@@ -328,14 +324,12 @@ function setupKeyboardEvents()
                 $last = $('.lzy-tabs-mode-panel-header:last-child', $(this).parent());
                 var id1 = '#' + $last.attr('id').replace(/lzy-tabs-mode-panel-header-/, 'lzy-panel-');
             }
-            // console.log( id1 );
             openPanel( id1 );
             $( id1.replace(/lzy-panel-/, 'lzy-tabs-mode-panel-header-')).focus();
 
         } else if (keyCode == 36) {    // home key
             event.preventDefault();
             var id1 = id + '01';
-            // console.log( id1 );
             openPanel( id1 );
             $( id1.replace(/lzy-panel-/, 'lzy-tabs-mode-panel-header-')).focus();
 
@@ -389,3 +383,26 @@ function openRequestedPanel() {
         openPanel( id );
     }
 } // openRequestedPanel
+
+
+
+
+
+function initPanel( widgetSelector, preOpen )
+{
+    if (typeof panelsInitialized[widgetSelector] !== 'undefined') {
+        return;
+    }
+    panelsInitialized[widgetSelector] = true;
+    initializePanel(widgetSelector, preOpen);
+    setPanelHeights();
+    setupEvents();
+    openRequestedPanel();
+
+    $( window ).resize( onResize );
+    onResize( true );
+
+    scrollToWidget();
+} // initPanel
+
+

@@ -122,6 +122,7 @@ li.lzy-tabs-mode-panel-header {
 
 .lzy-panels-widget:not(.lzy-tab-mode) .lzy-accordion-mode-panel-header a {
     text-decoration: none;
+    border-bottom: none;
     display: block;
 }
 
@@ -131,7 +132,7 @@ li.lzy-tabs-mode-panel-header {
 .lzy-panels-widget:not(.lzy-tab-mode) .lzy-panel-page .lzy-panel-inner-wrapper {
     margin-top: -100%;  /* initial value on the safe side, will be adjusted by js during initialization */
     overflow: auto;
-    transition: margin-top 0.4s;
+    transition-property: margin-top;
 }
 
 .lzy-panels-widget:not(.lzy-tab-mode) .lzy-panel-page.lzy-panel-page-open .lzy-panel-inner-wrapper {

@@ -12,6 +12,7 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
+    $selector = $this->getArg($macroName, 'selector', 'Selector of DIV block(s) to be turned into panels. (Default is".lzy-panels-widget")', false);
     $mode = $this->getArg($macroName, 'mode', '[ tabs | accordion | auto ] (optional) If set, forces a particular mode.', 'auto');
     $background = $this->getArg($macroName, 'background', 'Defines the background color, e.g. #ff0', '');
     $unselectedTabsBackground = $this->getArg($macroName, 'unselectedTabsBackground', '', '');
@@ -22,7 +23,7 @@ $this->addMacro($macroName, function () {
     $headerBeautifier = $this->getArg($macroName, 'headerBeautifier', 'Activates an improved visual effect on tabs and accordion headers (optionally, provide your own CSS styling here)', false);
     $oneOpenOnly = $this->getArg($macroName, 'oneOpenOnly', 'If true, makes sure that only one panel is open at the time (in accordion mode)', '');
     $tilted = $this->getArg($macroName, 'tilted', 'Activates tilted sides on tabs, providing an improved visual effect', false);
-    $applyGlobally = $this->getArg($macroName, 'applyGlobally', 'If true, the above options are applied to all widgets within the page', false);
+    $preOpen = $this->getArg($macroName, 'preOpen', '[false | number] If set, defines which panel should initially appear opened (numbers starting at 1)', true);
 //    $threshold = $this->getArg($macroName, 'threshold', 'defines the width threshold used for switching between tabs- and accordion-mode (default is 480px)', '');
 //??? TBD
     // Threshold for switching modes:
@@ -38,12 +39,19 @@ $this->addMacro($macroName, function () {
 
 
     // Where to apply these settings - to this or to all widgets:
-    if ($applyGlobally) {
+    if (!$selector) {
         $widgetSelector = ".lzy-panels-widget";
+        $widgetClassSelector = ".lzy-panels-widget";
+    } elseif ($selector[0] == '#') {
+        $widgetSelector = $selector;
+        $widgetClassSelector = ".lzy-panels-widget$inx";
+    } elseif ($selector[0] == '.') {
+        $widgetSelector = $selector;
+        $widgetClassSelector = $selector;
     } else {
-        $widgetSelector = ".lzy-panels-widget$inx";
+        $widgetSelector = ".$selector";
+        $widgetClassSelector = ".$selector";
     }
-
 
     // Preset modes:
     if ($mode == 'accordion') {
@@ -59,41 +67,48 @@ $this->addMacro($macroName, function () {
     if ($oneOpenOnly) {
         $this->page->addJq("$('$widgetSelector').addClass('one-open-only');\n");
     }
+    if ($preOpen === true) {
+        $preOpen = 1;
+    } elseif ($preOpen === false) {
+        $preOpen = 'false';
+    }
+    $this->page->addJq("$('$widgetSelector').each(function() { initPanel( '$widgetSelector', $preOpen ); });\n");
+
 
     // prepare CSS that depends on settings:
     $css = '';
 
     if ($unselectedTextColor) {
-        $css .= "$widgetSelector.lzy-tab-mode .lzy-tabs-mode-panel-header { color: $unselectedTextColor; }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header a { color: $unselectedTextColor; }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode .lzy-tabs-mode-panel-header { color: $unselectedTextColor; }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header a { color: $unselectedTextColor; }\n";
     }
     if ($selectedTextColor) {
-        $css .= "$widgetSelector .lzy-tabs-mode-panel-header[aria-selected=true] { color: $selectedTextColor; }\n";
+        $css .= "$widgetClassSelector .lzy-tabs-mode-panel-header[aria-selected=true] { color: $selectedTextColor; }\n";
     }
     if ($unselectedTabsBackground) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetSelector .lzy-tabs-mode-panel-header::before { background: $unselectedTabsBackground; }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header { background: $unselectedTabsBackground; }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetClassSelector .lzy-tabs-mode-panel-header::before { background: $unselectedTabsBackground; }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header { background: $unselectedTabsBackground; }\n";
     }
     if ($background) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header[aria-selected=true]::after, $widgetSelector .lzy-tabs-mode-panel-header[aria-selected=true]::before, $widgetSelector .lzy-panel-inner-wrapper { background: $background; }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header[aria-selected=true]::after, $widgetClassSelector .lzy-tabs-mode-panel-header[aria-selected=true]::before, $widgetClassSelector .lzy-panel-inner-wrapper { background: $background; }\n";
     }
     if ($outlineColor) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetSelector .lzy-tabs-mode-panel-header::before, $widgetSelector.lzy-tab-mode .lzy-panel-body-wrapper::before { border: 1px solid $outlineColor; outline-color: $outlineColor; }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header { border: 1px solid $outlineColor; }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetClassSelector .lzy-tabs-mode-panel-header::before, $widgetClassSelector.lzy-tab-mode .lzy-panel-body-wrapper::before { border: 1px solid $outlineColor; outline-color: $outlineColor; }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header { border: 1px solid $outlineColor; }\n";
     }
     if (($shadow === true) || ($shadow === 'true')) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetSelector .lzy-tabs-mode-panel-header::before, $widgetSelector .lzy-panel-body-wrapper::before { box-shadow: 0 0 15px gray; }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header::before { box-shadow: 0 0 15px gray; }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetClassSelector .lzy-tabs-mode-panel-header::before, $widgetClassSelector .lzy-panel-body-wrapper::before { box-shadow: 0 0 15px gray; }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header::before { box-shadow: 0 0 15px gray; }\n";
     } elseif ($shadow) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetSelector .lzy-tabs-mode-panel-header::before, $widgetSelector .lzy-panel-body-wrapper::before { $shadow; }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header::before { $shadow; }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetClassSelector .lzy-tabs-mode-panel-header::before, $widgetClassSelector .lzy-panel-body-wrapper::before { $shadow; }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header::before { $shadow; }\n";
     }
     if (($headerBeautifier === true) || ($headerBeautifier === 'true')) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetSelector .lzy-tabs-mode-panel-header::before { background-image: linear-gradient( hsla( 0,0%, 100%,.6), hsla( 0,0%, 100%, 0)); }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header { background-image: linear-gradient( hsla( 0,0%, 100%,.6), hsla( 0,0%, 100%, 0)); }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetClassSelector .lzy-tabs-mode-panel-header::before { background-image: linear-gradient( hsla( 0,0%, 100%,.6), hsla( 0,0%, 100%, 0)); }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header { background-image: linear-gradient( hsla( 0,0%, 100%,.6), hsla( 0,0%, 100%, 0)); }\n";
     } elseif ($headerBeautifier) {
-        $css .= "$widgetSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetSelector .lzy-tabs-mode-panel-header::before { $headerBeautifier; }\n";
-        $css .= "$widgetSelector .lzy-accordion-mode-panel-header { $headerBeautifier }\n";
+        $css .= "$widgetClassSelector.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after, $widgetClassSelector .lzy-tabs-mode-panel-header::before { $headerBeautifier; }\n";
+        $css .= "$widgetClassSelector .lzy-accordion-mode-panel-header { $headerBeautifier }\n";
     }
 
     if ($css) {
