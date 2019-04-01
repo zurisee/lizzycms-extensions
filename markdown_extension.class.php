@@ -767,7 +767,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     {
         // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
         if (!$line) {
-            return ['', '', '', '', false, false];
+            return ['', '', '', '', false, true];
         }
 
         return parseInlineBlockArguments($line);
