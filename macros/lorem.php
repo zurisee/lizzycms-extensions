@@ -13,6 +13,7 @@ $this->addMacro($macroName, function () {
     $max = $this->getArg($macroName, 'max', '(optional) defines the minimum of a randomly chosen number of words out of "lorem ipsum"', '');
     $dot = $this->getArg($macroName, 'dot', '[true,false] specifies whether generated text shall be terminated by a dot "."', true);
     $class = $this->getArg($macroName, 'class', '(optional) If set, wraps the string in a div and applies the class', '');
+    $wrapper = $this->getArg($macroName, 'wrapper', '(optional) The tag to be placed around the output', 'div');
 
     $lorem = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.';
 
@@ -44,8 +45,9 @@ $this->addMacro($macroName, function () {
 		}
 		$str = strtoupper($str[0]).substr($str, 1);
 	}
-	if ($class) {
-	    $str = "<div class='$class'>$str</div>";
+    if ($wrapper) {
+        $class = trim("lzy-lorem $class");
+        $str = "<$wrapper class='$class'>" . ucfirst($str) . "</$wrapper>";
     }
-	return ucfirst( $str );
+	return$str;
 });
