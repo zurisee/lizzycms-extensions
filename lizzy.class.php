@@ -1895,6 +1895,9 @@ EOT;
                 $systemTimeZone = $systemTimeZone[0];
             }
         }
+        if ($systemTimeZone == 'CEST') {    // workaround: CEST not supported
+            $systemTimeZone = 'CET';
+        }
         date_default_timezone_set($systemTimeZone);
         setStaticVariable('systemTimeZone', $systemTimeZone);
     } // setLocale
