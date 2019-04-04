@@ -607,12 +607,28 @@ a.lzy-button {
 		display: none;
 	}
 	.mail_link {
-		background: url("../rsc/mail.gif") no-repeat;
-		padding-left: 14px;
+		background: url("../rsc/mail.svg") no-repeat;
+		background-size: 0.9em 1.2em;
+		padding-left: 1.2em;
+	}
+	.sms_link {
+		background: url("../rsc/sms.svg") no-repeat;
+		padding-left: 1.5em;
+	}
+	.tel_link {
+		background: url("../rsc/tel.svg") no-repeat;
+		background-size: 0.9em 1.2em;
+		padding-left: 1.1em;
+	}
+	.geo_link {
+		background: url("../rsc/geo.svg") no-repeat;
+		background-size: 0.9em 1.2em;
+		padding-left: 1.1em;
 	}
 	.external_link {
-		background: url("../rsc/popup.png") no-repeat;
-		padding-left: 12px;
+		background: url("../rsc/newwin.svg") no-repeat;
+		background-size: 0.8em 1.3em;
+		padding-left: 1.1em;
 	}
 	.lzy-img-link {
 		background: none;
