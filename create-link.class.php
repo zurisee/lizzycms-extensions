@@ -20,10 +20,10 @@ class CreateLink
             $title = " title='$title'";
         }
         $hiddenText = '';
-        if ((stripos($href, 'mailto:') !== false) || (stripos($type, 'mail') !== false)) {
+        $arg = '';
+        if ((stripos($href, 'mailto:') === 0) || (stripos($type, 'mail') !== false)) {
             $class = ($class) ?  "$class mail_link" : 'mail_link';
             $title = ($title) ? $title : " title='{{ opens mail app }}'";
-            $arg = '';
             $body = str_replace(' ', '%20', $body);
             $body = str_replace(['\n', "\n"], '%0A', $body);
             if ($subject) {
@@ -36,25 +36,51 @@ class CreateLink
                 $arg = "?body=$body";
             }
             if (!$text) {
-                $text = substr($href, 7);
+                $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
             } else {
                 $hiddenText = "<span class='print_only'> [$href]</span>";
             }
             $href .= $arg;
 
+        } elseif ((stripos($href, 'sms:') === 0) || (stripos($type, 'sms') !== false)) {
+            $class = ($class) ?  "$class sms_link" : 'sms_link';
+            $title = ($title) ? $title : " title='{{ opens messaging app }}'";
+            if (!$text) {
+                $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
+            }
+            if ($body) {
+                $href .= "?&body=$body";
+            }
+
+        } elseif ((stripos($href, 'tel:') === 0) || (stripos($type, 'tel') !== false)) {
+            $class = ($class) ?  "$class tel_link" : 'tel_link';
+            $title = ($title) ? $title : " title='{{ opens telephone app }}'";
+            if (!$text) {
+                $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
+            }
+
+        } elseif ((stripos($href, 'geo:') === 0) || (stripos($type, 'geo') !== false)) {
+            $class = ($class) ?  "$class geo_link" : 'geo_link';
+            $title = ($title) ? $title : " title='{{ opens map app }}'";
+            if (!$text) {
+                $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
+            }
+
         } else {
             $href0 = $href;
-            if ((strpos($href, 'http') !== 0) && (stripos($type, 'intern') === false) && preg_match('/[\w-]+\.[\w-]{2,10}/', $href, $m)) {
-                $href = 'https://'.$href;
+            if (!preg_match('/: [^\?&]*/x', $href)) {
+                if ((strpos($href, 'http') !== 0) && (stripos($type, 'intern') === false) && preg_match('/[\w-]+\.[\w-]{2,10}/', $href, $m)) {
+                    $href = 'https://' . $href;
+                }
+                $href = resolvePath($href, false, 'https');
             }
-            $href = resolvePath($href, false, 'https');
             if (!$text) {
                 $rec = isset($this->siteStructure) ? $this->siteStructure->findSiteElem($href0, true) : false;
                 if ($rec) {
                     $href = resolvePath('~/'.$rec['folder'], false, 'https');
                     $text = $rec['name'];
                 } else {
-                    $text = $href;
+                    $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
                 }
             } else {
                 $hiddenText = "<span class='print_only'> [$href]</span>";
@@ -71,6 +97,9 @@ class CreateLink
             }
         }
         $class = ($class) ? " class='$class'" : '';
+        if (preg_match('/^ ([^\?&]*) (.*)/x', $href, $m)) {     // remove blanks from href
+            $href = str_replace(' ', '', $m[1]).str_replace(' ', '%20', $m[2]);
+        }
         $str = "<a href='$href' $class$title$target>$text$hiddenText</a>";
 
         return $str;
@@ -78,6 +107,4 @@ class CreateLink
 
 
 } // CreateLink
-
-
 
