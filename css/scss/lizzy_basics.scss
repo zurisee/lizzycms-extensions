@@ -145,7 +145,22 @@ figure a {
     margin-left: auto;
     text-align: left;
     text-overflow: ellipsis;
-    overflow: hidden; }
+    overflow: hidden; 
+    padding-bottom: 1em;
+    line-height: 1.25em; }
+
+@media screen and (max-width: 600px) {
+    .dl-as-table dl {
+        display: block;
+    }
+    .dl-as-table dl dd {
+        margin-left: 2em;
+    }
+    .dl-as-table dl dt {
+        font-weight: bold;
+        padding-bottom: 0.5em;
+    }
+}
 
 .lzy-h-space {
 	display: inline-block;
