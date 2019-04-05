@@ -502,6 +502,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 if ($nEmptyLines++ > 0) {
                     break;
                 }
+            } else {
+                $nEmptyLines = 0;
             }
             $block['content'][] = $lines[$i];
         }
