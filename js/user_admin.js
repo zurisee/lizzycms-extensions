@@ -14,7 +14,7 @@ function init() {
     $('.lzy-login-username').focus();
     $('.lzy-signup-username').focus();
 
-    $('#lzy-panel-id101').addClass('lzy-panel-page-open');  // pre-open first accordion panel
+    // $('#lzy-panel-id101').addClass('lzy-panel-page-open');  // pre-open first accordion panel
 }
 
 function setGenericEventHandlers() {
