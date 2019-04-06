@@ -254,7 +254,7 @@ class DataStorage
         if ($key === '*') {     // return all data
             if ($reportLockState) {
                 if (isset($data[LIZZY_META])) {
-                    $mega = $data[LIZZY_META];
+                    $meta = $data[LIZZY_META];
                     unset($data[LIZZY_META]);
                 }
                 foreach ($data as $key => $value) {
@@ -345,6 +345,26 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
+    public function check($lastCheck)
+    {
+        $lastModified = $this->lastModified();
+        if ($lastCheck < $lastModified) {
+            $data = $this->read();
+            foreach ($data as $key => $value) {
+                if ($this->isLocked($key)) {
+                    $data[$key] = ['value' => $value, 'state' => 'locked'];
+                }
+            }
+            $json = json_encode($data);
+            return $json;
+        } else {
+            return false;
+        }
+    } // check
+
+
+
+        //---------------------------------------------------------------------------
     public function lastModified($key = false)
     {
         if ($key) {
