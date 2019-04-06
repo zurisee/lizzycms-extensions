@@ -66,6 +66,19 @@ class CreateLink
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
             }
 
+        } elseif ((stripos($href, 'pdf:') === 0) || (stripos($type, 'pdf') !== false)) {
+            $class = ($class) ?  "$class pdf_link" : 'pdf_link';
+            $title = ($title) ? $title : " title='{{ opens PDF in new window }}'";
+            if (!$text) {
+                $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
+            }
+            $href = resolvePath(str_replace('pdf:', '', $href), true, true);
+            if ($target) {
+                $target = ($target === 'newwin')? '_blank': $target;
+                $target = " target='$target' rel='noopener'";
+                // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
+            }
+
         } else {
             $href0 = $href;
             if (!preg_match('/: [^\?&]*/x', $href)) {
@@ -87,6 +100,7 @@ class CreateLink
             }
 
             if ($target) {
+                $target = ($target === 'newwin')? '_blank': $target;
                 $target = " target='$target' rel='noopener'";
                 // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
 
