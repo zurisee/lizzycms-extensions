@@ -148,11 +148,14 @@ EOT;
                 $elem = "<p>Error: form type unknown: '{$this->type}'</p>\n";
         }
 
-		if (isset($this->currRec->wrapperclass) && ($this->currRec->wrapperclass)) {
-	        $class = " class='lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}'";
+        if (isset($this->currRec->wrapperclass) && ($this->currRec->wrapperclass)) {
+//	        $class = "$elemId lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
+	        $class = "lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
 		} else {
-	        $class = $this->classAttr('lzy-form-field-wrapper lzy-form-field-type-'.$this->currRec->type);
+            $elemId = $this->formDescr["anfrage"]->formId.'_'. $this->currRec->elemId;
+            $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$this->currRec->type;
 		}
+        $class = $this->classAttr($class);
 		$out = "\t\t<div $class>\n$elem\t\t</div><!-- /field-wrapper -->\n\n";
         return $out;
     } // render
@@ -226,19 +229,19 @@ EOT;
             $valueNames = $values;
         }
         $groupName = translateToIdentifier($this->currRec->label);
+        if ($this->currRec->name) {
+            $groupName = $this->currRec->name;
+        }
 		$checkedElem = (isset($this->userSuppliedData[$groupName])) ? $this->userSuppliedData[$groupName] : false;
         $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-radio-label'><legend>{$this->currRec->label}</legend>\n";
         foreach($values as $i => $value) {
             $val = translateToIdentifier($value);
             $name = $valueNames[$i];
-//            $name = translateToIdentifier($valueNames[$i]);
-            $id = "fld_$name";
-//            $id = "fld_$val";
+            $id = "fld_{$groupName}_$name";
 
 			$checked = ($checkedElem && ($val == $checkedElem)) ? ' checked' : '';
             $out .= "\t\t\t<div class='$id lzy-form-radio-elem lzy-form-choice-elem'>\n";
             $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$name'$checked /><label for='$id'>$value</label>\n";
-//            $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$val'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
         $out .= "\t\t\t</fieldset>\n";
@@ -250,17 +253,25 @@ EOT;
     private function renderCheckbox()
     {
         $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
+        if (isset($this->currRec->valueNames)) {
+            $valueNames = preg_split('/\s*\|\s*/', $this->currRec->valueNames);
+        } else {
+            $valueNames = $values;
+        }
         $groupName = translateToIdentifier($this->currRec->label);
         $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-checkbox-label'><legend>{$this->currRec->label}</legend>\n";
 		
 		$data = isset($this->userSuppliedData[$groupName]) ? $this->userSuppliedData[$groupName] : [];
-        foreach($values as $value) {
+        foreach($values as $i => $value) {
             $val = translateToIdentifier($value);
-            $id = "fld_{$groupName}_$val";
-			
+            $name = $valueNames[$i];
+//            $id = "fld_{$groupName}_$val";
+            $id = "fld_{$groupName}_$name";
+
 			$checked = ($data && in_array($value, $data)) ? ' checked' : '';
             $out .= "\t\t\t<div class='$id lzy-form-checkbox-elem lzy-form-choice-elem'>\n";
-            $out .= "\t\t\t\t<input id='$id' type='checkbox' name='{$groupName}[]' value='$value'$checked /><label for='$id'>$value</label>\n";
+            $out .= "\t\t\t\t<input id='$id' type='checkbox' name='{$groupName}[]' value='$name'$checked /><label for='$id'>$value</label>\n";
+//            $out .= "\t\t\t\t<input id='$id' type='checkbox' name='{$groupName}[]' value='$value'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
         $out .= "\t\t\t</fieldset>\n";
@@ -518,15 +529,15 @@ EOT;
 		$value = (isset($this->currRec->value) && $this->currRec->value) ? $this->currRec->value : $label;
 		$out = '';
 		$class = $this->classAttr('lzy-form-form-button lzy-button');
-		if (strpos($value, ',') === false) {
+        $types = preg_split('/\s*[,|]\s*/', $value);
+
+		if (!$types) {
 			$id = 'btn_'.$this->currForm->formId.'_'.translateToIdentifier($value);
-//			$out .= "$indent<output id='{$this->currForm->formId}_error-msg'  aria-live='polite' aria-relevant='additions'></output>\n";
 			$out .= "$indent<input type='submit' id='$id' value='$label' $class />\n";
 
 		} else {
-			$types = explode(',', $value);
-			$labels = explode(',', $label);
-			
+            $labels = preg_split('/\s*[,|]\s*/', $label);
+
 			foreach ($types as $i => $type) {
 			    if (!$type) { continue; }
 				$id = 'btn_'.$this->currForm->formId.'_'.translateToIdentifier($type);
@@ -659,6 +670,7 @@ EOT;
         $rec = &$this->currRec;
 
 		$rec->type = $type;
+		$rec->elemId = $elemId;
 
 		if (strpos($label, '*')) {
 			$label = trim(str_replace('*', '', $label));
@@ -703,7 +715,6 @@ EOT;
             if ($type == 'form-head') {
 			$this->currForm->formData['labels'][0] = 'Date';
 			$this->currForm->formData['names'] = [];
-//		} elseif (($type != 'button') && ($type != 'form-tail')) {
 		} elseif (($type != 'button') && ($type != 'form-tail') && (strpos($type, 'fieldset') === false)) {
 			$rec->shortLabel = (isset($args['shortlabel'])) ? $args['shortlabel'] : $label;
 			if ($type == 'checkbox') {

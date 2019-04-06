@@ -1,5 +1,5 @@
 .lzy-form {
-    --form-width: 329px;
+    --form-width: 30em;
     --label-width: 6em;
     max-width: var(--form-width);
 }
@@ -44,14 +44,95 @@
 .lzy-form-required-marker {
 	color: red;
 }
+
+/* === Radio and Checkbox === */
+.lzy-form-field-wrapper .lzy-form-choice-elem {
+    display: block;
+    height: 1.8em;
+}
+.lzy-form-field-wrapper .lzy-form-choice-elem * {
+    vertical-align: top;
+}
+.lzy-form-field-type-checkbox input,
+.lzy-form-field-type-radio input {
+    width: 1.5em;
+}
+.lzy-form-field-type-checkbox legend,
+.lzy-form-field-type-radio legend {
+    display: block;
+    margin: 1em 0 0.5em;
+}
+.lzy-form-field-type-checkbox label,
+.lzy-form-field-type-radio label {
+    display: inline-block;
+    width: calc(100% - 1.6em);
+}
+fieldset.lzy-form-radio-label,
+fieldset.lzy-form-checkbox-label {
+    border: none;
+    margin-bottom: 1em;
+}
+
+/* horizontal variant */
+.lzy-horizontal.lzy-form-field-type-checkbox legend,
+.lzy-horizontal.lzy-form-field-type-radio legend {
+    display: inline-block;
+}
+.lzy-horizontal.lzy-form-field-type-checkbox .lzy-form-choice-elem,
+.lzy-horizontal.lzy-form-field-type-radio .lzy-form-choice-elem {
+    display: inline-block;
+    white-space: nowrap;
+}
+.lzy-horizontal.lzy-form-field-type-checkbox label,
+.lzy-horizontal.lzy-form-field-type-radio label {
+    margin-right: 2em;
+}
+
+
+/* === Text Area === */
+.lzy-form-field-type-textarea label {
+    display: block;
+    margin: 1em 0 0.3em;
+    width: 100%;
+}
+.lzy-form-field-type-textarea textarea {
+    display: block;
+    margin: 0 0 0.5em;
+    width: 100%;
+    height: 5em;
+}
+
+/* horizontal variant */
+.lzy-horizontal.lzy-form-field-type-textarea * {
+    vertical-align: top;
+}
+.lzy-horizontal.lzy-form-field-type-textarea label {
+    display: inline-block;
+    margin: 0;
+    width: var(--label-width);
+}
+.lzy-horizontal.lzy-form-field-type-textarea textarea {
+    display: inline-block;
+    margin: 0 0 0.5em;
+    width: calc(100% - var(--label-width) - 1em);
+    height: 5em;
+}
+
+
+
+
+/*
 .lzy-form-radio-label,
 .lzy-form-checkbox-label {
-	display: inline-block;
-	width: var(--label-width);
-}
+	display: block;
+	/*display: inline-block;*/
+	/*width: var(--label-width);*/
+/*}
 legend {
     padding: 0 0.5em;
 }
+*/
+/*
 .lzy-form-label legend {
 	display: inline-block;
 	width: 7em;
@@ -77,20 +158,26 @@ fieldset.lzy-form-label {
 	display: block;
 	width: 100%;
 }
+*/
 ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
   text-align: right;
+  opacity: 0.5;
 }
 ::-moz-placeholder { /* Firefox 19+ */
   text-align: right;
+  opacity: 0.5;
 }
 :-ms-input-placeholder { /* IE 10+ */
   text-align: right;
+  opacity: 0.5;
 }
 :-moz-placeholder { /* Firefox 18- */
   text-align: right;
+  opacity: 0.5;
 }
 ::placeholder { /* generic */
   text-align: right;
+  opacity: 0.5;
 }
 .lzy-form-field-wrapper.lzy-form-field-type-button input.lzy-form-form-button,
 .lzy-form-field-wrapper.lzy-form-field-type-button button.lzy-form-form-button {
