@@ -1,4 +1,4 @@
-#New Lizzy-Based Website
+# New Lizzy-Based Website
 
 Congratulations! It's working.
 
