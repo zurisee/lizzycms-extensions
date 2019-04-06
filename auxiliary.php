@@ -1181,6 +1181,26 @@ function timestamp($short = false)
 
 
 
+
+//-------------------------------------------------------------------------
+function dateFormatted($date = false, $format = false)
+{
+    if (!$date) {
+        $date = time();
+    } if (is_string($date)) {
+        $date = strtotime($date);
+}
+    if (!$format) {
+        $format = '%x';
+    }
+    $out = strftime($format, $date);
+    return $out;
+}
+
+
+
+
+
 //-------------------------------------------------------------------------
 function touchFile($file, $time = false)
 {	// work-around: PHP's touch() fails if http-user is not owner of file 
