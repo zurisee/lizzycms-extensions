@@ -5,8 +5,8 @@
 
 require_once SYSTEM_PATH.'forms.class.php';
 
-$page->addCssFiles('~sys/css/lizzy_forms.css');
-$page->addJqFiles('JQUERY');
+//$page->addCssFiles('~sys/css/lizzy_forms.css');
+//$page->addJqFiles('JQUERY');
 
 
 $macroName = basename(__FILE__, '.php');
