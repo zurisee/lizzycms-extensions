@@ -1713,14 +1713,16 @@ function parseDimString($str, $imageFile = false, $aspectRatio = false)
         if (!$str) {
             $w = $h = $aspectRatio = 0;
         } else {
-            if (file_exists($imageFile)) {
-                list($w0, $h0) = getimagesize($imageFile);
-                $aspectRatio = $h0 / $w0;
-            } else {
-                $aspectRatio = DEFAULT_ASPECT_RATIO;
+            if (!$aspectRatio) {
+                if (file_exists($imageFile)) {
+                    list($w0, $h0) = getimagesize($imageFile);
+                    $aspectRatio = $h0 / $w0;
+                } else {
+                    $aspectRatio = DEFAULT_ASPECT_RATIO;
+                }
             }
             $w = intval($str);
-            $h = round($w * $aspectRatio);
+            $h = (int) round($w * $aspectRatio);
         }
     } else {
         list($w, $h) = explode('x', $str);
@@ -1736,23 +1738,24 @@ function parseDimString($str, $imageFile = false, $aspectRatio = false)
             } else {
                 $aspectRatio = DEFAULT_ASPECT_RATIO;
             }
-        } else {
+        } elseif (!$aspectRatio) {
             $aspectRatio = DEFAULT_ASPECT_RATIO;
         }
 
         if (!$w) {
-            $w = round($h / $aspectRatio);
+            $w = (int) round($h / $aspectRatio);
         } elseif (!$h) {
-            $h = round($w * $aspectRatio);
+            $h = (int) round($w * $aspectRatio);
         }
     }
-    return [$w, $h, $aspectRatio];
+    return [$w, $h];
+//    return [$w, $h, $aspectRatio];
 } // parseDimString
 
 
 
 //....................................................
-function parseFileName($filename)
+function parseFileName($filename, $aspectRatio)
 {
     $path = dirname($filename).'/';
     $fname = base_name($filename);
@@ -1765,7 +1768,7 @@ function parseFileName($filename)
 
         $imgFullsizeFile = $path.$basename.$ext;
 
-        list($w, $h, $aspectRatio) = parseDimString($dimStr, $imgFullsizeFile);
+        list($w, $h) = parseDimString($dimStr, $imgFullsizeFile, $aspectRatio);
 
         $filename = $path.$basename."[{$w}x$h]".$ext;
         $dimFound = true;
@@ -1774,18 +1777,10 @@ function parseFileName($filename)
         $basename = base_name($fname, false);
         $ext = '.'.fileExt($fname);
         $f = resolvePath($filename);
-        if (file_exists($f)) {
-            list($w, $h) = getimagesize($f);
-            $aspectRatio = $h / $w;
-        } else {
-            $w = false;
-            $h = false;
-            $aspectRatio = DEFAULT_ASPECT_RATIO;
-        }
     }
     $filename = convertFsToHttpPath($filename);
     $path = convertFsToHttpPath($path);
-    return [$filename, $path, $basename, $ext, $w, $h, $aspectRatio, $dimFound];
+    return [$filename, $path, $basename, $ext, $w, $h, $dimFound];
 } // parseFileName
 
 

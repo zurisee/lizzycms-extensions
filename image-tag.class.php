@@ -24,7 +24,7 @@ class ImageTag
         $this->ext = null;
         $this->width = null;
         $this->height = null;
-        $this->aspectRatio = null;
+        $this->aspRatio = null;
         $this->imgFullsizeFile = null;
         $this->imgFullsizeWidth = null;
         $this->imgFullsizeHeight = null;
@@ -41,11 +41,11 @@ class ImageTag
             $this->lateImgLoadingCodeLoaded = true;
         }
 
-        // figure out src, srcFile and imgFullsizeFile
-        $this->determineFilePaths();
-
         // prepare working copy of image in '_/':
         $this->prepareImageWorkingCopy();
+
+        // figure out src, srcFile and imgFullsizeFile
+        $this->determineFilePaths();
 
         $qvDataAttr = $this->renderQuickview();
 
@@ -74,11 +74,25 @@ class ImageTag
 
     private function prepareImageWorkingCopy()
     {
-        $origSrc = str_replace('/_/', '/', $this->imgFullsizeFile);
-        if (!file_exists($this->imgFullsizeFile)) {
+        $src = $this->src;
+        $origSrc = preg_replace('/( \[ [^\] ]* \] )/x', '', $src);
+        $origSrc = resolvePath($origSrc, true);
+        $fullsizeImg = dirname($origSrc). '/_/'.basename($origSrc);
+        if (!file_exists($fullsizeImg) && file_exists($origSrc)) {
             $resizer = new ImageResizer($this->feature_ImgDefaultMaxDim);
-            $resizer->resizeImage($origSrc, $this->imgFullsizeFile);
+            $resizer->resizeImage($origSrc, $fullsizeImg);
+            $this->fullsizeImg = $fullsizeImg;
         }
+
+        if (file_exists($fullsizeImg)) {
+            list($this->imgFullsizeWidth, $this->imgFullsizeHeight) = getimagesize($fullsizeImg);
+            $this->aspRatio = $this->imgFullsizeHeight / $this->imgFullsizeWidth;
+
+        } elseif (file_exists($origSrc)) {  // rare case: orig img has been deleted but working copy still there
+            list($this->width, $this->height) = getimagesize($origSrc);
+            $this->aspRatio = $this->height / $this->width;
+        }
+
     } // prepareImageWorkingCopy
 
 
@@ -153,7 +167,6 @@ class ImageTag
             $this->srcset = " {$this->lateImgLoadingPrefix}srcset='" . substr($this->srcset, 0, -2) . "'";
             $this->srcset .= ($this->w) ? " sizes='{$this->w}px'" : '';
 
-//        } elseif ($this->srcset) {
         } elseif ($this->srcset !== true) {
             $this->srcset = " {$this->lateImgLoadingPrefix}srcset='{$this->srcset}'";
 
@@ -169,7 +182,7 @@ class ImageTag
     {
         $this->src = makePathRelativeToPage($this->src, true);
         $this->srcFile = resolvePath($this->src, true);
-        list($this->src, $this->path, $this->basename, $this->ext, $this->w, $this->h, $this->aspRatio, $dimFound) = parseFileName($this->src);
+        list($this->src, $this->path, $this->basename, $this->ext, $this->w, $this->h, $dimFound) = parseFileName($this->src, $this->aspRatio);
         $this->w = ($dimFound) ? $this->w : null;
         $this->h = ($dimFound) ? $this->h : null;
 
