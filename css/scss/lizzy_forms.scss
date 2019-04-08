@@ -1,8 +1,171 @@
+/* === Styles for Lizzy Forms ========================== */
+
+
+/* === Parametrization Arguments ======================= */
 .lzy-form {
-    --form-width: 30em;
-    --label-width: 6em;
-    max-width: var(--form-width);
+  --form-width: 30em;
+  --label-width: 6em;
+  max-width: var(--form-width);
 }
+
+
+
+/* === Small Screen ==================================== */
+#lzy.small-screen {
+  .lzy-form-field-wrapper {
+    margin-bottom: 0.7em;
+    label {
+      margin: 0.7em 0 0.3em;
+    }
+    label.lzy-form-pw-toggle {
+      margin: 0;
+    }
+  }
+  textarea,
+  input {
+    display: block;
+    width: 100%;
+    height: 2.5em;
+  }
+  // radio & checkbox:
+  .lzy-form-choice-elem {
+    input {
+      height: 1.3em;
+      width: 1.3em;
+      display: block;
+      margin-right: 0.7em;
+      float: left;
+      font-size: 1.3em;
+    }
+    label {
+      display: block;
+      //height: 1.3em;
+      line-height: 1.8em;
+
+    }
+  }
+  .lzy-horizontal {
+    .lzy-form-choice-elem {
+      input {
+        display: inline-block;
+        float: none;
+      }
+
+      label {
+        display: inline-block;
+        margin: 0 2em 0 0;
+      }
+    }
+  }
+
+  // password
+  .lzy-form-field-type-password {
+    input,
+    .lzy-form-pw-toggle,
+    .lzy-form-pw-toggle img {
+      display: inline-block;
+    }
+
+    .lzy-form-pw-toggle,
+    .lzy-form-pw-toggle img {
+      max-width: 1.6em;
+      height: auto;
+    }
+
+    input {
+      width: calc(100% - 2em - 10px);
+    }
+  } // password
+
+
+  // buttons
+  .lzy-form-field-type-button {
+    --box-width: 7em;
+    --grid-gap: 10px;
+    display: grid;
+    grid-gap: var(--grid-gap);
+    grid-template-columns: repeat(auto-fill, minmax(var(--box-width), 1fr));
+    grid-auto-flow: dense;
+  }
+
+  .lzy-form-field-type-button > input {
+    overflow: hidden;
+  }
+
+  // select
+  .lzy-form-field-wrapper.lzy-form-field-type-dropdown {
+    label {
+      width: 100%;
+      display: block;
+    }
+    select {
+    }
+  }
+
+} // small-screen
+
+
+
+// radio / checkbox
+.lzy-form-field-type-choice {
+  legend {
+    line-height: 1.8em;
+  }
+  input {
+    height: 1.3em;
+    width: 1.3em;
+    display: block;
+    margin-right: 0.7em;
+    float: left;
+    font-size: 1.3em;
+  }
+  label {
+    display: block;
+    //height: 1.3em;
+    line-height: 1.8em;
+
+  }
+}
+
+
+
+// select
+.lzy-form-field-type-dropdown {
+  label {
+    width: 100%;
+    display: block;
+  }
+  select {
+    border: 1px solid gray;
+    min-width: 7em;
+  }
+}
+
+
+//----------------------
+//#lzy.small-screen label,
+//#lzy.small-screen textarea,
+//#lzy.small-screen input {
+//	display: block;
+//	width: 100%;
+//}
+//#lzy.small-screen .lzy-form-field-type-password input,
+//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle,
+//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle img {
+//	display: inline-block;
+//}
+//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle,
+//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle img {
+//	max-width: 1.6em;
+//	height: auto;
+//}
+//#lzy.small-screen .lzy-form-field-type-password input {
+//	width: calc(100% - 2em - 10px);
+//}
+//#lzy.small-screen textarea,
+//#lzy.small-screen input {
+//	height: 2em;
+//}
 .lzy-form-field-wrapper {
     min-height: 2em;
     vertical-align: middle;
@@ -10,6 +173,10 @@
 .lzy-form-field-wrapper label {
     width: var(--label-width);
     display: inline-block;
+}
+.lzy-form-field-wrapper textarea,
+.lzy-form-field-wrapper input {
+    border: 1px solid #ddd;
 }
 .lzy-form-field-wrapper input {
     width: calc(100% - var(--label-width) - 5px);

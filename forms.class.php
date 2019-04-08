@@ -148,12 +148,18 @@ EOT;
                 $elem = "<p>Error: form type unknown: '{$this->type}'</p>\n";
         }
 
+        $type = $this->currRec->type;
+        if (($type == 'radio') || ($type == 'checkbox')) {
+            $type .= ' lzy-form-field-type-choice';
+        }
         if (isset($this->currRec->wrapperclass) && ($this->currRec->wrapperclass)) {
 //	        $class = "$elemId lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
-	        $class = "lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
+	        $class = "lzy-form-field-wrapper lzy-form-field-type-$type {$this->currRec->wrapperclass}";
+//	        $class = "lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
 		} else {
             $elemId = $this->formDescr["anfrage"]->formId.'_'. $this->currRec->elemId;
-            $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$this->currRec->type;
+            $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$type;
+//            $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$this->currRec->type;
 		}
         $class = $this->classAttr($class);
 		$out = "\t\t<div $class>\n$elem\t\t</div><!-- /field-wrapper -->\n\n";
