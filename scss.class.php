@@ -90,10 +90,8 @@ class SCssCompiler
     private function getFile($file)
     {
         $out = getFile($file);
-        $out = zapFileEND($out);
-        $out = removeCStyleComments($out);
-        $fname = basename($file);
         if ($this->localCall && $this->config->debug_compileScssWithLineNumbers) {
+            $fname = basename($file);
             $lines = explode(PHP_EOL, $out);
             $out = '';
             foreach ($lines as $i => $l) {
@@ -102,6 +100,8 @@ class SCssCompiler
                 }
                 $out .= $l."\n";
             }
+        } else {
+            $out = removeCStyleComments($out);
         }
         return $out . "\n";
     } // getFile
