@@ -222,22 +222,25 @@
 .lzy-form-field-wrapper .lzy-form-choice-elem * {
     vertical-align: top;
 }
-.lzy-form-field-type-checkbox input,
-.lzy-form-field-type-radio input {
-    width: 1.5em;
+//.lzy-form-field-type-checkbox input,
+//.lzy-form-field-type-radio input {
+.lzy-form-field-type-choice input {
+    width: 0.7em;
 }
 .lzy-form-field-type-checkbox legend,
 .lzy-form-field-type-radio legend {
     display: block;
     margin: 1em 0 0.5em;
 }
-.lzy-form-field-type-checkbox label,
-.lzy-form-field-type-radio label {
+//.lzy-form-field-type-checkbox label,
+//.lzy-form-field-type-radio label {
+.lzy-form-field-type-choice label {
     display: inline-block;
-    width: calc(100% - 1.6em);
+    width: calc(100% - 2em);
 }
-fieldset.lzy-form-radio-label,
-fieldset.lzy-form-checkbox-label {
+//fieldset.lzy-form-radio-label,
+//fieldset.lzy-form-checkbox-label {
+.lzy-form-field-type-choice fieldset {
     border: none;
     margin: 0;
     padding: 0;
