@@ -1709,9 +1709,10 @@ function handleFatalPhpError() {
 function parseDimString($str, $imageFile = false, $aspectRatio = false)
 {
     // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
-    if (strpos($str, 'x') === false) {
+    if (strpos($str, 'x') === false) {      // no 'x' present
         if (!$str) {
             $w = $h = $aspectRatio = 0;
+
         } else {
             if (!$aspectRatio) {
                 if (file_exists($imageFile)) {
@@ -1720,11 +1721,16 @@ function parseDimString($str, $imageFile = false, $aspectRatio = false)
                 } else {
                     $aspectRatio = DEFAULT_ASPECT_RATIO;
                 }
+            } elseif ($aspectRatio < 1) {
+                $w = intval($str);
+                $h = (int)round($w * $aspectRatio);
+            } else {
+                $h = intval($str);
+                $w = (int)round($h / $aspectRatio);
             }
-            $w = intval($str);
-            $h = (int) round($w * $aspectRatio);
         }
-    } else {
+
+    } else {                    // 'x' present
         list($w, $h) = explode('x', $str);
         $w = intval($w);
         $h = intval($h);
