@@ -176,25 +176,36 @@ figure a {
 }
 
 /* === Module Encapsulation: */
-#lzy .lzy-encapsulated ul,
-#lzy .lzy-encapsulated ol,
-#lzy .lzy-encapsulated li,
-#lzy .lzy-encapsulated div,
-#lzy .lzy-encapsulated a,
-#lzy .lzy-encapsulated img,
-#lzy .lzy-encapsulated label {
-    margin: 0;
-    padding: 0;
-    line-height: initial;
-    border: none;
-    background: transparent;
-    display: block;
-    position: relative;
-    overflow: initial;
-    z-index: initial;
-    width: initial;
-    list-style: initial;
-    box-sizing: border-box;
+#lzy .lzy-encapsulated {
+    p,
+    ul,
+    ol,
+    li,
+    div,
+    a,
+    img,
+    input,
+    textarea,
+    select,
+    label {
+        margin: 0;
+        padding: 0;
+        width: initial;
+        min-width: initial;
+        max-width: initial;
+        height: initial;
+        min-height: initial;
+        max-height: initial;
+        line-height: initial;
+        border: none;
+//        background: transparent;
+        display: block;
+        position: relative;
+        overflow: initial;
+        z-index: initial;
+        list-style: initial;
+        box-sizing: border-box;
+    }
 }
 
 
