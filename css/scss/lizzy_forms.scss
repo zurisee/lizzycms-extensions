@@ -1,389 +1,429 @@
-/* === Styles for Lizzy Forms ========================== */
-
+/**
+*
+*     Styles for Lizzy Forms
+*
+**/
 
 /* === Parametrization Arguments ======================= */
 .lzy-form {
-  --form-width: 30em;
-  --label-width: 6em;
-  max-width: var(--form-width);
+    --form-width: 30em;
+    --label-width: 6em;
+    max-width: var(--form-width);
 }
+
+
+
+
+#lzy .lzy-form.lzy-encapsulated,
+.lzy-form {
+
+    /* === Dropdown / select ================== */
+    .lzy-form-field-type-dropdown {
+        select {
+            border: 1px solid gray;
+            min-width: 10em;
+            height: 1.8em;
+        }
+        label {
+            padding-bottom: 0.4em;
+        }
+    }
+    .lzy-form-field-type-dropdown.lzy-horizontal {
+        select {
+            display: inline-block;
+        }
+        label {
+            padding-top: 0.3em;
+        }
+    }
+
+
+
+    /* === form-field-wrapper ========================== */
+    .lzy-form-field-wrapper {
+        min-height: 2.5em;
+        vertical-align: middle;
+        padding: 0 0 1em 0;
+
+        * {
+            box-sizing: border-box;
+            vertical-align: middle;
+        }
+    }
+
+    /* === Generic =================================== */
+    textarea,
+    input {
+        border: 1px solid #ddd;
+        line-height: 2em;
+    }
+
+    label {
+        width: 7em;
+        width: var(--label-width);
+        display: inline-block;
+    }
+
+    input {
+        width: 16em;
+        width: calc(100% - var(--label-width));
+        padding: 0.2em 0.4em;
+        display: inline-block;
+    }
+
+    /* === Placeholders =================================== */
+    ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+        text-align: right;
+        opacity: 0.5;
+    }
+
+    ::-moz-placeholder { /* Firefox 19+ */
+        text-align: right;
+        opacity: 0.5;
+    }
+
+    :-ms-input-placeholder { /* IE 10+ */
+        text-align: right;
+        opacity: 0.5;
+    }
+
+    :-moz-placeholder { /* Firefox 18- */
+        text-align: right;
+        opacity: 0.5;
+    }
+
+    ::placeholder { /* generic */
+        text-align: right;
+        opacity: 0.5;
+    }
+
+
+    /* === Password ================================ */
+    .lzy-form-field-type-password {
+        input {
+            width: calc(100% - var(--label-width) - 2em - 10px);
+        }
+
+        .lzy-form-pw-toggle {
+            img {
+                width: 2em;
+            }
+            width: 2em;
+            input {
+                position: absolute;
+                left: -1000vw;
+            }
+        }
+    }
+
+
+    /* === Text Area === */
+    .lzy-form-field-type-textarea {
+        label {
+            display: block;
+            margin: 1em 0 0.3em;
+            width: 100%;
+        }
+
+        textarea {
+            display: block;
+            margin: 0 0 0.5em;
+            width: 100%;
+            height: 5em;
+            box-sizing: border-box;
+            padding: 0.2em 0.4em;
+        }
+    }
+    // horizontal variant
+    .lzy-horizontal.lzy-form-field-type-textarea {
+        * {
+            vertical-align: top;
+        }
+
+        label {
+            display: inline-block;
+            margin: 0;
+            width: var(--label-width);
+        }
+
+        textarea {
+            display: inline-block;
+            margin: 0 0 0.5em;
+            width: calc(100% - var(--label-width));
+            height: 5em;
+        }
+
+    }
+
+
+    /* === Buttons =============================== */
+    .lzy-form-field-type-buttons {
+        text-align: right;
+    }
+    .lzy-form-form-button {
+        width: 7em;
+        min-height: 2em;
+    }
+
+
+    /* === fieldset ============================= */
+    .lzy-form-field-type-choice {
+        fieldset {
+            border: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+
+            > * {
+                vertical-align: top;
+            }
+        }
+        .lzy-legend {
+            display: block;
+            margin: 0 0 0.5em;
+        }
+    }
+
+
+    /* === choice elements (radio/checkbox) ====== */
+    .lzy-form-field-type-choice {
+        padding-bottom: 0.6em;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: content-box;
+        }
+        .lzy-form-choice-elem {
+            > * {
+                vertical-align: top;
+                line-height: 1.2em;
+            }
+            margin-bottom: 0.3em;
+        }
+        label {
+            display: inline-block;
+            cursor: pointer;
+            padding: 0;
+            width: calc(100% - 2em - 6px);
+        }
+        input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            display: inline-block;
+            position: relative;
+            background-color: #f1f1f1;
+            color: #666;
+            font-size: inherit;
+            height: 1em;
+            width: 1em;
+            border: 0;
+            box-shadow: inset 0 0 0 1px #bbb;
+            cursor: pointer;
+            margin-top: -1px;
+            margin-right: 0.65em;
+            outline: none;
+        }
+
+        input:checked::before {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1em;
+            height: 1em;
+            text-align: center;
+            line-height: 1em;
+            font-size: 90%;
+            left: 0.05em;
+            margin: 0;
+            content: '\02143';
+            transform: rotate(40deg);
+        }
+        input:checked {
+            background-color: #eafec5;
+        }
+        input:hover {
+            background-color: #f9ffef;
+        }
+    }
+    .lzy-form-field-type-radio input {
+        border-radius: 50%;
+    }
+
+    .lzy-form-field-type-checkbox input {
+        border-radius: 15%;
+    }
+
+
+
+    /* === choice elements - horizontal ========== */
+    .lzy-horizontal.lzy-form-field-type-choice {
+        fieldset > * {
+            display: inline-block;
+        }
+
+        .lzy-legend {
+            width: 7em;
+            width: var(--label-width);
+            margin: 0 6px 0 0;
+            line-height: 1.2em;
+        }
+    }
+
+
+    /* === choice elements - large widgets ====== */
+    .lzy-form-field-type-choice.lzy-horizontal.lzy-large-widget .lzy-legend {
+        padding-top: 0.4em;
+    }
+    .lzy-form-field-type-choice.lzy-large-widget {
+        label {
+            padding-top: 0.4em;
+            width: calc(100% - 3em - 6px);
+        }
+        input {
+            height: 1.8em;
+            width: 1.8em;
+            margin-right: 0.8em;
+        }
+        input:checked::before {
+            font-size: 133%;
+            left: 0.2em;
+            top: 0.1em;
+        }
+    }
+
+
+
+    /* === horizontal ============================ */
+    .lzy-horizontal {
+        .lzy-legend,
+        .lzy-fieldset-body,
+        .lzy-form-choice-elem {
+            display: inline-block;
+        }
+        .lzy-fieldset-body {
+            width: calc(100% - var(--label-width) - 16px);
+        }
+        .lzy-form-choice-elem label,
+        :not(.lzy-small-screen-vertical) .lzy-form-choice-elem label {
+            width: inherit;
+            margin-right: 2em;
+        }
+    }
+    .lzy-horizontal:not(.lzy-small-screen-vertical) .lzy-form-choice-elem {
+        display: inline-block;
+    }
+
+} // lzy-form
+
+
 
 
 
 /* === Small Screen ==================================== */
-#lzy.small-screen {
-  .lzy-form-field-wrapper {
-    margin-bottom: 0.7em;
-    label {
-      margin: 0.7em 0 0.3em;
-    }
-    label.lzy-form-pw-toggle {
-      margin: 0;
-    }
-  }
-  textarea,
-  input {
-    display: block;
-    width: 100%;
-    height: 2.5em;
-  }
-  // radio & checkbox:
-  .lzy-form-choice-elem {
-    input {
-      height: 1.3em;
-      width: 1.3em;
-      display: block;
-      margin-right: 0.7em;
-      float: left;
-      font-size: 1.3em;
-    }
-    label {
-      display: block;
-      //height: 1.3em;
-      line-height: 1.8em;
+#lzy.small-screen .lzy-form.lzy-encapsulated,
+.small-screen .lzy-form {
+    .lzy-form-field-wrapper {
+        font-size: 14pt;
 
-    }
-  }
-  .lzy-horizontal {
-    .lzy-form-choice-elem {
-      input {
-        display: inline-block;
-        float: none;
-      }
+        label {
+            margin: 0 0 0.2em;
+        }
 
-      label {
-        display: inline-block;
-        margin: 0 2em 0 0;
-      }
-    }
-  }
+        label.lzy-form-pw-toggle {
+            margin: 0;
+        }
 
-  // password
-  .lzy-form-field-type-password {
-    input,
-    .lzy-form-pw-toggle,
-    .lzy-form-pw-toggle img {
-      display: inline-block;
+        textarea,
+        input {
+            display: block;
+            width: 100%;
+        }
     }
 
-    .lzy-form-pw-toggle,
-    .lzy-form-pw-toggle img {
-      max-width: 1.6em;
-      height: auto;
+
+    // password
+    .lzy-s1 .lzy-form-field-type-password {
+        input,
+        .lzy-form-pw-toggle,
+        .lzy-form-pw-toggle img {
+            display: inline-block;
+        }
+
+        .lzy-form-pw-toggle,
+        .lzy-form-pw-toggle img {
+            max-width: 1.6em;
+            height: auto;
+        }
+
+        input {
+            width: calc(100% - 2em - 10px);
+        }
     }
 
-    input {
-      width: calc(100% - 2em - 10px);
+
+    // buttons
+    .lzy-form-field-type-buttons {
+        --box-width: 7em;
+        --grid-gap: 10px;
+        display: grid;
+        grid-gap: var(--grid-gap);
+        grid-template-columns: repeat(auto-fill, minmax(var(--box-width), 1fr));
+        grid-auto-flow: dense;
     }
-  } // password
 
-
-  // buttons
-  .lzy-form-field-type-button {
-    --box-width: 7em;
-    --grid-gap: 10px;
-    display: grid;
-    grid-gap: var(--grid-gap);
-    grid-template-columns: repeat(auto-fill, minmax(var(--box-width), 1fr));
-    grid-auto-flow: dense;
-  }
-
-  .lzy-form-field-type-button > input {
-    overflow: hidden;
-  }
-
-  // select
-  .lzy-form-field-wrapper.lzy-form-field-type-dropdown {
-    label {
-      width: 100%;
-      display: block;
+    .lzy-form-field-type-buttons > input {
+        overflow: hidden;
     }
-    select {
+
+    // select
+    .lzy-form-field-wrapper.lzy-form-field-type-dropdown {
+        label {
+            width: 100%;
+            display: block;
+        }
     }
-  }
-
-} // small-screen
 
 
+    // choice (radio / checkbox)
+    .lzy-form-field-type-choice {
+        .lzy-legend {
+            margin-bottom: 1em;
+        }
+        input {
+            height: 2.4em;
+            width: 2.4em;
+            margin-top: -1px;
+            margin-right: 0.8em;
+            display: inline-block;
+        }
 
-// radio / checkbox
-.lzy-form-field-type-choice {
-  legend {
-    line-height: 1.8em;
-  }
-  input {
-    height: 1.3em;
-    width: 1.3em;
-    display: block;
-    margin-right: 0.7em;
-    float: left;
-    font-size: 1.3em;
-  }
-  label {
-    display: block;
-    //height: 1.3em;
-    line-height: 1.8em;
+        input:checked::before {
+            font-size: 133%;
+            left: 0.4em;
+            top: 0.25em;
+        }
 
-  }
-}
+        label {
+            padding: 0.6em 0 0.6em;
+            width: calc(100% - 3em - 6px);
+            display: inline-block;
+        }
+    }
+    .lzy-form-field-type-choice.lzy-horizontal {
+        .lzy-legend {
+            padding-top: 0.6em;
+        }
+    }
 
-
-
-// select
-.lzy-form-field-type-dropdown {
-  label {
-    width: 100%;
-    display: block;
-  }
-  select {
-    border: 1px solid gray;
-    min-width: 7em;
-  }
-}
-
-
-//----------------------
-//#lzy.small-screen label,
-//#lzy.small-screen textarea,
-//#lzy.small-screen input {
-//	display: block;
-//	width: 100%;
-//}
-//#lzy.small-screen .lzy-form-field-type-password input,
-//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle,
-//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle img {
-//	display: inline-block;
-//}
-//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle,
-//#lzy.small-screen .lzy-form-field-type-password .lzy-form-pw-toggle img {
-//	max-width: 1.6em;
-//	height: auto;
-//}
-//#lzy.small-screen .lzy-form-field-type-password input {
-//	width: calc(100% - 2em - 10px);
-//}
-//#lzy.small-screen textarea,
-//#lzy.small-screen input {
-//	height: 2em;
-//}
-.lzy-form-field-wrapper {
-    min-height: 2em;
-    vertical-align: middle;
-}
-.lzy-form-field-wrapper label {
-    width: var(--label-width);
-    display: inline-block;
-}
-.lzy-form-field-wrapper textarea,
-.lzy-form-field-wrapper input {
-    border: 1px solid #ddd;
-}
-.lzy-form-field-wrapper input {
-    width: calc(100% - var(--label-width) - 5px);
-    padding: 0.2em 0.4em;
-    display: inline-block;
-    box-sizing: border-box;
-}
-.lzy-form-field-wrapper.lzy-form-field-type-password input {
-    width: calc(100% - var(--label-width) - 2em - 10px);
-}
-.lzy-form-field-wrapper.lzy-form-field-type-password .lzy-form-pw-toggle {
-    width: 2em;
-}
-
-.lzy-form-login-form-icon {
-    max-height: 1.2em;
-}
-.lzy-form-pw-toggle {
-    width: 2em;
-}
-.lzy-form-password-hint {
-    display: none;
-}
-
-.lzy-form-showPassword {
-    position: absolute;
-    left: -1000vw;
-}
-
-.lzy-form-field-type-button {
-    text-align: right;
-}
-
-.lzy-form-required-marker {
-	color: red;
-}
-
-/* === Radio and Checkbox === */
-.lzy-form-field-wrapper .lzy-form-choice-elem {
-    display: block;
-    height: 1.8em;
-}
-.lzy-form-field-wrapper .lzy-form-choice-elem * {
-    vertical-align: top;
-}
-//.lzy-form-field-type-checkbox input,
-//.lzy-form-field-type-radio input {
-.lzy-form-field-type-choice input {
-    width: 0.7em;
-}
-.lzy-form-field-type-checkbox legend,
-.lzy-form-field-type-radio legend {
-    display: block;
-    margin: 1em 0 0.5em;
-}
-//.lzy-form-field-type-checkbox label,
-//.lzy-form-field-type-radio label {
-.lzy-form-field-type-choice label {
-    display: inline-block;
-    width: calc(100% - 2em);
-}
-//fieldset.lzy-form-radio-label,
-//fieldset.lzy-form-checkbox-label {
-.lzy-form-field-type-choice fieldset {
-    border: none;
-    margin: 0;
-    padding: 0;
-}
-
-/* horizontal variant */
-.lzy-horizontal.lzy-form-field-type-checkbox legend, 
-.lzy-horizontal.lzy-form-field-type-radio legend {
-    display: inline-block;
-    width: var(--label-width);
-    float: left;
-    margin: 0;
-}
-.lzy-horizontal fieldset.lzy-form-radio-label, fieldset.lzy-form-checkbox-label {
-    margin-bottom: 0;
-}
-
-.lzy-horizontal.lzy-form-field-type-checkbox .lzy-form-choice-elem,
-.lzy-horizontal.lzy-form-field-type-radio .lzy-form-choice-elem {
-    display: inline-block;
-    white-space: nowrap;
-}
-.lzy-horizontal.lzy-form-field-type-checkbox label,
-.lzy-horizontal.lzy-form-field-type-radio label {
-    margin-right: 2em;
-}
-
-
-/* === Text Area === */
-.lzy-form-field-type-textarea label {
-    display: block;
-    margin: 1em 0 0.3em;
-    width: 100%;
-}
-.lzy-form-field-type-textarea textarea {
-    display: block;
-    margin: 0 0 0.5em;
-    width: 100%;
-    height: 5em;
-    box-sizing: border-box;
-    padding: 0.2em 0.4em;
-}
-
-/* horizontal variant */
-.lzy-horizontal.lzy-form-field-type-textarea * {
-    vertical-align: top;
-}
-.lzy-horizontal.lzy-form-field-type-textarea label {
-    display: inline-block;
-    margin: 0;
-    width: var(--label-width);
-}
-.lzy-horizontal.lzy-form-field-type-textarea textarea {
-    display: inline-block;
-    margin: 0 0 0.5em;
-    width: calc(100% - var(--label-width) - 5px);
-    height: 5em;
-}
-
-.lzy-form option {
-    background: yellow;
-}
-
-::-webkit-input-placeholder { /* Chrome/Opera/Safari */
-  text-align: right;
-  opacity: 0.5;
-}
-::-moz-placeholder { /* Firefox 19+ */
-  text-align: right;
-  opacity: 0.5;
-}
-:-ms-input-placeholder { /* IE 10+ */
-  text-align: right;
-  opacity: 0.5;
-}
-:-moz-placeholder { /* Firefox 18- */
-  text-align: right;
-  opacity: 0.5;
-}
-::placeholder { /* generic */
-  text-align: right;
-  opacity: 0.5;
-}
-.lzy-form-field-wrapper.lzy-form-field-type-button input.lzy-form-form-button,
-.lzy-form-field-wrapper.lzy-form-field-type-button button.lzy-form-form-button {
-	width: 7em;
-	height: 2em;
-}
-.lzy-form-field-wrapper * {
-    vertical-align: middle;
-}
-
-
-/* file upload */
-.lzy-form-file-upload {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: -1;
-    color: rgba(0,0,0,0);
-    padding: 0;
-    margin: 0;
-    height: 100%;
-    overflow:  hidden;
-}
-.lzy-form-file-upload::before {
-    content: " ";
-    position: absolute;
-    top:0;right:0;bottom: 0; left: 0;
-    background: white;
-}
-.lzy-form-file-upload-label {
-    position: relative;
-    width:  initial;
-    padding: 5px 15px;
-    cursor:  pointer;
-}
-.lzy-form-progress-indicator {
-	width: 20em;
-}
-.lzy-form-progress-indicator progress {
-	width: calc(100% - 3em);
-	margin-top: 0.2em;
-}
-.lzy-form-progress-indicator progress:not([value]) {
-    background: yellow;
-}
-.lzy-form-progress-indicator > div {
-	float: right;
-}
-
-.lzy-form-uploaded {
-	margin-top: 1em;
-}
-.lzy-form-uploaded li span {
-    display: inline-block;
-    vertical-align: middle;
-    padding: 0 15px 0 0;
-}
-
-.lzy-form-response {
-    margin: 1em 0;
-    border: 1px dashed red;
-    padding: 1em;
-}
+    .lzy-form-field-type-choice.lzy-small-screen-vertical {
+        .lzy-legend {
+            padding-top: 0;
+        }
+        .lzy-legend,
+        .lzy-fieldset-body,
+        .lzy-form-choice-elem {
+            display: block;
+        }
+    }
+} // .small-screen

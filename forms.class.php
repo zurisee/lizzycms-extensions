@@ -65,13 +65,16 @@ EOT;
     public function render($args)
     {
         if (isset($args[0]) && ($args[0] == 'help')) {
-            return false;
+            return $this->renderHelp();
         }
 
         $this->inx++;
         $this->parseArgs($args);
         
         switch ($this->currRec->type) {
+            case 'help':
+                return $this->renderHelp();
+
             case 'form-head':
                 return $this->formHead($args);
             
@@ -151,15 +154,14 @@ EOT;
         $type = $this->currRec->type;
         if (($type == 'radio') || ($type == 'checkbox')) {
             $type .= ' lzy-form-field-type-choice';
+        } elseif ($type == 'button') {
+            $type = 'buttons';
         }
         if (isset($this->currRec->wrapperclass) && ($this->currRec->wrapperclass)) {
-//	        $class = "$elemId lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
 	        $class = "lzy-form-field-wrapper lzy-form-field-type-$type {$this->currRec->wrapperclass}";
-//	        $class = "lzy-form-field-wrapper lzy-form-field-type-{$this->currRec->type} {$this->currRec->wrapperclass}";
 		} else {
-            $elemId = $this->formDescr["anfrage"]->formId.'_'. $this->currRec->elemId;
+            $elemId = $this->currForm->formId.'_'. $this->currRec->elemId;
             $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$type;
-//            $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$this->currRec->type;
 		}
         $class = $this->classAttr($class);
 		$out = "\t\t<div $class>\n$elem\t\t</div><!-- /field-wrapper -->\n\n";
@@ -170,9 +172,16 @@ EOT;
 //-------------------------------------------------------------
     private function formHead($args)
     {
-		$this->currForm->class = $class = (isset($args['class'])) ? $args['class'] : translateToIdentifier($this->currForm->formName);
-		$_class = " class='lzy-form $class'";
-		
+		$this->currForm->class = $class = (isset($args['class'])) ? $args['class'] : 'lzy-form';
+		if ($this->currForm->formName) {
+		    $class .= ' '.translateToIdentifier($this->currForm->formName);
+        }
+        $this->currForm->class = $class;
+        if (isset($args['encapsulate']) && $args['encapsulate']) {
+            $class .= ' lzy-encapsulated';
+        }
+		$_class = " class='$class'";
+
 		$this->currForm->method = (isset($args['method'])) ? $args['method'] : 'post';
 		$_method = " method='{$this->currForm->method}'";
 
@@ -183,13 +192,13 @@ EOT;
 		$this->currForm->mailfrom = (isset($args['mailfrom'])) ? $args['mailfrom'] : '';
 		$this->currForm->process = (isset($args['process'])) ? $args['process'] : '';
 		$this->currForm->action = (isset($args['action'])) ? $args['action'] : '';
-		$this->currForm->class = (isset($args['class'])) ? $args['class'] : '';
 		$this->currForm->next = (isset($args['next'])) ? $args['next'] : './';
 		$this->currForm->file = (isset($args['file'])) ? $args['file'] : '';
 
 		$time = time();
 
-		$out = "<form$_class$_method$_action>\n";
+		$out = "\t<form$_class$_method$_action>\n";
+		$out .= "\t  <div class='lzy-s1 lzy-s2 lzy-s3'>\n";
 		$out .= "\t\t<input type='hidden' name='lizzy_form' value='$class' />\n";
 		$out .= "\t\t<input type='hidden' class='lizzy_time' name='lizzy_time' value='$time' />\n";
 		$out .= "\t\t<input type='hidden' class='lizzy_next' value='{$this->currForm->next}' />\n";
@@ -198,10 +207,32 @@ EOT;
 
 
 //-------------------------------------------------------------
-	private function renderTextarea()
+    private function renderTextInput()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<textarea id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} >{$this->currRec->value}</textarea>\n";
+        $out .= "<input type='text' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        return $out;
+    } // renderTextInput
+
+
+//-------------------------------------------------------------
+    private function renderPassword()
+    {
+        $input = "<input type='password' class='lzy-form-password' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} aria-invalid='false' aria-describedby='password-hint' value='{$this->currRec->value}' />\n";
+        $hint = <<<EOT
+            <label class='lzy-form-pw-toggle' for="showPassword"><input type="checkbox" id="lzy-form-showPassword{$this->inx}" class="lzy-form-showPassword"><img src="~sys/rsc/show.png" class="lzy-form-login-form-icon" alt="{{ show password }}" title="{{ show password }}" /></label>
+EOT;
+        $out = $this->getLabel();
+        $out .= $input . $hint;
+        return $out;
+    } // renderPassword
+
+
+//-------------------------------------------------------------
+    private function renderTextarea()
+    {
+        $out = $this->getLabel();
+        $out .= "<textarea id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} >{$this->currRec->value}</textarea>\n";
         return $out;
     } // renderTextarea
 
@@ -210,22 +241,13 @@ EOT;
     private function renderEMailInput()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='email' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='email' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderEMailInput
 
-//-------------------------------------------------------------
-	private function checkEMailInput($value)
-	{
-		if (is_legal_email_address($value)) {
-			$this->currRec->errMsg .= "{{ Syntax-Error in E-Mail }}";
-			return false;
-		}
-		return true;
-	}
 
 
-//-------------------------------------------------------------
+    //-------------------------------------------------------------
     private function renderRadio()
     {
         $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
@@ -238,19 +260,19 @@ EOT;
         if ($this->currRec->name) {
             $groupName = $this->currRec->name;
         }
-		$checkedElem = (isset($this->userSuppliedData[$groupName])) ? $this->userSuppliedData[$groupName] : false;
-        $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-radio-label'><legend>{$this->currRec->label}</legend>\n";
+        $checkedElem = (isset($this->userSuppliedData[$groupName])) ? $this->userSuppliedData[$groupName] : false;
+        $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-radio-label'><div class='lzy-legend'><legend>{$this->currRec->label}</legend></div>\n\t\t\t  <div class='lzy-fieldset-body'>\n";
         foreach($values as $i => $value) {
             $val = translateToIdentifier($value);
             $name = $valueNames[$i];
-            $id = "fld_{$groupName}_$name";
+            $id = "lzy-radio_{$groupName}_$i";
 
-			$checked = ($checkedElem && ($val == $checkedElem)) ? ' checked' : '';
+            $checked = ($checkedElem && ($val == $checkedElem)) ? ' checked' : '';
             $out .= "\t\t\t<div class='$id lzy-form-radio-elem lzy-form-choice-elem'>\n";
             $out .= "\t\t\t\t<input id='$id' type='radio' name='$groupName' value='$name'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
-        $out .= "\t\t\t</fieldset>\n";
+        $out .= "\t\t\t  </div><!--/lzy-fieldset-body -->\n\t\t\t</fieldset>\n";
         return $out;
     } // renderRadio
 
@@ -265,54 +287,30 @@ EOT;
             $valueNames = $values;
         }
         $groupName = translateToIdentifier($this->currRec->label);
-        $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-checkbox-label'><legend>{$this->currRec->label}</legend>\n";
-		
-		$data = isset($this->userSuppliedData[$groupName]) ? $this->userSuppliedData[$groupName] : [];
+        $out = "\t\t\t<fieldset class='lzy-form-label lzy-form-checkbox-label'><div class='lzy-legend'><legend>{$this->currRec->label}</legend></div>\n\t\t\t  <div class='lzy-fieldset-body'>\n";
+
+        $data = isset($this->userSuppliedData[$groupName]) ? $this->userSuppliedData[$groupName] : [];
         foreach($values as $i => $value) {
             $val = translateToIdentifier($value);
             $name = $valueNames[$i];
-//            $id = "fld_{$groupName}_$val";
-            $id = "fld_{$groupName}_$name";
+            $id = "lzy-chckb_{$groupName}_$i";
 
-			$checked = ($data && in_array($value, $data)) ? ' checked' : '';
+            $checked = ($data && in_array($value, $data)) ? ' checked' : '';
             $out .= "\t\t\t<div class='$id lzy-form-checkbox-elem lzy-form-choice-elem'>\n";
             $out .= "\t\t\t\t<input id='$id' type='checkbox' name='{$groupName}[]' value='$name'$checked /><label for='$id'>$value</label>\n";
-//            $out .= "\t\t\t\t<input id='$id' type='checkbox' name='{$groupName}[]' value='$value'$checked /><label for='$id'>$value</label>\n";
             $out .= "\t\t\t</div>\n";
         }
-        $out .= "\t\t\t</fieldset>\n";
+        $out .= "\t\t\t  </div><!--/lzy-fieldset-body -->\n\t\t\t</fieldset>\n";
         return $out;
     } // renderRadio
 
-
-//-------------------------------------------------------------
-    private function renderTextInput()
-    {
-        $out = $this->getLabel();
-        $out .= "\t\t\t<input type='text' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
-        return $out;
-    } // renderTextInput
-
-
-//-------------------------------------------------------------
-    private function renderPassword()
-    {
-        $input = "\t\t\t<input type='password' class='lzy-form-password' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} aria-invalid='false' aria-describedby='password-hint' value='{$this->currRec->value}' />\n";
-        $hint = <<<EOT
-            <label class='lzy-form-pw-toggle' for="showPassword"><input type="checkbox" id="lzy-form-showPassword{$this->inx}" class="lzy-form-showPassword"><img src="~sys/rsc/show.png" class="lzy-form-login-form-icon" alt="{{ show password }}" title="{{ show password }}" /></label>
-EOT;
-//            <div id="password-hint" class="password-hint">{{password-hint}}</div>
-        $out = $this->getLabel();
-        $out .= $input . $hint;
-        return $out;
-    } // renderPassword
 
 
 //-------------------------------------------------------------
     private function renderDate()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='date' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='date' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderDate
 
@@ -321,7 +319,7 @@ EOT;
     private function renderTime()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='time' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='time' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderDate
 
@@ -330,7 +328,7 @@ EOT;
     private function renderMonth()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='month' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='month' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderMonth
 
@@ -338,7 +336,7 @@ EOT;
     private function renderNumber()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='number' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='number' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderNumber
 
@@ -347,7 +345,7 @@ EOT;
     private function renderRange()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='range' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='range' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderRange
 
@@ -356,7 +354,7 @@ EOT;
     private function renderTel()
     {
         $out = $this->getLabel();
-        $out .= "\t\t\t<input type='tel' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
+        $out .= "<input type='tel' id='fld_{$this->currRec->name}'{$this->currRec->inpAttr} value='{$this->currRec->value}' />\n";
         return $out;
     } // renderTel
 
@@ -366,7 +364,7 @@ EOT;
     {
         $values = ($this->currRec->value) ? preg_split('/\s*\|\s*/', $this->currRec->value) : [];
         $out = $this->getLabel();
-        $out .= "\t\t\t<select id='fld_{$this->currRec->name}' name='{$this->currRec->name}'>\n";
+        $out .= "<select id='fld_{$this->currRec->name}' name='{$this->currRec->name}'>\n";
         $out .= "\t\t\t\t<option value=''></option>\n";
 
         foreach ($values as $item) {
@@ -468,7 +466,6 @@ EOT;
 			</div>
 
 			<div id='lzy-form-uploaded$inx' class='lzy-form-uploaded'$dispNo >$list</div>
-			<!--<div id='uploaded$inx' class='lzy-form-uploaded'$dispNo >$list</div>-->
 
 EOT;
 //??? -> upload with 'lzy-form-'?
@@ -549,8 +546,6 @@ EOT;
 				$id = 'btn_'.$this->currForm->formId.'_'.translateToIdentifier($type);
 				$label = (isset($labels[$i])) ? $labels[$i] : $type;
 				if (stripos($type, 'submit') !== false) {
-//					$out .= "$indent<output id='{$this->currForm->formId}_error-msg$i'  aria-live='polite' aria-relevant='additions'></output>\n";
-//					$out .= "$indent<output id='{$this->currForm->formId}_error-msg'  aria-live='polite' aria-relevant='additions'></output>\n";
 					$out .= "$indent<input type='submit' id='$id' value='$label' $class />\n";
 					
 				} elseif (stripos($type, 'reset') !== false) {
@@ -570,10 +565,12 @@ EOT;
 	private function formTail()
     {
 		$this->saveFormDescr();
-		if (isset($this->page->formEvalResult)) {
-			return "</form>\n".$this->page->formEvalResult;
+		$out = "\t  </div><!-- /lzy-s1 lzy-s2 lzy-s3 -->\n\t</form>\n";
+
+        if (isset($this->page->formEvalResult)) {
+			return $out.$this->page->formEvalResult;
 		} else {
-			return "</form>\n";
+			return $out;
 		}
 	} // formTail
 
@@ -602,7 +599,7 @@ EOT;
             }
         }
 
-        return "\t\t\t<label for='$id'>$label</label>\n";
+        return "\t\t\t<label for='$id'>$label</label>";
     } // getLabel
 
 
@@ -648,7 +645,6 @@ EOT;
 		} else {
             $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form-Elem'.($this->inx + 1);
             $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : true;
-//            $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : false;
 			$formId = $this->currForm->formId;
 			$this->currForm = &$this->formDescr[ $formId ];
 		}
@@ -667,12 +663,8 @@ EOT;
 		
 		$elemId = translateToIdentifier($label);
 
-//		if ($type != 'fieldset') {
-            $this->currForm->formElements[$elemId] = new FormElement;
-            $this->currRec = &$this->currForm->formElements[$elemId];
-//        } else {
-//            $this->currRec = new FormElement;
-//        }
+        $this->currForm->formElements[$elemId] = new FormElement;
+        $this->currRec = &$this->currForm->formElements[$elemId];
         $rec = &$this->currRec;
 
 		$rec->type = $type;
@@ -718,7 +710,7 @@ EOT;
         }
 
 
-            if ($type == 'form-head') {
+        if ($type == 'form-head') {
 			$this->currForm->formData['labels'][0] = 'Date';
 			$this->currForm->formData['names'] = [];
 		} elseif (($type != 'button') && ($type != 'form-tail') && (strpos($type, 'fieldset') === false)) {
@@ -861,8 +853,6 @@ EOT;
 //-------------------------------------------------------------
 	private function defaultFormEvaluation($currFormDescr)
 	{
-		$formId = $this->formId;
-
 		$formName = $currFormDescr->formName;
 		$mailto = $currFormDescr->mailto;
 		$mailfrom = $currFormDescr->mailfrom;
@@ -910,7 +900,6 @@ EOT;
 //-------------------------------------------------------------
 	private function saveCsv($currFormDescr)
 	{
-		$cvsHead = '';
 		$cvs = '';
 		$quoteChar = CSV_QUOTE;
 		$formId = $currFormDescr->formId;
@@ -1033,6 +1022,9 @@ mailfrom:
 
 process:
 : Name of php-script (in folder _code/) that will process submitted data
+
+encapsulate:
+: If true, applies Lizzy's CSS encapsulation (i.e. adds lzy-encapsulated class to form element)
 
 form-tail:
 : The last element (required)
