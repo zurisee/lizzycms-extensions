@@ -59,7 +59,7 @@ $this->addMacro($macroName, function () {
 
     // link around img
     if ($link) {
-        require_once SYSTEM_PATH . 'create-link.class.php';
+        require_once SYSTEM_PATH . 'link.class.php';
         $cl = new CreateLink();
 
         $str = str_replace('lzy-quickview', '', $str); // link overrides quickview

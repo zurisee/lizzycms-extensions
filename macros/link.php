@@ -2,7 +2,7 @@
 
 // @info: Renders a link.
 
-require_once SYSTEM_PATH.'create-link.class.php';
+require_once SYSTEM_PATH.'link.class.php';
 
 
 $macroName = basename(__FILE__, '.php');
