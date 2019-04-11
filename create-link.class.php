@@ -51,6 +51,7 @@ class CreateLink
             if ($body) {
                 $href .= "?&body=$body";
             }
+            $target = " target='_blank' rel='noopener noreferrer'";
 
         } elseif ((stripos($href, 'tel:') === 0) || (stripos($type, 'tel') !== false)) {
             $class = ($class) ?  "$class tel_link" : 'tel_link';
@@ -58,6 +59,7 @@ class CreateLink
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
             }
+            $target = " target='_blank' rel='noopener noreferrer'";
 
         } elseif ((stripos($href, 'geo:') === 0) || (stripos($type, 'geo') !== false)) {
             $class = ($class) ?  "$class geo_link" : 'geo_link';
@@ -65,6 +67,7 @@ class CreateLink
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
             }
+            $target = " target='_blank' rel='noopener noreferrer'";
 
         } elseif ((stripos($href, 'pdf:') === 0) || (stripos($type, 'pdf') !== false)) {
             $class = ($class) ?  "$class pdf_link" : 'pdf_link';
@@ -75,7 +78,7 @@ class CreateLink
             $href = resolvePath(str_replace('pdf:', '', $href), true, true);
             if ($target) {
                 $target = ($target === 'newwin')? '_blank': $target;
-                $target = " target='$target' rel='noopener'";
+                $target = " target='$target' rel='noopener noreferrer'";
                 // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
             }
 
@@ -101,11 +104,11 @@ class CreateLink
 
             if ($target) {
                 $target = ($target === 'newwin')? '_blank': $target;
-                $target = " target='$target' rel='noopener'";
+                $target = " target='$target' rel='noopener noreferrer'";
                 // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
 
             } elseif (stripos($type, 'extern') !== false) {
-                $target = " target='_blank' rel='noopener'";
+                $target = " target='_blank' rel='noopener noreferrer'";
                 $class = ($class) ? "$class external_link" : 'external_link';
                 $title = $title ? $title : " title='{{ opens in new win }}'";
             }
