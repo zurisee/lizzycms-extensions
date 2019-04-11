@@ -197,7 +197,7 @@ function parseInlineBlockArguments($str, $returnElements = false)
     }
 
     if ($returnElements) {
-        return [$tag, $id, $class, $attr];
+        return [$tag, $id, $class, trim($style), $attr];
     } else {
         $str = "$id$class$style$attr";
         return [$tag, $str, $lang, $comment, $literal, $mdCompile];

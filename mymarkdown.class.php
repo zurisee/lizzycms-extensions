@@ -525,20 +525,24 @@ class MyMarkdown
 		if ($args) {
 			$c1 = $args{0};
 			if ($c1 == '"') {		                                                        // span
-                if (preg_match('/([^"]*)"([^"]*)"(.*)/', $args, $mm)) {	// "
+                if (preg_match('/([^"]*) " ([^"]*) " \s* ,? (.*)/x', $args, $mm)) {	// "
                     $span = $mm[2];
                     $args = $mm[1] . $mm[3];
                 }
             } elseif ($c1 == "'") {
-                if (preg_match("/([^ ']*)'([^']*)'(.*)/", $args, $mm)) {	 // '
+                if (preg_match("/([^ ']*) ' ([^']*) ' \s* ,? (.*)/x", $args, $mm)) {	 // '
                     $span = $mm[2];
                     $args = $mm[1] . $mm[3];
                 }
             }
-            list($tag, $id, $class, $attr) = parseInlineBlockArguments($args, true);
+            list($tag, $id, $class, $style, $attr) = parseInlineBlockArguments($args, true);
 
 			if ($span) {
-                $head .= "<span $attr>$span</span>";
+		        $id = $id ? " id='$id'" : '';
+		        $class = $class ? " class='$class'" : '';
+		        $style = $style ? " style='$style'" : '';
+
+                $head .= "<span $id$class$style$attr>$span</span>";
 
 			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $m)) {	// now insert into preceding tag
 				$head = $m[1] . "$attr>" . $m[2] . $span;
