@@ -37,8 +37,8 @@
         }
     );
 
-    // prepare small-screen nav: expand
-    $('.small-screen .primary-nav .lzy-nav > ol > li').each(function() {
+    // prepare lzy-small-screen nav: expand
+    $('.lzy-small-screen .primary-nav .lzy-nav > ol > li').each(function() {
         toggleAccordion($( this ), true, true);
     });
 
@@ -48,7 +48,7 @@
         $( this ).removeClass('lzy-nav-animated').addClass('lzy-nav-animation-active');
     });
 
-    if ($('body.small-screen').length) {
+    if ($('body.lzy-small-screen').length) {
         operateMobileMenuPane( false );
     }
 

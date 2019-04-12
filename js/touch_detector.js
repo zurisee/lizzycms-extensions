@@ -17,8 +17,8 @@
 	if (Modernizr.touchevents) {
 		$('body').addClass('touch');
 		if (w < 400) {
-			$('body').addClass('small-screen');
-			mylog('small-screen: true');
+			$('body').addClass('lzy-small-screen');
+			mylog('lzy-small-screen: true');
 		}
 	}
 }( jQuery ));

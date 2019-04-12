@@ -2,17 +2,17 @@
 // handle screen-size and resize
 (function ( $ ) {
     if ($(window).width() < screenSizeBreakpoint) {
-        $('body').addClass('small-screen');
+        $('body').addClass('lzy-small-screen');
     } else {
-        $('body').addClass('large-screen');
+        $('body').addClass('lzy-large-screen');
     }
 
     $(window).resize(function(){
         var w = $(this).width();
         if (w < screenSizeBreakpoint) {
-            $('body').addClass('small-screen').removeClass('large-screen');
+            $('body').addClass('lzy-small-screen').removeClass('lzy-large-screen');
         } else {
-            $('body').removeClass('small-screen').addClass('large-screen');
+            $('body').removeClass('lzy-small-screen').addClass('lzy-large-screen');
         }
     });
 }( jQuery ));

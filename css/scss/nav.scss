@@ -243,7 +243,7 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
 } // lzy-nav-colored
 
 
-body:not(lzy-small-screen) {
+body:not(.lzy-small-screen) {
     .lzy-mobile-page-header {
         display: none;
     }
@@ -322,7 +322,7 @@ body:not(lzy-small-screen) {
 
 }
 
-#lzy.large-screen {
+#lzy.lzy-large-screen {
     .lzy-nav-top-horizontal {
         a {
             line-height: var(--lzy-nav-line-height);
@@ -416,7 +416,7 @@ body:not(lzy-small-screen) {
         }
 
     } // lzy-nav-top-horizontal
-} // top-nav large-screen
+} // top-nav lzy-large-screen
 
 
 

@@ -321,8 +321,8 @@
 
 
 /* === Small Screen ==================================== */
-#lzy.small-screen .lzy-form.lzy-encapsulated,
-.small-screen .lzy-form {
+#lzy.lzy-small-screen .lzy-form.lzy-encapsulated,
+.lzy-small-screen .lzy-form {
     .lzy-form-field-wrapper {
         font-size: 14pt;
 
@@ -426,4 +426,4 @@
             display: block;
         }
     }
-} // .small-screen
+} // .lzy-small-screen
