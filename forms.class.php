@@ -199,7 +199,8 @@ EOT;
 
 		$out = "\t<form$_class$_method$_action>\n";
 		$out .= "\t  <div class='lzy-s1 lzy-s2 lzy-s3'>\n";
-		$out .= "\t\t<input type='hidden' name='lizzy_form' value='$class' />\n";
+		$out .= "\t\t<input type='hidden' name='lizzy_form' value='{$this->currForm->formId}' />\n";
+//		$out .= "\t\t<input type='hidden' name='lizzy_form' value='$class' />\n";
 		$out .= "\t\t<input type='hidden' class='lizzy_time' name='lizzy_time' value='$time' />\n";
 		$out .= "\t\t<input type='hidden' class='lizzy_next' value='{$this->currForm->next}' />\n";
 		return $out;
@@ -768,38 +769,44 @@ EOT;
 	private function saveFormDescr()
 	{
 		$formId = $this->currForm->formId;
-		$_SESSION['lizzy'][$formId] = serialize($this->formDescr);
+		$_SESSION['lizzy']['formDescr'][$formId] = serialize($this->formDescr);
+//		$_SESSION['lizzy'][$formId] = serialize($this->formDescr);
 	} // saveFormDescr
 
 
 //-------------------------------------------------------------
 	private function restoreFormDescr($formId)
 	{
-		return (isset($_SESSION['lizzy'][$formId])) ? unserialize($_SESSION['lizzy'][$formId]) : null;
+		return (isset($_SESSION['lizzy']['formDescr'][$formId])) ? unserialize($_SESSION['lizzy']['formDescr'][$formId]) : null;
+//		return $tmp[$formId];
+//		return (isset($_SESSION['lizzy']['formDescr'][$formId])) ? unserialize($_SESSION['lizzy']['formDescr'][$formId]) : null;
+//		return (isset($_SESSION['lizzy'][$formId])) ? unserialize($_SESSION['lizzy'][$formId]) : null;
 	} // restoreFormDescr
 
 
 //-------------------------------------------------------------
 	private function saveUserSuppliedData($formId, $userSuppliedData)
 	{
-		$_SESSION['lizzy'][$formId.'_userData'] = serialize($userSuppliedData);
+		$_SESSION['lizzy']['formData'][$formId] = serialize($userSuppliedData);
+//		$_SESSION['lizzy'][$formId.'_userData'] = serialize($userSuppliedData);
 	} // saveUserSuppliedData
 
 
 //-------------------------------------------------------------
 	private function getUserSuppliedData($formId)
 	{
-		return (isset($_SESSION['lizzy'][$formId.'_userData'])) ? unserialize($_SESSION['lizzy'][$formId.'_userData']) : null;
+		return (isset($_SESSION['lizzy']['formData'][$formId])) ? unserialize($_SESSION['lizzy']['formData'][$formId]) : null;
+//		return (isset($_SESSION['lizzy'][$formId.'_userData'])) ? unserialize($_SESSION['lizzy'][$formId.'_userData']) : null;
 	} // getUserSuppliedData
 
 
 //-------------------------------------------------------------
-    private function prepareFieldValue()
-    {
-		if ((!$this->value) && (isset($this->data['$this->name']))) {
-			$this->value = $this->data['$this->name'];
-		}
-	} // prepareFieldValue
+//    private function prepareFieldValue()
+//    {
+//		if ((!$this->value) && (isset($this->data['$this->name']))) {
+//			$this->value = $this->data['$this->name'];
+//		}
+//	} // prepareFieldValue
 
 
 //-------------------------------------------------------------
@@ -964,7 +971,9 @@ EOT;
 	public function clearCache()
 	{
 		if (isset($this->formId)) {
-			unset($_SESSION['lizzy'][$this->formId.'_userData']);
+			unset($_SESSION['lizzy']['formDescr']);
+			unset($_SESSION['lizzy']['formData']);
+//			unset($_SESSION['lizzy'][$this->formId.'_userData']);
 		}
 	}
 
