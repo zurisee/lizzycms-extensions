@@ -28,6 +28,8 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'ariaLabel', 'A label that describes the role, e.g. "Main Menu" (&rarr; needed by assistive technologies)');
     $this->getArg($macroName, 'arrow', 'The symbol to be placed in front of nav elements that have children.');
 
+    $this->getArg($macroName, 'primary', '[true|false] If true, applies class "primary-nav". By default, the first instance of nav() gets the "primary-nav" class. This options permits to override the mechanism.', null);
+
     $this->getArg($macroName, 'depth', 'The max depth of headers which shall be included', 6);
     $this->getArg($macroName, 'targetElement', 'For "in-page": specifies the html tag that shall be targeted', false);
     $this->getArg($macroName, 'listTag', '[ol, ul, div] Specifies type of list. Default is OL.', 'ol');

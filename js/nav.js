@@ -1,9 +1,22 @@
+var largeScreenClasses = '';
 
 
 (function ( $ ) {
     if (!$('#lzy').length) {
         alert("Warning: '#lzy'-Id missing within this page \n-> Lizzy's nav() objects not working.");
     }
+    largeScreenClasses = $('.primary-nav .lzy-nav').attr('class');
+
+    var isSmallScreen = ($(window).width() < screenSizeBreakpoint);
+    adaptMainMenuToScreenSize(isSmallScreen);
+
+    $(window).resize(function(){
+        var w = $(this).width();
+        var isSmallScreen = (w < screenSizeBreakpoint);
+        adaptMainMenuToScreenSize(isSmallScreen);
+        setHightOnHiddenElements( false );
+    });
+
 
     if ($('.lzy-nav-accordion, .lzy-nav-slidedown, .lzy-nav-top-horizontal').length) {
         setHightOnHiddenElements();
@@ -57,6 +70,18 @@
 }( jQuery ));
 
 
+function adaptMainMenuToScreenSize( smallScreen ) {
+    if (smallScreen) {
+        $('.primary-nav .lzy-nav').removeClass('lzy-nav-top-horizontal lzy-nav-hover').addClass('lzy-nav-accordion');
+        // console.log('nav set to smallScreen');
+    } else {
+        $('.primary-nav .lzy-nav').attr('class', largeScreenClasses);
+        $('.primary-nav input').prop('checked', false);
+        $('.primary-nav .lzy-has-children').removeClass('open');
+        $('body').removeClass('lzy-nav-mobile-open');
+        // console.log('nav set to largeScreen');
+    }
+}
 
 function toggleAccordion($parentLi, newState, deep) {
     var $nextDiv = $( '> div', $parentLi );
@@ -114,10 +139,15 @@ function operateMobileMenuPane( newState ) {
 
 
 
-function setHightOnHiddenElements() {
+function setHightOnHiddenElements( first ) {
+    var doCalc = !(typeof first === 'undefined');
     $('#lzy .lzy-nav-accordion .lzy-has-children, #lzy .lzy-nav-top-horizontal .lzy-has-children, #lzy .lzy-nav-collapsed .lzy-has-children').each(function() {
-        var h = $('>div>ol', this).height() + 20;                // set height to optimize animation
-        $('>div>ol', this).css('margin-top', '-'+h+'px');
+        if (doCalc) {
+            var h = '100vh';
+        } else {
+            var h = $('>div>ol', this).height() + 20 + 'px';                // set height to optimize animation
+        }
+        $('>div>ol', this).css('margin-top', '-'+h);
     });
 } // setHightOnHiddenElements
 

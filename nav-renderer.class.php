@@ -47,14 +47,25 @@ class NavRenderer
         $options['listWrapper'] = ($options['listWrapper']) ? $options['listWrapper'] : 'div'; // listWrapper by default
         $layoutClass = '';
 
+        $primaryClass = '';
+        if ($options['primary'] === null) {
+            if ($this->inx == 1) {
+                $primaryClass = ' primary-nav';
+                $options['ariaLabel'] = $options['ariaLabel']? $options['ariaLabel'] : 'Main Menu';
+            }
+        } elseif ($options['primary']) {
+            $primaryClass = ' primary-nav';
+            $options['ariaLabel'] = $options['ariaLabel']? $options['ariaLabel'] : 'Main Menu';
+        }
+
         // no specific php-file, so render standard output of predefined types:
         if ($type == 'top') {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-animated lzy-nav-hover lzy-encapsulated');
-            $options['options'] .= ' editable primary-nav';
+            $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-accordion lzy-nav-indented lzy-nav-animated lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
-            $options['options'] .= ' editable primary-nav';
+            $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'sitemap') {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-encapsulated');
@@ -125,10 +136,6 @@ class NavRenderer
         $this->collapse = (strpos($navClass, 'lzy-nav-collapsed') !== false);
         $this->currBranch = (strpos($navOptions, 'curr-branch') !== false);
         $this->currBranchEmpty = true;
-//        $currBranch = false;
-//        if (strpos($navOptions,'curr-branch') !== false) {
-//            $currBranch = true;
-//        }
 
         $nav = $this->_renderSitemap(false, $type, 0, "\t\t", $navOptions);
 
@@ -165,11 +172,6 @@ EOT;
             $edWrapper = '';
             $_edWrapper = '';
         }
-
-        if (!$ariaLabel) {
-            $ariaLabel = '{{ Main Menu }}';
-        }
-
 
         $out = <<<EOT
 
