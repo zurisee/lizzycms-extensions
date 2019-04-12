@@ -177,7 +177,6 @@ EOT;
 		    $class .= ' '.translateToIdentifier($this->currForm->formName);
         }
         $this->currForm->class = $class;
-//        if (isset($args['encapsulate']) && $args['encapsulate']) {
         if (!isset($args['encapsulate']) || $args['encapsulate']) {
             $class .= ' lzy-encapsulated';
         }
