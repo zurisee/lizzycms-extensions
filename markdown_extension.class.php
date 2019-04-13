@@ -523,12 +523,12 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                     if (preg_match('/\s\s$/', $md)) { // 2 blanks at end of line -> insert line break
                         $md .= "<br />\n";
                     }
-                    $html = compileMarkdownStr($md, true);
+                    $html = trim(compileMarkdownStr($md, true));
                     $html = "\t\t\t".str_replace("\n", "\n\t\t\t", $html);
-                    $out .= substr($html, 0, -3);
+                    $out .= $html;
                     $md = '';
                 }
-                $out .= "\t\t</dd>\n";
+                $out .= "\n\t\t</dd>\n";
 
             } elseif (preg_match('/^: /', $line)) { // within dd block
                 $md .= substr($line, 2);
@@ -537,8 +537,8 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                 }
 
             } else {                                        // new dt block starts
-                $line = compileMarkdownStr($line, true);
-                $out .= "\n\t\t<dt>$line</dt>\n";
+                $line = trim(compileMarkdownStr($line, true));
+                $out .= "\t\t<dt>$line</dt>\n";
                 $out .= "\t\t<dd>\n";
             }
         }
@@ -547,7 +547,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $html = "\t\t\t".str_replace("\n", "\n\t\t\t", $html);
             $out .= substr($html, 0, -3);
         }
-        $out .= "\t\t</dd>\n";
+//        $out .= "\t\t</dd>\n";
         $out = "\t<dl>\n$out\t</dl>\n";
         return $out;
     } // renderDefinitionList
