@@ -781,7 +781,7 @@ EOT;
         $this->data = [[]];
         if ($this->dataSource) {
             $ds = new DataStorage($this->dataSource);
-            $this->data = $ds->read();
+            $this->data = $ds->read('*');
         }
 
         $this->adjustTableSize();

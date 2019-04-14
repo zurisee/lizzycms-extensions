@@ -703,6 +703,11 @@ EOT;
 		} else {
 			$rec->value = '';
 		}
+        if (isset($args['valueNames'])) {
+            $rec->valueNames = $args['valueNames'];
+        } else {
+            $rec->valueNames = $rec->value;
+        }
 
         if (isset($args['path'])) {
 		    $rec->uploadPath = $args['path'];
@@ -717,7 +722,7 @@ EOT;
 		} elseif (($type != 'button') && ($type != 'form-tail') && (strpos($type, 'fieldset') === false)) {
 			$rec->shortLabel = (isset($args['shortlabel'])) ? $args['shortlabel'] : $label;
 			if ($type == 'checkbox') {
-				$checkBoxLabels = ($rec->value) ? preg_split('/\s*\|\s*/', $rec->value) : [];
+				$checkBoxLabels = ($rec->valueNames) ? preg_split('/\s* [\|,] \s*/x', $rec->valueNames) : [];
 				array_unshift($checkBoxLabels, $rec->shortLabel);
 				$this->currForm->formData['labels'][] = $checkBoxLabels;
 			} else {
