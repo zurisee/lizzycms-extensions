@@ -23,7 +23,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'admin_logClientAccesses'           => [false, 'Activates logging of user accesses.' ],
             'admin_useRequestRewrite'           => [true, '[true|false] If true, assumes web-server supports request-rewrite (e.g. .htaccess).' ],
             'admin_userAllowSelfAdmin'          => [true, 'If true, user can modify their account after they logged in' ],
-            'admin_webmasterEmail'              => [true, 'E-mail address of webmaster' ],
+            'admin_webmasterEmail'              => ['webmaster@domain.net', 'E-mail address of webmaster' ],
 
             'custom_permitUserCode'             => [false, "[true|false] Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],
             'custom_permitUserInitCode'         => [false, "[true|false] Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'" ],
