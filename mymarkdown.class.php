@@ -535,14 +535,10 @@ class MyMarkdown
                     $args = $mm[1] . $mm[3];
                 }
             }
-            list($tag, $id, $class, $style, $attr) = parseInlineBlockArguments($args, true);
+            list($tag, $attr, $lang, $comment, $literal, $mdCompile) = parseInlineBlockArguments($args);
 
 			if ($span) {
-		        $id = $id ? " id='$id'" : '';
-		        $class = $class ? " class='$class'" : '';
-		        $style = $style ? " style='$style'" : '';
-
-                $head .= "<span $id$class$style$attr>$span</span>";
+                $head .= "<span $attr>$span</span>";
 
 			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $m)) {	// now insert into preceding tag
 				$head = $m[1] . "$attr>" . $m[2] . $span;
