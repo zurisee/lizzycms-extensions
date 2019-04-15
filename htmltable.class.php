@@ -270,6 +270,8 @@ EOT;
         $newCol = $this->getArg('column'); // starting at 1
         if (!$newCol) {
             $newCol = sizeof($data)+1;
+        } else {
+            $newCol = min(sizeof($data[0])+1, max(1, $newCol));
         }
         $_newCol = $newCol - 1;     // starting at 0
         $content = $this->getArg('content');
@@ -284,6 +286,9 @@ EOT;
         }
 
         foreach ($data as $i => $row) {
+            if (($i === 0) && $header) {
+                $content = $header;
+            }
             array_splice($data[$i], $_newCol, 0, $content);
         }
         $this->nCols++;
@@ -654,28 +659,6 @@ EOT;
 
 
 
-//    private function getData()
-//    {
-//        $this->dataFile = $this->dataSource;
-//        if ($this->dataFile) {
-//            $ds = new DataStorage($this->dataFile);
-//        } else {
-//            $ds = new DataStorage('~page/'.$this->id.'.yaml');
-//        }
-//
-//        $this->data = $ds->read();
-//        if (!$this->data) {
-//            return "<p>{{ no data found for }} '$this->id'</p>";
-//        }
-//        if (!isset($this->data[0])) {
-//            return '';
-//        }
-//        return true;
-//    } // getData
-
-
-
-
     private function getDataElem($row, $col, $tag = 'td')
     {
         $cell = $this->data[$row][$col];
@@ -701,7 +684,7 @@ EOT;
         $tdClass = trim(str_replace('  ', ' ', "$tdClass lzy-col-$col1"));
         $tdClass = " class='$tdClass'";
         $cell = str_replace("\n", '<br />', $cell);
-        return "<$tag$tdId$tdClass$ref>$cell</$tag>";
+        return "<$tag$tdId$tdClass$ref><div>$cell</div></$tag>";
     } // getDataElem
 
 
