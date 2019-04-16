@@ -42,12 +42,15 @@ $this->addMacro($macroName, function () {
     if (!$selector) {
         $widgetSelector = ".lzy-panels-widget";
         $widgetClassSelector = ".lzy-panels-widget";
+
     } elseif ($selector[0] == '#') {
         $widgetSelector = $selector;
         $widgetClassSelector = ".lzy-panels-widget$inx";
+
     } elseif ($selector[0] == '.') {
         $widgetSelector = $selector;
         $widgetClassSelector = $selector;
+
     } else {
         $widgetSelector = ".$selector";
         $widgetClassSelector = ".$selector";
@@ -72,7 +75,8 @@ $this->addMacro($macroName, function () {
     } elseif ($preOpen === false) {
         $preOpen = 'false';
     }
-    $this->page->addJq("$('$widgetSelector').each(function() { initPanel( '$widgetSelector', $preOpen ); });\n");
+
+    $this->page->addJq("initLzyPanel( '$widgetSelector', $preOpen );\n");
 
 
     // prepare CSS that depends on settings:
