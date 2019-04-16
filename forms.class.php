@@ -909,54 +909,57 @@ EOT;
 	} // defaultFormEvaluation()
 
 
+
+
+
 //-------------------------------------------------------------
 	private function saveCsv($currFormDescr)
 	{
-		$cvs = '';
-		$quoteChar = CSV_QUOTE;
 		$formId = $currFormDescr->formId;
-		$cvsHead = "{$quoteChar}Timestamp$quoteChar".CSV_SEPARATOR;;
 
 		if (isset($currFormDescr->file) && $currFormDescr->file) {
 		    $fileName = resolvePath($currFormDescr->file);
         } else {
             $fileName = resolvePath("~page/{$formId}_data.csv");
         }
-		$labels = $currFormDescr->formData['labels'];
-		$names = $currFormDescr->formData['names'];
-		$userSuppliedData = $this->userSuppliedData;
-		if (!file_exists($fileName) || (file_get_contents($fileName) == '')) {
-			foreach($labels as $label) {
-				if (is_array($label)) {
-					for ($i=1;$i<sizeof($label); $i++) {
-						$l = $label[$i];
-						$cvsHead .= "$quoteChar$l$quoteChar".CSV_SEPARATOR;
-					}
-				} else {
-					$label = trim($label, ':');
-					$cvsHead .= "$quoteChar$label$quoteChar".CSV_SEPARATOR;
-				}
-			}
-			$cvsHead = rtrim($cvsHead, CSV_SEPARATOR);
-			file_put_contents($fileName, $cvsHead."\n", FILE_APPEND);
-		}
-		
-		$cvs.= $quoteChar.timestamp().$quoteChar.CSV_SEPARATOR;
-		foreach($names as $i => $name) {
-			$value = (isset($userSuppliedData[$name])) ? $userSuppliedData[$name] : '';
-			if (is_array($value)) {
-				$labs = $labels[$i];
-				for ($j=1; $j<sizeof($labs); $j++) {
-					$l = $labs[$j];
-					$val = (in_array($l, $value)) ? '1' : '0';
-					$cvs .= "$quoteChar$val$quoteChar".CSV_SEPARATOR;
-				}
-			} else {
-				$cvs .= "$quoteChar$value$quoteChar".CSV_SEPARATOR;
-			}
-		}
-		$cvs = rtrim($cvs, CSV_SEPARATOR);
-		file_put_contents($fileName, $cvs."\n", FILE_APPEND);
+
+        $userSuppliedData = $this->userSuppliedData;
+        $names = $currFormDescr->formData['names'];
+        $labels = $currFormDescr->formData['labels'];
+
+        $db = new DataStorage($fileName);
+        $data = $db->read('*');
+        if (!$data) {
+            $data = [];
+            $j = 0;
+            foreach($labels as $label) {
+                if (is_array($label)) {
+                    for ($i=1;$i<sizeof($label); $i++) {
+                        $data[0][$j++] = $label[$i];
+                    }
+                } else {
+                    $label = trim($label, ':');
+                    $data[0][$j++] = $label;
+                }
+            }
+        }
+        $r = sizeof($data);
+        $j = 0;
+        foreach($names as $i => $name) {
+            $value = (isset($userSuppliedData[$name])) ? $userSuppliedData[$name] : '';
+            if (is_array($value)) {
+                $labs = $labels[$i];
+                for ($k=1; $k<sizeof($labs); $k++) {
+                    $l = $labs[$k];
+                    $val = (in_array($l, $value)) ? '1' : '0';
+                    $data[$r][$j++] = $val;
+                }
+            } else {
+                $data[$r][$j++] = $value;
+            }
+        }
+        $db->write($data);
+
 	} // saveCsv
 
 
@@ -971,16 +974,21 @@ EOT;
             fatalError("Error: unable to send e-mail", 'File: '.__FILE__.' Line: '.__LINE__);
 		}
 	} // sendMail
-	
+
+
+
+
 //-------------------------------------------------------------
 	public function clearCache()
 	{
 		if (isset($this->formId)) {
 			unset($_SESSION['lizzy']['formDescr']);
 			unset($_SESSION['lizzy']['formData']);
-//			unset($_SESSION['lizzy'][$this->formId.'_userData']);
 		}
 	}
+
+
+
 
 
 //-------------------------------------------------------------
