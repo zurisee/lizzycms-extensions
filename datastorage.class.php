@@ -82,15 +82,20 @@ class DataStorage
 	        $this->dataFile = $dbFile;
 
 		} else {
-			if (file_exists(pathinfo($dbFile, PATHINFO_DIRNAME))) {
-		        $this->dataFile = $dbFile;
+            $path = pathinfo($dbFile, PATHINFO_DIRNAME);
+            $this->dataFile = $dbFile;
+			if (file_exists($path)) {
 	            touch($this->dataFile);
 
             } else {
-			    if (function_exists('fatalError')) {
-                    fatalError("DataStorage: unable to create file '$dbFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+                if (!mkdir($path, 0777, true) || !is_writable($path)) {
+                    if (function_exists('fatalError')) {
+                        fatalError("DataStorage: unable to create file '$dbFile'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+                    } else {
+                        die("DataStorage: unable to create file '$dbFile'");
+                    }
                 } else {
-			        die("DataStorage: unable to create file '$dbFile'");
+                    touch($this->dataFile);
                 }
 			}
         }
@@ -126,6 +131,9 @@ class DataStorage
         }
 
         $data = &$this->data;
+        if ($data === null) {
+            $data = [];
+        }
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
