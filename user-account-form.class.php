@@ -259,7 +259,7 @@ EOT;
         $html = <<<EOT
         <h1>{{ lzy-login-with-choice }}</h1>
 $message
-        <div class="lzy-panels-widget lzy-tilted one-open-only lzy-account-form lzy-login-multi-mode">
+        <div id="lzy-login-panel" class="lzy-panels-widget lzy-tilted one-open-only lzy-account-form lzy-login-multi-mode">
             <div><!-- lzy-panel-page -->
             <h2>{{ lzy-login-without-password }}</h2>
       
@@ -277,6 +277,8 @@ $form2
     </div><!-- / .lzy-panels-widget -->
 
 EOT;
+///???
+//$this->page->addJq("initPanel( '#lzy-login-panel', true );\n");
 
         return $html;
     } // createMultimodeLoginForm

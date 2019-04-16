@@ -11,6 +11,9 @@ if (typeof window.widthThreshold === 'undefined') {
 panelWidgetInstance = 1;    // instance number
 panelsInitialized = [];
 
+// Auto-initialize:
+// initializePanel( '.lzy-panels-widget', 1 );
+// $('.lzy-panels-widget').addClass('lzy-tabs'); setMode();
 
 function initializePanel( widgetSelector, preOpen )
 {
