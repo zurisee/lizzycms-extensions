@@ -715,13 +715,7 @@ class Lizzy
             $login = $userAcc->renderLoginLink($rec);
             $userName = $userAcc->getUsername();
         } else {
-            $login = <<<EOT
-    <span class="lzy-tooltip-arrow" data-lzy-tooltip-from='login-warning' style="border-bottom:none;">
-        <img src="~sys/rsc/error.svg" />
-    </span>
-    <div id="login-warning" style="display:none;">Warning:<br>no users defined - login mechanism is disabled.<br>&rarr; see config/users.yaml</div>
-EOT;
-            $this->page->addModules('TOOLTIPS');
+            $login = '';
             $userName = '';
         }
         $this->trans->addVariable('Log-in', $login);
