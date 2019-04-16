@@ -17,12 +17,15 @@ function initializePanel( widgetSelector, preOpen )
     var $widgets = $( widgetSelector );
     $widgets.each(function () {
         var $this = $( this );
+        if ($this.attr('data-lzy-panels')) {
+            return;
+        }
         if (widgetSelector.substr(0,1) !== '#') {
             $this.attr('id', 'lzy-panels-widget' + panelWidgetInstance);
         } else {
             $this.addClass('lzy-panels-widget');
         }
-        $this.addClass('lzy-panels-widget' + panelWidgetInstance);
+        $this.addClass('lzy-panels-widget lzy-panels-widget' + panelWidgetInstance);
 
         var panels = [];
         i = 0;
@@ -36,6 +39,7 @@ function initializePanel( widgetSelector, preOpen )
             panels[i] = {hdrText: hdrText, body: body};
             i++;
         });
+        $this.attr('data-lzy-panels', panels.length);
 
         var header = '';
         var body = '';
@@ -388,7 +392,7 @@ function openRequestedPanel() {
 
 
 
-function initPanel( widgetSelector, preOpen )
+function initLzyPanel( widgetSelector, preOpen )
 {
     if (typeof panelsInitialized[widgetSelector] !== 'undefined') {
         return;
@@ -406,3 +410,5 @@ function initPanel( widgetSelector, preOpen )
 } // initPanel
 
 
+// auto-initialize widgets marked by '.lzy-panels-widget':
+initLzyPanel( '.lzy-panels-widget', false );
