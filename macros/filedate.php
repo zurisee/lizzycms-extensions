@@ -39,7 +39,7 @@ function _fileDate($path, $recursive, $exclude)
     }
     $dir = glob($path);
     foreach ($dir as $file) {
-        if (preg_match("/$exclude/", $file)) {
+        if ($exclude && preg_match("/$exclude/", $file)) {
             continue;
         }
         if (is_file($file)) {
