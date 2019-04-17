@@ -30,35 +30,8 @@ class Forms
 		$this->transvar = $transvar;
 		$this->page = $page;
 		$this->inx = -1;
-		$jq = <<<'EOT'
-		
-	$('input[type=reset]').click(function(e) {  // reset: clear all entries
-		var $form = $(this).closest('form');
-		$('.lizzy_time',  $form ).val(0);
-		$form[0].submit();
-	});
-	
-	$('input[type=button]').click(function(e) { // cancel: reload page (or goto 'next' if provided
-		var $form = $(this).closest('form');
-		var next = $('.lizzy_next', $form ).val();
-		window.location.href = next;
-	});
-    $('.lzy-form-pw-toggle').click(function(e) {
-        e.preventDefault();
-		var $form = $(this).closest('form');
-		var $pw = $('.lzy-form-password', $form);
-        if ($pw.attr('type') == 'text') {
-            $pw.attr('type', 'password');
-            $('.lzy-form-login-form-icon', $form).attr('src', systemPath+'rsc/show.png');
-        } else {
-            $pw.attr('type', 'text');
-            $('.lzy-form-login-form-icon', $form).attr('src', systemPath+'rsc/hide.png');
-        }
-    });
-
-EOT;
-        $this->page->addJq($jq);
-	} // __construct
+        $this->addButtonsActions();
+    } // __construct
 
     
 //-------------------------------------------------------------
@@ -775,7 +748,6 @@ EOT;
 	{
 		$formId = $this->currForm->formId;
 		$_SESSION['lizzy']['formDescr'][$formId] = serialize($this->formDescr);
-//		$_SESSION['lizzy'][$formId] = serialize($this->formDescr);
 	} // saveFormDescr
 
 
@@ -783,9 +755,6 @@ EOT;
 	private function restoreFormDescr($formId)
 	{
 		return (isset($_SESSION['lizzy']['formDescr'][$formId])) ? unserialize($_SESSION['lizzy']['formDescr'][$formId]) : null;
-//		return $tmp[$formId];
-//		return (isset($_SESSION['lizzy']['formDescr'][$formId])) ? unserialize($_SESSION['lizzy']['formDescr'][$formId]) : null;
-//		return (isset($_SESSION['lizzy'][$formId])) ? unserialize($_SESSION['lizzy'][$formId]) : null;
 	} // restoreFormDescr
 
 
@@ -793,7 +762,6 @@ EOT;
 	private function saveUserSuppliedData($formId, $userSuppliedData)
 	{
 		$_SESSION['lizzy']['formData'][$formId] = serialize($userSuppliedData);
-//		$_SESSION['lizzy'][$formId.'_userData'] = serialize($userSuppliedData);
 	} // saveUserSuppliedData
 
 
@@ -801,7 +769,6 @@ EOT;
 	private function getUserSuppliedData($formId)
 	{
 		return (isset($_SESSION['lizzy']['formData'][$formId])) ? unserialize($_SESSION['lizzy']['formData'][$formId]) : null;
-//		return (isset($_SESSION['lizzy'][$formId.'_userData'])) ? unserialize($_SESSION['lizzy'][$formId.'_userData']) : null;
 	} // getUserSuppliedData
 
 
@@ -932,10 +899,16 @@ EOT;
         if (!$data) {
             $data = [];
             $j = 0;
-            foreach($labels as $label) {
+            foreach($labels as $l => $label) {
                 if (is_array($label)) {
-                    for ($i=1;$i<sizeof($label); $i++) {
-                        $data[0][$j++] = $label[$i];
+                    $name = $names[$l];
+                    $splitOutput = (isset($currFormDescr->formElements[$name]->splitOutput))? $currFormDescr->formElements[$name]->splitOutput: false ;
+                    if (!$splitOutput) {
+                        $data[0][$j++] = $label[0];
+                    } else {
+                        for ($i=1;$i<sizeof($label); $i++) {
+                            $data[0][$j++] = $label[$i];
+                        }
                     }
                 } else {
                     $label = trim($label, ':');
@@ -948,11 +921,18 @@ EOT;
         foreach($names as $i => $name) {
             $value = (isset($userSuppliedData[$name])) ? $userSuppliedData[$name] : '';
             if (is_array($value)) {
-                $labs = $labels[$i];
-                for ($k=1; $k<sizeof($labs); $k++) {
-                    $l = $labs[$k];
-                    $val = (in_array($l, $value)) ? '1' : '0';
-                    $data[$r][$j++] = $val;
+                $name = $names[$l];
+                $splitOutput = (isset($currFormDescr->formElements[$name]->splitOutput))? $currFormDescr->formElements[$name]->splitOutput: false ;
+                if (!$splitOutput) {
+                    $data[$r][$j++] = implode(', ', $value);
+
+                } else {
+                    $labs = $labels[$i];
+                    for ($k=1; $k<sizeof($labs); $k++) {
+                        $l = $labs[$k];
+                        $val = (in_array($l, $value)) ? '1' : '0';
+                        $data[$r][$j++] = $val;
+                    }
                 }
             } else {
                 $data[$r][$j++] = $value;
@@ -981,10 +961,8 @@ EOT;
 //-------------------------------------------------------------
 	public function clearCache()
 	{
-		if (isset($this->formId)) {
-			unset($_SESSION['lizzy']['formDescr']);
-			unset($_SESSION['lizzy']['formData']);
-		}
+        unset($_SESSION['lizzy']['formDescr']);
+        unset($_SESSION['lizzy']['formData']);
 	}
 
 
@@ -1023,6 +1001,8 @@ value:
 : Button element only:  
 : {{ space }} -> [submit, reset]
 
+splitOutput (Checkbox only):
+: [true|false] -> If true, there is one field (i.e column) in the output data
 
 min:
 : Range element only: min value
@@ -1056,6 +1036,41 @@ form-tail:
 
 EOT;
         return compileMarkdownStr($help);
+    }
+
+
+
+
+    private function addButtonsActions()
+    {
+        $jq = <<<'EOT'
+		
+	$('input[type=reset]').click(function(e) {  // reset: clear all entries
+		var $form = $(this).closest('form');
+		$('.lizzy_time',  $form ).val(0);
+		$form[0].submit();
+	});
+	
+	$('input[type=button]').click(function(e) { // cancel: reload page (or goto 'next' if provided
+		var $form = $(this).closest('form');
+		var next = $('.lizzy_next', $form ).val();
+		window.location.href = next;
+	});
+    $('.lzy-form-pw-toggle').click(function(e) {
+        e.preventDefault();
+		var $form = $(this).closest('form');
+		var $pw = $('.lzy-form-password', $form);
+        if ($pw.attr('type') == 'text') {
+            $pw.attr('type', 'password');
+            $('.lzy-form-login-form-icon', $form).attr('src', systemPath+'rsc/show.png');
+        } else {
+            $pw.attr('type', 'text');
+            $('.lzy-form-login-form-icon', $form).attr('src', systemPath+'rsc/hide.png');
+        }
+    });
+
+EOT;
+        $this->page->addJq($jq);
     } // renderHelp
 
 } // Forms
