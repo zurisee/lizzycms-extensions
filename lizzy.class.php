@@ -269,7 +269,7 @@ class Lizzy
             $this->trans->loadUserComputedVariables();
         }
 
-        $this->appendLoginForm();   // sleeping code for popup population
+        $this->appendLoginForm($accessGranted);   // sleeping code for popup population
         $this->handleAdminRequests2();
         $this->handleUrlArgs2();
 
@@ -439,7 +439,7 @@ class Lizzy
 
 
     //....................................................
-    private function appendLoginForm()
+    private function appendLoginForm($accessGranted)
     {
         if ( !$this->auth->getKnownUsers() ) { // don't bother with login if there are no users
             return;
@@ -461,6 +461,10 @@ class Lizzy
         } elseif ($this->config->feature_preloadLoginForm) {    // preload login form if configured
             $this->page->addPopup(['contentFrom' => '#lzy-login-form', 'triggerSource' => '.lzy-login-link']);
             $this->renderLoginForm();
+
+        } elseif (!$accessGranted) {
+            $loginForm = $this->renderLoginForm( false );
+            $this->page->addContent($loginForm);
         }
     } // appendLoginForm
 
@@ -1911,12 +1915,17 @@ EOT;
 
 
 
-    private function renderLoginForm(): void
+    private function renderLoginForm($asPopup = true): string
     {
         $accForm = new UserAccountForm($this);
         $html = $accForm->renderLoginForm($this->auth->message, false, true);
-        $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
         $this->page->addModules('PANELS');
+        if ($asPopup) {
+            $this->page->addBodyEndInjections("\t<div class='invisible'><div id='lzy-login-form'>$html\t  </div>\n\t</div><!-- /login form wrapper -->\n");
+            return '';
+        } else {
+            return $html;
+        }
     } // renderLoginForm
 
 

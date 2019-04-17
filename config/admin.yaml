@@ -162,7 +162,7 @@ lzy-forgot-password2:
     _:  "'>Password not working or forgotten...</a>"
 
 lzy-login-with-choice:
-    de: Anmeldung
+    de: Anmelden
     _:  Log in
 
 
