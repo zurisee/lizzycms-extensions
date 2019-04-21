@@ -71,6 +71,14 @@ Uploaded file list:
 
 Loading: '<img class="lzy-loading-spinner" src="~sys/rsc/loader.gif" alt="" />'
 
+lzy-error-in-email-addr:
+    de: "Dies E-Mail Adresse ist nicht gültig"
+    _:  "This e-mail address is not valid"
+
+lzy-please-correct:
+    de: "Bitte korrigieren."
+    _:  "Please correct."
+
 #--- Links -------------------------------
 opens mail app: 
     de: 'Öffnet in Mail-Anwendung'

@@ -319,7 +319,17 @@
 } // lzy-form
 
 
-
+#lzy .lzy-form {
+    .lzy-form-error-msg {
+        border: 1px solid red;
+        padding: 3px 0.5em;
+        color: red;
+    }
+    .lzy-form-error input {
+        //background: #fffefe;
+        box-shadow: inset 0 0 3px red;
+    }
+}
 
 
 /* === Small Screen ==================================== */

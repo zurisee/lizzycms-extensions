@@ -136,8 +136,17 @@ class Forms
             $elemId = $this->currForm->formId.'_'. $this->currRec->elemId;
             $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$type;
 		}
+
+        // error in supplied data? -> signal to user:
+        $error = '';
+        $name = $this->currRec->name;
+        if (isset($this->errorDescr["my_form"][$name])) {
+            $error = $this->errorDescr["my_form"][$name];
+            $error = "\n\t\t<div class='lzy-form-error-msg'>$error</div>";
+            $class .= ' lzy-form-error';
+        }
         $class = $this->classAttr($class);
-		$out = "\t\t<div $class>\n$elem\t\t</div><!-- /field-wrapper -->\n\n";
+		$out = "\t\t<div $class>$error\n$elem\t\t</div><!-- /field-wrapper -->\n\n";
         return $out;
     } // render
     
@@ -616,6 +625,8 @@ EOT;
 			$this->currForm->formData['names'] = [];
 			$this->userSuppliedData = $this->getUserSuppliedData($formId);
 
+			$this->errorDescr = $this->restoreErrorDescr();
+
 		} else {
             $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form-Elem'.($this->inx + 1);
             $this->translateLabel = (isset($args['translateLabel'])) ? $args['translateLabel'] : true;
@@ -744,10 +755,13 @@ EOT;
 	
 	
 //-------------------------------------------------------------
-	private function saveFormDescr()
+	private function saveFormDescr($formId = false, $formDescr = false)
 	{
-		$formId = $this->currForm->formId;
-		$_SESSION['lizzy']['formDescr'][$formId] = serialize($this->formDescr);
+		$formId = $formId ? $formId : $this->currForm->formId;
+		$formDescr = $formDescr ? $formDescr : $this->formDescr;
+//		$formId = $this->currForm->formId;
+		$_SESSION['lizzy']['formDescr'][$formId] = serialize($formDescr);
+//		$_SESSION['lizzy']['formDescr'][$formId] = serialize($this->formDescr);
 	} // saveFormDescr
 
 
@@ -821,10 +835,16 @@ EOT;
 			$str = $this->defaultFormEvaluation($currFormDescr);
 		}
 		
-		$this->page->addCss(".$formId { display: none; }");
-		
-		$str .= "<div class='lzy-form-continue'><a href='{$next}'>{{ lzy-form-continue }}</a></div>\n<form class='$formId'>";
-        $this->clearCache();
+//		$this->page->addCss(".$formId { display: none; }");
+
+		if ($str) {
+            $this->page->addCss(".$formId { display: none; }");
+            $str .= "<div class='lzy-form-continue'><a href='{$next}'>{{ lzy-form-continue }}</a></div>\n<form class='$formId'>";
+            $this->clearCache();
+//        } else {
+//            $this->saveFormErrors($formId, $formDescr);
+//
+        }
         return $str;
     } // evaluate
 
@@ -856,7 +876,10 @@ EOT;
 			$str .= mb_str_pad($label, 22, '.').": $value\n\n";
 		}
 		$str = trim($str, "\n\n");
-		$this->saveCsv($currFormDescr);
+		if ($res = $this->saveCsv($currFormDescr)) {
+		    $this->saveErrorDescr($res);
+		    return '';
+        }
 		
 		$serverName = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : 'localhost';
 		$remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : '';
@@ -883,6 +906,7 @@ EOT;
 	private function saveCsv($currFormDescr)
 	{
 		$formId = $currFormDescr->formId;
+		$errorDescr = false;
 
 		if (isset($currFormDescr->file) && $currFormDescr->file) {
 		    $fileName = resolvePath($currFormDescr->file);
@@ -896,11 +920,12 @@ EOT;
 
         $db = new DataStorage($fileName);
         $data = $db->read('*');
-        if (!$data) {
+
+        if (!$data) {   // no data yet -> prepend header row containing labels:
             $data = [];
             $j = 0;
             foreach($labels as $l => $label) {
-                if (is_array($label)) {
+                if (is_array($label)) { // checkbox returns array of values
                     $name = $names[$l];
                     $splitOutput = (isset($currFormDescr->formElements[$name]->splitOutput))? $currFormDescr->formElements[$name]->splitOutput: false ;
                     if (!$splitOutput) {
@@ -910,17 +935,22 @@ EOT;
                             $data[0][$j++] = $label[$i];
                         }
                     }
-                } else {
+
+                } else {        // normal value
                     $label = trim($label, ':');
                     $data[0][$j++] = $label;
                 }
             }
+            $data[0][$j] = 'timestamp';
         }
+
         $r = sizeof($data);
         $j = 0;
+        $formElements = &$currFormDescr->formElements;
+        $errors = 0;
         foreach($names as $i => $name) {
             $value = (isset($userSuppliedData[$name])) ? $userSuppliedData[$name] : '';
-            if (is_array($value)) {
+            if (is_array($value)) { // checkbox returns array of values
                 $name = $names[$l];
                 $splitOutput = (isset($currFormDescr->formElements[$name]->splitOutput))? $currFormDescr->formElements[$name]->splitOutput: false ;
                 if (!$splitOutput) {
@@ -934,13 +964,44 @@ EOT;
                         $data[$r][$j++] = $val;
                     }
                 }
-            } else {
+            } else {        // normal value
+                if (isset($formElements[$name])) {
+                    $type = $formElements[$name]->type;
+                    if (($type == 'email') && $value) {
+                        if (!preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})$/i", $value)) {
+                            $errorDescr[$formId][$name] = "{{ lzy-error-in-email-addr }}. {{ lzy-please-correct }}";
+                            $errors++;
+                        }
+                    }
+                }
                 $data[$r][$j++] = $value;
             }
         }
-        $db->write($data);
-
+        $data[$r][$j] = time();
+        if ($errors == 0) {
+            $db->write($data);
+            return false;
+        }
+        return $errorDescr;
+//        return $errors;
 	} // saveCsv
+
+
+
+    private function restoreErrorDescr()
+    {
+        return isset($_SESSION['lizzy']['formErrDescr']) ? $_SESSION['lizzy']['formErrDescr'] : [];
+    }
+
+
+
+
+    private function saveErrorDescr($errDescr)
+    {
+        $_SESSION['lizzy']['formErrDescr'] = $errDescr;
+    }
+
+
 
 
 //-------------------------------------------------------------
@@ -963,6 +1024,7 @@ EOT;
 	{
         unset($_SESSION['lizzy']['formDescr']);
         unset($_SESSION['lizzy']['formData']);
+        unset($_SESSION['lizzy']['formErrDescr']);
 	}
 
 
