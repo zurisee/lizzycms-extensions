@@ -140,8 +140,8 @@ class Forms
         // error in supplied data? -> signal to user:
         $error = '';
         $name = $this->currRec->name;
-        if (isset($this->errorDescr["my_form"][$name])) {
-            $error = $this->errorDescr["my_form"][$name];
+        if (isset($this->errorDescr[$this->formId][$name])) {
+            $error = $this->errorDescr[$this->formId][$name];
             $error = "\n\t\t<div class='lzy-form-error-msg'>$error</div>";
             $class .= ' lzy-form-error';
         }
@@ -615,6 +615,7 @@ EOT;
             $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form'.($this->inx + 1);
 	        $formId = (isset($args['class'])) ? $args['class'] : translateToIdentifier($label);
 
+	        $this->formId = $formId;
 			$this->formDescr[ $formId ] = new FormDescriptor;
 			$this->currForm = &$this->formDescr[ $formId ];
 			$this->currForm->formId = $formId;
@@ -983,10 +984,11 @@ EOT;
             return false;
         }
         return $errorDescr;
-//        return $errors;
 	} // saveCsv
 
 
+
+    
 
     private function restoreErrorDescr()
     {
