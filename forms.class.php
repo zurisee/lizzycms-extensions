@@ -180,9 +180,7 @@ class Forms
 		$time = time();
 
 		$out = "\t<form$_class$_method$_action>\n";
-		$out .= "\t  <div class='lzy-s1 lzy-s2 lzy-s3'>\n";
 		$out .= "\t\t<input type='hidden' name='lizzy_form' value='{$this->currForm->formId}' />\n";
-//		$out .= "\t\t<input type='hidden' name='lizzy_form' value='$class' />\n";
 		$out .= "\t\t<input type='hidden' class='lizzy_time' name='lizzy_time' value='$time' />\n";
 		$out .= "\t\t<input type='hidden' class='lizzy_next' value='{$this->currForm->next}' />\n";
 		return $out;
@@ -390,7 +388,7 @@ EOT;
     } // renderTel
 
 
-
+/*
 //-------------------------------------------------------------
     private function renderFileUpload()
     {
@@ -504,7 +502,7 @@ EOT;
 		
         return $out;
     } // renderFileUpload
-
+*/
 
 
 //-------------------------------------------------------------
@@ -543,12 +541,13 @@ EOT;
         return $out;
     } //renderButtons
 
-	
+
+
 //-------------------------------------------------------------
 	private function formTail()
     {
 		$this->saveFormDescr();
-		$out = "\t  </div><!-- /lzy-s1 lzy-s2 lzy-s3 -->\n\t</form>\n";
+		$out = "\t</form>\n";
 
         if (isset($this->page->formEvalResult)) {
 			return $out.$this->page->formEvalResult;
@@ -557,7 +556,8 @@ EOT;
 		}
 	} // formTail
 
-    
+
+
 //-------------------------------------------------------------
     private function getLabel($id = false)
     {
@@ -586,12 +586,14 @@ EOT;
     } // getLabel
 
 
+
 //-------------------------------------------------------------
     private function getRequiredMarker()
     {
 		$required = $this->currRec->required;
         return ($required) ? "<span class='lzy-form-required-marker' aria-hidden='true'>{$this->currRec->requiredMarker}</span>" : '';
     } // getRequiredMarker
+
 
 
 //-------------------------------------------------------------
@@ -601,7 +603,8 @@ EOT;
         return trim($out);
     } // classAttr
     
-    
+
+
 //-------------------------------------------------------------
     private function parseArgs($args)
     {
@@ -760,9 +763,7 @@ EOT;
 	{
 		$formId = $formId ? $formId : $this->currForm->formId;
 		$formDescr = $formDescr ? $formDescr : $this->formDescr;
-//		$formId = $this->currForm->formId;
 		$_SESSION['lizzy']['formDescr'][$formId] = serialize($formDescr);
-//		$_SESSION['lizzy']['formDescr'][$formId] = serialize($this->formDescr);
 	} // saveFormDescr
 
 
@@ -786,14 +787,6 @@ EOT;
 		return (isset($_SESSION['lizzy']['formData'][$formId])) ? unserialize($_SESSION['lizzy']['formData'][$formId]) : null;
 	} // getUserSuppliedData
 
-
-//-------------------------------------------------------------
-//    private function prepareFieldValue()
-//    {
-//		if ((!$this->value) && (isset($this->data['$this->name']))) {
-//			$this->value = $this->data['$this->name'];
-//		}
-//	} // prepareFieldValue
 
 
 //-------------------------------------------------------------
@@ -836,15 +829,10 @@ EOT;
 			$str = $this->defaultFormEvaluation($currFormDescr);
 		}
 		
-//		$this->page->addCss(".$formId { display: none; }");
-
 		if ($str) {
             $this->page->addCss(".$formId { display: none; }");
             $str .= "<div class='lzy-form-continue'><a href='{$next}'>{{ lzy-form-continue }}</a></div>\n<form class='$formId'>";
             $this->clearCache();
-//        } else {
-//            $this->saveFormErrors($formId, $formDescr);
-//
         }
         return $str;
     } // evaluate

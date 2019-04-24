@@ -182,9 +182,7 @@ EOT;
 
     private function renderDiv()
     {
-        $header = '';
         $data = &$this->data;
-        $header = true;
         $body = '';
         $nRows = sizeof($data);
         $nCols = sizeof($data[0]);
@@ -371,7 +369,6 @@ EOT;
             }
             $data[$r] = $row;
         }
-
     } // removeCols
 
 
@@ -386,6 +383,7 @@ EOT;
         if (!$col) {
             die("Error: modifyCol() requires 'column' argument to be set.");
         }
+        $col = min(sizeof($data[0]), max(1, $col));
         $_col = $col - 1;     // starting at 0
         $content = $this->getArg('content');
         $header = $this->getArg('header');
