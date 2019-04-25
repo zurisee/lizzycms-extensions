@@ -541,8 +541,7 @@ EOT;
         return $out;
     } //renderButtons
 
-
-
+	
 //-------------------------------------------------------------
 	private function formTail()
     {
@@ -556,8 +555,7 @@ EOT;
 		}
 	} // formTail
 
-
-
+    
 //-------------------------------------------------------------
     private function getLabel($id = false)
     {
@@ -586,14 +584,12 @@ EOT;
     } // getLabel
 
 
-
 //-------------------------------------------------------------
     private function getRequiredMarker()
     {
 		$required = $this->currRec->required;
         return ($required) ? "<span class='lzy-form-required-marker' aria-hidden='true'>{$this->currRec->requiredMarker}</span>" : '';
     } // getRequiredMarker
-
 
 
 //-------------------------------------------------------------
@@ -603,8 +599,7 @@ EOT;
         return trim($out);
     } // classAttr
     
-
-
+    
 //-------------------------------------------------------------
     private function parseArgs($args)
     {
@@ -788,7 +783,6 @@ EOT;
 	} // getUserSuppliedData
 
 
-
 //-------------------------------------------------------------
     public function evaluate()
     {
@@ -836,6 +830,7 @@ EOT;
         }
         return $str;
     } // evaluate
+
 
 
 //-------------------------------------------------------------
@@ -976,7 +971,62 @@ EOT;
 
 
 
-    
+
+
+    private function checkUserSuppliedData()
+    {
+        $formId = $currFormDescr->formId;
+        $errorDescr = false;
+
+        if (isset($currFormDescr->file) && $currFormDescr->file) {
+            $fileName = resolvePath($currFormDescr->file);
+        } else {
+            $fileName = resolvePath("~page/{$formId}_data.csv");
+        }
+
+        $userSuppliedData = $this->userSuppliedData;
+        $names = $currFormDescr->formData['names'];
+        $labels = $currFormDescr->formData['labels'];
+        $errors = 0;
+        foreach($names as $i => $name) {
+            $value = (isset($userSuppliedData[$name])) ? $userSuppliedData[$name] : '';
+            if (is_array($value)) { // checkbox returns array of values
+                $name = $names[$l];
+                $splitOutput = (isset($currFormDescr->formElements[$name]->splitOutput))? $currFormDescr->formElements[$name]->splitOutput: false ;
+                if (!$splitOutput) {
+                    $data[$r][$j++] = implode(', ', $value);
+
+                } else {
+                    $labs = $labels[$i];
+                    for ($k=1; $k<sizeof($labs); $k++) {
+                        $l = $labs[$k];
+                        $val = (in_array($l, $value)) ? '1' : '0';
+                        $data[$r][$j++] = $val;
+                    }
+                }
+            } else {        // normal value
+                if (isset($formElements[$name])) {
+                    $type = $formElements[$name]->type;
+                    if (($type == 'email') && $value) {
+                        if (!preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})$/i", $value)) {
+                            $errorDescr[$formId][$name] = "{{ lzy-error-in-email-addr }}. {{ lzy-please-correct }}";
+                            $errors++;
+                        }
+                    }
+                }
+                $data[$r][$j++] = $value;
+            }
+        }
+        $data[$r][$j] = time();
+        if ($errors == 0) {
+            $db->write($data);
+            return false;
+        }
+        return $errorDescr;
+    }
+
+
+
 
     private function restoreErrorDescr()
     {
