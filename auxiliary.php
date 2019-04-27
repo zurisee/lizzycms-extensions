@@ -268,13 +268,13 @@ function arrayToCsv($array, $quote = '"', $delim = ',')
 
 
 //--------------------------------------------------------------
-function convertYaml($str, $stopOnError = true, $origin = '')
+function convertYaml($str, $stopOnError = true, $origin = '', $convertDates = true)
 {
 	$data = null;
+    $str = removeHashTypeComments($str);
 	if ($str) {
-	    if (preg_match('/^[\'"] [^\'"]+ [\'"]/x', $str)) {
-	        // handle case of argument-list where yaml fails:
-	        $data = csv_to_array($str); //???
+	    if (preg_match('/^[\'"] [^\'"]+ [\'"] (?!:) /x', $str)) {
+	        $data = csv_to_array($str);
 
         } else {
             $str = str_replace("\t", '    ', $str);
@@ -290,19 +290,60 @@ function convertYaml($str, $stopOnError = true, $origin = '')
             }
         }
 	}
-	return $data;
+    if (!$convertDates) {
+        return $data;
+    }
+    $data1 = [];
+    foreach ($data as $key => $value) {
+        if (is_string($key) && ($t = strtotime($key))) {
+            $data1[$t] = $value;
+        } else {
+            $data1[$key] = $value;
+        }
+    }
+    return $data1;
 } // convertYaml
 
 
 
 //--------------------------------------------------------------
-function getYamlFile($filename)
+function getYamlFile($filename, $returnStructure = false)
 {
 	$yaml = getFile($filename, true);
 	if ($yaml) {
         $data = convertYaml($yaml);
     } else {
 	    $data = [];
+    }
+
+    $structure = false;
+    $structDefined = false;
+    if (isset($data['_structure'])) {
+        $structure = $data['_structure'];
+        unset($data['_structure']);
+        $structDefined = true;
+    }
+	if ($returnStructure) {     // return structure of data
+	    if (!$structure) {      // source fild didn't contain a '_structure' record, so derive it from data:
+	        $yaml = trim(removeHashTypeComments($yaml));
+	        if (preg_match('/^ [\'"]? ([\w-]*?) [\'"]? \: .*/x', $yaml, $m)) {
+	            $inx0 = $m[1];
+                if (strtotime(($inx0))) {
+                    $structure['key'] = 'date';
+                } elseif (preg_match('/^\d+$/', $inx0)) {
+                    $structure['key'] = 'number';
+                } else {
+                    $structure['key'] = 'string';
+                }
+            }
+            $inxs = array_keys($data);  // get first data rec
+	        if (isset($inxs[0])) {
+                foreach (array_keys($data[ $inxs[0] ]) as $name) {   // extract field names
+                    $structure['fields'][$name] = 'string';
+                }
+            }
+        }
+	    return [$data, $structure, $structDefined];
     }
 	return $data;
 } // getYamlFile
@@ -318,9 +359,14 @@ function convertToYaml($data, $level = 3)
 
 
 //--------------------------------------------------------------
-function writeToYamlFile($file, $data, $level = 3)
+function writeToYamlFile($file, $data, $level = 3, $saveToRecycleBin = false)
 {
 	$yaml = Yaml::dump($data, $level);
+	if ($saveToRecycleBin) {
+        require_once SYSTEM_PATH.'page-source.class.php';
+        $ps = new PageSource;
+	    $ps->copyFileToRecycleBin($file);
+    }
 	file_put_contents($file, $yaml);
 } // writeToYamlFile
 
@@ -411,8 +457,34 @@ function removeEmptyLines($str)
 
 
 //--------------------------------------------------------------
+function getHashCommentedHeader($fileName)
+{
+    $str = getFile($fileName);
+    if (!$str) {
+        return '';
+    }
+	$lines = explode(PHP_EOL, $str);
+    $out = '';
+	foreach ($lines as $i => $l) {
+		if (isset($l[0]) ) {
+		    $c1 = $l[0];
+		    if (($c1 != '#') && ($c1 != ' ')) {
+		        break;
+            }
+		}
+        $out .= "$l\n";
+	}
+	return $out;
+} // getHashCommentedHeader
+
+
+
+//--------------------------------------------------------------
 function removeHashTypeComments($str)
 {
+    if (!$str) {
+        return '';
+    }
 	$lines = explode(PHP_EOL, $str);
 	foreach ($lines as $i => $l) {
 		if (isset($l{0}) && ($l{0} == '#')) {
@@ -420,7 +492,7 @@ function removeHashTypeComments($str)
 		}
 	}
 	return implode("\n", $lines);
-} //
+} // removeHashTypeComments
 
 
 
