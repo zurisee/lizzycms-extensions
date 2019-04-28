@@ -1812,7 +1812,11 @@ function parseDimString($str, $imageFile = false, $aspectRatio = false)
             }
             if (file_exists($imageFile)) {
                 list($w0, $h0) = getimagesize($imageFile);
-                $aspectRatio = $h0 / $w0;
+                if ($w0 && $h0) {
+                    $aspectRatio = $h0 / $w0;
+                } else {
+                    $aspectRatio = DEFAULT_ASPECT_RATIO;
+                }
             } else {
                 $aspectRatio = DEFAULT_ASPECT_RATIO;
             }
@@ -1838,6 +1842,7 @@ function parseFileName($filename, $aspectRatio)
     $path = dirname($filename).'/';
     $fname = base_name($filename);
     $dimFound = false;
+    $w = $h = '';
 
     if (preg_match('/([^\[]*)\[(.*)\](\.\w+)/', $fname, $m)) {    // [WxH] size specifier present?
         $basename = $m[1];
