@@ -159,6 +159,7 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['DATATABLES']            = array('module' => 'third-party/datatables/datatables.min.js,'.
                                                                         'third-party/datatables/datatables.min.css', 'weight' => 50);
 
+        $this->loadModules['PAGED_POLYFILL']        = array('module' => 'third-party/paged.polyfill/paged.polyfill.js', 'weight' => 46);
         $this->loadModules['ZOOM_TARGET']           = array('module' => 'third-party/zoomooz/jquery.zoomooz.min.js', 'weight' => 45);
         $this->loadModules['TOUCH_DETECTOR']        = array('module' => 'js/touch_detector.js', 'weight' => 40);
         $this->loadModules['SLIDESHOW_SUPPORT']     = array('module' => 'js/slideshow_support.js, css/slideshow_support.css', 'weight' => 32);

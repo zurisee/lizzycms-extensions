@@ -678,20 +678,20 @@ a.lzy-button {
 
 
 @media print {
-	body, main, section {
-		padding: 0;
-		margin: 0;
-		font-size: 11pt;
-	}
-	.page {
-		position: relative;
-		width: 21cm;
-		height: 29.7cm;
-		padding: 2cm;
-		margin:0;
-		border: none!important;
-		box-shadow: none!important;
-	}
+	//body, main, section {
+	//	padding: 0;
+	//	margin: 0;
+	//	font-size: 11pt;
+	//}
+	//.page {
+	//	position: relative;
+	//	width: 21cm;
+	//	height: 29.7cm;
+	//	padding: 2cm;
+	//	margin:0;
+	//	border: none!important;
+	//	box-shadow: none!important;
+	//}
 	.dont-print,
     .print_no,
     .print-no,
@@ -702,7 +702,10 @@ a.lzy-button {
     .debugInfo {
 		display: none!important;
 	}
-	.print-page {
+//	.print-page {
+//	page-break-after: always;
+//}
+	.print-page-break {
 		page-break-after: always;
 	}
 }

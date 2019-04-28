@@ -1345,7 +1345,13 @@ EOT;
                 setStaticVariable('user',false);
             }
 		}
-
+        if (getUrlArg('print-preview')) {              // activate Print-Preview
+            $this->page->addModules('PAGED_POLYFILL');
+            $this->page->addCss('.pagedjs_sheet { box-shadow: 0 0 4px #aaa;margin: 10px; }');
+        }
+        if (getUrlArg('print')) {              // activate Print-Preview
+            $this->page->addModules('PAGED_POLYFILL');
+        }
 
         if (!$this->auth->checkGroupMembership('editors')) {  // only localhost or logged in as editor/admin group
             $this->trans->addVariable('toggle-edit-mode', "");
