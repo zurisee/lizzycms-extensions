@@ -1347,10 +1347,22 @@ EOT;
 		}
         if (getUrlArg('print-preview')) {              // activate Print-Preview
             $this->page->addModules('PAGED_POLYFILL');
-            $this->page->addCss('.pagedjs_sheet { box-shadow: 0 0 4px #aaa;margin: 10px; }');
+            $this->page->addCss('.pagedjs_sheet { box-shadow: 0 0 4px #aaa;margin: 60px 10px 10px 10px; } .lzy-print-btn {background: linear-gradient(#fff 0%,#fffbe0 60%,#fff7c2 100%);}');
+            $jq = <<<EOT
+    var html = "<a href='./?print' class='lzy-button lzy-print-btn' style='position: absolute;top: -55px; left: 10px; padding: 10px; text-align: center; box-shadow: 0 0 5px 1px gray; cursor: pointer;border-bottom: none;'>{{ lzy-print-now }}</a></a>";
+    $('body').append( html );
+EOT;
+            $this->page->addJq($jq);
         }
-        if (getUrlArg('print')) {              // activate Print-Preview
+        if (getUrlArg('print')) {              // activate Print-supprt and start printing dialog
             $this->page->addModules('PAGED_POLYFILL');
+            $jq = <<<EOT
+    setTimeout(function() {
+        window.print();
+    }, 800);
+EOT;
+
+            $this->page->addJq($jq);
         }
 
         if (!$this->auth->checkGroupMembership('editors')) {  // only localhost or logged in as editor/admin group

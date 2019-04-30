@@ -105,6 +105,11 @@ select de: "<img src='~sys/rsc/de.png' class='lang-icon' alt='' /><span class='i
 select en: "<img src='~sys/rsc/en.png' class='lang-icon' alt='' /><span class='invisible'>English</span>"
 
 
+#--- Printing ---------------------------
+lzy-print-now:
+        de: Drucken
+        _:  Print
+
     
 # --- Login ------------------------------
 lzy-onetimelogin-email-info-title:
