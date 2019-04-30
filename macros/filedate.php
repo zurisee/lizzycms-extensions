@@ -25,6 +25,7 @@ $this->addMacro($macroName, function () {
     } else {
         $filedate = date($format, $newest);
     }
+    $this->optionAddNoComment = true;
 	return $filedate;
 });
 
