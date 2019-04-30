@@ -394,6 +394,10 @@ lzy-popup-close-button: '✕'
 #lzy-lightbox-close-button: '☒'
 #lzy-popup-close-button: '☒'
 
+lzy-close:
+    de: Schliessen
+    _:  Close
+
 
 #--- Editing -------------------------------------
 turn edit mode on:

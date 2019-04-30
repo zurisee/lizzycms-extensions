@@ -699,14 +699,18 @@ body.lzy-print-preview {
 dd {
 	page-break-before: avoid;
 }
-.lzy-print-btn {
-	background: linear-gradient(#fff 0%,#fffbe0 60%,#fff7c2 100%);
+.lzy-print-btns {
 	position: absolute;
-	top: -55px; left: 10px;
-	padding: 0.5em 1.5em;
+	top: -40px; left: 0;
+}
+.lzy-print-btns > a {
+	background: linear-gradient(#fff 0%,#fffbe0 60%,#fff7c2 100%);
+	padding: 0.7em 1.5em;
+	margin: 1em 0 0 1em;
 	box-shadow: 0 0 5px 1px gray;
 	cursor: pointer;
 	border-bottom: none; /* for <a> */
+
 }
 @page {
 	size: A4;

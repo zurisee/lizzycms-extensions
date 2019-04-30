@@ -1350,7 +1350,7 @@ EOT;
         if (getUrlArg('print-preview')) {              // activate Print-Preview
             $this->page->addModules('PAGED_POLYFILL');
             $jq = <<<EOT
-    $('body').append( "<a href='./?print' class='lzy-button lzy-print-btn' >{{ lzy-print-now }}</a>" ).addClass('lzy-print-preview');
+    $('body').append( "<div class='lzy-print-btns'><a href='./?print' class='lzy-button' >{{ lzy-print-now }}</a><a href='./' onclick='window.close();' class='lzy-button' >{{ lzy-close }}</a></div>" ).addClass('lzy-print-preview');
 EOT;
             $this->page->addJq($jq);
         }
