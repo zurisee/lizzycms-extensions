@@ -110,6 +110,8 @@ lzy-print-now:
         de: Drucken
         _:  Print
 
+page-break: "<div class='lzy-print-page-break'></div>"
+
     
 # --- Login ------------------------------
 lzy-onetimelogin-email-info-title:
