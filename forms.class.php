@@ -870,7 +870,8 @@ EOT;
 		$localCall = (($serverName == 'localhost') || (strpos($remoteAddress, '192.') === 0) || ($remoteAddress == '::1'));
 
 		if ($localCall) {
-			$out = "<div class='lzy-form-response'>\n<p>{{ lzy-form-feedback-local }}</p><p><em>{{ lzy-form-data-received-ok }}</em></p>\n<pre>\n$str\n</pre>\n</div>\n";
+		    $str = "-------------------------------\n$str\n\n-------------------------------\n(-> would be be sent to $mailto)\n";
+			$out = "<div class='lzy-form-response'>\n<p><em>{{ lzy-form-data-received-ok }}</em></p>\n<div class='lzy-localhost-response'><p>{{ lzy-form-feedback-local }}</p>\n<pre>\n$str\n</pre>\n</div></div>\n";
 		} elseif ($mailto) {
 			$subject = "[$formName] user data received";
 			$this->sendMail($mailto, $mailfrom, $subject, $str);
@@ -972,9 +973,11 @@ EOT;
 
 
 
-
+/*
     private function checkUserSuppliedData()
     {
+//        $formId = $currFormDescr->formId;
+        $currFormDescr = $this->currFormDescr;
         $formId = $currFormDescr->formId;
         $errorDescr = false;
 
@@ -1024,7 +1027,7 @@ EOT;
         }
         return $errorDescr;
     }
-
+*/
 
 
 
