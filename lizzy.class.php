@@ -1349,8 +1349,13 @@ EOT;
 		// printing support:
         if (getUrlArg('print-preview')) {              // activate Print-Preview
             $this->page->addModules('PAGED_POLYFILL');
+            $url = './?print';
+            unset($_GET['print-preview']);
+            foreach ($_GET as $k => $v) {   // make sure all other url-args are preserved:
+                $url .= "&$k=$v";
+            }
             $jq = <<<EOT
-    $('body').append( "<div class='lzy-print-btns'><a href='./?print' class='lzy-button' >{{ lzy-print-now }}</a><a href='./' onclick='window.close();' class='lzy-button' >{{ lzy-close }}</a></div>" ).addClass('lzy-print-preview');
+    $('body').append( "<div class='lzy-print-btns'><a href='$url' class='lzy-button' >{{ lzy-print-now }}</a><a href='./' onclick='window.close();' class='lzy-button' >{{ lzy-close }}</a></div>" ).addClass('lzy-print-preview');
 EOT;
             $this->page->addJq($jq);
         }
