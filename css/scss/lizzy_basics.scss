@@ -128,40 +128,58 @@ figure a {
 	width: 6em;
 }
 
-.dl-as-table  {
-	--dl-as-table-dt-width: 6em;
-}
-.dl-as-table dl {
-    display: flex;
-    flex-flow: row;
-    flex-wrap: wrap;
-    max-width: 600px;
-    overflow: visible; }
-  .dl-as-table dl dt {
-    flex: 0 0 var(--dl-as-table-dt-width);
-    text-overflow: ellipsis;
-    overflow: hidden; }
-  .dl-as-table dl dd {
-    flex: 0 0 calc(100% - var(--dl-as-table-dt-width));
-    margin-left: auto;
-    text-align: left;
-    text-overflow: ellipsis;
-    overflow: hidden; 
-    padding-bottom: 1em;
-    line-height: 1.25em; }
 
-@media screen and (max-width: 600px) {
-    .dl-as-table dl {
-        display: block;
-    }
-    .dl-as-table dl dd {
-        margin-left: 2em;
-    }
-    .dl-as-table dl dt {
-        font-weight: bold;
-        padding-bottom: 0.5em;
-    }
+/* === Definition Lists in table layout ======== */
+.lzy-large-screen .dl-as-table  {
+	--dl-as-table-dt-width: 6em;
+	dl {
+		margin: 0;
+	}
+	dt, dd {
+		display: inline-block;
+		vertical-align: top;
+		margin: 0 0 0.5em 0;
+	}
+	dt {
+		width: var(--dl-as-table-dt-width);
+	}
+	dd {
+		width: calc(100% - var(--dl-as-table-dt-width));
+	}
 }
+.lzy-small-screen {
+	.dl-as-table,
+	.dl-floating{
+		dt {
+			font-weight: bold;
+		}
+	}
+}
+.lzy-large-screen {
+	.dl-floating {
+		--dt-width: 6em;
+
+		dl {
+			clear: left;
+		}
+
+		dt, dd {
+			margin-bottom: 0.5em;
+		}
+
+		dt {
+			width: var(--dt-width);
+			float: left;
+		}
+
+		dd {
+			vertical-align: top;
+			margin-left: 0;
+			padding-left: calc(var(--dt-width));
+		}
+	}
+}
+
 
 .lzy-h-space {
 	display: inline-block;
@@ -529,7 +547,7 @@ footer a {
         vertical-align: middle;
     }
     .lzy-checklist-elem > input::before {
-        vertical-align: top;        
+        vertical-align: top;
     }
     input[type=checkbox]:not([disabled]) {
       cursor: pointer;
@@ -630,7 +648,7 @@ a.lzy-button {
 
 /* === Media Queries =================================== */
 @media screen {
-	.print_only, 
+	.print_only,
 	.print-only {
 		display: none;
 	}
@@ -727,7 +745,7 @@ dd {
 	#lzy-log,
 	.Warning,
 	.MsgBox,
-    #debugInfo, 
+    #debugInfo,
     .debugInfo {
 		display: none!important;
 	}
