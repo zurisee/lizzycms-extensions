@@ -723,16 +723,15 @@ dd {
 }
 .lzy-print-btns > a {
 	background: linear-gradient(#fff 0%,#fffbe0 60%,#fff7c2 100%);
+	font-size: 12pt;
 	padding: 0.7em 1.5em;
 	margin: 1em 0 0 1em;
 	box-shadow: 0 0 5px 1px gray;
 	cursor: pointer;
 	border-bottom: none; /* for <a> */
-
 }
 @page {
 	size: A4;
-	margin: 1.5cm 2cm 1.5cm 2cm;
 }
 
 @media print {
