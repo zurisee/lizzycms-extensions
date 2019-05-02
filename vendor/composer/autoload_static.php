@@ -85,20 +85,11 @@ class ComposerStaticInitf773fc72f2df5c5db6b45dc256600503
         ),
     );
 
-    public static $classMap = array (
-        'lessc' => __DIR__ . '/..' . '/leafo/lessphp/lessc.inc.php',
-        'lessc_formatter_classic' => __DIR__ . '/..' . '/leafo/lessphp/lessc.inc.php',
-        'lessc_formatter_compressed' => __DIR__ . '/..' . '/leafo/lessphp/lessc.inc.php',
-        'lessc_formatter_lessjs' => __DIR__ . '/..' . '/leafo/lessphp/lessc.inc.php',
-        'lessc_parser' => __DIR__ . '/..' . '/leafo/lessphp/lessc.inc.php',
-    );
-
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInitf773fc72f2df5c5db6b45dc256600503::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInitf773fc72f2df5c5db6b45dc256600503::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitf773fc72f2df5c5db6b45dc256600503::$classMap;
 
         }, null, ClassLoader::class);
     }
