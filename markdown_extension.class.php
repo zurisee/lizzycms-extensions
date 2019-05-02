@@ -538,8 +538,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
             } else {                                        // new dt block starts
                 $line = trim(compileMarkdownStr($line, true));
-                $out .= "\t\t<dt>$line</dt>\n";
-                $out .= "\t\t<dd>\n";
+                $out .= "\t\t<dt>$line</dt><dd>\n";
             }
         }
         if ($md) {
