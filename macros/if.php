@@ -11,6 +11,7 @@ $this->addMacro($macroName, function () {
     $state = $this->getArg($macroName, 'state', '[isLocalhost, isPrivileged] The system state to be checked.', '');
     $config = $this->getArg($macroName, 'config', 'Name of a config-value (as in config/config.yaml)', '');
     $file = $this->getArg($macroName, 'file', 'File name to be checked (relative to page path by default)', '');
+    $path = $this->getArg($macroName, 'path', 'Checks whether the pattern is found in the path from filesystem root to the current page', '');
     $urlArg = $this->getArg($macroName, 'urlArg', 'Name of URL-argument, e.g. "?arg=true"', '');
     $request = $this->getArg($macroName, 'request', 'Name of request-argument, either GET or POST as submitted by a form', '');
     $variable = $this->getArg($macroName, 'request', 'Name of a Session-Variable', '');
@@ -57,6 +58,10 @@ $this->addMacro($macroName, function () {
         } elseif (($op == '&gt;') || ($op == 'gt') || ($op == '>')) {
             $res = (file_exists($file) && (filesize($file) > intval($arg)));
         }
+
+    } elseif ($path) {
+        $currPath = getcwd().'/'.$GLOBALS["globalParams"]["pathToPage"];
+        $res = (strpos($currPath, $path) !== false);
 
     } elseif ($urlArg) {
         if (!$op) {
