@@ -130,8 +130,13 @@ figure a {
 
 
 /* === Definition Lists in table layout ======== */
-.lzy-large-screen .dl-as-table  {
+.dl-floating,
+.dl-flex,
+.dl-as-table {
 	--dl-as-table-dt-width: 6em;
+}
+.lzy-large-screen .dl-as-table  {
+
 	dl {
 		margin: 0;
 	}
@@ -147,9 +152,11 @@ figure a {
 		width: calc(100% - var(--dl-as-table-dt-width));
 	}
 }
+
+// variante floating -> less problem in conjunction with printing
 .lzy-small-screen {
 	.dl-as-table,
-	.dl-floating{
+	.dl-floating {
 		dt {
 			font-weight: bold;
 		}
@@ -179,6 +186,29 @@ figure a {
 		}
 	}
 }
+
+// variante using flex -> less problem in conjunction with other floating elements
+.dl-flex dl {
+	display: flex;
+	flex-flow: row;
+	flex-wrap: wrap;
+	overflow: visible;
+	dt {
+		flex: 0 0 var(--dl-as-table-dt-width);
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+	dd {
+		flex: 0 0 calc(100% - var(--dl-as-table-dt-width));
+		margin-left: auto;
+		text-align: left;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		padding-bottom: 1em;
+		line-height: 1.25em;
+	}
+}
+
 
 
 .lzy-h-space {
