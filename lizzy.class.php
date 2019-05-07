@@ -591,6 +591,7 @@ class Lizzy
                 $this->config->isLegacyBrowser = $overrideLegacy;
             }
         }
+        $globalParams['legacyBrowser'] = $this->config->isLegacyBrowser;
 
 
         $this->reqPagePath = $pagePath;
