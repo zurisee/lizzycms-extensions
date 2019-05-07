@@ -48,6 +48,7 @@ class HtmlTable
             $this->headers          = $this->getOption('headersTop');   // synonyme for 'headers'
         }
         $this->headersLeft          = $this->getOption('headersLeft', '(optional) Row headers may be supplied in the form [A|B|C...]');
+        $this->headersAsVars        = $this->getOption('headersAsVars', '(optional) If true, header elements will be rendered as variables (i.e. in curly brackets).');
         $this->showRowNumbers       = $this->getOption('showRowNumbers', '(optional) Adds a left most column showing row numbers.');
         $this->renderAsDiv	        = $this->getOption('renderAsDiv', '(optional) If set, the table is rendered as &lt;div> tags rather than &lt;table>');
         $this->tableDataAttr	    = $this->getOption('tableDataAttr', '(optional) ');
@@ -682,6 +683,9 @@ EOT;
         $tdClass = trim(str_replace('  ', ' ', "$tdClass lzy-col-$col1"));
         $tdClass = " class='$tdClass'";
         $cell = str_replace("\n", '<br />', $cell);
+        if ($this->headersAsVars && ($tag == 'th')) {
+            $cell = "{{ $cell }}";
+        }
         return "<$tag$tdId$tdClass$ref><div>$cell</div></$tag>";
     } // getDataElem
 
@@ -763,6 +767,7 @@ EOT;
         if ($this->dataSource) {
             $ds = new DataStorage($this->dataSource);
             $this->data = $ds->read('*');
+            $this->arrangeData();
         }
 
         $this->adjustTableSize();
@@ -979,5 +984,38 @@ EOT;
             }
         }
     } // convertLinks
+
+
+
+
+    private function arrangeData()
+    {
+        if (isset($this->data[0])) {    // tabular data (probably from csv -> nothing to do
+            return;
+        }
+
+        // data is array of records (probably from a yaml source):
+        $data = [];
+        $headers = false;
+        foreach ($this->data as $key => $rec) {
+            if (!$headers) {
+                foreach ($rec as $name => $item) {
+                    $headers[] = $name;
+                }
+                $headers[] = 'index';
+                $data[] = $headers;
+            }
+            $newRec = [];
+            foreach ($headers as $name) {
+                if ($name == 'index') {
+                    $newRec[] = $key;
+                } else {
+                    $newRec[] = isset($rec[$name]) ? $rec[$name] : '???';
+                }
+            }
+            $data[] = $newRec;
+        }
+        $this->data = $data;
+    } // arrangeData
 
 } // HtmlTable
