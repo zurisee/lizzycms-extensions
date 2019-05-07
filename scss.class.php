@@ -3,6 +3,11 @@
  *	Lizzy - small and fast web-page rendering engine
  *
  *	SCSS Compiler Adapter
+ *
+ *  Resulting CSS code is stored a) in individual file (e.g. '_style.css') and
+ *  aggregated in file '_styles.css'.
+ *  Aggregation is skipped if the scss filename starts with a non-apha character, e.g. '@special.css'.
+ *  -> Thus it's possible to distribute CSS rules over category files.
 */
 use Leafo\ScssPhp\Compiler;
 
@@ -125,7 +130,13 @@ class SCssCompiler
         if (!$this->scss) {
             $this->scss = new Compiler;
         }
-        $targetFile = $toPath . '_' . basename($file, '.scss') . '.css';
+        $includeFile = true;
+        $fname = basename($file, '.scss');
+        if (preg_match('/^\W/', $fname)) {
+            $fname = substr($fname,1);
+            $includeFile = false;
+        }
+        $targetFile = $toPath . "_$fname.css";
         $t0 = filemtime($file);
         $scssStr = $this->getFile($file);
         $cssStr = "/**** auto-created from '$file' - do not modify! ****/\n\n";
@@ -137,10 +148,13 @@ class SCssCompiler
         file_put_contents($targetFile, $cssStr);
         touchFile($targetFile, $t0);
 
-        if (!$this->config->localCall) {
+        if (!$this->config->localCall) {    // remove comments, if not on local host:
             $cssStr = preg_replace("|\s+/\* .* \*/|m", '', $cssStr);
         }
-        file_put_contents($compiledFilename, $cssStr."\n\n\n", FILE_APPEND);
+
+        if ($includeFile) {                 // assemble all generated CSS, unless its filename started with non-alpha char
+            file_put_contents($compiledFilename, $cssStr . "\n\n\n", FILE_APPEND);
+        }
 
         return basename($file).", ";
     } // doCompile
