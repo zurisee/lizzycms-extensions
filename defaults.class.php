@@ -116,9 +116,8 @@ private $userConfigurableSettingsAndDefaults      = [
         // shortcuts for modules to be loaded (upon request):
         // weight value controls the order of invocation. The higher the earlier.
         $this->jQueryWeight = 200;
-        $this->loadModules['JQUERY']                = array('module' => 'third-party/jquery/jquery-3.3.1.min.js', 'weight' => $this->jQueryWeight);
-        $this->loadModules['JQUERY3']               = array('module' => 'third-party/jquery/jquery-3.3.1.min.js', 'weight' => $this->jQueryWeight);
-        $this->loadModules['JQUERY2']               = array('module' => 'third-party/jquery/jquery-2.2.4.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY']                = array('module' => 'third-party/jquery/jquery-3.4.1.min.js', 'weight' => $this->jQueryWeight);
+        $this->loadModules['JQUERY3']               = array('module' => 'third-party/jquery/jquery-3.4.1.min.js', 'weight' => $this->jQueryWeight);
         $this->loadModules['JQUERY1']               = array('module' => 'third-party/jquery/jquery-1.12.4.min.js', 'weight' => $this->jQueryWeight);
 
         $this->loadModules['JQUERYUI']              = array('module' => 'third-party/jqueryui/jquery-ui.min.js, '.
