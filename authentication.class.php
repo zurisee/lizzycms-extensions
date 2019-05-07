@@ -477,8 +477,10 @@ class Authentication
     public function logout()
     {
         $user = getStaticVariable('user');
-        $user .= (isset($_SESSION['lizzy']['userDisplayName'])) ? ' ('.$_SESSION['lizzy']['userDisplayName'].')' : '';
-        writeLog("logged out: $user [".getClientIP(true).']', LOGIN_LOG_FILENAME);
+        if ($user) {
+            $user .= (isset($_SESSION['lizzy']['userDisplayName'])) ? ' (' . $_SESSION['lizzy']['userDisplayName'] . ')' : '';
+            writeLog("logged out: $user [" . getClientIP(true) . ']', LOGIN_LOG_FILENAME);
+        }
 
         $this->unsetLoggedInUser();
     } // logout
