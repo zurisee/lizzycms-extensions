@@ -325,6 +325,9 @@ EOT;
                    "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
             if ((!$elem['hide!']) || $showHidden) {
+                if ($elem['hide!']) {
+                    $liClass .= ' lzy-nav-hidden-elem';
+                }
                 if (!$stop && isset($elem[0])) {	// does it have children?
 
                     // --- recursion:
