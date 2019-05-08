@@ -961,9 +961,11 @@ EOT;
             $data = &$this->data;
             foreach ($data as $r => $row) {
                 foreach ($data[$r] as $c => $col) {
-                    $d = &$data[$r][$c];
-                    if (preg_match('/^(.*)\@(.*\.\w{2,6})$/', $d, $m)) {
-                        $d = "<a href='mailto:$d'>$d</a>";
+                    $d = trim($data[$r][$c]);
+                    if (preg_match_all('/([\w-\.]*?)\@([\w-\.]*?\.\w{2,6})/', $d, $m)) {
+                        foreach ($m[0] as $addr) {
+                            $d = str_replace($addr, "<a href='mailto:$addr'>$addr</a>", $d);
+                        }
 
                     } elseif (preg_match('/^( \+? [\d\-\s\(\)]* )$/x', $d, $m)) {
                         $tel = preg_replace('/[^\d\+]/', '', $d);
@@ -980,6 +982,7 @@ EOT;
                             $d = "<a href='$url'>$d</a>";
                         }
                     }
+                    $data[$r][$c] = $d;
                 }
             }
         }
