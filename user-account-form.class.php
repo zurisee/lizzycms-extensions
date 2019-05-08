@@ -9,6 +9,8 @@ $lizzyAccountCounter = 0;
 
 class UserAccountForm
 {
+    private $un_preset = '';
+
     public function __construct($lzy, $infoIcon = '&#9432;')
     {
         global $lizzyAccountCounter;
@@ -42,6 +44,7 @@ class UserAccountForm
 
     public function renderLoginForm($notification = '', $message = '', $returnRaw = false)
     {
+        $this->un_preset = '{{^ lzy-username-preset }}';
         $this->page = new Page;
         if ($this->config->admin_enableAccessLink) {
             $str = $this->createMultimodeLoginForm($notification, $message);
@@ -672,7 +675,7 @@ EOT;
                         <span>{{ {$prefix}username-prompt }}:</span>
                         <a href="#" class="lzy-admin-show-info" title="{{ {$prefix}username-info-title }}" aria-label="{{ {$prefix}username-info-title }}">{$this->infoIcon}</a> 
                         <span class="lzy-admin-info" style="display: none">{{ {$prefix}username-info-text }}</span>
-                        <input type="text" id="lzy-login-username{$this->inx}" class="lzy-login-username" name="{$prefix}username" required aria-required="true">
+                        <input type="text" id="lzy-login-username{$this->inx}" class="lzy-login-username" name="{$prefix}username" required aria-required="true" value="{$this->un_preset}" />
                         <output class='lzy-error-message' aria-live="polite" aria-relevant="additions"></output>
                     </label>
 
