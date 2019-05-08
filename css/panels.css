@@ -1,6 +1,10 @@
 
 body {
    --width-threshold: 480px;    /* var(--width-threshold) */
+    --lzy-panels-label-color: white;
+    --lzy-panels-bg-color: white;
+    --lzy-panels-bg-color-non-selected: #444;
+    --lzy-panels-label-color-non-selected: #ddd;
 }
 /* All Modes */
 .lzy-panels-widget,
@@ -163,12 +167,12 @@ li.lzy-tabs-mode-panel-header {
 /* Tabs: */
         /* non-selected tabs: */
         .lzy-panels-widget.lzy-tab-mode .lzy-tabs-mode-panel-header {
-            color: #ddd;
+            color: var(--lzy-panels-label-color-non-selected);
         }
 
         /* selected tab: */
         .lzy-panels-widget .lzy-tabs-mode-panel-header[aria-selected=true] {
-            color: #444;
+            color: var(--lzy-panels-label-color);
         }
 
 
@@ -185,7 +189,7 @@ li.lzy-tabs-mode-panel-header {
         /* Background unselected tabs: */
         .lzy-panels-widget.lzy-tab-mode.lzy-tilted .lzy-tabs-mode-panel-header::after,
         .lzy-tabs-mode-panel-header::before {
-            background: #444;
+            background: var(--lzy-panels-bg-color-non-selected);
         }
 
         /* Background: selected tab and panel*/
@@ -193,7 +197,7 @@ li.lzy-tabs-mode-panel-header {
         .lzy-panels-widget .lzy-tabs-mode-panel-header[aria-selected=true]::before,
         .lzy-panel-body-wrapper,
         .lzy-panel-inner-wrapper {
-            background: white;
+            background: var(--lzy-panels-bg-color);
         }
 
         /* Outline in tabs mode: */

@@ -153,7 +153,10 @@
     margin: 10px 0;
     font-size: 90%;
 }
-
+.lzy-admin-info,
+.lzy-admin-info p {
+    color: #333;
+}
 
 .lzy-logged-in-confirmation {
     border: 1px solid #ddd;
