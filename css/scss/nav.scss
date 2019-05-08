@@ -45,6 +45,12 @@ body {
 
     --lzy-smallscreen-txt-color: #fff;
     --lzy-smallscreen-bg-color: #555;
+    
+    // small screen footer
+    --lzy-mobile-footer-txt-color: #fff;
+    --lzy-mobile-footer-bg-color: #555;
+
+    --lzy-footer-txt-color: #555;
 }
 
 
@@ -529,6 +535,11 @@ body:not(.lzy-small-screen) {
     }
 }
 
+footer {
+    svg {
+        fill: var(--lzy-footer-txt-color);
+    }
+}
 
 body.lzy-small-screen {
     min-height: 100vh;
@@ -579,9 +590,13 @@ body.lzy-small-screen {
         width: calc(100vw - 2em);
         height: 7vh;
         line-height: 7vh;
-        color: var(--lzy-mobile-header-txt-color);
+        color: var(--lzy-mobile-footer-txt-color);
+        background: var(--lzy-mobile-footer-bg-color);
         a {
-            color: var(--lzy-mobile-header-txt-color);
+            color: var(--lzy-mobile-footer-txt-color);
+        }
+        svg {
+            fill: var(--lzy-mobile-footer-txt-color);
         }
         z-index: 9;
     }
