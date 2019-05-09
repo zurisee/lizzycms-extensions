@@ -13,9 +13,10 @@ $this->addMacro($macroName, function () {
     $id = $this->getArg($macroName, 'id', 'Help-text', 'default value');
     $class = $this->getArg($macroName, 'class', 'Help-text', 'default value');
     $keyFormat = $this->getArg($macroName, 'keyFormat', 'Help-text', false);
+    $labelsAsVars = $this->getArg($macroName, 'labelsAsVars', '(optional) If true, header elements will be rendered as variables (i.e. in curly brackets).', false);
 
     $ed = new EditData($this->page, $dataSource);
-    $str = $ed->render($id, $class, $keyFormat);
+    $str = $ed->render($id, $class, $keyFormat, $labelsAsVars);
 	return $str;
 });
 
@@ -47,9 +48,10 @@ class EditData
 
 
 
-    public function render($id, $class, $keyFormat = false)
+    public function render($id, $class, $keyFormat = false, $labelsAsVars = false)
     {
         $this->keyFormat = $keyFormat ? $keyFormat : 'Y-m-d';
+        $this->labelsAsVars = $labelsAsVars;
 
         $id = $id ? "id='$id'" : '';
         $class = $class ? "class='$class'" : '';
@@ -108,7 +110,11 @@ EOT;
         if ($key && ($keyType == 'date')) {
             $key = date($this->keyFormat, $key);
         }
-        $keyLabel = "{{ lzy-data-key-$keyType-label }}";
+        if ($this->labelsAsVars) {
+            $keyLabel = "{{ lzy-data-key-$keyType-label }}";
+        } else {
+            $keyLabel = $keyType;
+        }
 
         $out = <<<EOT
         <div class='lzy-data-input-rec$class'>
@@ -124,9 +130,12 @@ EOT;
             $type = (stripos($fieldType, 'string') !== false) ? 'text' : $fieldType;
             $value = isset($rec[$label]) ? $rec[$label] : '';
             $name = str_replace('-', '_', $label);
+            if ($this->labelsAsVars) {
+                $label = "{{ $label }}";
+            }
             $out .= <<<EOT
                     <div class='lzy-data-input-field'>
-                        <label for='lzy-data-field-$inx-$j'>{{ $label }}</label>
+                        <label for='lzy-data-field-$inx-$j'>$label</label>
                         <input type='$type' id='lzy-data-field-$inx-$j' name='{$name}' value="$value">
                     </div>
 
