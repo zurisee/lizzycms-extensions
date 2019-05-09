@@ -37,6 +37,9 @@ class EditData
             case 'yaml':
                 list($this->data, $structure, $structDefined) = getYamlFile($dataSource, true);
                 break;
+            case 'csv':
+                list($this->data, $structure, $structDefined) = getCsvFile($dataSource, true);
+                break;
             default:
                 die("EditData not implemented yet for data type $type");
         }
@@ -120,7 +123,7 @@ EOT;
         if ($this->labelsAsVars) {
             $keyLabel = "{{ lzy-data-key-$keyType-label }}";
         } else {
-            $keyLabel = $keyType;
+            $keyLabel = '{{ key }}'; //$keyType;
         }
 
         $out = <<<EOT
