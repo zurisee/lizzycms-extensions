@@ -228,6 +228,42 @@ function parseCsv($str, $delim = false, $enclos = false) {
 
 
 
+//--------------------------------------------------------------
+function getCsvFile($filename, $returnStructure = false)
+{
+    $csv = getFile($filename, true);
+    if ($csv) {
+        $data = parseCsv($csv);
+    } else {
+        $data = [];
+    }
+
+    $structure = false;
+    $structDefined = false;
+
+    if ($returnStructure) {     // return structure of data
+        if (isset($data[0])) {
+            $fields = [];
+            foreach ($data[0] as $label) {
+                $fields[$label] = 'string';
+            }
+            unset($data[0]);
+            $structure['key'] = 'string';
+            $structure['fields'] = $fields;
+            $data1 = [];
+            foreach ($data as $r => $rec) {
+                foreach (array_keys($fields) as $i => $label) {
+                    $data1[$r][$label] = $rec[$i];
+                }
+            }
+        }
+        return [$data1, $structure, $structDefined];
+    }
+    return $data;
+} // getCsvFile
+
+
+
 //------------------------------------------------------------
 function csv_to_array($str, $delim = ',') {
     $str = trim($str);
