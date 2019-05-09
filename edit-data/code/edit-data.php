@@ -1,6 +1,8 @@
 <?php
 // @info: -> one line description of macro <-
 
+$this->page->addModules('~sys/extensions/edit-data/css/edit-data.css');
+
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
 
 
@@ -68,8 +70,8 @@ class EditData
         $formButtons = <<<EOT
 
         <div class="lzy-data-input-form-buttons">
-            <input type='submit' class='lzy-button' value='{{ lzy-data-input-submit }}'>
-            <input type='reset' class='lzy-button' value='{{ lzy-data-input-cancel }}'>
+            <input type='submit' class='lzy-button' value='{{ Save }}'>
+            <input type='reset' class='lzy-button' value='{{ Cancel }}'>
         </div>
 
 EOT;
@@ -110,8 +112,8 @@ EOT;
         }
         $buttons = <<<EOT
             <div class="lzy-data-input-rec-buttons">
-                <button class='lzy-data-input-add-rec lzy-button'>{{ lzy-data-input-add-rec-symbol }}</button>
-                <button class='lzy-data-input-del-rec lzy-button'>{{ lzy-data-input-del-rec-symbol }}</button>
+                <button class='lzy-data-input-add-rec lzy-button'>&plus;</button>
+                <button class='lzy-data-input-del-rec lzy-button'>&minus;</button>
             </div>
 EOT;
 
