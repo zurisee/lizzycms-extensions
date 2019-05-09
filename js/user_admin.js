@@ -23,10 +23,10 @@ function setGenericEventHandlers() {
         e.preventDefault();
         if ($('.lzy-form-password').attr('type') == 'text') {
             $('.lzy-form-password').attr('type', 'password');
-            $('.login-form-icon').attr('src', systemPath+'rsc/show.png');
+            $('.lzy-form-show-password svg .crossed').css('display', 'none');   // toggles line in svg icon
         } else {
             $('.lzy-form-password').attr('type', 'text');
-            $('.login-form-icon').attr('src', systemPath+'rsc/hide.png');
+            $('.lzy-form-show-password svg .crossed').css('display', 'block');
         }
     });
 

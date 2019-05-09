@@ -1,5 +1,8 @@
 
 /* --- Authentication ----- */
+body {
+    --lzy-login-txt-color: black;
+}
 
 .lzy-login-menu ol {
     padding-left: 1em;
@@ -156,6 +159,15 @@
 .lzy-admin-info,
 .lzy-admin-info p {
     color: #333;
+}
+.lzy-form-show-password svg .crossed {
+    display: none;
+}
+.lzy-form-show-password svg {
+    height: 1.5em;
+    width: auto;
+    margin-top: -0.25em;
+    fill: var(--lzy-login-txt-color);
 }
 
 .lzy-logged-in-confirmation {
