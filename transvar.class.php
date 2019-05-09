@@ -147,6 +147,7 @@ class Transvar
                     }
                 }
             }
+            $n--;
             list($p1, $p2) = strPosMatching($str, '{{', '}}', $p1+1);
 		}
 		return $modified;
