@@ -32,7 +32,14 @@ class EditData
         $this->page = $page;
 
         $dataSource = resolvePath($dataSource, true);
-        list($this->data, $structure, $structDefined) = getYamlFile($dataSource, true);
+        $type = fileExt($dataSource);
+        switch ($type) {
+            case 'yaml':
+                list($this->data, $structure, $structDefined) = getYamlFile($dataSource, true);
+                break;
+            default:
+                die("EditData not implemented yet for data type $type");
+        }
 
         if (!isset($structure['key'])) {
             fatalError("Error in data file: structure def missing");
