@@ -1678,7 +1678,6 @@ EOT;
     public function sendMail($to, $subject, $message, $from = false)
     {
         if (!$from) {
-//            $from = $this->config->admin_webmasterEmail;
             $from = $this->trans->getVariable('webmaster_email');
         }
         $explanation = "<p><strong>Message sent by e-mail when not on localhost:</strong></p>";
