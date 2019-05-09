@@ -93,6 +93,17 @@ opens in new win:
     en: Opens in new window
 
 
+nextPageLabel: "<span class='nextLinkArrow' title='{{ to next page }}'></span>"
+prevPageLabel: "<span class='prevLinkArrow' title='{{ to prev page }}'></span>"
+to next page:
+    de: zur nächsten Seite
+    _: to next page
+
+to prev page:
+    de: zur vorherigen Seite
+    _: to previous page
+
+
 
 #--- Navigation --------------------------
 lzy-nav-elem-button:
@@ -126,10 +137,10 @@ lzy-onetimelogin-email-info-title:
 lzy-onetimelogin-email-info-text:
     de: "<p>Geben Sie Ihre <strong>E-Mail-Adresse</strong> ein. <br>&rarr; Sie erhalten dann eine Mail mit einem Zugangs-Link. Klicken Sie auf diesen Link. So sind Sie automatisch im Browser angemeldet.</p>
     <p>Der Link enthält einen <strong>Zugangs-Code</strong>. Dieser Code ist nur ein einziges Mal und nur während 15 Minuten gültig.</p>
-    <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ Webmaster }}, falls dies nicht der Fall ist.</p>"
+    <p>Damit dies funktioniert, muss Ihre E-Mail-Adresse bei uns registriert sein. Kontaktieren Sie den {{ webmaster_link }}, falls dies nicht der Fall ist.</p>"
     en: "<p>Enter your <strong>e-mail address</strong>.<br>&rarr; You will then get an e-mail containing a link. Click on that link to open the web-page you requested.</p>
     <p>This Link contains an <strong>access code</strong>. This code is only valid one time and within the next 15 minutes.</p>
-    <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
+    <p>Note: for this to work your e-mail address must be registered. Contact the {{ webmaster_link }} if that is not the case.</p>"
 
 lzy-login-username-prompt:
     de: E-Mail Adresse (oder Benutzername)
@@ -273,13 +284,13 @@ lzy-login-failed:
 #    <p>Note: for this to work your e-mail address must be registered. Contact the {{ Webmaster }} if that is not the case.</p>"
 
 un-pw-login-info:
-    de: "Geben Sie Ihren Benutzernamen ein.<br>Kontaktieren Sie den {{ Webmaster }}, falls Sie noch keine Zugangsdaten besitzen."
-    en: "Enter your username.<br>Contact the {{ Webmaster }} if you don&#39;t have credentials for this website."
+    de: "Geben Sie Ihren Benutzernamen ein.<br>Kontaktieren Sie den {{ webmaster_link }}, falls Sie noch keine Zugangsdaten besitzen."
+    en: "Enter your username.<br>Contact the {{ webmaster_link }} if you don&#39;t have credentials for this website."
 
 #login-password-info:
 login-password-login-info:
-    de: "Geben Sie Ihr Kennwort ein.Kontaktieren Sie den {{ Webmaster }}, falls Sie das Kennwort vergessen haben oder ein sonstiges Problem aufgetreten ist."
-    en: "Enter your password.<br>Contact the {{ Webmaster }} if you forgot your password or some other problem has come up."
+    de: "Geben Sie Ihr Kennwort ein.Kontaktieren Sie den {{ webmaster_link }}, falls Sie das Kennwort vergessen haben oder ein sonstiges Problem aufgetreten ist."
+    en: "Enter your password.<br>Contact the {{ webmaster_link }} if you forgot your password or some other problem has come up."
 
 info-password-login-title:
     de: 'Hilfe: zum Kennwort'
@@ -288,7 +299,7 @@ info-password-login-title:
 
 
 
-//maillink Webmaster: "{{ concat('forgot password1', webmaster-email,'?subject=',login-problems,'&body=%0a%0aURL:%20',pageUrl, '\'\>Webmaster</a>') }}"
+#maillink Webmaster: "{{ concat('forgot password1', webmaster-email,'?subject=',login-problems,'&body=%0a%0aURL:%20',pageUrl, '\'\>Webmaster</a>') }}"
 
 #forgot password:
 #    de: "<a href='mailto:webmaster-email'>Kennwort funktioniert nicht oder vergessen...</a>"

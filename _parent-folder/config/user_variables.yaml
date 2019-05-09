@@ -1,18 +1,19 @@
-# Transvar Definition File
+# Variables Definition File
 
-page_title: $page_name / Lizzy
-
+# Name of website:
 site_title: Lizzy Website
 
-nextPageLabel: "<span class='nextLinkArrow' title='{{ to next page }}'></span>"
-prevPageLabel: "<span class='prevLinkArrow' title='{{ to prev page }}'></span>"
-to next page:
-    de: zur nächsten Seite
-    _: to next page
+# Title of page, appears e.g. in browser's tab:
+page_title: $page_name / {{site_title}}
 
-to prev page:
-    de: zur vorherigen Seite
-    _: to previous page
+# E-mail address of webmaster, appears e.g. when Lizzy tries to point to futher help:
+webmaster_email: webmaster@domain.net
+webmaster_link: "<a href='mailto:{{webmaster_email}}'>Webmaster</a>"
+
+lzy-sign-up further info:
+    de: "<p>Für weitere Informationen kontaktieren Sie bitte den {{webmaster_link}}.</p><p><br />(Mit der Taste ESC dieses Overlay schliessen)</p>"
+    _:  "<p>For further information contact the {{webmaster_link}}.</p><p><br />(Press ESC to remove overlay)</p>"
+
 
 
 
