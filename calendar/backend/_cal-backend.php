@@ -122,7 +122,7 @@ class CalendarBackend {
         $startTime = $post['start-time'];
         $endTime = $post['end-time'];
 
-        $recId = (isset($post['rec-id']) && $post['rec-id']) ? $post['rec-id'] : time();
+        $recId = (isset($post['rec-id'])) ? intval($post['rec-id']) : time();
 
         if (preg_match('/\[(.*)\]/', $startTime, $m)) { // array of events:
             $startTimes = explode(',', $m[1]);
@@ -175,7 +175,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function deleteRec($post)
     {
-        if (isset($post['rec-id']) && ($post['rec-id'] != '')) {
+        if (isset($post['rec-id']) && ($post['rec-id'] !== '')) {
             $recId = $post['rec-id'];
             $this->ds->delete($recId);
         }

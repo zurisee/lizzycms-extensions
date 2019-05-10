@@ -33,12 +33,9 @@ $this->addMacro($macroName, function () {
     $lang = $this->config->lang;
 
     $source = $this->getArg($macroName, 'file', 'File path where data shall be fetched and stored.', 'calendar.yaml');
-    if ($source == 'help') {
-        return '';
-    }
     $source = resolvePath($source, true);
 
-    $edPermitted = $this->getArg($macroName, 'calEditingPermission', '', false);
+    $edPermitted = $this->getArg($macroName, 'calEditingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
 
     $publish = $this->getArg($macroName, 'publish', 'If set, Lizzy will switch to calendar publishing mode (using given name). Use a calendar app to subscribe to this calendar.', false);
     if ($publish) {
@@ -58,10 +55,14 @@ EOT;
         $this->page->addJqFiles("~sys/extensions/calendar/third-party/qtip/jquery.qtip.min.js,");
     }
 
+    if ($source == 'help') {
+        return '';
+    }
+
     $backend = CALENDAR_BACKEND;
     $viewMode = (isset($_SESSION['lizzy']['calMode'])) ? $_SESSION['lizzy']['calMode'] : 'agendaWeek';
 
-    if ($edPermitted == 'all') {
+    if (($edPermitted == 'all') || ($edPermitted == '*')) {
         $edPermitted = true;
     } elseif ($edPermitted) {
         $edPermitted = $this->lzy->auth->checkAdmission($edPermitted);
