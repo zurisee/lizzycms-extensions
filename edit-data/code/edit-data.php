@@ -3,9 +3,8 @@
 
 $this->page->addModules('~sys/extensions/edit-data/css/edit-data.css');
 
+
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
-
-
 $this->addMacro($macroName, function () {
 
 	$macroName = basename(__FILE__, '.php');
@@ -34,17 +33,18 @@ class EditData
         $this->page = $page;
 
         $dataSource = resolvePath($dataSource, true);
-        $type = fileExt($dataSource);
-        switch ($type) {
-            case 'yaml':
-                list($this->data, $structure, $structDefined) = getYamlFile($dataSource, true);
-                break;
-            case 'csv':
-                list($this->data, $structure, $structDefined) = getCsvFile($dataSource, true);
-                break;
-            default:
-                die("EditData not implemented yet for data type $type");
-        }
+        list($this->data, $structure, $structDefined) = getDataFromFile($dataSource, true);
+//        $type = fileExt($dataSource);
+//        switch ($type) {
+//            case 'yaml':
+//                list($this->data, $structure, $structDefined) = getYamlFile($dataSource, true);
+//                break;
+//            case 'csv':
+//                list($this->data, $structure, $structDefined) = getCsvFile($dataSource, true);
+//                break;
+//            default:
+//                die("EditData not implemented yet for data type $type");
+//        }
 
         if (!isset($structure['key'])) {
             fatalError("Error in data file: structure def missing");
@@ -174,6 +174,8 @@ EOT;
         $jq = <<<'EOT'
     var nRecs = parseInt($('input[name=lzy-data-input-form]').val());
     console.log('nRecs: ' + nRecs);
+    
+    // add record:
     $('.lzy-data-input-add-rec').click(function() {
         console.log('lzy-data-input-add-rec');
         var $rec = $( this ).closest('.lzy-data-input-rec');
@@ -185,12 +187,16 @@ EOT;
         
         return false;
     });
+    
+    // delete record:
     $('.lzy-data-input-del-rec').click(function() {
         console.log('lzy-data-input-del-rec');
         var $rec = $( this ).closest('.lzy-data-input-rec');
         $rec.remove();
         return false;
     });
+    
+    // reset form:
     $('input[type=reset]').click(function() {
         console.log('reload page');
         var response = confirm("{{ lzy-discard-all-changes }}");
@@ -198,6 +204,8 @@ EOT;
             lzyReload();
         }
     });
+    
+    // submit form:
     $('form').submit(function() {
         var url = window.location.href;
         console.log('submit ' + url);
@@ -244,6 +252,13 @@ EOT;
         if (!isset($_POST['lzy_data_input_form'])) {
             return;
         }
+        $data0 = json_decode($_POST['lzy_data_input_form'], true);
+        if (writeDataToFile($dataSource, $data0)) {
+            exit('ok');
+        } else {
+            exit('error');
+        }
+
         $hashedHeader = getHashCommentedHeader($dataSource);
 
         $data0 = json_decode($_POST['lzy_data_input_form'], true);
