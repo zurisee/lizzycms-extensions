@@ -207,66 +207,6 @@ function parseInlineBlockArguments($str, $returnElements = false)
 
 
 //--------------------------------------------------------------
-function writeDataToFile($filename, $data, $saveToRecycleBin = false)
-{
-    $ext = fileExt($filename);
-    switch ($ext) {
-        case 'yaml':
-            $out = writeToYamlFile($filename, $data);
-            break;
-
-        case 'csv':
-            $out = arrayToCsv($data);
-            break;
-
-        case'json':
-            $out = json_encode($data);
-            break;
-
-        default:
-            return false;
-    }
-    if ($saveToRecycleBin) {
-        require_once SYSTEM_PATH.'page-source.class.php';
-        $ps = new PageSource;
-        $ps->copyFileToRecycleBin($filename);
-    }
-    file_put_contents($filename, $out);
-    return true;
-} // writeDataToFile
-
-
-
-
-//--------------------------------------------------------------
-function getDataFromFile($filename, $returnStructure = false)
-{
-    $ext = fileExt($filename);
-    switch ($ext) {
-        case 'yaml':
-            $data = getYamlFile($filename, $returnStructure);
-            break;
-
-        case 'csv':
-            $data = getCsvFile($filename, $returnStructure);
-            break;
-        case'json':
-            $json = getFile($filename);
-            $data = json_decode($json, true);
-            if ($returnStructure) {     // return structure of data
-                return extractStructureFromData($data);
-            }
-            break;
-        default:
-            return [];
-    }
-    return $data;
-} // getDataFromFile
-
-
-
-
-//--------------------------------------------------------------
 function parseCsv($str, $delim = false, $enclos = false) {
 
     if (!$delim) {
@@ -298,48 +238,29 @@ function getCsvFile($filename, $returnStructure = false)
         $data = [];
     }
 
+    $structure = false;
+    $structDefined = false;
+
     if ($returnStructure) {     // return structure of data
-        return extractStructureFromData($data);
+        if (isset($data[0])) {
+            $fields = [];
+            foreach ($data[0] as $label) {
+                $fields[$label] = 'string';
+            }
+            unset($data[0]);
+            $structure['key'] = 'string';
+            $structure['fields'] = $fields;
+            $data1 = [];
+            foreach ($data as $r => $rec) {
+                foreach (array_keys($fields) as $i => $label) {
+                    $data1[$r][$label] = $rec[$i];
+                }
+            }
+        }
+        return [$data1, $structure, $structDefined];
     }
     return $data;
 } // getCsvFile
-
-
-
-
-//------------------------------------------------------------
-function extractStructureFromData($data)
-{
-    $structure = false;
-    $structDefined = false;
-    $data1 = $data;
-
-    // return structure of data
-    if (isset($data[0])) {      // tabular data with first rec = field names:
-        $fields = [];
-        foreach ($data[0] as $label) {
-            $fields[$label] = 'string';
-        }
-        unset($data[0]);
-        $structure['key'] = 'string';
-        $structure['fields'] = $fields;
-        $data1 = [];
-        foreach ($data as $r => $rec) {
-            foreach (array_keys($fields) as $i => $label) {
-                $data1[$r][$label] = $rec[$i];
-            }
-        }
-    } else {
-        $fields = array_keys( reset($data) );
-        $structure['key'] = 'string';
-        foreach ($fields as $field) {
-            $structure['fields'][$field] = 'string';
-        }
-    }
-    return [$data1, $structure, $structDefined];
-
-} // extractStructureFromData
-
 
 
 
@@ -503,8 +424,7 @@ function getFile($pat, $removeComments = false)
     global $globalParams;
 	$pat = str_replace('~/', '', $pat);
 	if (strpos($pat, '~page/') === 0) {
-	    $pat = str_replace('~page/', $globalParams['pathToPage'], $pat);
-//	    $pat = str_replace('~page/', $globalParams['pagePath'], $pat);
+	    $pat = str_replace('~page/', $globalParams['pagePath'], $pat);
     }
     if (file_exists($pat)) {
         $file = file_get_contents($pat);
