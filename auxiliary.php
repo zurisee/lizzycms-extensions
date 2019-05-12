@@ -286,12 +286,12 @@ function csv_to_array($str, $delim = ',') {
 
 
 //--------------------------------------------------------------
-function arrayToCsv($array, $quote = '"', $delim = ',')
+function arrayToCsv($array, $quote = '"', $delim = ',', $forceQuotes = true)
 {
     $out = '';
     foreach ($array as $row) {
         foreach ($row as $i => $elem) {
-            if (strpbrk($elem, "$quote$delim")) {
+            if ($forceQuotes || strpbrk($elem, "$quote$delim")) {
                 $row[$i] = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
             }
             $row[$i] = str_replace(["\n", "\r"], ["\\n", ''], $row[$i]);
