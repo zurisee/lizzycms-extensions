@@ -1,6 +1,6 @@
 <?php
 /*
- *	Lizzy - small and fast web-page rendering engine
+ *	LZY - small and fast web-page rendering engine
  *
  * Simple file-based key-value database
  *
@@ -44,13 +44,14 @@
  *      or in separate file in case of 2D data in .csv files -> in this case meta data is not under '_mega_'
 */
 
-define('LIZZY_META', '_meta_');
-define('LIZZY_LOCK', 'lock');
-define('LIZZY_LOCK_TIME', 'time');
-define('LIZZY_SID', 'sid');     // session ID
-define('LIZZY_MODIF_TIME', 'modif');
-define('LIZZY_LOCK_ALL', 'lock_all');
-define('LIZZY_DEFAULT_FILE_TYPE', 'json');
+define('LZY_META', '_meta_');
+define('LZY_STRUCTURE', '_structure');
+define('LZY_LOCK', 'lock');
+define('LZY_LOCK_TIME', 'time');
+define('LZY_SID', 'sid');     // session ID
+define('LZY_MODIF_TIME', 'modif');
+define('LZY_LOCK_ALL', 'lock_all');
+define('LZY_DEFAULT_FILE_TYPE', 'json');
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
 
@@ -100,10 +101,7 @@ class DataStorage
 			}
         }
         if (strpos($dbFile, '.csv') !== false) {
-            $this->dbMetaDBfile = str_replace('.csv', '_meta.'.LIZZY_DEFAULT_FILE_TYPE, $dbFile);
-            if (!file_exists($this->dbMetaDBfile)) {
-                touch($this->dbMetaDBfile);
-            }
+            $this->dbMetaDBfile = str_replace('.csv', '_meta.'.LZY_DEFAULT_FILE_TYPE, $dbFile);
         }
         $this->sid = $sid;
         $this->lockDB = $lockDB;
@@ -124,24 +122,15 @@ class DataStorage
 	//---------------------------------------------------------------------------
     public function write($key, $value = null)
     {
-        if (isset($this->meta[LIZZY_LOCK_ALL])) { // entire DB is locked
-            if (!$this->isMySessionID($this->meta[LIZZY_LOCK_ALL])) {
+        if (isset($this->meta[LZY_LOCK_ALL])) { // entire DB is locked
+            if (!$this->isMySessionID($this->meta[LZY_LOCK_ALL])) {
                 return false;
             }
         }
 
         $data = &$this->data;
-        if ($data === null) {
+        if (($data === null) || ($value === null)) {
             $data = [];
-        }
-        if ($this->dbMetaDBfile) {
-            $meta = &$this->meta;
-        } else {
-            if (!isset($this->data[LIZZY_META])) {
-                $this->data[LIZZY_META] = [];
-            }
-            $meta = $this->data[LIZZY_META];
-            $this->meta = $meta;
         }
 
         if (!is_array($data)) {
@@ -156,12 +145,12 @@ class DataStorage
             } else {
                 $array = $key;
                 foreach ($array as $key => $value) {
-                    if (!isset($meta[$key][LIZZY_LOCK][LIZZY_LOCK_TIME])) { // skip meta / lock-time
+                    if (!isset($this->meta[$key][LZY_LOCK][LZY_LOCK_TIME])) { // skip meta / lock-time
                         $this->setValue($key, $value);
 
 
-                    } elseif (isset($meta[$key][LIZZY_LOCK][LIZZY_SID]) &&
-                            ($meta[$key][LIZZY_LOCK][LIZZY_SID] == $this->sid)) { // skip meta / sessionID
+                    } elseif (isset($this->meta[$key][LZY_LOCK][LZY_SID]) &&
+                            ($this->meta[$key][LZY_LOCK][LZY_SID] == $this->sid)) { // skip meta / sessionID
                         $this->setValue($key, $value);
 
                     } else {
@@ -181,8 +170,8 @@ class DataStorage
 	//---------------------------------------------------------------------------
     public function writeMeta($key, $value)
     {
-        if (isset($this->meta[LIZZY_LOCK_ALL])) { // entire DB is locked
-            if (!$this->isMySessionID($this->meta[LIZZY_LOCK_ALL])) {
+        if (isset($this->meta[LZY_LOCK_ALL])) { // entire DB is locked
+            if (!$this->isMySessionID($this->meta[LZY_LOCK_ALL])) {
                 return false;
             }
         }
@@ -190,10 +179,10 @@ class DataStorage
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
-            if (!isset($this->data[LIZZY_META])) {
-                $this->data[LIZZY_META] = [];
+            if (!isset($this->data[LZY_META])) {
+                $this->data[LZY_META] = [];
             }
-            $meta = &$this->data[LIZZY_META];
+            $meta = &$this->data[LZY_META];
         }
         $meta[$key] = $value;
         return $this->lowLevelWrite();
@@ -251,40 +240,40 @@ class DataStorage
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
-            if (!isset($this->data[LIZZY_META])) {
-                $this->data[LIZZY_META] = [];
+            if (!isset($this->data[LZY_META])) {
+                $this->data[LZY_META] = [];
             }
-            $meta = &$this->data[LIZZY_META];
+            $meta = &$this->data[LZY_META];
         }
         if (!is_array($data)) {
             return null;
         }
         if ($key === '*') {     // return all data
             if ($reportLockState) {
-                if (isset($data[LIZZY_META])) {
-                    $meta = $data[LIZZY_META];
-                    unset($data[LIZZY_META]);
+                if (isset($data[LZY_META])) {
+                    $meta = $data[LZY_META];
+                    unset($data[LZY_META]);
                 }
                 foreach ($data as $key => $value) {
                     if (is_array($value)) { // 2D array
                         $row = $value;
                         foreach ($row as $k2 => $value) {
                             $k = "$key,$k2";
-                            if (isset($meta[$k][LIZZY_LOCK][LIZZY_SID]) && ($meta[$k][LIZZY_LOCK][LIZZY_SID] != $this->sid)) {
+                            if (isset($meta[$k][LZY_LOCK][LZY_SID]) && ($meta[$k][LZY_LOCK][LZY_SID] != $this->sid)) {
                                 // locked by some other user
                                 $data[$key][$k2] = str_replace('**LOCKED**', '', $value) . '**LOCKED**';
                             }
                         }
 
-                    } elseif (isset($meta[$key][LIZZY_LOCK][LIZZY_SID]) && ($meta[$key][LIZZY_LOCK][LIZZY_SID] != $this->sid)) {
+                    } elseif (isset($meta[$key][LZY_LOCK][LZY_SID]) && ($meta[$key][LZY_LOCK][LZY_SID] != $this->sid)) {
                         // locked by some other user
                         $data[$key] = str_replace('**LOCKED**', '', $value) . '**LOCKED**';
                     }
                 }
             }
 
-            if (isset($data[LIZZY_META])) {   // make sure no sessionIds are passed on
-                unset($data[LIZZY_META]);
+            if (isset($data[LZY_META])) {   // make sure no sessionIds are passed on
+                unset($data[LZY_META]);
             }
             $value = $data;
 
@@ -313,10 +302,10 @@ class DataStorage
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
-            if (!isset($this->data[LIZZY_META])) {
-                $this->data[LIZZY_META] = [];
+            if (!isset($this->data[LZY_META])) {
+                $this->data[LZY_META] = [];
             }
-            $meta = &$this->data[LIZZY_META];
+            $meta = &$this->data[LZY_META];
         }
         $value = isset($meta[$key]) ? $meta[$key] : false;
         return $value;
@@ -372,13 +361,28 @@ class DataStorage
 
 
 
-        //---------------------------------------------------------------------------
+
+    //---------------------------------------------------------------------------
+    public function getRecStructure()
+    {
+        if (isset($this->meta[LZY_STRUCTURE])) {
+            return $this->meta[LZY_STRUCTURE];
+
+        } else {
+            fatalError("getRecStructure() structure info missing...");
+        }
+    } // getRecStructure
+
+
+
+
+    //---------------------------------------------------------------------------
     public function lastModified($key = false)
     {
         if ($key) {
             $meta = $this->meta;
-            if (isset($meta[$key][LIZZY_MODIF_TIME])) {
-                return $meta[$key][LIZZY_MODIF_TIME];
+            if (isset($meta[$key][LZY_MODIF_TIME])) {
+                return $meta[$key][LZY_MODIF_TIME];
             } else {
                 return 0;
             }
@@ -453,16 +457,16 @@ class DataStorage
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
-            $meta = &$this->data[LIZZY_META];
+            $meta = &$this->data[LZY_META];
         }
 
         if (!is_array($meta) || !$key) {
             return false;
         }
 
-        if (isset($meta[$key][LIZZY_LOCK][LIZZY_SID])) { // is data element locked?
-            $sid = $meta[$key][LIZZY_LOCK][LIZZY_SID];
-            if ($meta[$key][LIZZY_LOCK][LIZZY_SID] != $this->sid) { // locked by other sid?
+        if (isset($meta[$key][LZY_LOCK][LZY_SID])) { // is data element locked?
+            $sid = $meta[$key][LZY_LOCK][LZY_SID];
+            if ($meta[$key][LZY_LOCK][LZY_SID] != $this->sid) { // locked by other sid?
                 return true;   // element was locked, locking failed
             }
         }
@@ -478,7 +482,7 @@ class DataStorage
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
-            $meta = &$this->data[LIZZY_META];
+            $meta = &$this->data[LZY_META];
         }
 
         if (!$key) {
@@ -489,19 +493,19 @@ class DataStorage
         }
 
         if ($key == 'all') {        // lock entire DB
-            $meta[LIZZY_LOCK_ALL] = $this->getSessionID();
+            $meta[LZY_LOCK_ALL] = $this->getSessionID();
 
         } else {
-            if (isset($meta[$key][LIZZY_LOCK][LIZZY_SID])) { // is data element locked?
-                $sid = $meta[$key][LIZZY_LOCK][LIZZY_SID];
-                if ($meta[$key][LIZZY_LOCK][LIZZY_SID] != $this->sid) { // locked by other sid?
+            if (isset($meta[$key][LZY_LOCK][LZY_SID])) { // is data element locked?
+                $sid = $meta[$key][LZY_LOCK][LZY_SID];
+                if ($meta[$key][LZY_LOCK][LZY_SID] != $this->sid) { // locked by other sid?
                     return false;   // element was locked, locking failed
                 } else {
                     return true;    // already locked by caller
                 }
             }
-            $meta[$key][LIZZY_LOCK][LIZZY_LOCK_TIME] = time();
-            $meta[$key][LIZZY_LOCK][LIZZY_SID] = $this->sid;
+            $meta[$key][LZY_LOCK][LZY_LOCK_TIME] = time();
+            $meta[$key][LZY_LOCK][LZY_SID] = $this->sid;
         }
         $this->lowLevelWrite();
 
@@ -543,31 +547,31 @@ class DataStorage
         if ($this->dbMetaDBfile) {
             $meta = &$this->meta;
         } else {
-            $meta = &$this->data[LIZZY_META];
+            $meta = &$this->data[LZY_META];
         }
         if (!is_array($meta)) {
             return false;
         }
 
         if ($key === 'all') {        // lock entire DB
-            unset($meta[LIZZY_LOCK_ALL]);
+            unset($meta[LZY_LOCK_ALL]);
 
         } elseif ($key === '*') {    // unlock all records
             foreach ($meta as $id => $rec) {
-                unset($meta[$id][LIZZY_LOCK]);
+                unset($meta[$id][LZY_LOCK]);
             }
 
         } elseif ($key === true) {    // unlock all owner's records
             $mySid = $this->sid;
             foreach ($meta as $key => $value) {
-                if (isset($value[LIZZY_LOCK][LIZZY_SID]) && ($value[LIZZY_LOCK][LIZZY_SID] == $mySid)) {
-                    unset($meta[$key][LIZZY_LOCK]);
+                if (isset($value[LZY_LOCK][LZY_SID]) && ($value[LZY_LOCK][LZY_SID] == $mySid)) {
+                    unset($meta[$key][LZY_LOCK]);
                 }
             }
         } else {
-            if (isset($meta[$key][LIZZY_LOCK][LIZZY_SID]) &&
-                ($meta[$key][LIZZY_LOCK][LIZZY_SID] == $this->sid)) {
-                unset($meta[$key][LIZZY_LOCK]);
+            if (isset($meta[$key][LZY_LOCK][LZY_SID]) &&
+                ($meta[$key][LZY_LOCK][LZY_SID] == $this->sid)) {
+                unset($meta[$key][LZY_LOCK]);
             }
         }
         return $this->lowLevelWrite();
@@ -615,12 +619,15 @@ class DataStorage
         } else {    // skip locking DB
 
             if ($this->dbMetaDBfile) {
-                file_put_contents($this->dbMetaDBfile, $this->encode(false, true));
+                $out = $this->encode(false, true);
+                file_put_contents($this->dbMetaDBfile, $out);
                 if ($this->dataModified) {
-                    file_put_contents($this->dataFile, $this->encode());
+                    $out = $this->encode();
+                    file_put_contents($this->dataFile, $out);
                 }
             } else {
-                file_put_contents($this->dataFile, $this->encode());
+                $out = $this->encode();
+                file_put_contents($this->dataFile, $out);
             }
             $this->dataModified = false;
             return true;
@@ -649,7 +656,7 @@ class DataStorage
                 flock($fp, LOCK_UN);    // release the lock
                 fclose($fp);
                 if ($this->dbMetaDBfile) {  // separate meta file
-                    $this->meta = $this->decode($rawData, LIZZY_DEFAULT_FILE_TYPE);
+                    $this->meta = $this->decode($rawData, LZY_DEFAULT_FILE_TYPE);
 
                     $rawData = file_get_contents($this->dataFile); // read payload separately
                 }
@@ -665,22 +672,59 @@ class DataStorage
 
         } else {    // skip DB locking
             $rawData = file_get_contents($this->dataFile);
+            $rawData = $this->extractLead($rawData);
             $encod = mb_detect_encoding($rawData, 'UTF-8, ISO-8859-1');
             if ($encod == 'ISO-8859-1') {
                 $rawData = utf8_encode($rawData);
             }
             $data = $this->decode($rawData);
         }
+
+        if ($this->format === 'csv') {
+            $rec0 = array_shift($data);
+            $structure = null;
+            if ($rec0) {
+                $structure['key'] = 'index';
+                $structure['labels'] = array_values($rec0);
+                $structure['types'] = array_fill(0, sizeof($rec0), 'string');
+            }
+            $this->meta[LZY_STRUCTURE] = $structure;
+        }
+
         $this->data = $data;
-        if ($this->dbMetaDBfile) {
-            $this->meta = $this->decode(file_get_contents($this->dbMetaDBfile), LIZZY_DEFAULT_FILE_TYPE);
-        } else {
-            $this->meta = &$this->data[LIZZY_META]; // no sep meta file -> meta == data
-            if ($this->meta === null) {
-                $this->data[LIZZY_META] = [];
+        if (file_exists($this->dbMetaDBfile)) {
+            $this->meta = $this->decode(file_get_contents($this->dbMetaDBfile), LZY_DEFAULT_FILE_TYPE);
+
+        } elseif ($this->format !== 'csv') {    // yaml or json -> derive structure:
+            if (isset($this->data[LZY_META])) {
+                $this->meta = $this->data[LZY_META];
+                unset($this->data[LZY_META]);
+            } else {
+                $this->meta = [];
+                $key = array_keys($this->data);
+                $key = (isset($key[0])) ? $key[0] : null;
+                if (is_string($key)) {
+                    if (strtotime($key) !== false) {
+                        $this->meta[LZY_STRUCTURE]['key'] = 'date';
+                    } else {
+                        $this->meta[LZY_STRUCTURE]['key'] = 'string';
+                    }
+                } elseif (is_int($key)) {
+                    if ($key === 0) {
+                        $this->meta[LZY_STRUCTURE]['key'] = 'index';
+                    } else {
+                        $this->meta[LZY_STRUCTURE]['key'] = 'number';
+                    }
+                } else {
+                    $this->meta[LZY_STRUCTURE]['key'] = 'index';
+                }
+                $rec = reset($this->data);
+                $this->meta[LZY_STRUCTURE]['labels'] = array_keys($rec);
+                $this->meta[LZY_STRUCTURE]['types'] = array_fill(0, sizeof($rec), 'string');
             }
         }
-        return $data;
+
+        return $this->data;
     } // lowLevelRead
 
 
@@ -700,6 +744,28 @@ class DataStorage
         $destFile = "$destPath/" . date('Y-m-d H.i.s') . ' ' . basename($this->dataFile);
         copy($this->dataFile, $destFile);
     } // saveToRycleBin
+
+
+
+
+
+    //---------------------------------------------------------------------------
+    private function extractLead($str)
+    {
+        $lines = explode("\n", $str);
+        $lead = '';
+        foreach ($lines as $i => $line) {
+            if (!$line || (preg_match('/^[\#\s]/', $line))) {
+                $lead .= "$line\n";
+                unset($lines[$i]);
+                continue;
+            }
+            break;
+        }
+        $str = implode("\n", $lines);
+        $this->lead = $lead;
+        return $str;
+    } // $this->extractLead
 
 
 
@@ -726,10 +792,10 @@ class DataStorage
         $meta = &$this->meta;
         $modified = false;
         foreach ($meta as $id => $rec) {
-            if (isset($rec[LIZZY_LOCK][LIZZY_LOCK_TIME])) {
-                $t = $rec[LIZZY_LOCK][LIZZY_LOCK_TIME];
-                if ($rec[LIZZY_LOCK][LIZZY_LOCK_TIME] < $th) {
-                    unset($meta[$id][LIZZY_LOCK]);
+            if (isset($rec[LZY_LOCK][LZY_LOCK_TIME])) {
+                $t = $rec[LZY_LOCK][LZY_LOCK_TIME];
+                if ($rec[LZY_LOCK][LZY_LOCK_TIME] < $th) {
+                    unset($meta[$id][LZY_LOCK]);
                     $modified = true;
                 }
             }
@@ -746,11 +812,7 @@ class DataStorage
     private function setValue($key, $value)
     {
         $data = &$this->data;
-        if ($this->dbMetaDBfile) {
-            $meta = &$this->meta;
-        } else {
-            $meta = &$this->data[LIZZY_META];
-        }
+        $meta = &$this->meta;
 
 //???: sort out!
         if (is_array($key)) {                               // special case: entire rec to set
@@ -759,7 +821,6 @@ class DataStorage
 
         } elseif (strpos($key, '/') === false) {      // regular value
 //???: sort out!
-//      if (strpos($key, '/') === false) {      // regular value
             if (list($c, $r) = $this->array2DKey($key)) {      // 2-dimensional key
                 if (is_array($value)) {
                     foreach ($value as $k => $v) {
@@ -768,17 +829,33 @@ class DataStorage
                 } else {
                     $data[$r][$c] = $value;
                 }
-                $meta[$key][LIZZY_MODIF_TIME] = time();
+                $meta[$key][LZY_MODIF_TIME] = time();
 
             } else {                                    // normal key
                 if (is_array($value)) {
-                    foreach ($value as $k => $v) {
-                        $data[$key][$k] = $v;
+                    $rec = [];
+                    if ($this->format == 'csv') {
+                        $i = 0;
+                        foreach ($value as $k => $v) {
+                            if ($v) {
+                                $rec[$i++] = $v;
+                            }
+                        }
+
+                    } else {
+                        foreach ($value as $k => $v) {
+                            if ($v) {
+                                $rec[$k] = $v;
+                            }
+                        }
+                    }
+                    if ($rec) {
+                        $data[$key] = $rec;
                     }
                 } else {
                     $data[$key] = $value;
                 }
-                $meta[$key][LIZZY_MODIF_TIME] = time();
+                $meta[$key][LZY_MODIF_TIME] = time();
 
             }
 
@@ -856,6 +933,7 @@ class DataStorage
 
         } elseif (($format == 'csv') || ($this->format == 'txt')) {
             $data = $this->parseCsv($rawData);
+
         }
         if (!$data) {
             $data = array();
@@ -870,23 +948,27 @@ class DataStorage
     {
         if ($metaData) {
             $data = $this->meta;
-            $format = LIZZY_DEFAULT_FILE_TYPE;
+            $format = LZY_DEFAULT_FILE_TYPE;
+
         } else {
-            $data = &$this->data;
+            $data = $this->data;
         }
 
         if (!$format) {
             $format = $this->format;
         }
-        $encodedData = false;
+        $encodedData = '';
         if ($format == 'json') {
-            $encodedData = json_encode($data);
+            $data[LZY_META] = $this->meta;
+            $encodedData = $this->lead.json_encode($data);
 
         } elseif ($format == 'yaml') {
-            $encodedData = $this->convertToYaml($data);
+            $data[LZY_META] = $this->meta;
+            $encodedData = $this->lead.$this->convertToYaml($data);
 
         } elseif ($format == 'csv') {
-            $encodedData = $this->arrayToCsv($data);
+            $encodedData = $this->arrayToCsv( [$this->meta[LZY_STRUCTURE]['labels']] );
+            $encodedData .= $this->arrayToCsv($data);
         }
         return $encodedData;
     } // encode
@@ -933,9 +1015,7 @@ class DataStorage
             $rowStr = '';
             for ($c=0; $c < $nCols; $c++) {
                 $elem = isset($array[$r][$c]) ? $array[$r][$c] : '';
-                if (strpbrk($elem, "$quote$delim")) {
-                    $elem = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
-                }
+                $elem = $quote . str_replace($quote, $quote.$quote, $elem) . $quote;
                 $elem = str_replace(["\n", "\r"], ["\\n", ''], $elem);
                 $rowStr .= "$elem,";
             }
