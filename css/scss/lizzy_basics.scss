@@ -403,17 +403,21 @@ pre {
     display: none;
 }
 
-footer div {
-    float: right;
-}
 .lzy-edit-icon {
     margin-top: 2px;
 }
-footer img {
-    width: 18px;
-}
-footer a {
-	border-bottom: none;
+footer {
+	a {
+		border-bottom: none;
+	}
+	svg {
+        fill: var(--lzy-footer-txt-color);
+		width: 1.2em;
+		height: 1.2em;
+	}
+	div {
+		float: right;
+	}
 }
 .toggle-edit-mode {
     border-right: 1px solid gray;
@@ -426,7 +430,6 @@ footer a {
     padding: 15px;
     margin-top: 30px;
 }
-
 
 
 

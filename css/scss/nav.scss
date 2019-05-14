@@ -535,11 +535,6 @@ body:not(.lzy-small-screen) {
     }
 }
 
-footer {
-    svg {
-        fill: var(--lzy-footer-txt-color);
-    }
-}
 
 body.lzy-small-screen {
     min-height: 100vh;
