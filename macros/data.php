@@ -94,12 +94,12 @@ EOT;
         $dataSource = resolvePath($dataSource, true);
         $this->ds = new DataStorage($dataSource,'', false, '', 120, true);
         if ($this->editing) {
-            if (!$this->ds->lockDB) {
+            if (!$this->ds->lockDB()) {
                 $this->page->addPopup('{{ lzy-DB-currently-locked }}');
                 $this->editing = false;
             }
         } else {
-            $this->ds->unlockDB;
+            $this->ds->unlockDB();
         }
 
         $this->structure = $structure = $this->ds->getRecStructure();
