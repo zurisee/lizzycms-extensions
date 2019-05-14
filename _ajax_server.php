@@ -55,7 +55,7 @@ require_once 'vendor/autoload.php';
 require_once 'datastorage.class.php';
 require_once 'ticketing.class.php';
 
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LIZZY_DEFAULT_FILE_TYPE);
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
 
 use Symfony\Component\Yaml\Yaml;
 
