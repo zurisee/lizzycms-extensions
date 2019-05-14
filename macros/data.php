@@ -94,12 +94,12 @@ EOT;
         $dataSource = resolvePath($dataSource, true);
         $this->ds = new DataStorage($dataSource,'', false, '', 120, true);
         if ($this->editing) {
-            if (!$this->ds->lockDB()) {
+            if (!$this->ds->doLockDB()) {
                 $this->page->addPopup('{{ lzy-DB-currently-locked }}');
                 $this->editing = false;
             }
         } else {
-            $this->ds->unlockDB();
+            $this->ds->doUnlockDB();
         }
 
         $this->structure = $structure = $this->ds->getRecStructure();
@@ -205,9 +205,11 @@ EOT;
     {
         $invocationIndex = $this->invocationIndex;
         $cls = ($emptyRec === 'template') ? 'lzy-data-input-template dispno' : "lzy-data-row$inx";
+        $keyType = $this->structure["key"];
+        $keyId = "lzy-data-key-label{$invocationIndex}-$inx";
         $recStr = <<<EOT
         <div class="lzy-data-row $cls">
-            <div class='lzy-data-key'><label class="lzy-data-key-label">$this->keyLabel0</label><div class="lzy-data-key-value">$key</div></div>
+            <div class='lzy-data-key' data-field-type="$keyType"><label for="$keyId" class="lzy-data-key-label">$this->keyLabel0</label><div id="$keyId" class="lzy-data-key-value">$key</div></div>
 
 EOT;
 
@@ -312,25 +314,46 @@ EOT;
         if (!$form.hasClass('lzy-data-buttons-active')) {
             return false;
         }
-        deactivateFormButtons();
         var data = {};
         var d = 0;
+        var abort = false;
         $('.lzy-data-row').each(function() {
             var $this = $(this);
             if ($this.hasClass('lzy-data-input-template')) {
                 return;
             }
             if (d !== '') {
-                data[d] = {};
+                var keyType = $('.lzy-data-key' , $this).attr('data-field-type');
+                if (keyType == 'index') {
+                    var inx = $('.lzy-data-key-value', $this).text();
+                } else {
+                    var inx = $('.lzy-data-key input', $this).val();
+                }
+                data[inx] = {};
+                var recEmpty = true;
                 $('.lzy-data-elem', $this).each(function() {
                     var $inp = $( 'input', $(this) );
                     var name = $inp.attr('name');
                     var val = $inp.val();
-                    data[d][name] = val;
+                    data[inx][name] = val;
+                    if (val) {
+                        recEmpty = false;
+                    }
                 });
+                if (keyType != 'index') {
+                    if ((inx == '') && !recEmpty) {
+                        $('.lzy-data-key input', $this).addClass('lzy-data-required');
+                        abort = true;
+                        return false;
+                    }
+                }
             }
             d = d + 1; //??? -> csv
         });
+        if (abort) {
+            return false;
+        }
+        deactivateFormButtons();
         console.log(data);
         var json = JSON.stringify(data);
         $.ajax({
@@ -347,6 +370,15 @@ EOT;
     // make editable:
     $('.lzy-data-wrapper .lzy-data-row').each(function() {
         var $this = $( this );
+        
+        var $keyElem = $('.lzy-data-key-value', $this);
+        var keyType = $keyElem.parent().attr('data-field-type');
+        if (keyType != 'index') {
+            var id = $keyElem.attr('id');
+            var text = $keyElem.text();
+            $( '.lzy-data-key', $this ).append('<input type="' + keyType + '" id="' + id + '" name="key" value="' + text + '" />');
+            $keyElem.remove();
+        }
 
         $('.lzy-data-elem', $this).each(function () {
             var $elem = $('.lzy-data-field', this );
@@ -428,9 +460,10 @@ EOT;
         }
         $data0 = json_decode($_POST['lzy_data_input_form'], true);  // decode
 
-        $lastRec = $data0[sizeof($data0)-1];    // remove last record if empty
+        $keyL = array_pop(array_keys($data0));
+        $lastRec = $data0[$keyL];    // remove last record if empty
         if (!implode('', $lastRec)) {
-            unset($data0[sizeof($data0)-1]);
+            array_pop($data0);
         }
 
         $ds = new DataStorage($dataSource);     // store data

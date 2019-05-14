@@ -64,7 +64,9 @@ class DataStorage
 {
 	private $dataFile;
 	private $sid;
-	private $lead;
+	private $lead = '';
+	private $format;
+	private $lockDB = false;
 	private $dbMetaDBfile = false;
 	private $dataModified = false;
 	private $meta = [];
@@ -124,7 +126,6 @@ class DataStorage
         }
 
         $this->checkDB();   // make sure DB is initialized
-        $this->lead = '';
         return;
     } // __construct
 
@@ -488,7 +489,7 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
-    public function lockDB($maxDuration = false)
+    public function doLockDB($maxDuration = false)
     {
         $meta = &$this->meta;
 
@@ -501,21 +502,23 @@ class DataStorage
 
         $this->lowLevelWrite();
         return true;
-    } // lockDB
+    } // doLockDB
 
 
 
 
     //---------------------------------------------------------------------------
-    public function unlockDB()
+    public function doUnlockDB()
     {
         $meta = &$this->meta;
 
-        unset($meta[LZY_LOCK_ALL]);
-        unset($meta[LZY_LOCK_ALL_TIME]);
+        if (isset($meta[LZY_LOCK_ALL]) && ($meta[LZY_LOCK_ALL] == $this->sid)) {
+            unset($meta[LZY_LOCK_ALL]);
+            unset($meta[LZY_LOCK_ALL_TIME]);
 
-        return $this->lowLevelWrite();
-    } // unlockDB
+            return $this->lowLevelWrite();
+        }
+    } // doUnlockDB
 
 
 
@@ -951,6 +954,19 @@ class DataStorage
 
         } elseif ($format == 'yaml') {
             $data = $this->convertYaml($rawData);
+            if ($data) {
+                $key0 = (array_keys($data))[0];
+                $isDate = is_string($key0) && preg_match('/^\d{4}-\d{2}-\d{2}/', $key0);
+                if ((isset($data["_meta_"]["_structure"]["key"]) && ($data["_meta_"]["_structure"]["key"] == 'date')) ||
+                    $isDate) {
+                    foreach ($data as $k => $rec) {
+                        if (is_int($k) && ($k > 10000)) {
+                            $data[date('Y-m-d', $k)] = $rec;
+                            unset($data[$k]);
+                        }
+                    }
+                }
+            }
 
         } elseif (($format == 'csv') || ($this->format == 'txt')) {
             $data = $this->parseCsv($rawData);
