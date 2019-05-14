@@ -844,7 +844,6 @@ class DataStorage
             $this->shieldSpecialChars($rec);
 
         } elseif (strpos($key, '/') === false) {      // regular value
-//???: sort out!
             if (list($c, $r) = $this->array2DKey($key)) {      // 2-dimensional key
                 if (is_array($value)) {
                     foreach ($value as $k => $v) {
@@ -868,9 +867,9 @@ class DataStorage
 
                     } else {
                         foreach ($value as $k => $v) {
-                            if ($v) {
+                                // if ($v) {     //??? unclear what this was for
                                 $rec[$k] = $v;
-                            }
+                                // }
                         }
                     }
                     if ($rec) {
