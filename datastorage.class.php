@@ -51,6 +51,8 @@ define('LZY_LOCK_TIME', 'time');
 define('LZY_SID', 'sid');     // session ID
 define('LZY_MODIF_TIME', 'modif');
 define('LZY_LOCK_ALL', 'lock_all');
+define('LZY_LOCK_ALL_TIME', 'lock_all_time');
+define('LZY_LOCK_ALL_DURATION_DEFAULT', 900); // 15 minutes
 define('LZY_DEFAULT_FILE_TYPE', 'json');
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
@@ -123,6 +125,10 @@ class DataStorage
     public function write($key, $value = null)
     {
         if (isset($this->meta[LZY_LOCK_ALL])) { // entire DB is locked
+            if ($this->meta[LZY_LOCK_ALL_TIME] < time()) {  // lock-all expired
+                unset($this->meta[LZY_LOCK_ALL]);
+                unset($this->meta[LZY_LOCK_ALL_TIME]);
+            }
             if (!$this->isMySessionID($this->meta[LZY_LOCK_ALL])) {
                 return false;
             }
@@ -454,11 +460,7 @@ class DataStorage
     //---------------------------------------------------------------------------
     public function isLocked($key)
     {
-        if ($this->dbMetaDBfile) {
-            $meta = &$this->meta;
-        } else {
-            $meta = &$this->data[LZY_META];
-        }
+        $meta = &$this->meta;
 
         if (!is_array($meta) || !$key) {
             return false;
@@ -477,13 +479,43 @@ class DataStorage
 
 
     //---------------------------------------------------------------------------
-    public function lock($key)
+    public function lockDB($maxDuration = false)
     {
-        if ($this->dbMetaDBfile) {
-            $meta = &$this->meta;
-        } else {
-            $meta = &$this->data[LZY_META];
+        $meta = &$this->meta;
+
+        $sessId = $this->getSessionID();
+        if (isset($meta[LZY_LOCK_ALL]) && ($meta[LZY_LOCK_ALL] != $sessId)) { // already locked by other user
+            return false;
         }
+        $meta[LZY_LOCK_ALL] = $sessId;
+        $meta[LZY_LOCK_ALL_TIME] = $maxDuration ? (time() + $maxDuration) : (time() + LZY_LOCK_ALL_DURATION_DEFAULT);
+
+        $this->lowLevelWrite();
+        return true;
+    } // lockDB
+
+
+
+
+    //---------------------------------------------------------------------------
+    public function unlockDB()
+    {
+        $meta = &$this->meta;
+
+        unset($meta[LZY_LOCK_ALL]);
+        unset($meta[LZY_LOCK_ALL_TIME]);
+
+        return $this->lowLevelWrite();
+    } // unlockDB
+
+
+
+
+
+    //---------------------------------------------------------------------------
+    public function lock($key, $maxDuration = false)
+    {
+        $meta = &$this->meta;
 
         if (!$key) {
             return false;
@@ -493,11 +525,16 @@ class DataStorage
         }
 
         if ($key == 'all') {        // lock entire DB
-            $meta[LZY_LOCK_ALL] = $this->getSessionID();
+            $sessId = $this->getSessionID();
+            if (isset($meta[LZY_LOCK_ALL]) && ($meta[LZY_LOCK_ALL] != $sessId)) { // already locked by other user
+                return false;
+            }
+            $meta[LZY_LOCK_ALL] = $sessId;
+            $meta[LZY_LOCK_ALL_TIME] = $maxDuration ? (time() + $maxDuration) : (time() + LZY_LOCK_ALL_DURATION_DEFAULT);
 
         } else {
             if (isset($meta[$key][LZY_LOCK][LZY_SID])) { // is data element locked?
-                $sid = $meta[$key][LZY_LOCK][LZY_SID];
+//                $sid = $meta[$key][LZY_LOCK][LZY_SID];
                 if ($meta[$key][LZY_LOCK][LZY_SID] != $this->sid) { // locked by other sid?
                     return false;   // element was locked, locking failed
                 } else {
@@ -511,6 +548,42 @@ class DataStorage
 
         return true;
     } // lock
+
+
+
+
+    //---------------------------------------------------------------------------
+    public function unlock($key = true)
+    {
+        $meta = &$this->meta;
+        if (!is_array($meta)) {
+            return false;
+        }
+
+        if ($key === 'all') {        // lock entire DB
+            unset($meta[LZY_LOCK_ALL]);
+            unset($meta[LZY_LOCK_ALL_TIME]);
+
+        } elseif ($key === '*') {    // unlock all records
+            foreach ($meta as $id => $rec) {
+                unset($meta[$id][LZY_LOCK]);
+            }
+
+        } elseif ($key === true) {    // unlock all owner's records
+            $mySid = $this->sid;
+            foreach ($meta as $key => $value) {
+                if (isset($value[LZY_LOCK][LZY_SID]) && ($value[LZY_LOCK][LZY_SID] == $mySid)) {
+                    unset($meta[$key][LZY_LOCK]);
+                }
+            }
+        } else {
+            if (isset($meta[$key][LZY_LOCK][LZY_SID]) &&
+                ($meta[$key][LZY_LOCK][LZY_SID] == $this->sid)) {
+                unset($meta[$key][LZY_LOCK]);
+            }
+        }
+        return $this->lowLevelWrite();
+    } // unlock
 
 
 
@@ -537,45 +610,6 @@ class DataStorage
         }
         return ($sid == $sessionId);
     } // isMySessionID
-
-
-
-
-    //---------------------------------------------------------------------------
-    public function unlock($key = true)
-    {
-        if ($this->dbMetaDBfile) {
-            $meta = &$this->meta;
-        } else {
-            $meta = &$this->data[LZY_META];
-        }
-        if (!is_array($meta)) {
-            return false;
-        }
-
-        if ($key === 'all') {        // lock entire DB
-            unset($meta[LZY_LOCK_ALL]);
-
-        } elseif ($key === '*') {    // unlock all records
-            foreach ($meta as $id => $rec) {
-                unset($meta[$id][LZY_LOCK]);
-            }
-
-        } elseif ($key === true) {    // unlock all owner's records
-            $mySid = $this->sid;
-            foreach ($meta as $key => $value) {
-                if (isset($value[LZY_LOCK][LZY_SID]) && ($value[LZY_LOCK][LZY_SID] == $mySid)) {
-                    unset($meta[$key][LZY_LOCK]);
-                }
-            }
-        } else {
-            if (isset($meta[$key][LZY_LOCK][LZY_SID]) &&
-                ($meta[$key][LZY_LOCK][LZY_SID] == $this->sid)) {
-                unset($meta[$key][LZY_LOCK]);
-            }
-        }
-        return $this->lowLevelWrite();
-    } // unlock
 
 
 
