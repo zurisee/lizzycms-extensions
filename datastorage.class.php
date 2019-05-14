@@ -71,12 +71,13 @@ class DataStorage
 
 
 
-    public function __construct($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120, $secure = false)
+    public function __construct($args, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120, $secure = false)
     {
-        if (is_array($dbFile)) {
-            list($dbFile, $sid, $lockDB, $format, $lockTimeout, $secure, $useRecycleBin) = $this->parseArguments($dbFile);
+        if (is_array($args)) {
+            $this->parseArguments($args);
         } else {
-            $useRecycleBin = false;
+            $this->useRecycleBin = false;
+            $this->dbFile = $args;
         }
 
         if (!$sid) {
@@ -87,6 +88,7 @@ class DataStorage
                 session_abort();
             }
         }
+        $dbFile = $this->dbFile;
         if ($secure && (strpos($dbFile, 'config/') !== false)) {
             return null;
         }
@@ -115,10 +117,7 @@ class DataStorage
             $this->dbMetaDBfile = str_replace('.csv', '_meta.'.LZY_DEFAULT_FILE_TYPE, $dbFile);
         }
         $this->sid = $sid;
-        $this->lockDB = $lockDB;
-        $this->format = ($format) ? $format : pathinfo($dbFile, PATHINFO_EXTENSION) ;
-        $this->lockTimeout = $lockTimeout;
-        $this->useRecycleBin = $useRecycleBin;
+        $this->format = ($this->format) ? $this->format : pathinfo($dbFile, PATHINFO_EXTENSION) ;
 
         if (!isset($this->data)) {
             $this->lowLevelRead();
@@ -911,15 +910,14 @@ class DataStorage
     //---------------------------------------------------------------------------
     private function parseArguments($args)
     {
-        $dbFile = isset($args['dbFile']) ? $args['dbFile'] : '';
-        $sid = isset($args['sid']) ? $args['sid'] : '';
-        $lockDB = isset($args['lockDB']) ? $args['lockDB'] : false;
-        $format = isset($args['format']) ? $args['format'] : '';
-        $lockTimeout = isset($args['lockTimeout']) ? $args['lockTimeout'] : 120;
-        $secure = isset($args['secure']) ? $args['secure'] : false;
-        $useRecycleBin = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
-
-        return [$dbFile, $sid, $lockDB, $format, $lockTimeout, $secure, $useRecycleBin];
+        $this->dbFile = isset($args['dbFile']) ? $args['dbFile'] : '';
+        $this->sid = isset($args['sid']) ? $args['sid'] : '';
+        $this->lockDB = isset($args['lockDB']) ? $args['lockDB'] : false;
+        $this->format = isset($args['format']) ? $args['format'] : '';
+        $this->lockTimeout = isset($args['lockTimeout']) ? $args['lockTimeout'] : 120;
+        $this->secure = isset($args['secure']) ? $args['secure'] : false;
+        $this->useRecycleBin = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
+        return;
     } // parseArguments
 
 
