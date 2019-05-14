@@ -79,7 +79,11 @@ class SCssCompiler
         }
         $t2 = filemtime($compiledBundeledFilename);
         foreach ($files as $file) {
-            $compiledFile = $path . '_' . basename($file, '.scss') . '.css';
+            $baseName = basename($file, '.scss');
+            if (preg_match('/^\W/', $baseName)) {
+                $baseName = substr($baseName, 1);
+            }
+            $compiledFile = $path . '_' . $baseName . '.css';
             $t0 = filemtime($file);
             $t1 = (file_exists($compiledFile)) ? filemtime($compiledFile) : 0;
             if (($t0 > $t2) || ($t0 > $t1)) {
