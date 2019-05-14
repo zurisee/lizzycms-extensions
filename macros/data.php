@@ -21,9 +21,9 @@ $this->addMacro($macroName, function () {
         $this->getArg($macroName, 'id', 'ID applied to wrapper tag', '');
         $this->getArg($macroName, 'class', 'Class applied to wrapper tag', '');
         $this->getArg($macroName, 'editableBy', '[groups] Defines who can edit data, e.g. "admins".', false);
-        $this->getArg($macroName, 'layout', '[table, record, auto, false] Defines how data shall be presented, i.e. in table or record form.', 'auto');
+        $this->getArg($macroName, 'layout', '[table, record, auto, false] Defines how data shall be presented, i.e. in table or record form. False means no styling at all will be applied.', 'auto');
         $this->getArg($macroName, 'layoutBreakpoint', '[integer] In layout-auto-mode defines when layout switches from table to record mode.', LAYOUT_BREAKPOINT);
-        $this->getArg($macroName, 'indexPresentation', '[true, false, auto] Defines whether keys of data-records shall be included in the layout', 'auto');
+        $this->getArg($macroName, 'indexPresentation', '[true, false, auto] Defines whether keys of data-records shall be included in the layout.', 'auto');
         $this->getArg($macroName, 'labelsAsVars', 'If true, header elements will be rendered as variables (i.e. in curly brackets), so you  can translate them.', false);
         $this->getArg($macroName, 'dateFormat', '[format] Presentation of dates and times can be formatted, e.g. "d.m.Y" (see PHP date() function)', false);
         return '';
@@ -194,7 +194,6 @@ EOT;
 
         $out .= $outTail;
         $out .= "\t\t<div style='display: none;'><div id='lzy-cancel-popup' class='lzy-popup lzy-close-button popup_content'>{{ lzy-discard-all-changes }}</div></div>\n";
-//        $out .= "\t\t<div id='lzy-cancel-popup' style='display: none;'>{{ lzy-discard-all-changes }}</div>\n";
         return $out;
     } // render
 
@@ -436,6 +435,10 @@ EOT;
 
         $ds = new DataStorage($dataSource);     // store data
         $ds->write($data0, null);
+
+        // log activity:
+        $user = $_SESSION["lizzy"]["user"];
+        writeLog("data(): user '$user' modified DB '$dataSource'");
     } // handleUserSuppliedData
 
 
@@ -445,6 +448,9 @@ EOT;
     {
         $out = "\t\t<div class='lzy-data-headers'>\n\t\t\t<div class='lzy-data-key'>{{ Key }}</div>\n";
         foreach ($this->structure['labels'] as $fieldName) {
+            if ($this->labelsAsVars) {
+                $fieldName = "{{ $fieldName }}";
+            }
             $out .= <<<EOT
             <div class='lzy-data-header'>$fieldName</div>
 
