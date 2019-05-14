@@ -1,5 +1,5 @@
 <?php
-// @info: -> one line description of macro <-
+// @info:
 
 define('TABLE_VIEW_CLASS', 'lzy-data-table-view');
 define('RECORD_VIEW_CLASS', 'lzy-data-record-view');
@@ -61,6 +61,7 @@ class EditData
         $editableBy = $this->getArg('editableBy');
         $this->editable =  $editableBy && $this->lzy->auth->checkAdmission($editableBy);
         $this->editing =  $editableBy && getUrlArg('edit-data');
+
         $this->id = $id ? " id='$id'" : '';
 
         if ($layout) {
@@ -92,6 +93,15 @@ EOT;
         // get data:
         $dataSource = resolvePath($dataSource, true);
         $this->ds = new DataStorage($dataSource,'', false, '', 120, true);
+        if ($this->editing) {
+            if (!$this->ds->lockDB) {
+                $this->page->addPopup('{{ lzy-DB-currently-locked }}');
+                $this->editing = false;
+            }
+        } else {
+            $this->ds->unlockDB;
+        }
+
         $this->structure = $structure = $this->ds->getRecStructure();
 
 
@@ -111,8 +121,8 @@ EOT;
 EOT;
         $this->recButtonsTemplate = <<<EOT
             <div class="lzy-data-input-rec-buttons">
-                <button class='lzy-data-input-add-rec lzy-button'>&plus;</button>
-                <button class='lzy-data-input-del-rec lzy-button'>&minus;</button>
+                <button class='lzy-data-input-add-rec lzy-button' title="{{ lzy-data-add-record }}">&plus;</button>
+                <button class='lzy-data-input-del-rec lzy-button' title="{{ lzy-data-delete-record }}">&minus;</button>
             </div>
 
 EOT;
@@ -176,12 +186,15 @@ EOT;
             $r++;
         }
 
+        // editing:
         if ($this->editing) {
             $out .= $this->renderRec($r, $key+1, $rec, true);
             $out .= $this->renderRec($r, '', $rec, 'template');
         }
 
         $out .= $outTail;
+        $out .= "\t\t<div style='display: none;'><div id='lzy-cancel-popup' class='lzy-popup lzy-close-button popup_content'>{{ lzy-discard-all-changes }}</div></div>\n";
+//        $out .= "\t\t<div id='lzy-cancel-popup' style='display: none;'>{{ lzy-discard-all-changes }}</div>\n";
         return $out;
     } // render
 
@@ -265,10 +278,31 @@ EOT;
     $('input[type=reset]').click(function() {
         var $form = $( this ).closest('form');
         console.log('reload page');
-        var response = confirm("{{ lzy-discard-all-changes }}");
-        if (response) {
+        if (!$form.hasClass('lzy-data-buttons-active')) {
             lzyReload();
+            return;
         }
+        $('#lzy-cancel-popup').popup('show');
+            $('#lzy-cancel-popup')
+				.addClass('lzy-popup lzy-popup3 lzy-close-button lzy-popup-confirm')
+				.append("<div class='lzy-popup-buttons'><button class='lzy-popup-cancel lzy-popup-button'>{{ No }}</button> <button class='lzy-popup-confirm lzy-popup-button'>{{ Yes }}</button> </div>")
+			    .popup({
+					closebutton: true,
+					autoopen: true,
+					blur: true,
+					opacity: 0.8,
+					color: '#000',
+					transition: 'all 0.3s',
+					});
+			$('#lzy-cancel-popup .lzy-popup-confirm').click(function(e) {
+			     lzyReload();
+			    $popup.popup('hide');
+			});
+			
+			$('#lzy-cancel-popup .lzy-popup-cancel').click(function(e) {
+			    var $popup = $(e.target).closest('.popup_content');
+			    $popup.popup('hide');
+			});
     });
     
     // submit form:
@@ -279,6 +313,7 @@ EOT;
         if (!$form.hasClass('lzy-data-buttons-active')) {
             return false;
         }
+        deactivateFormButtons();
         var data = {};
         var d = 0;
         $('.lzy-data-row').each(function() {
@@ -369,10 +404,14 @@ EOT;
     }
 
     function activateFormButtons() {
-<!--        if (!$('.lzy-data-input-form-buttons').hasClass('lzy-data-buttons-active')) {-->
-<!--            $('.lzy-data-input-form-buttons').addClass('lzy-data-buttons-active');-->
         if (!$('.lzy-data-wrapper').hasClass('lzy-data-buttons-active')) {
             $('.lzy-data-wrapper').addClass('lzy-data-buttons-active');
+        }
+    }
+
+    function deactivateFormButtons() {
+        if ($('.lzy-data-wrapper').hasClass('lzy-data-buttons-active')) {
+            $('.lzy-data-wrapper').removeClass('lzy-data-buttons-active');
         }
     }
 
@@ -397,7 +436,6 @@ EOT;
 
         $ds = new DataStorage($dataSource);     // store data
         $ds->write($data0, null);
-        return "ok";
     } // handleUserSuppliedData
 
 
