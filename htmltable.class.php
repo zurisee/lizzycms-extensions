@@ -766,6 +766,11 @@ EOT;
         if ($this->dataSource) {
             $ds = new DataStorage(['dbFile' => $this->dataSource]);
             $this->data = $ds->read('*');
+            $structure = $ds->getRecStructure();
+            if ($structure['key'] == 'index') {
+                $headers = $structure['labels'];
+                array_unshift($this->data, $headers);
+            }
             $this->arrangeData();
         }
 
