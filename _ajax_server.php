@@ -49,7 +49,8 @@ define('ERROR_LOG',         PATH_TO_APP_ROOT.'.#logs/errlog.txt');	//
 define('LOCK_TIMEOUT', 		120);	                                // max time till field is automatically unlocked
 define('MAX_URL_ARG_SIZE',  255);
 define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
-define('RECYCLE_BIN_PATH',  '~page/.#recycleBin/');
+define('RECYCLE_BIN',           '.#recycleBin/');
+define('RECYCLE_BIN_PATH',      '~page/'.RECYCLE_BIN);
 
 require_once 'vendor/autoload.php';
 require_once 'datastorage.class.php';
