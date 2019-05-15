@@ -26,6 +26,7 @@ $this->addMacro($macroName, function () {
         $this->getArg($macroName, 'indexPresentation', '[true, false, auto] Defines whether keys of data-records shall be included in the layout.', 'auto');
         $this->getArg($macroName, 'labelsAsVars', 'If true, header elements will be rendered as variables (i.e. in curly brackets), so you  can translate them.', false);
         $this->getArg($macroName, 'dateFormat', '[format] Presentation of dates and times can be formatted, e.g. "d.m.Y" (see PHP date() function)', false);
+        $this->getArg($macroName, 'useRecycleBin', 'If true, files containing data will be moved to the recycle bin, rather than overwritten.', false);
         return '';
     }
 
@@ -57,6 +58,7 @@ class EditData
         $layoutBreakpoint = $this->getArg('layoutBreakpoint',LAYOUT_BREAKPOINT);
         $indexPresentation = $this->getArg('indexPresentation', 'auto');
         $this->labelsAsVars = $this->getArg('labelsAsVars');
+        $useRecycleBin = $this->getArg('useRecycleBin');
 
         $editableBy = $this->getArg('editableBy');
         $this->editable =  $editableBy && $this->lzy->auth->checkAdmission($editableBy);
@@ -92,7 +94,8 @@ EOT;
 
         // get data:
         $dataSource = resolvePath($dataSource, true);
-        $this->ds = new DataStorage($dataSource,'', false, '', 120, true);
+//        $this->ds = new DataStorage($dataSource,'', false, '', 120, true);
+        $this->ds = new DataStorage(['dbFile' => $dataSource, 'useRecycleBin' => $useRecycleBin]);
         if ($this->editing) {
             if (!$this->ds->doLockDB()) {
                 $this->page->addPopup('{{ lzy-DB-currently-locked }}');
@@ -466,8 +469,9 @@ EOT;
             array_pop($data0);
         }
 
-        $ds = new DataStorage($dataSource);     // store data
-        $ds->write($data0, null);
+//        $ds = new DataStorage($dataSource);     // store data
+//        $ds->write($data0, null);
+        $this->ds->write($data0, null);
 
         // log activity:
         $user = $_SESSION["lizzy"]["user"];
