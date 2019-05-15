@@ -10,7 +10,11 @@ $this->addMacro($macroName, function () {
     $format = $this->getArg($macroName, 'format', 'Format in which the output will be rendered (see http://php.net/manual/en/function.date.php)', 'Y-m-d');
     $recursive = $this->getArg($macroName, 'recursive', 'If true, files in sub-folders will be included.)', false);
     $exclude = $this->getArg($macroName, 'exclude', 'Regex-pattern of elements to be excluded.', false);
+    $file = $this->getArg($macroName, 'file', 'Synonym for "files"', '');
 
+    if ($file) {
+        $files = $file;
+    }
     if (preg_match('/^\[(.*)\]$/', $files, $m)) {
         $files = $m[1];
     }
