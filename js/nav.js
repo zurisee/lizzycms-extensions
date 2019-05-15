@@ -30,7 +30,14 @@ var largeScreenClasses = '';
     });
 
     // open/close sub-nav:
-    $('#lzy .lzy-nav .lzy-has-children > label').click(function(e) {        // double click
+    $('#lzy .lzy-nav.lzy-nav-clicktoopen .lzy-has-children').click(function(e) {        // click
+        if (toggleAccordion( $(this) )) {
+            $('> input', $(this)).prop('checked', true);
+        } else {
+            $('> input', $(this)).prop('checked', false);
+        }
+    });
+    $('#lzy .lzy-nav .lzy-has-children > label').click(function(e) {        // click
         var $parentLi = $(this).parent();
         toggleAccordion($parentLi);
     });
@@ -98,6 +105,7 @@ function toggleAccordion($parentLi, newState, deep) {
         $( 'li', $parentLi ).removeClass('open');            // all li below parent li
         $('a', $nextDivs).attr('tabindex', '-1');            // make un-focusable
         $('input', $nextDivs).prop('checked', false);            // un-check checkbox
+        return false;
 
     } else { // -> expand
         if ((typeof deep != 'undefined') && deep) {
@@ -111,6 +119,7 @@ function toggleAccordion($parentLi, newState, deep) {
             $parentLi.addClass('open').css('cursor', 'n-resize');       // parent li
             $('> div > ol > li > a', $parentLi).attr('tabindex', '0');             // make focusable
         }
+        return true;
     }
 } // toggleAccordion
 

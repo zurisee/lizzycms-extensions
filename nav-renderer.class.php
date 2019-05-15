@@ -100,7 +100,10 @@ class NavRenderer
         if (strpos($options['options'],'showTransition') !== false) {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
         }
-
+//$options['navClass'] .= ' lzy-nav-autoopen';
+        if (strpos($options['navClass'], 'lzy-nav-autoopen') === false) {
+            $options['navClass'] .= ' lzy-nav-clicktoopen';
+        }
         $this->options = $options;
         return $this->renderSitemap();
     } // render

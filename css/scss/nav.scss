@@ -185,7 +185,8 @@ $slidedownX5Arrow: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--l
 
 
 // hover
-#lzy .lzy-nav-hover {
+//#lzy .lzy-nav-hover {
+#lzy .lzy-nav-hover.lzy-nav-autoopen {
     li.lzy-has-children:hover > div > ol { // open next level
         margin-top: 0 !important;
     }
