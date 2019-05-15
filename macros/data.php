@@ -320,6 +320,7 @@ EOT;
         var data = {};
         var d = 0;
         var abort = false;
+        var keys = [];
         $('.lzy-data-row').each(function() {
             var $this = $(this);
             if ($this.hasClass('lzy-data-input-template')) {
@@ -332,6 +333,13 @@ EOT;
                 } else {
                     var inx = $('.lzy-data-key input', $this).val();
                 }
+                if (keys.includes(inx)) {
+                    alert('Conflict: this key is not unique: '+inx);
+                        $('.lzy-data-key input', $this).addClass('lzy-data-required');
+                        abort = true;
+                        return false;                    
+                }
+                keys.push(inx);
                 data[inx] = {};
                 var recEmpty = true;
                 $('.lzy-data-elem', $this).each(function() {
@@ -469,8 +477,6 @@ EOT;
             array_pop($data0);
         }
 
-//        $ds = new DataStorage($dataSource);     // store data
-//        $ds->write($data0, null);
         $this->ds->write($data0, null);
 
         // log activity:
