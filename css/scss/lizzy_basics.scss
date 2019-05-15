@@ -673,9 +673,12 @@ nav li {
   background: -ms-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
   background: linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
 }
+.lzy-button a:visited,
+a.lzy-button:visited,
 .lzy-button a,
 a.lzy-button {
 	border-bottom: none;
+	color: black;
 }
 
 
