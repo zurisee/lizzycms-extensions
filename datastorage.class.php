@@ -862,9 +862,9 @@ class DataStorage
                     if ($this->format == 'csv') {
                         $i = 0;
                         foreach ($value as $k => $v) {
-                            if ($v) {
-                                $rec[$i++] = $v;
-                            }
+                            // if ($v) {
+                            $rec[$i++] = $v;
+                            // }
                         }
 
                     } else {
