@@ -409,6 +409,7 @@ class Page
                 $args = ['text' => $args, 'mdCompile' => $mdCompile, 'closable' => $closable];
             }
         }
+        $args['closable'] = isset($args['closable']) ? $args['closable'] : false;
         if (!$this->overlay) {
             $this->overlay = $args;
 
