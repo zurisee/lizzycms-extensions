@@ -763,11 +763,11 @@ class DataStorage
             return;
         }
 
-        $destPath = dirname($this->dataFile) . '/' . RECYCLE_BIN_PATH;
+        $destPath = dirname($this->dataFile) . '/' . RECYCLE_BIN;
         if (!file_exists($destPath)) {
             mkdir($destPath, 0777);
         }
-        $destFile = "$destPath/" . date('Y-m-d H.i.s') . ' ' . basename($this->dataFile);
+        $destFile = $destPath . date('Y-m-d H.i.s') . ' ' . basename($this->dataFile);
         copy($this->dataFile, $destFile);
     } // saveToRycleBin
 
@@ -791,7 +791,7 @@ class DataStorage
         $str = implode("\n", $lines);
         $this->lead = $lead;
         return $str;
-    } // $this->extractLead
+    } // extractLead
 
 
 
