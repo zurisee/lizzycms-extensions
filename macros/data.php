@@ -156,6 +156,9 @@ EOT;
             $this->recButtons = '';
         }
 
+        if ($this->structure["key"] == 'date') {
+            $this->class .= ' lzy-data-date-index';
+        }
         // get data:
         $data = $this->ds->read('*');
         $this->fieldNames = $this->structure['labels'];
@@ -190,7 +193,8 @@ EOT;
 
         // editing:
         if ($this->editing) {
-            $out .= $this->renderRec($r, $key+1, $rec, true);
+            $key1 = is_int($key) ? $key+1 : '';
+            $out .= $this->renderRec($r, $key1, $rec, true);
             $out .= $this->renderRec($r, '', $rec, 'template');
         }
 
@@ -474,6 +478,10 @@ EOT;
         $lastRec = $data0[$keyL];    // remove last record if empty
         if (!implode('', $lastRec)) {
             array_pop($data0);
+        }
+
+        if ($this->structure["key"] == 'date') {
+            ksort($data0);
         }
 
         $this->ds->write($data0, null);

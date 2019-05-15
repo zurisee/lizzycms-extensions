@@ -98,7 +98,12 @@ body {
         font-weight: bold;
     }
 }
-
+.lzy-data-table-view.lzy-data-date-index {
+    .lzy-data-key.lzy-data-key {
+        min-width: 13.5em;
+        padding: 1em 0.2em;
+    }
+}
 
 
 /* === Record View ============================= */
