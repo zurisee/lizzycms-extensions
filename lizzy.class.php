@@ -20,8 +20,9 @@ define('USER_INIT_CODE_FILE',   USER_CODE_PATH.'user-init-code.php');
 define('CACHE_DEPENDENCY_FILE', '.#page-cache.dependency.txt');
 define('CACHE_FILENAME',        '.#page-cache.dat');
 
-define('SYSTEM_RECYCLE_BIN_PATH','~/.#recycleBin/');
-define('RECYCLE_BIN_PATH',      '~page/.#recycleBin/');
+define('RECYCLE_BIN',           '.#recycleBin/');
+define('SYSTEM_RECYCLE_BIN_PATH','~/'.RECYCLE_BIN);
+define('RECYCLE_BIN_PATH',      '~page/'.RECYCLE_BIN);
 
 define('LOG_FILE',              LOGS_PATH.'log.txt');
 define('ERROR_LOG',             LOGS_PATH.'errlog.txt');
@@ -1725,37 +1726,25 @@ EOT;
     private function purgeRecyleBins()
     {
         $pageFolder = $this->config->path_pagesPath;
-        $recycleBinFolderName = basename(RECYCLE_BIN_PATH);
+        $recycleBinFolderName = substr(RECYCLE_BIN,0, -1);
 
         // purge in page folders:
         $pageFolders = getDirDeep($pageFolder, true, false, true);
         foreach ($pageFolders as $item) {
             $basename = basename($item);
-            if (basename($item) === $recycleBinFolderName) {
-                array_map('unlink', glob("$item/*.*"));
+            if (($basename === $recycleBinFolderName) || ($basename == '_')) {      // it's a recycle bin:
                 rrmdir($item);
-            } elseif ($basename == '_') {
-                rrmdir($item);
-            }
-        }
-        $pageFolders = getDirDeep($pageFolder, true, false, true);
-
-        foreach ($pageFolders as $item) {
-            $dir = getDir($item.'{*.jpg,*.jpeg,*.png,*.gif,*.tif,*.tiff}');
-            foreach ($dir as $item) {
-                if (preg_match('/\w+ \[ \d{0,4} x? \d{0,4} \]/x', $item)) { // derived image files e.g. pic[300x].jpg
-                    unlink($item);
-                }
             }
         }
 
         // purge global recycle bin:
-        if (file_exists($recycleBinFolderName)) {
-            array_map('unlink', glob("$recycleBinFolderName/*.*"));
-            rmdir($recycleBinFolderName);
+        $sysRecycleBin = resolvePath(SYSTEM_RECYCLE_BIN_PATH);
+        if (file_exists($sysRecycleBin)) {
+            rrmdir($sysRecycleBin);
         }
 
     } // purgeRecyleBins
+
 
 
 
