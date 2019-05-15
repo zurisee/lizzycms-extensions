@@ -124,7 +124,7 @@ class Ticketing
         if ($lastPurge > (time() - 3600)) { // perform purge only once per hour at most
             return;
         }
-        $this->ds->lockDB();
+        $this->ds->doLockDB();
         $tickets = $this->ds->read();
         $now = time();
         foreach ($tickets as $key => $ticket) {
@@ -133,7 +133,7 @@ class Ticketing
             }
         }
         $this->ds->writeMeta('lastPurge', time());
-        $this->ds->unlockDB();
+        $this->ds->doUnlockDB();
     } // purgeExpiredTickets
 
 } // Ticketing
