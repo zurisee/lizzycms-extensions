@@ -473,8 +473,8 @@ EOT;
             return;
         }
         $data0 = json_decode($_POST['lzy_data_input_form'], true);  // decode
-
-        $keyL = array_pop(array_keys($data0));
+        $keys = array_keys($data0);
+        $keyL = array_pop($keys);
         $lastRec = $data0[$keyL];    // remove last record if empty
         if (!implode('', $lastRec)) {
             array_pop($data0);
