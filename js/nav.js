@@ -30,13 +30,15 @@ var largeScreenClasses = '';
     });
 
     // open/close sub-nav:
-    $('#lzy .lzy-nav.lzy-nav-clicktoopen .lzy-has-children').click(function(e) {        // click
-        if (toggleAccordion( $(this) )) {
-            $('> input', $(this)).prop('checked', true);
+    $('#lzy .lzy-nav.lzy-nav-clicktoopen .lzy-has-children > a').click(function(e) {        // click
+        var $parentLi = $(this).parent();
+        if (toggleAccordion( $parentLi )) {
+            $('> input',$parentLi).prop('checked', true);
         } else {
-            $('> input', $(this)).prop('checked', false);
+            $('> input', $parentLi).prop('checked', false);
         }
     });
+
     $('#lzy .lzy-nav .lzy-has-children > label').click(function(e) {        // click
         var $parentLi = $(this).parent();
         toggleAccordion($parentLi);
