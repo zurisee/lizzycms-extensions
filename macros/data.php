@@ -94,7 +94,6 @@ EOT;
 
         // get data:
         $dataSource = resolvePath($dataSource, true);
-//        $this->ds = new DataStorage($dataSource,'', false, '', 120, true);
         $this->ds = new DataStorage(['dbFile' => $dataSource, 'useRecycleBin' => $useRecycleBin]);
         if ($this->editing) {
             if (!$this->ds->doLockDB()) {
@@ -173,7 +172,7 @@ $formButtons
 
 EOT;
 
-        //
+        // wrap Key into variable braces:
         if ($this->labelsAsVars) {
             $this->keyLabel0 = '{{ Key }}';
         } else {
@@ -333,7 +332,7 @@ EOT;
                 } else {
                     var inx = $('.lzy-data-key input', $this).val();
                 }
-                if (keys.includes(inx)) {
+                if (keys.includes(inx)) {   // check whether key is unique:
                     alert('Conflict: this key is not unique: '+inx);
                         $('.lzy-data-key input', $this).addClass('lzy-data-required');
                         abort = true;
@@ -359,7 +358,7 @@ EOT;
                     }
                 }
             }
-            d = d + 1; //??? -> csv
+            d = d + 1;
         });
         if (abort) {
             return false;

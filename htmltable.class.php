@@ -740,7 +740,6 @@ $('.lzy-datatable').DataTable({
     $order
 });
 EOT;
-            // $order {$this->paging}{$this->searching}
 
             $page->addJq($jq);
             if (!$this->headers) {
@@ -765,7 +764,7 @@ EOT;
 
         $this->data = [[]];
         if ($this->dataSource) {
-            $ds = new DataStorage($this->dataSource);
+            $ds = new DataStorage(['dbFile' => $this->dataSource]);
             $this->data = $ds->read('*');
             $this->arrangeData();
         }
