@@ -31,33 +31,43 @@ var largeScreenClasses = '';
 
     // open/close sub-nav:
     $('#lzy .lzy-nav.lzy-nav-clicktoopen .lzy-has-children > a').click(function(e) {        // click
-        var $parentLi = $(this).parent();
-        if (toggleAccordion( $parentLi )) {
-            $('> input',$parentLi).prop('checked', true);
-        } else {
-            $('> input', $parentLi).prop('checked', false);
+        // mylog('a');
+        // console.log('click a');
+        var $parentLi = $(this).closest('.lzy-has-children');
+        toggleAccordion($parentLi, true);
+    });
+    $('#lzy .lzy-nav.lzy-nav-clicktoopen .lzy-has-children > label').keyup(function(e) {      // space bar
+        if ((e.which === 13) || (e.which === 32)) {
+            // console.log('space');
+            // console.log(e.which);
+            var $parentLi = $(e.target).closest('.lzy-has-children');
+            toggleAccordion($parentLi, true);
         }
     });
 
     $('#lzy .lzy-nav .lzy-has-children > label').click(function(e) {        // click
-        var $parentLi = $(this).parent();
+        // mylog('label');
+        var $parentLi = $(this).closest('.lzy-has-children');
         toggleAccordion($parentLi);
+        return false;
     });
-    $('#lzy .lzy-nav .lzy-has-children > label').dblclick(function(e) {        // double click
-        e.stopPropagation();
-        var $parentLi = $(this).parent();
-        toggleAccordion($parentLi, true, true);
-    });
+
+    // $('#lzy .lzy-nav .lzy-has-children > label').dblclick(function(e) {        // double click
+    //     e.stopPropagation();
+    //     var $parentLi = $(this).parent();
+    //     toggleAccordion($parentLi, false, true, true);
+    // });
 
 
     // let hover effect continue while mouse is over arrow (i.e. label):
-    $('.lzy-nav label').hover(
+   $('.lzy-nav-top-horizontal > ol > li.lzy-has-children').hover(
         function() {
-            $( '> a', $(this).parent() ).addClass( "hover" );
+            $(this).addClass( 'lzy-hover' );
         }, function() {
-            $( '> a', $(this).parent() ).removeClass( "hover" );
+            $(this).removeClass( 'lzy-hover' );
         }
     );
+
 
     // prepare lzy-small-screen nav: expand
     $('.lzy-small-screen .primary-nav .lzy-nav > ol > li').each(function() {
@@ -73,8 +83,8 @@ var largeScreenClasses = '';
     if ($('body.lzy-small-screen').length) {
         operateMobileMenuPane( false );
     }
-
-    setupKeyboardEvents();
+    closeAllAccordions($('.primary-nav .lzy-has-children'));
+    // setupKeyboardEvents();
 
 }( jQuery ));
 
@@ -92,7 +102,10 @@ function adaptMainMenuToScreenSize( smallScreen ) {
     }
 }
 
-function toggleAccordion($parentLi, newState, deep) {
+
+
+
+function toggleAccordion($parentLi, manipCheckbox, newState, deep) {
     var $nextDiv = $( '> div', $parentLi );
     var $nextDivs = $( 'div', $parentLi );
     if (typeof newState == 'undefined') {
@@ -100,30 +113,47 @@ function toggleAccordion($parentLi, newState, deep) {
     } else {
         var expanded = !newState;
     }
+    var manipCheckbox = (typeof manipCheckbox !== 'undefined');
+    closeAllAccordions($parentLi);
 
     if (expanded) { // -> collapse
-        $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
-        $parentLi.removeClass('open').css('cursor', 's-resize');    // parent li
-        $( 'li', $parentLi ).removeClass('open');            // all li below parent li
-        $('a', $nextDivs).attr('tabindex', '-1');            // make un-focusable
-        $('input', $nextDivs).prop('checked', false);            // un-check checkbox
         return false;
 
     } else { // -> expand
-        if ((typeof deep != 'undefined') && deep) {
-            $nextDivs.attr({'aria-expanded': 'true', 'aria-hidden':'false' });        // next div
-            $parentLi.addClass('open').css('cursor', 'n-resize');    // parent li
-            $( 'li.lzy-has-children', $parentLi ).addClass('open');            // all li below parent li
-            $('a', $parentLi).attr('tabindex', '0');            // make un-focusable
-            $('input', $parentLi).prop('checked', true);            // un-check checkbox
-        } else {
-            $nextDiv.attr({'aria-expanded': 'true', 'aria-hidden':'false'});        // next div
-            $parentLi.addClass('open').css('cursor', 'n-resize');       // parent li
-            $('> div > ol > li > a', $parentLi).attr('tabindex', '0');             // make focusable
-        }
+        openAccordion($parentLi);
         return true;
     }
 } // toggleAccordion
+
+
+
+function openAccordion($parentLi) {
+    var $nextDiv = $( '> div', $parentLi );
+    $nextDiv.attr({'aria-expanded': 'true', 'aria-hidden':'false'});        // next div
+    $parentLi.addClass('open');       // parent li
+    $('> input', $parentLi).prop('checked', true);            // check checkbox
+    $('> div > ol > li > a', $parentLi).attr('tabindex', '0');             // make focusable
+} // closeAccordion
+
+
+
+
+
+function closeAllAccordions($parentLi) {
+    var $nav = $parentLi.closest('.lzy-nav');
+    $('.lzy-has-children', $nav).each(function() {
+        var $elem = $( this );
+        var $nextDivs = $( 'div', $elem );
+        $elem.removeClass('open lzy-hover');
+        $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
+        $('a', $nextDivs).attr('tabindex', '-1');            // make un-focusable
+        $('label', $nextDivs).attr('tabindex', '-1');            // make un-focusable
+        $('li', $elem ).removeClass('open');            // all li below parent li
+        $('input', $nav).prop('checked', false);            // un-check checkbox
+        // $elem.removeClass( 'lzy-hover' );
+    });
+} // closeAccordion
+
 
 
 
@@ -202,3 +232,5 @@ function setupKeyboardEvents() {
         }
     });
 } // setupKeyboardEvents
+
+

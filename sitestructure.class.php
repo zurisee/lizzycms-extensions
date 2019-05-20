@@ -14,6 +14,7 @@ class SiteStructure
 	public $nextPage = '';
 	public $currPageRec = false;
 	public $config;
+	private $noContent = false;
 
 	//....................................................
 	public function __construct($lzy, $currPage = false)
@@ -52,6 +53,7 @@ class SiteStructure
 		if ($currNr !== false) {
 			$this->list[$currNr]['isCurrPage'] = true;
 			$this->currPageRec = &$this->list[$currNr];
+//			$this->currPageRec['parentFolderEmpty'] = $this->noContent;
 			$this->markParents();
 
 		} else {    // requested page not found:
@@ -230,6 +232,7 @@ class SiteStructure
 				$rec['inx'] = $i;
 				$rec['urlExt'] = '';
 				$rec['active'] = false;
+				$rec['noContent'] = false;
 
 				// Hide: hide always propagating, therefore we need 'hide!' element
                 if (isset($rec['hide!'])) {
@@ -264,6 +267,13 @@ class SiteStructure
                     $rec['hide!'] |= (time() < $t);
                 }
 
+                if (isset($rec['showthis']) && $rec['showthis']) {
+                    $rec['actualFolder'] = $rec['showthis'];
+                } else {
+                    $rec['actualFolder'] = $rec['folder'];
+                }
+//                $mdFiles = getDir("{$this->config->path_pagesPath}{$rec['actualFolder']}*.md");
+//                $rec['noContent'] = (sizeof($mdFiles) == 0);
                 $list[] = $rec;
             }
         }
@@ -294,6 +304,7 @@ class SiteStructure
 		    $path = '';
         }
 
+		$pagesPath = $this->config->path_pagesPath;
         while ($i < sizeof($list)) {
             $level = $list[$i]['level'];
 			if ($level > $lastLevel) {
@@ -305,14 +316,24 @@ class SiteStructure
 				$tree[$j-1] = (isset($tree[$j-1])) ? array_merge($tree[$j-1], $subtree) : $subtree;
 
 			} elseif ($level == $lastLevel) {
-				$list[$i]['hasChildren'] = false;
-				if (substr($list[$i]['folder'], 0, 2) != '~/') {
-					$list[$i]['folder'] = $path.$list[$i]['folder'];
+				$rec = &$list[$i];
+                $rec['hasChildren'] = false;
+				if (substr($rec['folder'], 0, 2) != '~/') {
+                    $rec['folder'] = $path.$rec['folder'];
 				} else {
-					$list[$i]['folder'] = (strlen($list[$i]['folder']) > 2) ? substr($list[$i]['folder'], 2) : '';
+                    $rec['folder'] = (strlen($rec['folder']) > 2) ? substr($rec['folder'], 2) : '';
 				}
+
+				if (substr($rec['actualFolder'], 0, 2) != '~/') {
+                    $rec['actualFolder'] = $path.$rec['actualFolder'];
+				} else {
+                    $rec['actualFolder'] = (strlen($rec['actualFolder']) > 2) ? substr($rec['actualFolder'], 2) : '';
+				}
+                $mdFiles = getDir("$pagesPath{$rec['actualFolder']}*.md");
+                $rec['noContent'] = (sizeof($mdFiles) == 0);
+
 				$list[$i]['parent'] = $parent;
-				if (isset($list[$i]['hide!']) && $list[$i]['hide!']) {
+				if (isset($rec['hide!']) && $rec['hide!']) {
 					$hasVisibleChildren = true;
 				}
 
@@ -421,6 +442,9 @@ class SiteStructure
 				    break;
 				} else {
 					$found = true;
+//					$this->list[$key]['noContent'] = true;
+//					$this->list[$key]['folderEmpty'] = true;
+                    $this->noContent = true;
 				}
 			} elseif (isset($elem['alias']) && ($str == $elem['alias'])) {
                 $found = true;

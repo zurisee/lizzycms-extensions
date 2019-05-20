@@ -5,6 +5,8 @@
 // animation: [dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.
 // options: [top-level, curr-branch, hidden] These are filters that render a subset of items.
 
+define('NAV_ARROW', '&#9013;'); // '&#8964;'; // '&#9013;'; // '&#9657;'; //'&#9656;';
+
 $page->addJqFiles('TABBABLE');
 
 class NavRenderer
@@ -60,7 +62,7 @@ class NavRenderer
 
         // no specific php-file, so render standard output of predefined types:
         if ($type == 'top') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-animated lzy-nav-hover lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-animated lzy-nav-hoveropen lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
@@ -101,7 +103,10 @@ class NavRenderer
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
         }
 //$options['navClass'] .= ' lzy-nav-autoopen';
-        if (strpos($options['navClass'], 'lzy-nav-autoopen') === false) {
+        if (($options['aminmation'] == 'slidedown') && (strpos($options['navClass'],'lzy-nav-hoveropen') === false)) {
+            $options['navClass'] .= ' lzy-nav-hoveropen';
+        }
+        if (strpos($options['navClass'], 'lzy-nav-hoveropen') === false) {
             $options['navClass'] .= ' lzy-nav-clicktoopen';
         }
         $this->options = $options;
@@ -128,7 +133,7 @@ class NavRenderer
         $ariaLabel = (isset($options['ariaLabel'])) ? $options['ariaLabel']: $title;
         $this->listTag = (isset($options['listTag'])) ? $options['listTag']: 'ol';
         $this->listWrapper = (isset($options['listWrapper'])) ? $options['listWrapper']: '';
-        $this->arrow = (isset($options['arrow'])) ? $options['arrow']: '&#9657;'; //'&#9656;';
+        $this->arrow = (isset($options['arrow'])) ? $options['arrow']: NAV_ARROW;
 
         $this->ulClass = $ulClass;
         $this->liClass = $liClass;
@@ -140,7 +145,7 @@ class NavRenderer
         $this->currBranch = (strpos($navOptions, 'curr-branch') !== false);
         $this->currBranchEmpty = true;
 
-        $nav = $this->_renderSitemap(false, $type, 0, "\t\t", $navOptions);
+        $nav = $this->_renderSitemap(false, $type, 0, "\t\t", '', $navOptions);
 
         if ($this->currBranch && $this->currBranchEmpty) {
             return null;
@@ -195,13 +200,17 @@ EOT;
 
 
     //....................................................
-    private function _renderSitemap($tree, $type, $level, $indent, $navOptions = false)
+    private function _renderSitemap($tree, $type, $level, $indent, $firstElem = '', $navOptions = false)
     {
         $level++;
         $indent = str_replace('\t', "\t", $indent);
         if ($indent == '') {
             $indent = "\t";
         }
+        $indent1 = "$indent   ";
+        $indent2 = "$indent      ";
+//        $indent1 = "$indent\t";
+//        $indent2 = "$indent\t  ";
         if (!$tree) {
             $tree = $this->tree;
         }
@@ -231,6 +240,11 @@ EOT;
 
         $modif = false;
         $out = '';
+
+        if ($firstElem) {
+            $out .= "$indent1<$li class='lzy-lvl$level lzy-nav-heading-elem'>$firstElem</$li>\n";
+//            $out .= "$indent1<$li class='lzy-nav-heading-elem'><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
+        }
 
         $aClass = ($this->aClass) ? " class='{$this->aClass}'" : '';
         foreach($tree as $n => $elem) {
@@ -277,7 +291,7 @@ EOT;
                     $liClass .= ' active';
             }
 
-            $aria = 'aria-expanded="false" aria-hidden="true"';
+            $aria = 'aria-expanded="false" aria-hidden="true" role="menubar"';
 
             // tabindex:
             $tabindex = 'tabindex="-1"';
@@ -289,7 +303,8 @@ EOT;
                 if (!($this->horizTop && ($level == 1))) {
                     $btnOpen = ' checked';
                     $liClassOpen = ' open';
-                    $aria = 'aria-expanded="true" aria-hidden="false"';
+                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
+//                    $aria = 'aria-expanded="true" aria-hidden="false"';
                 }
                 $tabindex = 'tabindex="0"';
 
@@ -297,7 +312,8 @@ EOT;
                 if (!($this->horizTop && ($level == 1))) {  // skip if horzontal & on top level:
                     $btnOpen = ' checked';
                     $liClassOpen = ' open';
-                    $aria = 'aria-expanded="true" aria-hidden="false"';
+                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
+//                    $aria = 'aria-expanded="true" aria-hidden="false"';
                 }
                 $tabindex = 'tabindex="0"';
             }
@@ -316,16 +332,31 @@ EOT;
             }
 
             if ($this->listWrapper) {
-                $listWrapper = "$indent\t  <{$this->listWrapper} $aria>\n";
-                $_listWrapper = "$indent\t  </{$this->listWrapper}>\n";
+                $listWrapper = "<{$this->listWrapper} class='lzy-nav-sub-wrapper' $aria>";
+                $_listWrapper = "</{$this->listWrapper}>";
+//                $listWrapper = "$indent\t  <{$this->listWrapper} class='lzy-nav-sub-wrapper' $aria>\n";
+//                $_listWrapper = "$indent\t  </{$this->listWrapper}>\n";
             } else {
                 $listWrapper = '';
                 $_listWrapper = '';
             }
 
             $btnId = "lzy-nav-el-{$this->inx}$level$n";
-            $btn = "$indent\t  <label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>\n".
-                   "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
+//            $btn = "<label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>\n".
+//                   "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
+//            $btn = "$indent\t  <label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>\n".
+//                   "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
+
+            $lbl1 = "<label for='$btnId' tabindex='0'><span class='lzy-nav-label'>";
+            $lbl2 = "</span><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
+//            $lbl = "<label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
+            $inp = "<input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />";
+//            $lbl = "<label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
+//            $inp = "\n$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
+//            $lbl = "\n$indent\t  <label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
+//            $inp = "\n$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
+//            $btn = "$indent\t  <label for='$btnId'><span class='lzy-nav-arrow'>{$this->arrow}</span><span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>\n".
+//                   "$indent\t  <input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />\n";
 
             if ((!$elem['hide!']) || $showHidden) {
                 if ($elem['hide!']) {
@@ -333,30 +364,55 @@ EOT;
                 }
                 if (!$stop && isset($elem[0])) {	// does it have children?
 
+                    if ($this->horizTop) {
+                        $firstElem = "<a href='$path'$aClass$target $tabindex>$name</a>";   // A1
+                    }
+                    $contentClass = $elem["noContent"] ? ' lzy-nav-no-content': '';
+
                     // --- recursion:
-                    $out1 = $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $navOptions);
+                    $out1 = $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $firstElem, $navOptions);
 
                     if ($out1) {
-                        $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
+                        $liClass .= ' '.$this->hasChildrenClass."$liClassOpen$contentClass";
+//                        $liClass .= ' '.$this->hasChildrenClass.$liClassOpen;
                         $liClass = trim($liClass);
                         $liClass = ($liClass) ? " class='$liClass'" : '';
-                        $out .= "$indent\t<$li$liClass><a href='javascript: false;' >$name</a>\n$btn$listWrapper";
+//                        $name = "<div class='lzy-nav-heading'>$name</div>";
+//                        $name = "<span class='lzy-nav-heading'>$name</span>";
+//                        $out .= "$indent\t<$li$liClass>\n$indent\t  $name\n$indent\t  $lbl\n$indent\t  $inp"; // name before label
+//                        $out .= "$indent\t<$li$liClass>\n$indent\t  $lbl1$name$lbl2\n$indent\t  $inp$listWrapper"; // name inside label
+//                        $out .= "$indent\t<$li$liClass>\n$indent\t  <a href='#' onclick='false;' >$name</a>$lbl$inp$listWrapper";
+//                        $out .= "$indent\t<$li$liClass>$lbl<a href='#' onclick='false;' >$name</a>$inp$listWrapper";
+//                        $out .= "$indent\t<$li$liClass><a href='#' onclick='false;' >$name</a>$btn$listWrapper";
+//                        $out .= "$indent\t<$li$liClass><a href='#' onclick='false;' >$name</a>\n$btn$listWrapper";
+//                        $out .= "$indent\t<$li$liClass><a href='javascript: false;' >$name</a>\n$btn$listWrapper";
 //                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a>\n$btn$listWrapper";
-                        $out .= $out1;
-                        $out .= "$_listWrapper$indent\t</$li>\n";
+//                        $out .= $out1;
+                        $out .= "$indent1<$li$liClass>\n";
+                        $out .= "$indent2<a href='$path'$aClass$target $tabindex>$name</a>\n"; // A0
+                        if ($this->horizTop) {
+                            $out .= "$indent2$lbl1$name$lbl2\n"; // L0
+                        } else {
+                            $out .= "$indent2$lbl1$lbl2\n"; // L0
+                        }
+                        $out .= "$indent2$inp\n";           // Inp
+                        $out .= "$indent2$listWrapper\n";
+                        $out .= "$out1";
+                        $out .= "$indent2$_listWrapper\n";
+                        $out .= "$indent1</$li>\n";
                         $modif = true;
                     } else {
                         $liClass .= ' '.$liClassOpen;
                         $liClass = trim($liClass);
                         $liClass = ($liClass) ? " class='$liClass'" : '';
-                        $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
+                        $out .= "$indent1<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
                         $modif = true;
                     }
 
                 } else {
                     $liClass = trim($liClass);
                     $liClass = ($liClass) ? " class='{$liClass}'" : '';
-                    $out .= "$indent\t<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
+                    $out .= "$indent1<$li$liClass><a href='$path'$aClass$target $tabindex>$name</a></$li>\n";
                     $modif = true;
                 }
             }
