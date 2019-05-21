@@ -172,12 +172,12 @@ class Authentication
 
 
     private function readOneTimeAccessCode($code)
-//    public function readOneTimeAccessCode($code)
     {
         // checks whether there is a pending oneTimeAccessCode, purges old entries
         require_once SYSTEM_PATH.'ticketing.class.php';
 
         $tick = new Ticketing();
+        $code = strtoupper($code);
         $ticket = $tick->consumeTicket($code);
         if (!$ticket) {
             $this->monitorFailedLoginAttempts();
