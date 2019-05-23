@@ -163,6 +163,7 @@ figure a {
 		}
 	}
 }
+
 .lzy-large-screen {
 	.dl-floating {
 		--dt-width: 6em;
@@ -679,6 +680,9 @@ a.lzy-button:visited,
 a.lzy-button {
 	border-bottom: none;
 	color: black;
+}
+.lzy-mobile-page-header {
+	display: none;
 }
 
 

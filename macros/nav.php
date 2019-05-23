@@ -18,6 +18,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'layout', '[horizontal, vertical] Specifies direction of top-level items.', '');
     $this->getArg($macroName, 'animation', '[dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.', '');
     $this->getArg($macroName, 'options', '[top-level, curr-branch] These are filters that render a subset of items.', '');
+    $this->getArg($macroName, 'scheme', '[dark] Selects coloring defaults.', '');
 
     $this->getArg($macroName, 'navClass', 'Class to be applied to the surrounding NAV tag.');
     $this->getArg($macroName, 'ulClass', 'Class to be applied to UL tags.');
@@ -28,7 +29,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'ariaLabel', 'A label that describes the role, e.g. "Main Menu" (&rarr; needed by assistive technologies)');
     $this->getArg($macroName, 'arrow', 'The symbol to be placed in front of nav elements that have children.');
 
-    $this->getArg($macroName, 'primary', '[true|false] If true, applies class "primary-nav". By default, the first instance of nav() gets the "primary-nav" class. This options permits to override the mechanism.', null);
+    $this->getArg($macroName, 'primary', '[true|false] If true, applies class "lzy-primary-nav". By default, the first instance of nav() gets the "lzy-primary-nav" class. This options permits to override the mechanism.', null);
 
     $this->getArg($macroName, 'depth', 'The max depth of headers which shall be included', 6);
     $this->getArg($macroName, 'targetElement', 'For "in-page": specifies the html tag that shall be targeted', false);
@@ -43,7 +44,7 @@ $this->addMacro($macroName, function () {
     $options = $this->getArgsArray($macroName);
 
     // -------- in-page
-    if ($type == 'in-page') {
+    if (($type == 'in-page') || ($type == 'inpage')) {
         return inPageNav($this->page, $options, $inx);
 
     // -------- small-screen-header
