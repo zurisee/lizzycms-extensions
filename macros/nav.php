@@ -18,7 +18,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'layout', '[horizontal, vertical] Specifies direction of top-level items.', '');
     $this->getArg($macroName, 'animation', '[dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.', '');
     $this->getArg($macroName, 'options', '[top-level, curr-branch] These are filters that render a subset of items.', '');
-    $this->getArg($macroName, 'scheme', '[dark] Selects coloring defaults.', '');
+    $this->getArg($macroName, 'theme', '[dark] Selects coloring defaults.', '');
 
     $this->getArg($macroName, 'navClass', 'Class to be applied to the surrounding NAV tag.');
     $this->getArg($macroName, 'ulClass', 'Class to be applied to UL tags.');

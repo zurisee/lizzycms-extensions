@@ -330,8 +330,8 @@ $xCorr: 1.55em;
 
 
 
-// --- dark color scheme:
-#lzy .lzy-nav-dark-scheme {
+// --- dark color theme:
+#lzy .lzy-nav-dark-theme {
     a:visited,
     a,
     label {
@@ -340,7 +340,7 @@ $xCorr: 1.55em;
     }
 
     // highlighting current elem and its parents and focused:
-    &.lzy-nav-dark-scheme {
+    &.lzy-nav-dark-theme {
         a:hover,
         a:focus,
         label:hover,
@@ -388,7 +388,7 @@ $xCorr: 1.55em;
             border-left: 3px solid red;
         }
     }
-} // lzy-nav-dark-scheme
+} // lzy-nav-dark-theme
 
 
 

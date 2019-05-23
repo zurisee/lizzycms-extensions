@@ -171,7 +171,7 @@ function closeAllAccordions($parentLi) {
 function adaptMainMenuToScreenSize( smallScreen ) {
     if (smallScreen) {
         $('.lzy-primary-nav .lzy-nav')
-            .removeClass('lzy-nav-top-horizontal lzy-nav-hover lzy-nav-colored lzy-nav-dark-scheme')
+            .removeClass('lzy-nav-top-horizontal lzy-nav-hover lzy-nav-colored lzy-nav-dark-theme')
             .addClass('lzy-nav-collapsed lzy-nav-open-current');
         $('.lzy-primary-nav .active').each(function() {
             console.log( $(this) );

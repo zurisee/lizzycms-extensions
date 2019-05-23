@@ -67,7 +67,8 @@ class NavRenderer
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-colored lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
+//            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-colored lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'sitemap') {
@@ -103,8 +104,8 @@ class NavRenderer
         if (strpos($options['options'],'noDefaultColoring') !== false) {
             $options['navClass'] = str_replace('lzy-nav-colored', '', $options['navClass']);
         }
-        if (strpos($options['scheme'],'dark') !== false) {
-            $options['navClass'] = str_replace('lzy-nav-colored', 'lzy-nav-dark-scheme', $options['navClass']);
+        if (strpos($options['theme'],'dark') !== false) {
+            $options['navClass'] = str_replace('lzy-nav-colored', 'lzy-nav-dark-theme', $options['navClass']);
         }
 
         if (strpos($options['options'],'showTransition') !== false) {
