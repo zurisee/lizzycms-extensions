@@ -53,7 +53,6 @@ class SiteStructure
 		if ($currNr !== false) {
 			$this->list[$currNr]['isCurrPage'] = true;
 			$this->currPageRec = &$this->list[$currNr];
-//			$this->currPageRec['parentFolderEmpty'] = $this->noContent;
 			$this->markParents();
 
 		} else {    // requested page not found:
@@ -67,6 +66,7 @@ class SiteStructure
                 'inx' => '0',
                 'urlExt' => '',
                 'active' => false,
+                'noContent' => false,
                 'hide!' => false,
                 'hasChildren' => false,
                 'restricted' => false,
@@ -272,8 +272,6 @@ class SiteStructure
                 } else {
                     $rec['actualFolder'] = $rec['folder'];
                 }
-//                $mdFiles = getDir("{$this->config->path_pagesPath}{$rec['actualFolder']}*.md");
-//                $rec['noContent'] = (sizeof($mdFiles) == 0);
                 $list[] = $rec;
             }
         }
@@ -442,8 +440,6 @@ class SiteStructure
 				    break;
 				} else {
 					$found = true;
-//					$this->list[$key]['noContent'] = true;
-//					$this->list[$key]['folderEmpty'] = true;
                     $this->noContent = true;
 				}
 			} elseif (isset($elem['alias']) && ($str == $elem['alias'])) {
