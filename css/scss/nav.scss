@@ -92,8 +92,12 @@ $xCorr: 1.55em;
         overflow: hidden;
         text-overflow: ellipsis;
         color: var(--lzy-nav-txt-color);
+        font-size: 12pt;
         font-size: var(--lzy-nav-txt-size);
+        line-height: 1.2em;
         line-height: var(--lzy-nav-line-height);
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
         padding-top: calc( (var(--lzy-nav-elem-height) - 1.2em) / 2);
         padding-bottom: calc( (var(--lzy-nav-elem-height) - 1.2em) / 2);
     }
@@ -111,6 +115,7 @@ $xCorr: 1.55em;
         padding: 0 0.5em;
         cursor: s-resize;
         opacity: 0;
+        transform-origin: 50% 50%;
     }
 
     .lzy-nav-no-content {
@@ -406,6 +411,7 @@ $xCorr: 1.55em;
 
     .lzy-nav-heading {
         display: inline-block;
+        font-size: 12pt;
         font-size: var(--lzy-nav-txt-size);
         padding-left: var(--lzy-nav-top-horizontal-padding);
         vertical-align: top;
@@ -460,10 +466,12 @@ $xCorr: 1.55em;
         a,
         ol,
         div {
+            font-size: 12pt;
             font-size: var(--lzy-nav-txt-size);
         }
         label,
         a {
+            padding-right: 2em;
             padding-right: var(--lzy-nav-top-horizontal-padding);
         }
         .lzy-nav-arrow {
@@ -471,6 +479,7 @@ $xCorr: 1.55em;
         }
         label {
             padding-left: 0;
+            padding-right: 2em;
             padding-right: var(--lzy-nav-top-horizontal-padding);
         }
         ol {
@@ -486,6 +495,7 @@ $xCorr: 1.55em;
         .lzy-lvl1 {
             display: inline-block;
             margin: 0;
+            margin-right: 2em;
             margin-right: var(--lzy-nav-top-horizontal-col-gap);
             font-size: 0;
 

@@ -92,8 +92,23 @@ var largeScreenClasses = '';
     }
 
     setupKeyboardEvents();
-
+    initTopNav();
 }( jQuery ));
+
+
+function initTopNav() {
+    $('.lzy-large-screen .lzy-primary-nav .lzy-nav-top-horizontal .lzy-has-children').each(function() {
+        var $elem = $( this );
+        var $nextDivs = $( 'div', $elem );
+        $elem.removeClass('open lzy-hover');
+        $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
+        $('a, label', $nextDivs).attr('tabindex', '-1');            // make un-focusable
+        $('li', $elem ).removeClass('open');            // all li below parent li
+        // $('input', $nav).prop('checked', false);            // un-check checkbox
+    });
+} // initTopNav
+
+
 
 
 function toggleAccordion($parentLi, manipCheckbox, deep, newState) {

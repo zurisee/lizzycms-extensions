@@ -1,7 +1,10 @@
+/*
+**    Panels.css
+*/
 
 body {
    --width-threshold: 480px;    /* var(--width-threshold) */
-    --lzy-panels-label-color: white;
+    --lzy-panels-label-color: #444;
     --lzy-panels-bg-color: white;
     --lzy-panels-bg-color-non-selected: #444;
     --lzy-panels-label-color-non-selected: #ddd;
