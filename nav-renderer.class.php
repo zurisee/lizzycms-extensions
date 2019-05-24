@@ -111,7 +111,7 @@ class NavRenderer
         if (strpos($options['options'],'showTransition') !== false) {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
         }
-        if (($options['aminmation'] == 'slidedown') && (strpos($options['navClass'],'lzy-nav-hoveropen') === false)) {
+        if (($options['animation'] == 'slidedown') && (strpos($options['navClass'],'lzy-nav-hoveropen') === false)) {
             $options['navClass'] .= ' lzy-nav-hoveropen';
         }
         if (strpos($options['navClass'], 'lzy-nav-hoveropen') === false) {
