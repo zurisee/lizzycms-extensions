@@ -18,9 +18,15 @@ var largeScreenClasses = '';
     });
 
 
-    if ($('.lzy-nav-accordion, .lzy-nav-slidedown, .lzy-nav-top-horizontal').length) {
+    // if ($('.lzy-nav-accordion, .lzy-nav-slidedown, .lzy-nav-top-horizontal').length) {
+    if ($('.lzy-nav-collapse, .lzy-nav-top-horizontal').length) {
         setHightOnHiddenElements();
     }
+
+    $('.lzy-nav-top-horizontal .lzy-lvl1.lzy-has-children').each(function() {
+        console.log($(this));
+        $('div a, div label', $( this )).attr('tabindex', '-1');             // make un-focusable
+    });
 
 
     // menu button in mobile mode:
@@ -60,6 +66,7 @@ var largeScreenClasses = '';
             if ($this.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) { // top-nav:
                 if ($this.hasClass('lzy-lvl1')) {
                     $this.addClass('lzy-hover');
+                    $('a', $this).attr('tabindex', '0');             // make focusable
                 }
             } else {        // side-nav or sitemap
                 $this.addClass( 'lzy-hover' );
@@ -74,6 +81,7 @@ var largeScreenClasses = '';
            if ($this.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) {  // top-nav
                if ($this.hasClass('lzy-lvl1')) {
                    $this.removeClass('lzy-hover');
+                   $('a', $this).attr('tabindex', '-1');             // make un-focusable
                }
            } else {        // side-nav or sitemap
                $this.removeClass( 'lzy-hover' );
