@@ -111,7 +111,7 @@ class NavRenderer
         if (strpos($options['options'],'showTransition') !== false) {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
         }
-        if (($options['aminmation'] == 'slidedown') && (strpos($options['navClass'],'lzy-nav-hoveropen') === false)) {
+        if (($options['animation'] == 'slidedown') && (strpos($options['navClass'],'lzy-nav-hoveropen') === false)) {
             $options['navClass'] .= ' lzy-nav-hoveropen';
         }
         if (strpos($options['navClass'], 'lzy-nav-hoveropen') === false) {
@@ -250,8 +250,11 @@ EOT;
         $modif = false;
         $out = '';
 
+        // in case curr folder has md content, firstElem is added on lower level to support touch devices:
         if ($firstElem) {
-            $out .= "$indent1<$li class='lzy-lvl$level lzy-nav-heading-elem'>$firstElem</$li>\n";
+            $headingElem = "$indent1<$li class='lzy-lvl$level lzy-nav-heading-elem'>$firstElem</$li>\n";
+        } else {
+            $headingElem = '';
         }
 
         $aClass = ($this->aClass) ? " class='{$this->aClass}'" : '';
@@ -396,6 +399,7 @@ EOT;
         }
 
         if ($modif) {
+            $out = "$headingElem$out";
             $ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
             $navClass = $this->options['navClass'];
 
