@@ -89,7 +89,7 @@ class ImageResizer
             $fname = str_replace('!', '', $fname);
         }
         
-        if (!preg_match('/([^\[]*)\[(\d*)x(\d*)\]$/', $fname, $m)) {
+        if (!preg_match('/([^\(]*) \( (\d*) x (\d*) \) $/x', $fname, $m)) {
             if (file_exists($filename) && list($w, $h) = getimagesize($filename)) {
                 return [$filename, $w, $h, false ];
             } else {

@@ -1880,7 +1880,7 @@ function parseFileName($filename, $aspectRatio)
     $dimFound = false;
     $w = $h = '';
 
-    if (preg_match('/([^\[]*)\[(.*)\](\.\w+)/', $fname, $m)) {    // [WxH] size specifier present?
+    if (preg_match('/([^\(]*) \( (.*) \) (\.\w+)/x', $fname, $m)) {    // (WxH) size specifier present?
         $basename = $m[1];
         $dimStr = $m[2];
         $ext = $m[3];

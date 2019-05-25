@@ -75,7 +75,12 @@ class ImageTag
     private function prepareImageWorkingCopy()
     {
         $src = $this->src;
-        $origSrc = preg_replace('/( \[ [^\] ]* \] )/x', '', $src);
+        // allow for [] instead of () brackets:
+        if (preg_match('/( \[ [^\] ]* \] )/x', $src)) {
+            $src = str_replace(['[', ']'], ['(', ')'], $src);
+            $this->src = $src;
+        }
+        $origSrc = preg_replace('/( \( .*? \) )/x', '', $src);
         $origSrc = resolvePath($origSrc, true);
         $fullsizeImg = dirname($origSrc). '/_/'.basename($origSrc);
         if (!file_exists($fullsizeImg) && file_exists($origSrc)) {
@@ -159,7 +164,7 @@ class ImageTag
             $h1 = ($this->h) ? $this->h : round(300 * $this->aspRatio);
             $this->srcset = '';
             while (($w1 < $this->imgFullsizeWidth) && ($w1 < $this->feature_image_default_max_width)) {
-                $f = $this->basename . "[{$w1}x{$h1}]" . $this->ext;
+                $f = $this->basename . "({$w1}x{$h1})" . $this->ext;
                 $this->srcset .= "$this->path$f {$w1}w, ";
                 $w1 += $this->feature_SrcsetDefaultStepSize;
                 $h1 = round($w1 * $this->aspRatio);
