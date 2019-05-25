@@ -32,16 +32,20 @@ $this->addMacro($macroName, function () {
         return '';
     }
 
-    $id = $this->getArg($macroName, 'id', 'Id that will be applied to the image.');
-    $caption = $this->getArg($macroName, 'caption', 'Optional caption. If set, Lizzy will wrap the image into a &lt;figure> tag and wrap the caption itself in &lt;figcaption> tag.');
-    $quickview = $this->getArg($macroName, 'quickview', "If true, activates the quickview mechanism (default: true). Quickview: click on the image to see in full size.");
-    $lateImgLoading = $this->getArg($macroName, 'lateImgLoading', "If true, activates the lazy-load mechanism: images get loaded after the page is ready otherwise.");
+    $id = $this->getArg($macroName, 'id', '');
+    $this->getArg($macroName, 'class', '');
+    $this->getArg($macroName, 'alt', '');
+    $caption = $this->getArg($macroName, 'caption', '');
+    $this->getArg($macroName, 'srcset', '');
+    $this->getArg($macroName, 'imgTagAttributes', '');
+    $quickview = $this->getArg($macroName, 'quickview', "");
+    $lateImgLoading = $this->getArg($macroName, 'lateImgLoading', '');
 
-    $link = $this->getArg($macroName, 'link', "Wraps a &lt;a href='link-argument'> tag round the image..");
-    $linkClass = $this->getArg($macroName, 'linkClass', "Class applied to &lt;a> tag");
-    $linkTarget = $this->getArg($macroName, 'linkTarget', "Target-attribute applied to &lt;a> tag, e.g. linkTarget:_blank");
-    $linkTitle = $this->getArg($macroName, 'linkTitle', "Title-attribute applied to &lt;a> tag, e.g. linkTitle:'opens new window'");
-    $linkType = $this->getArg($macroName, 'linkType', "Type of link (see link() macro).");
+    $link = $this->getArg($macroName, 'link', '');
+    $linkClass = $this->getArg($macroName, 'linkClass', '');
+    $linkTarget = $this->getArg($macroName, 'linkTarget', '');
+    $linkTitle = $this->getArg($macroName, 'linkTitle', '');
+    $linkType = $this->getArg($macroName, 'linkType', '');
 
     $args = $this->getArgsArray($macroName);
 
@@ -51,6 +55,7 @@ $this->addMacro($macroName, function () {
 
     $lateImgLoading = ($lateImgLoading || $this->config->feature_lateImgLoading || (strpos($args['class'], 'lzy-late-loading') !== false));
 
+    $args['class'] .= ' lzy-img';
     // invoke quickview resources if required:
     if ($this->config->feature_quickview || $quickview || (strpos($args['class'], 'lzy-quickview') !== false)) {
         $args['class'] .= ' lzy-quickview';

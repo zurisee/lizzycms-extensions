@@ -5,7 +5,6 @@
 
 class ImageTag
 {
-
     public function __construct($obj, $args) {
         list($feature_image_default_max_width) = parseDimString($obj->config->feature_ImgDefaultMaxDim, $args['src']);
         $this->feature_SrcsetDefaultStepSize = $obj->config->feature_SrcsetDefaultStepSize;
@@ -59,7 +58,7 @@ class ImageTag
             $class = trim("$id $class");
         }
 
-        $attr = " width='{$this->w}' height='{$this->h}'";
+//        $attr = " width='{$this->w}' height='{$this->h}'";
 
         $genericAttibs = $this->imgTagAttributes ? ' '.$this->imgTagAttributes : '';
 

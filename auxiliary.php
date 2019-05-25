@@ -1817,6 +1817,7 @@ function handleFatalPhpError() {
 function parseDimString($str, $imageFile = false, $aspectRatio = false)
 {
     // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
+    $h = $w = 0;
     if (strpos($str, 'x') === false) {      // no 'x' present
         if (!$str) {
             $w = $h = $aspectRatio = 0;
@@ -1867,7 +1868,6 @@ function parseDimString($str, $imageFile = false, $aspectRatio = false)
         }
     }
     return [$w, $h];
-//    return [$w, $h, $aspectRatio];
 } // parseDimString
 
 
@@ -1889,7 +1889,7 @@ function parseFileName($filename, $aspectRatio)
 
         list($w, $h) = parseDimString($dimStr, $imgFullsizeFile, $aspectRatio);
 
-        $filename = $path.$basename."[{$w}x$h]".$ext;
+        $filename = $path.$basename."({$w}x$h)".$ext;
         $dimFound = true;
 
     } else {
