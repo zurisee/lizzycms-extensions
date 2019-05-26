@@ -80,6 +80,7 @@ figure a {
 .lzy-invisible,
 .invisible,
 .visually-hidden {
+    visibility: hidden;
 	position: absolute !important;
 	right: 200vw;
 	width: 1px;
