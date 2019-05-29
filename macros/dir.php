@@ -10,11 +10,11 @@ $this->addMacro($macroName, function () {
     $pattern = $this->getArg($macroName, 'pattern', 'The search-pattern with which to look for files (-> \'glob style\')', '*');
     $path0 = $this->getArg($macroName, 'path', 'Selects the folder to be read', '~page/');
     $deep = $this->getArg($macroName, 'deep', 'Whether to recursively search sub-folders', false);
+    $order = $this->getArg($macroName, 'order', '[reverse] Displays result in reversed order', false);
     $hierarchical = $this->getArg($macroName, 'hierarchical', 'If true, found files will be displayed in hierarchical view.', false);
     $class = $this->getArg($macroName, 'class', 'class to be applied to the enclosing li-tag', '');
     $target = $this->getArg($macroName, 'target', '"target" attribute to be applied to the a-tag', '');
 //    $exclude = $this->getArg($macroName, 'exclude', 'pattern to be excluded (-> \'glob style\'), default is \'*.md\'', '');
-    $order = $this->getArg($macroName, 'order', '[reversed] If true, directory objects will be output in reversed order', '');
 
     if ($pattern == 'help') {
         return '';
@@ -40,6 +40,7 @@ class DirRenderer
         $this->pattern = $this->getArg('pattern');
         $this->path0 = $this->getArg('path');
         $this->deep = $this->getArg('deep');
+        $this->order = $this->getArg('order');
         $this->hierarchical = $this->getArg('hierarchical');
         $this->class = $this->getArg('class');
         $this->target = $this->getArg('target');
@@ -74,6 +75,7 @@ class DirRenderer
         } else {
             $dir = getDir($this->path);
         }
+
         $str = $this->straightList($dir);
 
         return $str;
