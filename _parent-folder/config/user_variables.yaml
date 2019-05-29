@@ -14,7 +14,24 @@ lzy-sign-up further info:
     de: "<p>Für weitere Informationen kontaktieren Sie bitte den {{webmaster_link}}.</p><p><br />(Mit der Taste ESC dieses Overlay schliessen)</p>"
     _:  "<p>For further information contact the {{webmaster_link}}.</p><p><br />(Press ESC to remove overlay)</p>"
 
+Main Menu:
+    de: Hauptmenü
+    _:  Main Menu
 
+Navigation:
+    de:
+
+Skip to Main:
+    de: Direkt zum Inhalt
+    _:  Skip to Main
+
+Skip to Navigation:
+    de: Direkt zum Navigationsmenü
+    _:  Skip to Navigation
+
+Skip to Sitemap:
+    de: Direkt zur Sitemap
+    _:  Skip to Sitemap
 
 
 __END__

@@ -50,15 +50,17 @@ class NavRenderer
         $options['listWrapper'] = ($options['listWrapper']) ? $options['listWrapper'] : 'div'; // listWrapper by default
         $layoutClass = '';
 
+        $this->id = '';
         $primaryClass = '';
         if ($options['primary'] === null) {
-            if ($this->inx == 1) {
+            if ($this->inx === 1) {
                 $primaryClass = ' lzy-primary-nav';
-                $options['ariaLabel'] = $options['ariaLabel']? $options['ariaLabel'] : 'Main Menu';
+                $options['ariaLabel'] = $options['ariaLabel']? $options['ariaLabel'] : '{{ Main Menu }}';
+                $this->id = ' id="lzy-primary-nav"';
             }
         } elseif ($options['primary']) {
             $primaryClass = ' lzy-primary-nav';
-            $options['ariaLabel'] = $options['ariaLabel']? $options['ariaLabel'] : 'Main Menu';
+            $options['ariaLabel'] = $options['ariaLabel']? $options['ariaLabel'] : '{{ Main Menu }}';
         }
 
         // no specific php-file, so render standard output of predefined types:
@@ -194,7 +196,7 @@ EOT;
 
         $out = <<<EOT
 
-  <div class='{$editClass}lzy-nav-wrapper$navWrapperClass'$dataAttr>$edWrapper
+  <div{$this->id} class='{$editClass}lzy-nav-wrapper$navWrapperClass'$dataAttr>$edWrapper
 $title	  <nav$navClass aria-label="$ariaLabel">
 $nav
 	  </nav>

@@ -5,7 +5,11 @@
 # activate options by removing the leading '#'
 #--------------------------------------------------------------------------
 
-admin_autoAdminOnLocalhost: true                 # default=false
+admin_autoAdminOnLocalhost: true
+debug_compileScssWithLineNumbers: true
+feature_selflinkAvoid: false
+#site_defaultLanguage: 'en'
+
 
 #admin_activityLogging: false                     # default=true
 #admin_allowDisplaynameForLogin: true             # default=false
@@ -20,11 +24,10 @@ admin_autoAdminOnLocalhost: true                 # default=false
 #admin_logClientAccesses: true                    # default=false
 #admin_useRequestRewrite: false                   # default=true
 #admin_userAllowSelfAdmin: false                  # default=true
-#admin_webmasterEmail: false                      # default=true
 
 #custom_permitUserCode: true                      # default=false
 #custom_permitUserInitCode: true                  # default=false
-#custom_permitUserVarDefs: ''                     # default=sandboxed
+#custom_permitUserVarDefs: true                   # default=false
 #custom_wrapperTag: true                          # default=false
 
 #debug_allowDebugInfo: true                       # default=false

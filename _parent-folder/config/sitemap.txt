@@ -1,7 +1,10 @@
 # Sitemap
 
 Home: { folder: '~/', showThis: 'home/'}
+
 Contact
+
+Sitemap { hide:true }
 
 __END__
 
