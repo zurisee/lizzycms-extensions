@@ -982,14 +982,30 @@ EOT;
 			}
 			$cls = trim($cls);
 			$str = $newPage->get('content');
+
 			if ($this->config->custom_wrapperTag) {
                 $wrapperTag = $this->config->custom_wrapperTag;
             } else {
                 $wrapperTag = $newPage->get('wrapperTag');
             }
+
+			// extract <aside> and append it after </section>
+            $aside = '';
+            if (preg_match('|^ (.*) (<aside .* aside>) (.*) $|xms', $str, $m)) {
+                if (preg_match('|^ (<!-- .*? -->\s*) (.*) |xms', $m[3], $mm)) {
+                    $m[2] .= $mm[1];
+                    $m[3] = $mm[2];
+                }
+                $str = $m[1].$m[3];
+                $aside = $m[2];
+            }
+
 			$wrapperId = "{$wrapperTag}_$id";
 			$wrapperCls = "{$wrapperTag}_$cls";
-			$str = "\n\t\t    <$wrapperTag id='$wrapperId' class='$editingClass$wrapperCls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n\n";
+			$str = "\n\t\t    <$wrapperTag id='$wrapperId' class='$editingClass$wrapperCls'$dataFilename>\n$str\t\t    </$wrapperTag><!-- /lzy-src-wrapper -->\n";
+			if ($aside) {
+                $str .= "\t$aside\n";
+            }
 			$newPage->addContent($str, true);
 
             $this->compileLocalCss($newPage, $wrapperId, $wrapperCls);
@@ -999,7 +1015,7 @@ EOT;
 			if ($eop) {
 			    break;
             }
-		}
+		} // md-files
 
 		$html = $page->get('content');
 		if ((isset($this->siteStructure->currPageRec['backTickVariables'])) &&
