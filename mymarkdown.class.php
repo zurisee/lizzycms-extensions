@@ -460,14 +460,14 @@ class MyMarkdown
             if (preg_match('|^<p>({{.*}})</p>$|', $l, $m)) { // remove <p> around variables/macros alone on a line
                 $l = $m[1];
             }
-            if (preg_match('|^<p> \s* ( < ([^>\s]*) .* )|x', $l, $m)) { // remove <p> before pure HTML
+            if (preg_match('|^<p> \s* ( < /? ([^>\s]*) .* )|x', $l, $m)) { // remove <p> before pure HTML
                 $tag = $m[2];
                 if (in_array($tag, $this->blockLevelElements)) {
                     $l = $m[1];
                 }
             }
 
-            if (preg_match('|^( .* </ ([^>]*) > ) </p>\s*$|x', $l, $m)) { // remove <p> before pure HTML
+            if (preg_match('|^( .* </? (\w+) [^>]* > ) </p>\s*$|x', $l, $m)) { // remove <p> before pure HTML
                 $tag = $m[2];
                 if (in_array($tag, $this->blockLevelElements)) {
                     $l = $m[1];
