@@ -219,6 +219,7 @@ class MyMarkdown
 			$str = implode("\n", $lines);
 		}
 
+        $str = $this->convertLinks($str);
 		$str = $this->handleInTextVariableDefitions($str);
 
 		$str = str_replace('\\<', '@/@\\lt@\\@', $str);       // shield \<
@@ -432,6 +433,47 @@ class MyMarkdown
 		} // loop over variables
 		return $l;
 	} // replaceVariables
+
+
+
+    //....................................................
+    private function convertLinks($str)
+    {
+        $enabled = false;
+        if (isset($this->page->autoConvertLinks)) {
+            $enabled = $this->page->autoConvertLinks;
+            if (!$enabled) {
+                return $str;
+            }
+        }
+        if ($enabled || $this->trans->lzy->config->feature_autoConvertLinks) {
+            $lines = explode("\n", $str);
+            foreach ($lines as $i => $l) {
+
+                if (preg_match_all('/( (?<!["\']) [\w-\.]*?)\@([\w-\.]*?\.\w{2,6}) (?!["\'])/x', $l, $m)) {
+                    foreach ($m[0] as $addr) {
+                        $lines[$i] = str_replace($addr, "<a href='mailto:$addr'>$addr</a>", $l);
+                    }
+
+                } elseif (preg_match_all('|( (?<!["\']) (https?://) ([\w-\.]+ \. [\w-]{1,6}) [\w-/]* ) (?!["\'])|xi', $l, $m)) {
+                    foreach ($m[0] as $j => $tmp) {
+                        if (!$m[2][$j]) {
+                            $url = "https://" . $m[3][$j];
+                        } else {
+                            $url = $m[1][$j];
+                        }
+                        if (strlen($url) > 7) {
+                            $l = str_replace( $m[0][$j], "<a href='$url'>$url</a>", $l);
+                        }
+                    }
+                    $lines[$i] = $l;
+                }
+            }
+            $str = implode("\n", $lines);
+        }
+        return $str;
+    } // convertLinks
+
 
 
 

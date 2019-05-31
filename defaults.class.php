@@ -43,6 +43,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'debug_monitorUnusedVariables'      => [false, '[false|true] If true, Lizzy keeps track of variable usage. Initialize tracking with url-arg "?reset"' ],
 
             //'feature_autoAttrFile'              => [false, 'Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.' ],
+            'feature_autoConvertLinks'          => [false, '[false|true] If true, automatically converts links to HTML-link (i.e. &lt;a> tags).' ],
             'feature_autoLoadClassBasedModules' => [true, '[false|true] If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
             'feature_autoLoadJQuery'            => [true, '[true|false] whether jQuery should be loaded automatically (even if not initiated by one of the macros)' ],
             'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
