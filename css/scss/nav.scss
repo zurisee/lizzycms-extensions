@@ -162,9 +162,11 @@ $xCorr: 1.55em;
 
 
 
-// open
-.lzy-nav.lzy-nav-collapsed li.lzy-has-children.open > div > ol {
+// lzy-open
+//.lzy-nav.lzy-nav-collapsed li.lzy-has-children.lzy-open > div > ol {
+.lzy-nav li.lzy-has-children.lzy-open > div > ol {
     margin-top: 0 !important;
+    transition-delay: 0s;
 }
 
 
@@ -258,7 +260,7 @@ $xCorr: 1.55em;
             transform: rotate(0deg);
         }
 
-        .lzy-has-children.open > * > .lzy-nav-arrow {
+        .lzy-has-children.lzy-open > * > .lzy-nav-arrow {
             transition: transform var(--lzy-nav-accordion-trans-speed);
             transform: rotate(90deg);
         }
@@ -417,38 +419,29 @@ $xCorr: 1.55em;
         vertical-align: top;
     }
 
-    .lzy-lvl1.lzy-nav-no-content > a {
-        display: none !important;
-    }
-    //#lzy.lzy-large-screen .lzy-nav-top-horizontal .lzy-has-children {
     .lzy-has-children {
-        .lzy-nav-heading-elem.lzy-nav-heading-elem a {
+        .lzy-nav-for-touch-only.lzy-nav-for-touch-only a {
             padding-left: var(--lzy-nav-top-horizontal-padding);
         }
     }
 } // lzy-nav-top-horizontal
 
+
+// while in touch mode, the parent element can't be activated as it is reserved for opening/closing the accordion
+// thus we need to repeat that element in the text sub-menu, but hide it while not in touch mode:
+#lzy .lzy-has-children .lzy-nav-for-touch-only {
+    display: none;
+}
+
+// when in touch mode, we show these elements, provided there actually is a page associated
+// if not, we jump to the next lower page anyway and don't need to make these "gost elements" visible:
+#lzy.touch .lzy-nav-top-horizontal,
 .touchevents #lzy .lzy-nav-top-horizontal {
-    // A0
-    .lzy-lvl1.lzy-has-children > a,
-    .lzy-lvl2 > div .lzy-nav-heading-elem {
-        display: none !important;
+    .lzy-nav-has-content .lzy-lvl2.lzy-nav-for-touch-only {
+        display: block;
     }
 }
 
-.no-touchevents #lzy .lzy-nav-top-horizontal {
-    .lzy-has-children {
-        .lzy-nav-heading-elem {
-            display: none;
-            background: #eeeeff;
-        }
-    }
-    .lzy-nav-has-content.lzy-nav-has-content {
-        & > label {
-            display: none;
-        }
-    }
-}
 
 
 #lzy .lzy-nav:not(.lzy-nav-top-horizontal) .lzy-nav-arrow {
@@ -770,7 +763,7 @@ body.lzy-small-screen {
     .lzy-nav-primary .lzy-nav-wrapper {
         min-height: 200vh;
     }
-    &#lzy .lzy-nav-heading-elem.lzy-nav-heading-elem {
+    &#lzy .lzy-nav-for-touch-only.lzy-nav-for-touch-only {
         display: none;
     }
 }

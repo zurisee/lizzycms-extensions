@@ -20,14 +20,21 @@ var largeScreenClasses = '';
 
     // if ($('.lzy-nav-accordion, .lzy-nav-slidedown, .lzy-nav-top-horizontal').length) {
     if ($('.lzy-nav-collapse, .lzy-nav-top-horizontal').length) {
-        setHightOnHiddenElements();
+        // setHightOnHiddenElements(); //??? Android-bug?
     }
 
     $('.lzy-nav-top-horizontal .lzy-lvl1.lzy-has-children').each(function() {
-        console.log($(this));
-        $('div a, div label', $( this )).attr('tabindex', '-1');             // make un-focusable
+        // console.log($(this));
+        // $('div a, div label', $( this )).attr('tabindex', '-1');             // make un-focusable
     });
 
+    // $('.touchevents .lzy-nav .lzy-has-children > a').click(function (e) {
+    $('.touchevents .lzy-has-children a').click(function (e) {
+        e.stopPropagation();
+        var $parentLi = $(this).parent();
+        toggleAccordion($parentLi, true);
+        return false;
+    });
 
     // menu button in mobile mode:
     $('#lzy-nav-menu-icon').click(function(e) {
@@ -39,19 +46,24 @@ var largeScreenClasses = '';
     // mouse:
     $('.lzy-has-children > * > .lzy-nav-arrow').dblclick(function(e) {        // double click -> open all
         var $parentLi = $(this).closest('.lzy-has-children');
-        toggleAccordion($parentLi, true, true, true);
+        toggleAccordion($parentLi, true, true);
+        // toggleAccordion($parentLi, true, true, true);
         e.stopPropagation();
         return false;
     });
     $('.lzy-has-children > label').click(function(e) {        // click
+        console.log( 'click label' );
         var $parentLi = $(this).closest('.lzy-has-children');
-        toggleAccordion($parentLi, true);
+        toggleAccordion($parentLi);
+        // toggleAccordion($parentLi, true);
         e.stopPropagation();
         return false;
     });
     $('.lzy-has-children > a > .lzy-nav-arrow').click(function(e) {        // click
+        console.log( 'click arrow' );
         var $parentLi = $(this).closest('.lzy-has-children');
-        toggleAccordion($parentLi, true);
+        toggleAccordion($parentLi);
+        // toggleAccordion($parentLi, true);
         e.stopPropagation();
         return false;
     });
@@ -59,21 +71,26 @@ var largeScreenClasses = '';
     // hover:
    $('.lzy-nav-hoveropen .lzy-has-children').hover(
         function() {    // mouseover
+            // mylog('mouseover');
             var $this = $(this);
             if ($('body').hasClass('touch')) {  // no-touch only
-                return;
+                return; // ??? -> better to remove
             }
             if ($this.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) { // top-nav:
                 if ($this.hasClass('lzy-lvl1')) {
                     $this.addClass('lzy-hover');
-                    $('a', $this).attr('tabindex', '0');             // make focusable
+                    openAccordion($this, true);
+                    // $('a', $this).attr('tabindex', '0');             // make focusable
                 }
             } else {        // side-nav or sitemap
                 $this.addClass( 'lzy-hover' );
+                openAccordion($this);
             }
+            // $('a', $this).attr({'aria-expanded': 'true'});
 
         },
        function() {     // mouseout
+           // mylog('mouseout');
            var $this = $(this);
            if ($('body').hasClass('touch')) {  // no-touch only
                return;
@@ -81,11 +98,14 @@ var largeScreenClasses = '';
            if ($this.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) {  // top-nav
                if ($this.hasClass('lzy-lvl1')) {
                    $this.removeClass('lzy-hover');
-                   $('a', $this).attr('tabindex', '-1');             // make un-focusable
+                   closeAccordion($this, true);
+                   // $('a', $this).attr('tabindex', '-1');             // make un-focusable
                }
            } else {        // side-nav or sitemap
                $this.removeClass( 'lzy-hover' );
+               closeAccordion($this);
            }
+           // $('a', $this).attr({'aria-expanded': 'false'});
         }
    );
 
@@ -104,24 +124,42 @@ var largeScreenClasses = '';
 }( jQuery ));
 
 
+
+
+
+function handleAccordion( elem ) {
+    if ($( 'body' ).hasClass('touch')) {
+        var $parentLi = $(elem).parent();
+        if ($parentLi.hasClass('lzy-lvl1')) {
+            toggleAccordion($parentLi, true);
+            return false;
+        }
+    }
+} // handleAccordion
+
+
+
+
+
 function initTopNav() {
+    // top-nav:
     $('.lzy-large-screen .lzy-primary-nav .lzy-nav-top-horizontal .lzy-has-children').each(function() {
         var $elem = $( this );
         var $nextDivs = $( 'div', $elem );
-        $elem.removeClass('open lzy-hover');
-        $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
-        $('a, label', $nextDivs).attr('tabindex', '-1');            // make un-focusable
-        $('li', $elem ).removeClass('open');            // all li below parent li
-        // $('input', $nav).prop('checked', false);            // un-check checkbox
+        $elem.removeClass('lzy-open lzy-hover');
+        $('li', $elem ).removeClass('lzy-open');       // close all li below parent li
+        $nextDivs.attr({'aria-hidden':'true' });        // make all sub-elements hidden
+        $('a', $nextDivs).attr({'tabindex': '-1'}); // make sub-menus un-focusable
+        // $('a', $nextDivs).attr({'aria-expanded': 'false', 'tabindex': '-1'}); // make sub-menus un-focusable
     });
 } // initTopNav
 
 
 
 
-function toggleAccordion($parentLi, manipCheckbox, deep, newState) {
+function toggleAccordion($parentLi, deep, newState) {
     if (typeof newState === 'undefined') {
-        var expanded = $parentLi.hasClass('open');
+        var expanded = $parentLi.hasClass('lzy-open');
     } else {
         var expanded = !newState;
     }
@@ -141,19 +179,23 @@ function toggleAccordion($parentLi, manipCheckbox, deep, newState) {
 
 
 function openAccordion($parentLi, deep) {
+    $parentLi.addClass('lzy-open');
+    $('> a', $parentLi).attr({'aria-expanded': 'true'});  // make focusable
     if (deep === true) {
-        var $nextDivs = $( 'div', $parentLi );
-        $nextDivs.attr({'aria-expanded': 'true', 'aria-hidden': 'false'});        // next div
-        $parentLi.addClass('open');       // parent li
-        $('.lzy-has-children', $parentLi).addClass('open');       // parent li
-        $('input', $parentLi).prop('checked', true);            // check checkbox
-        $('a', $parentLi).attr('tabindex', '0');             // make focusable
+        // var $nextDivs = $( 'div', $parentLi );
+        $( 'div', $parentLi ).attr({'aria-hidden': 'false'});        // next div
+        // $parentLi.addClass('lzy-open');       // parent li
+        $('.lzy-has-children', $parentLi).addClass('lzy-open');       // parent li
+        $('a', $parentLi).attr({'tabindex': ''});  // set aria-expanded and make focusable
+        // $('a', $parentLi).attr({'tabindex': '', 'aria-expanded': 'true'});  // set aria-expanded and make focusable
+
     } else {
-        var $nextDiv = $( '> div', $parentLi );
-        $nextDiv.attr({'aria-expanded': 'true', 'aria-hidden': 'false'});        // next div
-        $parentLi.addClass('open');       // parent li
-        $('> input', $parentLi).prop('checked', true);            // check checkbox
-        $('> div > ol > li > a', $parentLi).attr('tabindex', '0');             // make focusable
+        // var $nextDiv = $( '> div', $parentLi );
+        $( '> div', $parentLi ).attr({'aria-hidden': 'false'});
+        // $parentLi.addClass('lzy-open');
+        $('> a', $parentLi).attr({'tabindex': ''});  // make focusable
+        // $('> a', $parentLi).attr({'tabindex': '', 'aria-expanded': 'true'});  // make focusable
+        // $('> div > ol > li > a', $parentLi).attr({'tabindex': '', 'aria-expanded': 'true'});  // set aria-expanded and make focusable
     }
 } // openAccordion
 
@@ -165,26 +207,36 @@ function closeAccordion($parentLi, deep) {
     if (typeof deep === true) {
         $nextDiv = $( 'div', $parentLi );
     }
-    $nextDiv.attr({'aria-expanded': 'false', 'aria-hidden':'true'});        // next div
-    $parentLi.removeClass('open');       // parent li
-    $('> input', $parentLi).prop('checked', false);            // check checkbox
-    $('li > a, li > label', $parentLi).attr('tabindex', '-1');             // make un-focusable
+    $('> a', $parentLi).attr({'aria-expanded': 'false'});  // make focusable
+    $('a', $parentLi).attr({'tabindex': ''});  // make focusable
+    // $('a', $parentLi).attr({'tabindex': '', 'aria-expanded': 'false'});  // make focusable
+    $nextDiv.attr({'aria-hidden':'true'});        // next div
+    // $nextDiv.attr({'aria-expanded': 'false', 'aria-hidden':'true'});        // next div
+    $parentLi.removeClass('lzy-open');       // parent li
+    // $('> input', $parentLi).prop('checked', false);            // check checkbox
+    $('li > a', $parentLi).attr('tabindex', '-1');             // make un-focusable
+    // $('li > a, li > label', $parentLi).attr('tabindex', '-1');             // make un-focusable
 } // closeAccordion
 
 
 
 
-
+// all accordions includes siblings:
 function closeAllAccordions($parentLi) {
     var $nav = $parentLi.closest('.lzy-nav');
+    $('> a', $parentLi).attr({'aria-expanded': 'false'});  // make focusable
+    $('a', $parentLi).attr({'tabindex': ''});  // make focusable
+    // $('a', $parentLi).attr({'tabindex': '', 'aria-expanded': 'false'});  // make focusable
     $('.lzy-has-children', $nav).each(function() {
         var $elem = $( this );
         var $nextDivs = $( 'div', $elem );
-        $elem.removeClass('open lzy-hover');
-        $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
-        $('a, label', $nextDivs).attr('tabindex', '-1');            // make un-focusable
-        $('li', $elem ).removeClass('open');            // all li below parent li
-        $('input', $nav).prop('checked', false);            // un-check checkbox
+        $elem.removeClass('lzy-open lzy-hover');
+        $nextDivs.attr({'aria-hidden':'true' });        // next div
+        // $nextDivs.attr({'aria-expanded': 'false', 'aria-hidden':'true' });        // next div
+        $('a', $nextDivs).attr('tabindex', '-1');            // make un-focusable
+        // $('a, label', $nextDivs).attr('tabindex', '-1');            // make un-focusable
+        $('li', $elem ).removeClass('lzy-open');            // all li below parent li
+        // $('input', $nav).prop('checked', false);            // un-check checkbox
     });
 } // closeAllAccordions
 
@@ -204,7 +256,7 @@ function adaptMainMenuToScreenSize( smallScreen ) {
     } else {
         $('.lzy-primary-nav .lzy-nav').attr('class', largeScreenClasses);
         $('.lzy-primary-nav input').prop('checked', false);
-        $('.lzy-primary-nav .lzy-has-children').removeClass('open');
+        $('.lzy-primary-nav .lzy-has-children').removeClass('lzy-open');
         $('body').removeClass('lzy-nav-mobile-open');
     }
 }
@@ -258,13 +310,15 @@ function setupKeyboardEvents() {
 
         if (keyCode == 39) {            // right arrow
             event.preventDefault();
-            toggleAccordion($this.parent(), false,false, true);
+            toggleAccordion($this.parent(),false, true);
+            // toggleAccordion($this.parent(), false,false, true);
 
         } else if (keyCode == 37) {    // left arrow
             event.preventDefault();
-            var expanded = $this.parent().hasClass('open');
+            var expanded = $this.parent().hasClass('lzy-open');
             if (expanded) { // if open -> close
-                toggleAccordion($this.parent(), false,false, false);
+                toggleAccordion($this.parent(),false, false);
+                // toggleAccordion($this.parent(), false,false, false);
             } else {    // if already closed -> jump to parent element
                 $('> a', $this.parent().parent().closest('li')).focus();
             }
@@ -283,7 +337,8 @@ function setupKeyboardEvents() {
 
         } else if (keyCode == 32) {    // space
             event.preventDefault();
-            toggleAccordion($this.parent(), false);
+            toggleAccordion($this.parent());
+            // toggleAccordion($this.parent(), false);
         }
     });
 } // setupKeyboardEvents

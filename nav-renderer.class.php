@@ -254,7 +254,7 @@ EOT;
 
         // in case curr folder has md content, firstElem is added on lower level to support touch devices:
         if ($firstElem) {
-            $headingElem = "$indent1<$li class='lzy-lvl$level lzy-nav-heading-elem'>$firstElem</$li>\n";
+            $headingElem = "$indent1<$li class='lzy-lvl$level lzy-nav-for-touch-only'>$firstElem</$li>\n";
         } else {
             $headingElem = '';
         }
@@ -292,7 +292,7 @@ EOT;
                 $path = '~/'.$path;
             }
 
-            $btnOpen = '';
+//            $btnOpen = '';
             $liClassOpen = '';
             $liClass = $this->liClass." lzy-lvl$level";
             if ($elem['isCurrPage']) {
@@ -301,32 +301,38 @@ EOT;
                     $path = '#main';
                 }
             } elseif ($elem['active']) {
-                    $liClass .= ' active';
+                $liClass .= ' active';
             }
 
-            $aria = 'aria-expanded="false" aria-hidden="true" role="menubar"';
+            $aria1 = 'aria-expanded="false"';
+            $aria = 'aria-hidden="true"';
+//            $aria = 'aria-hidden="true" role="menubar"';
+//            $aria = 'aria-expanded="false" aria-hidden="true" role="menubar"';
 
             // tabindex:
             $tabindex = 'tabindex="-1"';
             if (($elem['parent'] === null) || ($this->list[$elem['parent']]['active'])) {
-                $tabindex = 'tabindex="0"';
+//                $tabindex = 'tabindex="0"';
+                $tabindex = '';
             }
 
             if (!$this->collapse) {
                 if (!($this->horizTop && ($level == 1))) {
-                    $btnOpen = ' checked';
+//                    $btnOpen = ' checked';
                     $liClassOpen = ' open';
-                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
+//                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
                 }
-                $tabindex = 'tabindex="0"';
+//                $tabindex = 'tabindex="0"';
+                $tabindex = '';
 
             } elseif ($elem['active'] && $this->openCurr) {
                 if (!($this->horizTop && ($level == 1))) {  // skip if horzontal & on top level:
-                    $btnOpen = ' checked';
+//                    $btnOpen = ' checked';
                     $liClassOpen = ' open';
-                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
+//                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
                 }
-                $tabindex = 'tabindex="0"';
+//                $tabindex = 'tabindex="0"';
+                $tabindex = '';
             }
 
             if (isset($elem['target'])) {
@@ -350,12 +356,13 @@ EOT;
                 $_listWrapper = '';
             }
 
-            $btnId = "lzy-nav-el-{$this->inx}$level$n";
-            $lbl1 = "<label for='$btnId' tabindex='0'>";
-            $lbl2 = "<span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
-            $inp = "<input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />";
+//            $btnId = "lzy-nav-el-{$this->inx}$level$n";
+//            $lbl1 = "<label for='$btnId' tabindex='-1'  $aria1>";
+//            $lbl1 = "<label for='$btnId' tabindex='0'>";
+//            $lbl2 = "<span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
+//            $inp = "<input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />";
 
-            $aElem = "<span class='lzy-nav-label'>$name</span><span class='lzy-nav-arrow'>{$this->arrow}</span>";
+            $aElem = "<span class='lzy-nav-label'>$name</span><span class='lzy-nav-arrow' aria-hidden='true'>{$this->arrow}</span>";
             if ((!$elem['hide!']) || $showHidden) {
                 if ($elem['hide!']) {
                     $liClass .= ' lzy-nav-hidden-elem';
@@ -364,6 +371,9 @@ EOT;
 
                     if ($this->horizTop) {
                         $firstElem = "<a href='$path'$aClass$target $tabindex>$name</a>";   // A1
+                    }
+                    if ($this->horizTop && ($level !== 1)) {
+                        $aria1 = '';
                     }
                     $contentClass = $elem["noContent"] ? ' lzy-nav-no-content': ' lzy-nav-has-content';
 
@@ -375,9 +385,17 @@ EOT;
                         $liClass = trim($liClass);
                         $liClass = ($liClass) ? " class='$liClass'" : '';
                         $out .= "$indent1<$li$liClass>\n";
-                        $out .= "$indent2<a href='$path'$aClass$target $tabindex>$aElem</a>\n"; // A0
-                        $out .= "$indent2$lbl1$aElem$lbl2\n"; // L0
-                        $out .= "$indent2$inp\n";           // Inp
+
+//                        $out .= "$indent2<a href='javascript:handleAccordion( this, \"$path\" );'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+//                        $out .= "$indent2<a href='javascript:window.location.href=\"$path\";'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+//                        $out .= "$indent2<a href='javascript:alert(\"Hello World!\");'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+//                        $out .= "$indent2<a href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+                        $out .= "$indent2<a onclick='return handleAccordion(this);' href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+//                        $out .= "$indent2<a onclick=\"return handleAccordion(this, \"$path\");\" href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+
+//                        $out .= "$indent2<a href='$path'$aClass$target $tabindex>$aElem</a>\n"; // A0
+//                        $out .= "$indent2$lbl1$aElem$lbl2\n"; // L0
+//                        $out .= "$indent2$inp\n";           // Inp
                         $out .= "$indent2$listWrapper\n";
                         $out .= "$out1";
                         $out .= "$indent2$_listWrapper\n";
