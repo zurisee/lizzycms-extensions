@@ -15,7 +15,7 @@ body {
     //--lzy-arrow-size: 2em;
     --lzy-nav-line-height: 1.2em;
     --lzy-nav-elem-height: 2em;
-    --lzy-nav-sub-width: 10em;
+    --lzy-nav-sub-width: 15em;
     --lzy-nav-sub-bg-color: #fff;
 
     // lzy-nav-top-horizontal:
@@ -515,7 +515,7 @@ $xCorr: 1.55em;
                     top: 100%; // push below top level elem
                     left: 0;
                     width: var(--lzy-nav-sub-width);
-                    z-index: 2;
+                    z-index: 102;
                     overflow: hidden;
                 }
             }
