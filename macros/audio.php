@@ -23,7 +23,7 @@ $this->addMacro($macroName, function () {
 
     $src = $this->getArg($macroName, 'src', 'Path to sound file', '');
 
-    if ($src == '') {
+    if (($src === '') || ($src === 'help')) {
 		return '';
 	}
 
