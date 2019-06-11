@@ -17,7 +17,6 @@ class ImageGallery
     public function __construct($galleryPath, $id, $options)
     {
         $this->galleryPath = resolvePath($galleryPath, true);
-        $this->galleryUrl = resolvePath($galleryPath, true, true);
         $this->id = $id;
         $this->options = $options;
         if (!file_exists($this->galleryPath)) {

@@ -789,7 +789,10 @@ function convertFsToHttpPath($path)
 
 
 //------------------------------------------------------------
-function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
+//function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
+function resolvePath($path, $relativeToCurrPage = false, $resourceAccess = false, $pageAccess = false)
+// $resourceAccess  -> includes 'pages/' in path
+// $pageAccess      -> excludes 'pages/' in path as used for access to html pages
 {
     global $globalParams;
 
@@ -820,29 +823,23 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         $globalParams['dataPath'],
         SYSTEM_PATH,
         EXTENSIONS_PATH,
-//        $globalParams['pathToPage'],
-        $globalParams['pathToRoot'].$globalParams['pagePath'],
+        $globalParams['pathToPage'],
     ];
 
     $pathToRoot = $globalParams['pathToRoot'];
-    if ($httpAccess) {  // http page access:
-        for ($i=0; $i<5; $i++) {
+    if ($resourceAccess) {    // -> include 'pages/' in path
+        for ($i=0; $i<4; $i++) {
             $to[$i] = $pathToRoot.$to[$i];
         }
+        $to[4] = $globalParams["host"].$globalParams['pathToPage'];
     }
-//    $pathToRoot = $globalParams['pathToRoot'];
-//    if (is_string($httpAccess)) {  // http page access:
+    if ($pageAccess) {    // -> exclude 'pages/' in path
 //        for ($i=0; $i<4; $i++) {
 //            $to[$i] = $pathToRoot.$to[$i];
 //        }
-//        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
-//
-//    } elseif ($httpAccess) {  // http resource access:
-//        for ($i=0; $i<5; $i++) {
-//            $to[$i] = $globalParams['pathToRoot'].$to[$i];
-//        }
-//$to[4] = $globalParams['pathToRoot'].$globalParams['pagePath']; //???
-//    }
+        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
+    }
+
     $path = preg_replace($from, $to, $path);
     return $path;
 } // resolvePath
