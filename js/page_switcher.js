@@ -65,6 +65,7 @@ function isProtectedTarget()
     if ($( document.activeElement ).closest('form').length ||	        // Focus within form field
         $( document.activeElement ).closest('input').length ||	        // Focus within input field
         $('.inhibitPageSwitch').length  ||				                // class .inhibitPageSwitch found
+        $('.slideshow-support').length  ||				                // class .slideshow-support found
         ($('.ug-lightbox').length &&
             ($('.ug-lightbox').css('display') != 'none')) ||            // special case: ug-album in full screen mode
         $( document.activeElement ).closest('.lzy-panels-widget').length	// Focus within lzy-panels-widget field
