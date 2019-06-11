@@ -192,7 +192,7 @@ class Transvar
 
             if (trim($argStr) == 'help') {
                 if ($val2 = $this->getMacroHelp($macro)) {
-                    $val = $val2;
+                    $val = $val2.$val;
                 }
             }
             if ($this->compileMd) {
