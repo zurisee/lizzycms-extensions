@@ -56,16 +56,19 @@ $this->addMacro($macroName, function () {
     $lateImgLoading = ($lateImgLoading || $this->config->feature_lateImgLoading || (strpos($args['class'], 'lzy-late-loading') !== false));
 
     $args['class'] .= ' lzy-img';
+
     // invoke quickview resources if required:
-    if ($this->config->feature_quickview || $quickview || (strpos($args['class'], 'lzy-quickview') !== false)) {
-        $args['class'] .= ' lzy-quickview';
-        if (!isset($this->page->quickviewLoaded)) {
-            $this->page->addModules('QUICKVIEW');
-            $this->page->addJq("\t$('img.lzy-quickview').quickview();");
-            $this->page->quickviewLoaded = true;
+    if ($quickview !== false) {
+        if ($this->config->feature_quickview || $quickview || (strpos($args['class'], 'lzy-quickview') !== false)) {
+            $args['class'] .= ' lzy-quickview';
+            if (!isset($this->page->quickviewLoaded)) {
+                $this->page->addModules('QUICKVIEW');
+                $this->page->addJq("\t$('img.lzy-quickview').quickview();");
+                $this->page->quickviewLoaded = true;
+            }
+        } elseif ($lateImgLoading) {    // lateImgLading requires quickview.js
+            $this->page->addJqFiles('QUICKVIEW');
         }
-    } elseif ($lateImgLoading) {    // lateImgLading requires quickview.js
-        $this->page->addJqFiles('QUICKVIEW');
     }
 
     $impTag = new ImageTag($this, $args);
