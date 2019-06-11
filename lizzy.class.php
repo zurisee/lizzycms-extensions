@@ -702,10 +702,7 @@ class Lizzy
 	//....................................................
 	private function injectPageSwitcher()
 	{
-        if ($this->config->feature_slideShowSupport) {
-            require_once($this->config->systemPath."slideshow-support.php");
-
-        } elseif ($this->config->feature_pageSwitcher) {
+        if ($this->config->feature_pageSwitcher) {
             require_once($this->config->systemPath."page_switcher.php");
         }
 	} // injectPageSwitcher
@@ -977,7 +974,8 @@ EOT;
 				$dataFilename = " data-lzy-filename='$f'";
                 $editingClass = 'lzy-src-wrapper ';
 			}
-			if ($wrapperClass = $newPage->get('wrapping_class')) {
+//			if ($wrapperClass = $newPage->get('wrapping_class')) {
+			if ($wrapperClass = $newPage->get('wrapperClass')) {
 				$cls .= ' '.$wrapperClass;
 			}
 			$cls = trim($cls);
