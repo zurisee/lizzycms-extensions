@@ -8,7 +8,7 @@ vgap: "<div class='vgap' style='margin:1em 0;'>&nbsp;</div>\n"
 
 clear: '<div style="clear:both;"></div>'
 
-section: "\n</section><section>\n\n"
+section: "\n</section>\n<section>\n"
 
 #user_icon: '<img src="~sys/rsc/user.svg" />'
 #user_icon: "&#128100;"
