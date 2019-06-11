@@ -820,21 +820,29 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         $globalParams['dataPath'],
         SYSTEM_PATH,
         EXTENSIONS_PATH,
-        $globalParams['pathToPage'],
+//        $globalParams['pathToPage'],
+        $globalParams['pathToRoot'].$globalParams['pagePath'],
     ];
 
     $pathToRoot = $globalParams['pathToRoot'];
-    if (is_string($httpAccess)) {  // http page access:
-        for ($i=0; $i<4; $i++) {
+    if ($httpAccess) {  // http page access:
+        for ($i=0; $i<5; $i++) {
             $to[$i] = $pathToRoot.$to[$i];
         }
-        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
-
-    } elseif ($httpAccess) {  // http resource access:
-        for ($i=0; $i<5; $i++) {
-            $to[$i] = $globalParams['pathToRoot'].$to[$i];
-        }
     }
+//    $pathToRoot = $globalParams['pathToRoot'];
+//    if (is_string($httpAccess)) {  // http page access:
+//        for ($i=0; $i<4; $i++) {
+//            $to[$i] = $pathToRoot.$to[$i];
+//        }
+//        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
+//
+//    } elseif ($httpAccess) {  // http resource access:
+//        for ($i=0; $i<5; $i++) {
+//            $to[$i] = $globalParams['pathToRoot'].$to[$i];
+//        }
+//$to[4] = $globalParams['pathToRoot'].$globalParams['pagePath']; //???
+//    }
     $path = preg_replace($from, $to, $path);
     return $path;
 } // resolvePath
