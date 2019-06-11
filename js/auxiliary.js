@@ -62,13 +62,16 @@ function serverLog(text)
 
 
 //--------------------------------------------------------------
-function lzyReload( arg )
+function lzyReload( arg, url )
 {
-    console.log('initiating page reload');
     var call = window.location.pathname.replace(/\?.*/, '');
+    if (typeof url != 'undefined') {
+        call = url.trim();
+    }
     if (typeof arg != 'undefined') {
         call = call + arg;
     }
+    console.log('initiating page reload: "' + call + '"');
     window.location.replace(call);
 }
 
