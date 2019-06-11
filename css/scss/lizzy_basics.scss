@@ -435,7 +435,8 @@ footer {
 		width: 1.2em;
 		height: 1.2em;
 	}
-	div {
+	#loggedInUser, 
+    .loggedInUser {
 		float: right;
 	}
 }
