@@ -7,6 +7,7 @@
 
 define('NAV_ARROW', '&#9657;'); // '&#9013;'; // '&#9657;'; //'&#9656;';
 define('NAV_ARROW_TOP', NAV_ARROW);
+define('NAV_SMALL_TREE_THRESHOLD', 15); // if nav tree small larger, mobile nav will be fully expanded initially
 
 $page->addJqFiles('TABBABLE');
 
@@ -69,8 +70,7 @@ class NavRenderer
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
-//            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-colored lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-open-current lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'sitemap') {
@@ -118,6 +118,10 @@ class NavRenderer
         }
         if (strpos($options['navClass'], 'lzy-nav-hoveropen') === false) {
             $options['navClass'] .= ' lzy-nav-clicktoopen';
+        }
+
+        if (sizeof($this->list) < NAV_SMALL_TREE_THRESHOLD) {   // automatically open nav if small
+            $options['navClass'] .= ' lzy-nav-small-tree';
         }
         $this->options = $options;
         return $this->renderSitemap();
@@ -292,7 +296,6 @@ EOT;
                 $path = '~/'.$path;
             }
 
-//            $btnOpen = '';
             $liClassOpen = '';
             $liClass = $this->liClass." lzy-lvl$level";
             if ($elem['isCurrPage']) {
@@ -306,32 +309,17 @@ EOT;
 
             $aria1 = 'aria-expanded="false"';
             $aria = 'aria-hidden="true"';
-//            $aria = 'aria-hidden="true" role="menubar"';
-//            $aria = 'aria-expanded="false" aria-hidden="true" role="menubar"';
 
             // tabindex:
             $tabindex = 'tabindex="-1"';
             if (($elem['parent'] === null) || ($this->list[$elem['parent']]['active'])) {
-//                $tabindex = 'tabindex="0"';
                 $tabindex = '';
             }
 
             if (!$this->collapse) {
-                if (!($this->horizTop && ($level == 1))) {
-//                    $btnOpen = ' checked';
-                    $liClassOpen = ' open';
-//                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
-                }
-//                $tabindex = 'tabindex="0"';
                 $tabindex = '';
 
             } elseif ($elem['active'] && $this->openCurr) {
-                if (!($this->horizTop && ($level == 1))) {  // skip if horzontal & on top level:
-//                    $btnOpen = ' checked';
-                    $liClassOpen = ' open';
-//                    $aria = 'aria-expanded="true" aria-hidden="false" role="menubar"';
-                }
-//                $tabindex = 'tabindex="0"';
                 $tabindex = '';
             }
 
@@ -356,11 +344,6 @@ EOT;
                 $_listWrapper = '';
             }
 
-//            $btnId = "lzy-nav-el-{$this->inx}$level$n";
-//            $lbl1 = "<label for='$btnId' tabindex='-1'  $aria1>";
-//            $lbl1 = "<label for='$btnId' tabindex='0'>";
-//            $lbl2 = "<span class='lzy-invisible'>{{ lzy-nav-elem-button }}</span></label>";
-//            $inp = "<input type='checkbox' id='$btnId'$btnOpen tabindex='-1' />";
 
             $aElem = "<span class='lzy-nav-label'>$name</span><span class='lzy-nav-arrow' aria-hidden='true'>{$this->arrow}</span>";
             if ((!$elem['hide!']) || $showHidden) {
@@ -386,16 +369,8 @@ EOT;
                         $liClass = ($liClass) ? " class='$liClass'" : '';
                         $out .= "$indent1<$li$liClass>\n";
 
-//                        $out .= "$indent2<a href='javascript:handleAccordion( this, \"$path\" );'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
-//                        $out .= "$indent2<a href='javascript:window.location.href=\"$path\";'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
-//                        $out .= "$indent2<a href='javascript:alert(\"Hello World!\");'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
-//                        $out .= "$indent2<a href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
-                        $out .= "$indent2<a onclick='return handleAccordion(this);' href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
-//                        $out .= "$indent2<a onclick=\"return handleAccordion(this, \"$path\");\" href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
+                        $out .= "$indent2<a onclick='return handleAccordion(this, event);' href='$path'$aClass$target $tabindex $aria1>$aElem</a>\n"; // A0
 
-//                        $out .= "$indent2<a href='$path'$aClass$target $tabindex>$aElem</a>\n"; // A0
-//                        $out .= "$indent2$lbl1$aElem$lbl2\n"; // L0
-//                        $out .= "$indent2$inp\n";           // Inp
                         $out .= "$indent2$listWrapper\n";
                         $out .= "$out1";
                         $out .= "$indent2$_listWrapper\n";
@@ -423,10 +398,16 @@ EOT;
             $ulClass = ($this->ulClass) ? " class='{$this->ulClass}'" : '';
             $navClass = $this->options['navClass'];
 
-            // apply top-margin for exanding variants: lzy-nav-accordion and lzy-nav-top-horizontal:
+            // apply top-margin for expanding variants: lzy-nav-accordion, collapsed, collapsible and lzy-nav-top-horizontal:
             if (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') !== false) ||
                     (strpos($navClass, 'lzy-nav-accordion') !== false))) {
                 $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
+
+            } elseif (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') === false) &&
+                    ((strpos($navClass, 'lzy-nav-accordion') !== false)) ||
+                    (strpos($navClass, 'lzy-nav-collaps') !== false))) {
+                $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
+
             } else {
                 $out = "$indent<{$this->listTag}$ulClass>\n".$out;
             }
@@ -440,7 +421,7 @@ EOT;
 
 
     //....................................................
-    public function renderBreadcrumb($options)
+    public function renderBreadcrumb()
     {
         $elem = $this->lzy->siteStructure->currPageRec;
         $list = $this->lzy->siteStructure->getSiteList();
