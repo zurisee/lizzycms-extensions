@@ -5,7 +5,9 @@
 body, main {
 	position: relative;
 }
-
+body {
+	min-height: 100vh;
+}
 
 html body, section {
 	position: relative;
