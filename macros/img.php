@@ -84,7 +84,7 @@ $this->addMacro($macroName, function () {
         $str = str_replace('lzy-quickview', '', $str); // link overrides quickview
 
         $args = ['text' => $str, 'href' => $link, 'class' => "lzy-img-link $linkClass", 'type' => $linkType,
-            'target' => $linkTarget, 'title' => $linkTitle, 'target' => '', 'subject' => '', 'body' => ''];
+            'target' => $linkTarget, 'title' => $linkTitle, 'subject' => '', 'body' => ''];
         $str = $cl->render($args);
     }
 
