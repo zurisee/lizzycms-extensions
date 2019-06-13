@@ -14,22 +14,14 @@ var largeScreenClasses = '';
         var w = $(this).width();
         var isSmallScreen = (w < screenSizeBreakpoint);
         adaptMainMenuToScreenSize(isSmallScreen);
-        setHightOnHiddenElements( false );
+        setHightOnHiddenElements();
     });
 
 
     if ($('.lzy-nav-collapsed, .lzy-nav-collapsible, .lzy-nav-top-horizontal').length) {
-        setHightOnHiddenElements(); //??? Android-bug?
+        setHightOnHiddenElements();
     }
 
-
-    $('.touchevents .lzy-has-children a').click(function (e) {
-        e.stopPropagation();
-        console.log( 'tap on a' );
-        var $parentLi = $(this).parent();
-        toggleAccordion($parentLi, true);
-        return false;
-    });
 
     // menu button in mobile mode:
     $('#lzy-nav-menu-icon').click(function(e) {
@@ -45,16 +37,8 @@ var largeScreenClasses = '';
         toggleAccordion($parentLi, true, true);
         return false;
     });
-    $('.lzy-has-children > label').click(function(e) {        // click
-        e.stopPropagation();
-        console.log( 'click label' );
-        var $parentLi = $(this).closest('.lzy-has-children');
-        toggleAccordion($parentLi, true);
-        return false;
-    });
     $('.lzy-has-children > a > .lzy-nav-arrow').click(function(e) {  // click arrow
         e.stopPropagation();
-        console.log( 'click arrow' );
         var $parentLi = $(this).closest('.lzy-has-children');
         $parentLi.removeClass('lzy-hover');
         var deep = ($('.lzy-nav-top-horizontal').length !== 0);
@@ -66,14 +50,9 @@ var largeScreenClasses = '';
    $('.lzy-nav-hoveropen .lzy-has-children').hover(
         function() {    // mouseover
             var $this = $(this);
-            if ($('body').hasClass('touch')) {  // no-touch only
-                return; // ??? -> better to remove
-            }
-            if ($this.hasClass('lzy-open')) {
-                console.log('mouseover skipped');
+            if ($('body').hasClass('touch') || $this.hasClass('lzy-open')) {
                 return;
             }
-            console.log('mouseover');
             if ($this.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) { // top-nav:
                 if ($this.hasClass('lzy-lvl1')) {
                     $this.addClass('lzy-hover');
@@ -92,14 +71,14 @@ var largeScreenClasses = '';
             }
             if ($this.hasClass('lzy-open')) {
                $this.removeClass('lzy-hover');
-               console.log('mouseout skipped');
                return;
            }
-           console.log('mouseout');
            if ($this.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) {  // top-nav
                if ($this.hasClass('lzy-lvl1')) {
-                   $this.removeClass('lzy-hover');
-                   closeAccordion($this, true);
+                   setTimeout(function () {
+                       $this.removeClass('lzy-hover');
+                       closeAccordion($this, true);
+                   }, 400);
                }
            } else {        // side-nav or sitemap
                $this.removeClass( 'lzy-hover' );
@@ -125,6 +104,21 @@ var largeScreenClasses = '';
 
 
 
+// called from HTML <a onclick:
+function handleAccordion( elem, ev ) {
+    ev.stopPropagation();
+    if ($( 'body' ).hasClass('touch') || $('html').hasClass('touchevents')) {
+        var $parentLi = $(elem).parent();
+        if ($parentLi.hasClass('lzy-lvl1')) {
+            toggleAccordion($parentLi, true);
+            return false;
+        }
+    }
+} // handleAccordion
+
+
+
+
 
 function initPrimaryNav() {
     $('.lzy-large-screen .lzy-primary-nav .lzy-has-children').each(function () {
@@ -134,7 +128,6 @@ function initPrimaryNav() {
         $('li', $elem).removeClass('lzy-open');       // close all li below parent li
         $nextDivs.attr({'aria-hidden': 'true'});        // make all sub-elements hidden
         $('a', $nextDivs).attr({'tabindex': '-1'}); // make sub-menus un-focusable
-        // $('a', $nextDivs).attr({'aria-expanded': 'false', 'tabindex': '-1'}); // make sub-menus un-focusable
     });
 } // initPrimaryNav
 
@@ -150,18 +143,16 @@ function toggleAccordion($parentLi, deep, newState) {
 
     if ($parentLi.closest('.lzy-nav').hasClass('lzy-nav-top-horizontal')) {
         closeAllAccordions($parentLi, deep, true);
-        // closeAllAccordions($parentLi);
+
     } else if (expanded) { // -> close
         closeAccordion($parentLi, deep, true);
-        // closeAccordion($parentLi, true);
+
     }
     if (!expanded) { // -> open
         openAccordion($parentLi, deep, true);
-        // openAccordion($parentLi, true);
         if ($( 'body' ).hasClass('touch')) {
             $('body').click(function (e) {
                 e.stopPropagation();
-                // console.log('closing menu by bg click');
                 $('body').off('click');
                 closeAccordion($parentLi, deep, true);
             });
@@ -279,16 +270,13 @@ function operateMobileMenuPane( newState ) {
 
 
 
-function setHightOnHiddenElements( first ) {
-    var doCalc = !(typeof first === 'undefined');
-    $('#lzy .lzy-nav-accordion .lzy-has-children, #lzy .lzy-nav-top-horizontal .lzy-has-children, #lzy .lzy-nav-collapsed .lzy-has-children, #lzy .lzy-nav-collapsible .lzy-has-children').each(function() {
-        if (doCalc) {
-            var h = '100vh';
-        } else {
+function setHightOnHiddenElements() {
+    if (!($('html').hasClass('touchevents') || $('body').hasClass('touch'))) {
+        $('#lzy .lzy-nav-accordion .lzy-has-children, #lzy .lzy-nav-top-horizontal .lzy-has-children, #lzy .lzy-nav-collapsed .lzy-has-children, #lzy .lzy-nav-collapsible .lzy-has-children').each(function () {
             var h = $('>div>ol', this).height() + 20 + 'px';                // set height to optimize animation
-        }
-        $('>div>ol', this).css('margin-top', '-'+h);
-    });
+            $('>div>ol', this).css('margin-top', '-' + h);
+        });
+    }
 } // setHightOnHiddenElements
 
 
@@ -296,7 +284,7 @@ function setHightOnHiddenElements( first ) {
 
 function setupKeyboardEvents() {
     // supports: left/right, up/down, space and home
-    $('.lzy-nav a, .lzy-nav label').keydown(function (event) {
+    $('.lzy-nav a').keydown(function (event) {
         var keyCode = event.keyCode;
         event.stopPropagation();
         var $this = $(this);
@@ -332,5 +320,4 @@ function setupKeyboardEvents() {
         }
     });
 } // setupKeyboardEvents
-
 

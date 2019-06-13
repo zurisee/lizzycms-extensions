@@ -401,12 +401,12 @@ EOT;
             // apply top-margin for expanding variants: lzy-nav-accordion, collapsed, collapsible and lzy-nav-top-horizontal:
             if (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') !== false) ||
                     (strpos($navClass, 'lzy-nav-accordion') !== false))) {
-                $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
+                $out = "$indent<{$this->listTag}$ulClass style='margin-top:-40em;'>\n".$out;
 
             } elseif (($level > 1) && ((strpos($navClass, 'lzy-nav-top-horizontal') === false) &&
                     ((strpos($navClass, 'lzy-nav-accordion') !== false)) ||
                     (strpos($navClass, 'lzy-nav-collaps') !== false))) {
-                $out = "$indent<{$this->listTag}$ulClass style='margin-top:-100000px;'>\n".$out;
+                $out = "$indent<{$this->listTag}$ulClass style='margin-top:-40em;'>\n".$out;
 
             } else {
                 $out = "$indent<{$this->listTag}$ulClass>\n".$out;

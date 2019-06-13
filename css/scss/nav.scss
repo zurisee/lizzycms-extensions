@@ -59,17 +59,12 @@ body {
 
 
 
-//$accordionX1: var(--lzy-nav-accordion-first-indent);
-//$accordionX2: calc(var(--lzy-nav-accordion-first-indent) + var(--lzy-nav-accordion-step));
-//$accordionX3: calc(var(--lzy-nav-accordion-first-indent) + 2 * var(--lzy-nav-accordion-step));
-//$accordionX4: calc(var(--lzy-nav-accordion-first-indent) + 3 * var(--lzy-nav-accordion-step));
-//$accordionX5: calc(var(--lzy-nav-accordion-first-indent) + 4 * var(--lzy-nav-accordion-step));
-//
 //$slidedownX1: var(--lzy-nav-top-horizontal-first-indent);
 $slidedownX2: var(--lzy-nav-top-horizontal-first-indent);
 $slidedownX3: calc(var(--lzy-nav-top-horizontal-first-indent) + var(--lzy-nav-top-horizontal-indent-step));
 $slidedownX4: calc(var(--lzy-nav-top-horizontal-first-indent) + 2 * var(--lzy-nav-top-horizontal-indent-step));
 $slidedownX5: calc(var(--lzy-nav-top-horizontal-first-indent) + 3 * var(--lzy-nav-top-horizontal-indent-step));
+$slidedownX6: calc(var(--lzy-nav-top-horizontal-first-indent) + 4 * var(--lzy-nav-top-horizontal-indent-step));
 
 $xCorr: 1.55em;
 
@@ -127,12 +122,6 @@ $xCorr: 1.55em;
 
 // collapsed:
 #lzy .lzy-nav {
-    &.lzy-nav-top-horizontal:not(.lzy-nav-collapsed) {
-        .lzy-lvl2 ol {
-            margin-top: 0 !important;
-        }
-    }
-
     &.lzy-nav-collapsible,
     &.lzy-nav-collapsed {
         .lzy-nav-arrow {
@@ -145,20 +134,14 @@ $xCorr: 1.55em;
 
 .lzy-nav li.lzy-has-children.lzy-open > div > ol {
     margin-top: 0 !important;
-    transition-delay: 0s;
 }
 
 
 
 // hover
 #lzy .lzy-nav-hoveropen {
-    .lzy-hover > div > ol {
+    .lzy-hover ol {
         margin-top: 0 !important;
-    }
-}
-#lzy:not(.touch) .lzy-nav-hoveropen.lzy-nav-animation-active {
-    :not(:hover) > div > ol { // closing delay
-        transition-delay: 0.4s;
     }
 }
 
@@ -171,42 +154,62 @@ $xCorr: 1.55em;
     }
     .lzy-lvl1 {
           > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + #{$xCorr});
+              padding-left: 2em;
+              padding-left: calc(var(--lzy-nav-first-indent) + #{$xCorr});
           }
           &.lzy-has-children > a {
-            padding-left: var(--lzy-nav-first-indent);
+              padding-left: 1em;    // for IE
+              padding-left: var(--lzy-nav-first-indent);
           }
     }
     .lzy-lvl2 {
           > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + var(--lzy-nav-indent-step) + #{$xCorr});
+              padding-left: 3.5em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + var(--lzy-nav-indent-step) + #{$xCorr});
           }
           &.lzy-has-children > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + var(--lzy-nav-indent-step));
+              padding-left: 2em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + var(--lzy-nav-indent-step));
           }
     }
     .lzy-lvl3 {
           > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + 2 * var(--lzy-nav-indent-step) + #{$xCorr});
+              padding-left: 4.5em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 2 * var(--lzy-nav-indent-step) + #{$xCorr});
           }
           &.lzy-has-children > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + 2 * var(--lzy-nav-indent-step));
+              padding-left: 3em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 2 * var(--lzy-nav-indent-step));
           }
     }
     .lzy-lvl4 {
           > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + 3 * var(--lzy-nav-indent-step) + #{$xCorr});
+              padding-left: 5.5em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 3 * var(--lzy-nav-indent-step) + #{$xCorr});
           }
           &.lzy-has-children > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + 3 * var(--lzy-nav-indent-step));
+              padding-left: 4em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 3 * var(--lzy-nav-indent-step));
           }
     }
     .lzy-lvl5 {
           > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + 4 * var(--lzy-nav-indent-step) + #{$xCorr});
+              padding-left: 6.5em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 4 * var(--lzy-nav-indent-step) + #{$xCorr});
           }
           &.lzy-has-children > a {
-            padding-left: calc(var(--lzy-nav-first-indent) + 4 * var(--lzy-nav-indent-step));
+              padding-left: 5em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 4 * var(--lzy-nav-indent-step));
+          }
+    }
+    .lzy-lvl6 {
+          > a {
+              padding-left: 7.5em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 5 * var(--lzy-nav-indent-step) + #{$xCorr});
+          }
+          &.lzy-has-children > a {
+              padding-left: 6em;    // for IE
+              padding-left: calc(var(--lzy-nav-first-indent) + 5 * var(--lzy-nav-indent-step));
           }
     }
 } // indentation
@@ -477,16 +480,24 @@ $xCorr: 1.55em;
             display: none;
         }
         .lzy-lvl2 > a {
+            padding-left: 1em;
             padding-left: $slidedownX2;
         }
         .lzy-lvl3 > a {
+            padding-left: 2em;
             padding-left: $slidedownX3;
         }
         .lzy-lvl4 > a {
+            padding-left: 3em;
             padding-left: $slidedownX4;
         }
         .lzy-lvl5 > a {
+            padding-left: 4em;
             padding-left: $slidedownX5;
+        }
+        .lzy-lvl6 > a {
+            padding-left: 5em;
+            padding-left: $slidedownX6;
         }
 
     } // lzy-nav-top-horizontal
@@ -509,21 +520,27 @@ $xCorr: 1.55em;
         display: block;
     }
     .H1 {
+        padding-left: 1em;
         margin-left: var(--lzy-in-page-first-indent);
     }
     .H2 {
+        padding-left: 2em;
         margin-left: calc(var(--lzy-in-page-first-indent) + var(--lzy-in-page-indent-step));
     }
     .H3 {
+        padding-left: 3em;
         margin-left: calc(var(--lzy-in-page-first-indent) + 2 * var(--lzy-in-page-indent-step));
     }
     .H4 {
+        padding-left: 4em;
         margin-left: calc(var(--lzy-in-page-first-indent) + 3 * var(--lzy-in-page-indent-step));
     }
     .H5 {
+        padding-left: 5em;
         margin-left: calc(var(--lzy-in-page-first-indent) + 4 * var(--lzy-in-page-indent-step));
     }
     .H6 {
+        padding-left: 6em;
         margin-left: calc(var(--lzy-in-page-first-indent) + 5 * var(--lzy-in-page-indent-step));
     }
 } // lzy-in-page-nav
