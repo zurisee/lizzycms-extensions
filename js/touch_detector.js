@@ -18,7 +18,7 @@
 		$('body').addClass('touch');
 		if (w < 400) {
 			$('body').addClass('lzy-small-screen');
-			mylog('lzy-small-screen: true');
+			console.log('lzy-small-screen: true');
 		}
 	}
 }( jQuery ));

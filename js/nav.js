@@ -39,6 +39,7 @@ var largeScreenClasses = '';
     });
     $('.lzy-has-children > a > .lzy-nav-arrow').click(function(e) {  // click arrow
         e.stopPropagation();
+// console.log('arrow');
         var $parentLi = $(this).closest('.lzy-has-children');
         $parentLi.removeClass('lzy-hover');
         var deep = ($('.lzy-nav-top-horizontal').length !== 0);
@@ -49,6 +50,7 @@ var largeScreenClasses = '';
     // hover:
    $('.lzy-nav-hoveropen .lzy-has-children').hover(
         function() {    // mouseover
+// console.log('mouseover');
             var $this = $(this);
             if ($('body').hasClass('touch') || $this.hasClass('lzy-open')) {
                 return;
@@ -107,6 +109,7 @@ var largeScreenClasses = '';
 // called from HTML <a onclick:
 function handleAccordion( elem, ev ) {
     ev.stopPropagation();
+// console.log('handleAccordion');
     if ($( 'body' ).hasClass('touch') || $('html').hasClass('touchevents')) {
         var $parentLi = $(elem).parent();
         if ($parentLi.hasClass('lzy-lvl1')) {
