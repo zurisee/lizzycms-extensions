@@ -612,7 +612,7 @@ $xCorr: 1.55em;
 
 
 // Small / Mobile Screen:
-$xCorr2: 1.95em;
+$xCorr2: 2.6em; // avoids displacing arrow to next line
 $yPadding: 0.4em;
 body.lzy-small-screen {
     font-size: 3vw;
