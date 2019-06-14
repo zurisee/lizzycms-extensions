@@ -111,6 +111,15 @@ lzy-nav-elem-button:
     de: Untermenü öffnen mit Leertaste
     en: Open sub-menu using space key
 
+lzy-breadcrumb-title:
+    de: 'Pfad zur aktuellen Seite:'
+    _:  'Breadcrumb path:'
+
+lzy-nav-main-title:
+    de: 'Lizzy Hauptnavigation'
+    _:  'Main Navigation'
+
+
 
 #--- Language Selection ------------------
 select langauge:

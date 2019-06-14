@@ -198,10 +198,19 @@ EOT;
             $_edWrapper = '';
         }
 
+        if (strpos($navWrapperClass, 'lzy-primary-nav') !== false) {
+            if (!$ariaLabel) {
+                $ariaLabel = '{{ lzy-nav-main-title }}';
+            }
+        }
+        if ($ariaLabel) {
+            $ariaLabel = " aria-label='$ariaLabel'";
+        }
+
         $out = <<<EOT
 
   <div{$this->id} class='{$editClass}lzy-nav-wrapper$navWrapperClass'$dataAttr>$edWrapper
-$title	  <nav$navClass aria-label="$ariaLabel">
+$title	  <nav$navClass$ariaLabel>
 $nav
 	  </nav>
 $_edWrapper  </div>
@@ -423,6 +432,7 @@ EOT;
     //....................................................
     public function renderBreadcrumb()
     {
+        $ariaLabel = (isset($options['ariaLabel'])) ? $options['ariaLabel']: $title;
         $elem = $this->lzy->siteStructure->currPageRec;
         $list = $this->lzy->siteStructure->getSiteList();
         $elems = [];
@@ -449,8 +459,12 @@ EOT;
             $out .= "<li>$sep$link</li>";
         }
 
+        if (!$ariaLabel) {
+            $ariaLabel = '{{ lzy-breadcrumb-title }}';
+        }
+
         $out = <<<EOT
-    <nav aria-label="breadcrumbs" class="lzy-nav-breadcrumb">
+    <nav id='lzy-nav-breadcrumb{$this->inx}' aria-label="$ariaLabel" class="lzy-nav-breadcrumb">
       <ol class='lzy-nav-breadcrumb'>$out</ol>
     </nav>
 EOT;
