@@ -121,6 +121,24 @@ lzy-nav-main-title:
 
 
 
+#--- Skip-Links
+Skip-links:
+    de: 'Direktsprünge'
+    _:  'Skip Navigation'
+
+Skip to Main:
+    de: Direkt zum Inhalt
+    _:  Skip to Main
+
+Skip to Navigation:
+    de: Direkt zum Navigationsmenü
+    _:  Skip to Navigation
+
+Skip to Sitemap:
+    de: Direkt zur Sitemap
+    _:  Skip to Sitemap
+
+
 #--- Language Selection ------------------
 select langauge:
     de: Sprache auswählen 
