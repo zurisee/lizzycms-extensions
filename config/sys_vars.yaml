@@ -119,7 +119,9 @@ lzy-nav-main-title:
     de: 'Lizzy Hauptnavigation'
     _:  'Main Navigation'
 
-
+InPage TOC:
+    de: 'Inhaltsverzeichnins dieser Seite'
+    _:  'Table of contents within this page'
 
 #--- Skip-Links
 Skip-links:

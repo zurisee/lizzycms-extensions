@@ -36,6 +36,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'listTag', '[ol, ul, div] Specifies type of list. Default is OL.', 'ol');
     $this->getArg($macroName, 'listWrapper', 'Specifies whether sub-lists get a wrapper.', 'div');
     $this->getArg($macroName, 'smallScreenHeaderText', 'Text in small-screen-header, typically the app name', '');
+    $this->getArg($macroName, 'inPageSizeThreshold', 'If less that this number of H-tags are found, the tag containing in-page nav is hidden', 0);
 
     if ($type == 'help') {
         return '';
@@ -45,7 +46,7 @@ $this->addMacro($macroName, function () {
 
     // -------- in-page
     if (($type == 'in-page') || ($type == 'inpage')) {
-        return inPageNav($this->page, $options, $inx);
+        return inPageNav($this->page, $options, $inx, $options["inPageSizeThreshold"]);
 
     // -------- small-screen-header
     } elseif ($type == 'small-screen-header') {
@@ -91,7 +92,7 @@ function renderSmallScreenHeader($trans, $options)
 
 
 
-function inPageNav($page, $options, $inx)
+function inPageNav($page, $options, $inx, $inPageSizeThreshold)
 {
 
     $depth = $options['depth'];
@@ -105,24 +106,26 @@ function inPageNav($page, $options, $inx)
 
     $listElemTag = ($listTag == 'div') ? 'div' : 'li';
     if ($targetElem) {
-        inPageByTargetElement($page, $inx, $targetElem, $listElemTag);
+        inPageByTargetElement($page, $inx, $targetElem, $listElemTag, $inPageSizeThreshold);
     } else {
-        inPageHierarchie($page, $inx, $depth, $listElemTag);
+        inPageHierarchie($page, $inx, $depth, $listElemTag, $inPageSizeThreshold);
     }
 
-    $out = "\t<nav class='lzy-in-page-nav dont-print'>$title<$listTag id='lzy-in-page-nav$inx' class='lzy-in-page-nav'></$listTag></nav>\n";
+    $out = "\t<nav class='lzy-in-page-nav' aria-label='{{ InPage TOC }}'>$title<$listTag id='lzy-in-page-nav$inx' class='lzy-in-page-nav'></$listTag></nav>\n";
     return $out;
 } // inPageNav
 
 
 
 
-function inPageHierarchie($page, $inx, $depth, $listElemTag)
+function inPageHierarchie($page, $inx, $depth, $listElemTag, $inPageSizeThreshold)
 {
     $depth = intval($depth);
     $hMax = "H$depth";
     $jq = <<<EOT
 
+    var str = '';
+    var nElems = 0;
     $(':header').each(function() {
         var \$this = $(this);
         if (\$this.closest('.lzy-mobile-page-header').length) {
@@ -135,21 +138,28 @@ function inPageHierarchie($page, $inx, $depth, $listElemTag)
         var nodeName = this.nodeName;
 
         if (nodeName <= '$hMax') {
-            str = '<$listElemTag class="'+nodeName+'"><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
-            $('#lzy-in-page-nav$inx').append(str);
+            str += '<$listElemTag class="'+nodeName+'"><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
+            nElems++;
         }
     });
+    $('#lzy-in-page-nav$inx').append(str);
+    if (nElems < $inPageSizeThreshold) {
+        $('#lzy-in-page-nav$inx').closest('nav.lzy-in-page-nav').parent().hide();
+    }
+
 EOT;
     $page->addJQ($jq);
 
-}
+} // inPageHierarchie
 
 
 
-function inPageByTargetElement($page, $inx, $targetElem, $listElemTag)
+function inPageByTargetElement($page, $inx, $targetElem, $listElemTag, $inPageSizeThreshold)
 {
     $jq = <<<EOT
 
+    var str = '';
+    var nElems = 0;
     $('$targetElem').each(function() {
         var \$this = $(this);
         if (\$this.closest('.lzy-mobile-page-header').length) {
@@ -159,10 +169,14 @@ function inPageByTargetElement($page, $inx, $targetElem, $listElemTag)
         var id = hdrText.replace(/\s/, '_');
         \$this.attr('id', id);
         var hdrId =  \$this.attr('id');
-        str = '<$listElemTag><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
-        $('#lzy-in-page-nav$inx').append(str);
+        str += '<$listElemTag><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
     });
+    $('#lzy-in-page-nav$inx').append(str);
+    if (nElems < $inPageSizeThreshold) {
+        $('#lzy-in-page-nav$inx').closest('nav.lzy-in-page-nav').parent().hide();
+    }
+
 EOT;
     $page->addJQ($jq);
 
-}
+} // inPageByTargetElement
