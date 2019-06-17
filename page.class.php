@@ -722,14 +722,7 @@ EOT;
         }
 
         if ($this->config->site_enableRelLinks) {
-            $home = rtrim($GLOBALS["globalParams"]["host"], '/').$GLOBALS["globalParams"]["appRoot"];
-            $headInjections .= "\t<link rel='home' title='Home' href='$home'>\n";
-            if ($this->lzy->siteStructure->prevPage) {
-                $headInjections .= "\t<link rel='prev' title='Previous' href='~/{$this->lzy->siteStructure->prevPage}'>\n";
-            }
-            if ($this->lzy->siteStructure->nextPage) {
-                $headInjections .= "\t<link rel='next' title='Next' href='~/{$this->lzy->siteStructure->nextPage}'>\n";
-            }
+            $headInjections .= $this->renderRelLinks();
         }
 
         $headInjections = "\t<!-- head injections -->\n$headInjections\t<!-- /head injections -->";
@@ -1186,6 +1179,7 @@ EOT;
     } // writeToCache
 
 
+
     public function readFromCache()
     {
         $pg = readFromCache();
@@ -1195,5 +1189,20 @@ EOT;
         $this->merge($pg);
         return true;
     }
+
+
+
+    private function renderRelLinks()
+    {
+        $home = rtrim($GLOBALS["globalParams"]["host"], '/') . $GLOBALS["globalParams"]["appRoot"];
+        $headInjections = "\t<link rel='home' title='Home' href='$home' >\n";
+        if ($this->lzy->siteStructure->prevPage) {
+            $headInjections .= "\t<link rel='prev' title='Previous' href='~/{$this->lzy->siteStructure->prevPage}' >\n";
+        }
+        if ($this->lzy->siteStructure->nextPage) {
+            $headInjections .= "\t<link rel='next' title='Next' href='~/{$this->lzy->siteStructure->nextPage}' >\n";
+        }
+        return $headInjections;
+    } // renderRelLinks
 
 } // Page
