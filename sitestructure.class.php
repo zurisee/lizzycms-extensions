@@ -20,8 +20,8 @@ class SiteStructure
 	public function __construct($lzy, $currPage = false)
 	{
 	    $this->lzy = $lzy;
-        $this->nextPage = '';
-        $this->prevPage = '';
+        $this->nextPage = false;
+        $this->prevPage = false;
 
         $this->config = $config = $lzy->config;
 
@@ -84,10 +84,16 @@ class SiteStructure
 		}
 		if ($currNr > 0) {
             $i = 1;
-            while ($this->list[$currNr - $i]['hide!'] && (($currNr - $i) > 0)) {
+            $j = $currNr - $i;
+            while (($j > 0) && ($this->list[$j]['hide!'] || $this->list[$j]['noContent'])) {
                 $i++;
+                $j = $currNr - $i;
             }
-			$this->prevPage = $this->list[$currNr - $i]['folder'];
+            if ($j >= 0) {
+                $this->prevPage = $this->list[$j]['folder'];
+            } else {
+                $this->prevPage = false;
+            }
 		}
 	} // __construct
 
