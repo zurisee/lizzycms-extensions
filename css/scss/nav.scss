@@ -612,7 +612,8 @@ $xCorr: 1.55em;
 
 
 // Small / Mobile Screen:
-$xCorr2: 2.6em; // avoids displacing arrow to next line
+//$xCorr2: 2.6em; // avoids displacing arrow to next line
+$xCorr2: 3em; // avoids displacing arrow to next line
 $yPadding: 0.4em;
 body.lzy-small-screen {
     font-size: 3vw;
@@ -626,14 +627,15 @@ body.lzy-small-screen {
         background: #333;
         height: 100vh;
         width: 100vw;
-        overflow: auto;
+        overflow-y: auto;
     }
 
     .main,
     .header {
         position: fixed;
         top: var(--lzy-mobile-header-height);
-        overflow: auto;
+        overflow-y: auto;
+        padding-bottom: 15vh;
     }
     .header {
         left: 0;

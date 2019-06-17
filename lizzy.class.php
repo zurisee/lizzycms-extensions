@@ -703,7 +703,14 @@ class Lizzy
 	private function injectPageSwitcher()
 	{
         if ($this->config->feature_pageSwitcher) {
-            require_once($this->config->systemPath."page_switcher.php");
+            if (!$this->config->isLegacyBrowser) {
+                $this->page->addJsFiles("HAMMERJS");
+                if ($this->config->feature_touchDeviceSupport) {
+                    $this->page->addJqFiles(["HAMMERJQ", "TOUCH_DETECTOR", "PAGE_SWITCHER", "JQUERY"]);
+                } else {
+                    $this->page->addJqFiles(["HAMMERJQ", "PAGE_SWITCHER", "JQUERY"]);
+                }
+            }
         }
 	} // injectPageSwitcher
 
@@ -766,7 +773,9 @@ EOT;
         }
         $this->trans->addVariable('lzy-version', getGitTag());
 
-        $this->definePageSwitchLinks();
+		if ($this->config->feature_pageSwitcher) {
+            $this->definePageSwitchLinks();
+        }
 
     } // setTransvars1
 
@@ -2009,11 +2018,11 @@ EOT;
     {
         $nextLabel = $this->trans->getVariable('lzy-next-page-link-label');
         if (!$nextLabel) {
-            $nextLabel = $this->config->isLegacyBrowser ? '&lt;' : '&#9001;';
+            $nextLabel = $this->config->isLegacyBrowser ? '&gt;' : '&#9002;';
         }
         $prevLabel = $this->trans->getVariable('lzy-prev-page-link-label');
         if (!$prevLabel) {
-            $prevLabel = $this->config->isLegacyBrowser ? '&gt;' : '&#9002;';
+            $prevLabel = $this->config->isLegacyBrowser ? '&lt;' : '&#9001;';
         }
         $nextTitle = $this->trans->getVariable('lzy-next-page-link-title');
         if ($nextTitle) {
@@ -2023,11 +2032,17 @@ EOT;
         if ($prevTitle) {
             $prevTitle = " title='$prevTitle' aria-label='$prevTitle'";
         }
+        $prevLink = '';
+        if ($this->siteStructure->prevPage !== false) {
+            $prevLink = "\n\t\t<div class='lzy-prev-page-link'><a href='~/{$this->siteStructure->prevPage}'$prevTitle>$prevLabel</a></div>";
+        }
+        $nextLink = '';
+        if ($this->siteStructure->nextPage !== false) {
+            $nextLink = "\n\t\t<div class='lzy-next-page-link'><a href='~/{$this->siteStructure->nextPage}'$nextTitle>$nextLabel</a></div>";
+        }
 
         $str = <<<EOT
-    <div class='lzy-page-switcher-links'>
-        <div class='lzy-prev-page-link'><a href='~/{$this->siteStructure->prevPage}'$prevTitle>$prevLabel</a></div>
-        <div class='lzy-next-page-link'><a href='~/{$this->siteStructure->nextPage}'$nextTitle>$nextLabel</a></div>
+    <div class='lzy-page-switcher-links'>$prevLink$nextLink
     </div>
 
 EOT;

@@ -2,16 +2,17 @@
 
 $( document ).ready(function() {
 
-    var prevLink = $('.prevPageLink a').attr('href');
-    var nextLink = $('.nextPageLink a').attr('href');
+    var prevLink = $('.lzy-prev-page-link a').attr('href');
+    var nextLink = $('.lzy-next-page-link a').attr('href');
 
     // Touch gesture handling:
 	if ($('body').hasClass('touch')) {
 		console.log('swipe detection activated');
 
 		$('.page').hammer().bind("swipeleft swiperight", function(ev) {
-		    var overflow = $(ev.gesture.target).css('overflow');
-		    if ((overflow == 'auto') || (overflow == 'scroll')) {
+		    var overflow = $(ev.gesture.target).css('overflowX'); // bug: returns value of 'overflow', not 'overflowX'
+            // if ((overflow == 'auto') || (overflow == 'scroll')) { // -> due to bug: not checking for 'auto'
+            if (overflow === 'scroll') {
                 console.log('page switching suppressed: was over scrolling element');
 		        return;
             }

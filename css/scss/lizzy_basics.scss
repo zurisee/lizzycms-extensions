@@ -93,12 +93,14 @@ figure a {
 	display: inline;
 	clip: rect(1px, 1px, 1px, 1px);
 }
-.skiplinks a {
+
+// SkipLinks
+.lzy-skiplinks a {
 	position: absolute;
 	top: 0;
 	right: 100%;
 }
-.skiplinks a:focus {
+.lzy-skiplinks a:focus {
 	right: auto;
 	left: 5vh;
 	top: 5vh;
@@ -109,6 +111,33 @@ figure a {
 	box-shadow: none;
 	border: none;
 }
+
+// Page Switcher Links
+.lzy-page-switcher-links a {
+	position: absolute;
+	top: 0;
+	border-bottom: none;
+	z-index: 100;
+}
+.lzy-prev-page-link a {
+	left: 0;
+}
+.lzy-next-page-link a {
+	right: 0;
+}
+.lzy-small-screen {
+	.lzy-page-switcher-links a {
+		font-size: var(--lzy-mobile-header-font-size);
+		color: #ddd;
+		top: 0.5em;
+	}
+	.lzy-prev-page-link a {
+		right: 1.2em;
+		left: initial;
+	}
+}
+
+
 //.footnote-ref {
 //	font-size: 70%;
 //	vertical-align: super;
