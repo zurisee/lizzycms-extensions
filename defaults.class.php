@@ -64,7 +64,6 @@ private $userConfigurableSettingsAndDefaults      = [
             'feature_screenSizeBreakpoint'      => [480, '[px] Determines the point where Lizzy switches from small to large screen mode.' ],
             'feature_selflinkAvoid'             => [true, '[true|false] If true, the nav-link of the current page is replaced with a local page link (to improve accessibility).' ],
             'feature_sitemapFromFolders'        => [false, '[true|false] If true, the sitemap will be derieved from the folder structure under pages/, rather than the config/sitemap.yaml file.' ],
-//            'feature_slideShowSupport'          => [false, '[true|false] If true, provides support for slide-shows' ],
             'feature_supportLegacyBrowsers'     => [false, '[true|false] Determines whether jQuery 3 can be loaded, if false jQuery 1 is invoked' ],
             'feature_touchDeviceSupport'        => [true, '[true|false] Determines whether to support swipe gestures etc. on touch devices.' ],
 
