@@ -721,6 +721,17 @@ EOT;
             $headInjections .= "\t<style>\n{$assembledCss}\n\t</style>\n";
         }
 
+        if ($this->config->site_enableRelLinks) {
+            $home = rtrim($GLOBALS["globalParams"]["host"], '/').$GLOBALS["globalParams"]["appRoot"];
+            $headInjections .= "\t<link rel='home' title='Home' href='$home'>\n";
+            if ($this->lzy->siteStructure->prevPage) {
+                $headInjections .= "\t<link rel='prev' title='Previous' href='~/{$this->lzy->siteStructure->prevPage}'>\n";
+            }
+            if ($this->lzy->siteStructure->nextPage) {
+                $headInjections .= "\t<link rel='next' title='Next' href='~/{$this->lzy->siteStructure->nextPage}'>\n";
+            }
+        }
+
         $headInjections = "\t<!-- head injections -->\n$headInjections\t<!-- /head injections -->";
         return $headInjections;
     } // getHeadInjections

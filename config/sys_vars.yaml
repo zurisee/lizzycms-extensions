@@ -141,6 +141,20 @@ Skip to Sitemap:
     _:  Skip to Sitemap
 
 
+#--- Page Switcher Links
+lzy-next-page-link-title: 
+    de: zur nächsten Seite
+    _:  to the next page
+
+lzy-prev-page-link-title: 
+    de: zur vorherigen Seite
+    _:  to the previeous page
+
+    #optional:
+    #lzy-next-page-link-label
+    #lzy-prev-page-link-label
+
+
 #--- Language Selection ------------------
 select langauge:
     de: Sprache auswählen 

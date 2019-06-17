@@ -79,6 +79,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'site_defaultLocale'                => ['en_US', 'Default local, e.g. "en_US" or "de_CH"' ],
             'site_enableCaching'                => [false, '[true|false] If true, Lizzy\'s caching mechanism is activated.' ],
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
+            'site_enableRelLinks'               => [true, '[true|false] Injects "rel links" into header, e.g. "&lt;link rel=\'next\' title=\'Next\' href=\'...\'>"' ],
             'site_multiLanguageSupport'         => [false, '[true|false] whether support for multiple languages should be active.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".USER_CODE_PATH."'"],
             'site_robots'                       => [false, '[true|false] If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],

@@ -766,6 +766,8 @@ EOT;
         }
         $this->trans->addVariable('lzy-version', getGitTag());
 
+        $this->definePageSwitchLinks();
+
     } // setTransvars1
 
 
@@ -1999,6 +2001,38 @@ EOT;
             }
         }
     } // handleConfigFeatures
+
+
+
+
+    private function definePageSwitchLinks()
+    {
+        $nextLabel = $this->trans->getVariable('lzy-next-page-link-label');
+        if (!$nextLabel) {
+            $nextLabel = $this->config->isLegacyBrowser ? '&lt;' : '&#9001;';
+        }
+        $prevLabel = $this->trans->getVariable('lzy-prev-page-link-label');
+        if (!$prevLabel) {
+            $prevLabel = $this->config->isLegacyBrowser ? '&gt;' : '&#9002;';
+        }
+        $nextTitle = $this->trans->getVariable('lzy-next-page-link-title');
+        if ($nextTitle) {
+            $nextTitle = " title='$nextTitle' aria-label='$nextTitle'";
+        }
+        $prevTitle = $this->trans->getVariable('lzy-prev-page-link-title');
+        if ($prevTitle) {
+            $prevTitle = " title='$prevTitle' aria-label='$prevTitle'";
+        }
+
+        $str = <<<EOT
+    <div class='lzy-page-switcher-links'>
+        <div class='lzy-prev-page-link'><a href='~/{$this->siteStructure->prevPage}'$prevTitle>$prevLabel</a></div>
+        <div class='lzy-next-page-link'><a href='~/{$this->siteStructure->nextPage}'$nextTitle>$nextLabel</a></div>
+    </div>
+
+EOT;
+        $this->trans->addVariable('lzy-page-switcher-links', $str);
+    } // definePageSwitchLinks
 
 } // class WebPage
 
