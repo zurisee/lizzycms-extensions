@@ -469,7 +469,8 @@ footer {
 		height: 1.2em;
 	}
 	#loggedInUser, 
-    .loggedInUser {
+    .loggedInUser,
+    .loggedInUser div.lzy-login-link {
 		float: right;
 	}
 }

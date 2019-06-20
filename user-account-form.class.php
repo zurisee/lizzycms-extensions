@@ -761,7 +761,7 @@ EOT;
                 $loggedInUser = '{{ LoginLink }}';
             }
             $logInVar = <<<EOT
-<div><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">{{ user_icon }}</a></div>
+<div class='lzy-login-link'><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">{{ user_icon }}</a></div>
 
 EOT;
         }
