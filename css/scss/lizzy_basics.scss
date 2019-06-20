@@ -470,7 +470,8 @@ footer {
 	}
 	#loggedInUser, 
     .loggedInUser,
-    .loggedInUser div.lzy-login-link {
+    .loggedInUser div.lzy-login-link,
+    .loggedInUser div.lzy-login-link-menu {
 		float: right;
 	}
 }
