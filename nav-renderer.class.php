@@ -430,9 +430,9 @@ EOT;
 
 
     //....................................................
-    public function renderBreadcrumb()
+    public function renderBreadcrumb($options)
     {
-        $ariaLabel = (isset($options['ariaLabel'])) ? $options['ariaLabel']: $title;
+        $ariaLabel = (isset($options['ariaLabel'])) ? $options['ariaLabel']: ''; //$title;
         $elem = $this->lzy->siteStructure->currPageRec;
         $list = $this->lzy->siteStructure->getSiteList();
         $elems = [];
