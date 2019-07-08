@@ -8,9 +8,11 @@
 
 define('CONFIG_PATH',           'config/');
 define('USER_CODE_PATH',        'code/');
+define('PATH_TO_APP_ROOT',      '');
 define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 
+define('LIZZY_DB',             'data/.lzy_db.sqlite');
 define('DATA_PATH',            'data/');
 define('CACHE_PATH',            '.#cache/');
 define('LOGS_PATH',             '.#logs/');
@@ -60,7 +62,8 @@ require_once SYSTEM_PATH.'defaults.class.php';
 require_once SYSTEM_PATH.'sitestructure.class.php';
 require_once SYSTEM_PATH.'authentication.class.php';
 require_once SYSTEM_PATH.'image-resizer.class.php';
-require_once SYSTEM_PATH.'datastorage.class.php';
+//require_once SYSTEM_PATH.'datastorage.class.php';
+require_once SYSTEM_PATH.'datastorage2.class.php';
 require_once SYSTEM_PATH.'sandbox.class.php';
 require_once SYSTEM_PATH.'uadetector.class.php';
 require_once SYSTEM_PATH.'user-account-form.class.php';
@@ -75,6 +78,7 @@ $globalParams = array(
 
 class Lizzy
 {
+    private $lzyDb = null;  // -> SQL DB for caching DataStorage data-files
 	private $currPage = false;
 	private $configPath = CONFIG_PATH;
 	private $systemPath = SYSTEM_PATH;
@@ -150,6 +154,8 @@ class Lizzy
             die("Error: file not found: ".$configFile);
         }
 
+        $this->initLizzyDB();
+
         session_start();
         $this->sessionId = session_id();
 
@@ -222,6 +228,19 @@ class Lizzy
         $this->config->cachingActive = $this->config->site_enableCaching;
         $GLOBALS['globalParams']['cachingActive'] = $this->config->site_enableCaching;
     } // init
+
+
+
+
+    private function initLizzyDB()
+    {
+        if (!file_exists(LIZZY_DB)) {
+            preparePath(LIZZY_DB);
+            touch(LIZZY_DB);
+        }
+        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
+    } // initLizzyDB
+
 
 
 
