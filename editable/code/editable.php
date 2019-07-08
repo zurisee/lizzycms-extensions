@@ -2,7 +2,7 @@
 
 // @info: Renders a field that can be modified by the user. Changes are persistent and can immediately be seen by other visitors.
 
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LIZZY_DEFAULT_FILE_TYPE);
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
 //define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
 
 $macroName = basename(__FILE__, '.php');
@@ -33,13 +33,14 @@ $this->addMacro($macroName, function () {
     $args['showRowNumbers'] = $this->getArg($macroName, 'showRowNumbers', '[true|false] Adds an index number to every row (default: true)', true);
     $args['useRecycleBin'] = $this->getArg($macroName, 'useRecycleBin', '[true|false] If true, previous values will be saved in a recycle bin rather than discared (default: false)', false);
     $args['freezeFieldAfter'] = $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
-    $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
+//    $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
 
 
     if (($args['id'] == 'help') || ($args['id'] === false)) {
         return '';
     }
 
+    $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
     $args = prepareArguments($args, $inx);
     $args = prepareDataSource($args, $inx);
 
