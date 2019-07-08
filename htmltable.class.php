@@ -17,11 +17,13 @@ class HtmlTable
 {
     private $errMsg = '';
 
-    public function __construct($page, $inx, $options)
+    public function __construct($lzy, $inx, $options)
+//    public function __construct($page, $inx, $options)
     {
         global $tableCounter;
-        $this->options = $options;
-        $this->page 		= $page;
+        $this->options      = $options;
+        $this->lzy 		    = $lzy;
+        $this->page 		= $lzy->page;
         $this->tableCounter = &$tableCounter;
         $this->helpText = false;
         if ($options == 'help') {
@@ -61,7 +63,8 @@ class HtmlTable
 
         $this->checkArguments($inx);
         
-        $this->handleDatatableOption($page);
+        $this->handleDatatableOption($this->page);
+//        $this->handleDatatableOption($page);
 
         $tableCounter = $this->handleCaption($tableCounter);
     } // __construct
@@ -662,7 +665,11 @@ EOT;
     {
         $cell = $this->data[$row][$col];
         $col1 = $col + 1;
-        $tdClass = $this->cellClass;
+        if ($tag == 'td') {
+            $tdClass = $this->cellClass;
+        } else {
+            $tdClass = $this->cellClass.'-hdr';
+        }
         $tdId = '';
         $ref = '';
         if (preg_match('/(@@([\w- ]*)@@)/', $cell, $m)) { // extract tdClass
@@ -764,10 +771,11 @@ EOT;
 
         $this->data = [[]];
         if ($this->dataSource) {
-            $ds = new DataStorage(['dbFile' => $this->dataSource]);
+            $ds = new DataStorage2($this->lzy, ['dbFile' => $this->dataSource]);
+//            $ds = new DataStorage(['dbFile' => $this->dataSource]);
             $this->data = $ds->read('*');
             $structure = $ds->getRecStructure();
-            if ($structure['key'] == 'index') {
+            if ($structure['key'] === 'index') {
                 $headers = $structure['labels'];
                 array_unshift($this->data, $headers);
             }
