@@ -654,6 +654,7 @@ EOT;
     public function autoInvokeClassBasedModules($content)
     {
         $modified = false;
+        $class1 = '';
         foreach ($this->config->classBasedModules as $class => $modules) {
             $varname = 'class_'.$class;
             if (isset($this->config->$varname) && ($class != $this->config->$varname)) {
