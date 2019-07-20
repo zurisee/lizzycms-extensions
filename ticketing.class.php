@@ -1,10 +1,23 @@
 <?php
 
-define ('DEFAULT_TICKET_STORAGE_FILE', DATA_PATH.'_tickets.'.LZY_DEFAULT_FILE_TYPE);
+define ('DEFAULT_TICKET_STORAGE_FILE', DATA_PATH.'_tickets.yaml');
+//define ('DEFAULT_TICKET_STORAGE_FILE', DATA_PATH.'_tickets.'.LZY_DEFAULT_FILE_TYPE);
 define ('DEFAULT_TICKET_HASH_SIZE', 6);
 define ('DEFAULT_TICKET_VALIDITY_TIME', 900);
 
 /*
+ * Purpose:
+ *      like a locker: put some data into a storage and get a ticket in return
+ *      use the ticket to retrieve the original data
+ *      the ticket is a hash code that cannot be predicted
+ *
+ * Options:
+ * - hashSize
+ * - unambiguous: creates tickets that avoid letters which could be mixed up with digits (e.g. O and 0)
+ * - defaultValidityPeriod / validityPeriod: time after which tickets expire
+ * - defaultMaxConsumptionCount / maxConsumptionCount: how many times a ticket may be used
+ * (- type: not used yet)
+ *
  * $validityPeriod:
  *      null = system default
  *      0    = infinite
@@ -21,7 +34,7 @@ class Ticketing
         $this->unambiguous = isset($options['unambiguous']) ? $options['unambiguous'] : false;
         $this->defaultValidityPeriod = isset($options['defaultValidityPeriod']) ? $options['defaultValidityPeriod'] : DEFAULT_TICKET_VALIDITY_TIME;
         $this->defaultMaxConsumptionCount = isset($options['defaultMaxConsumptionCount']) ? $options['defaultMaxConsumptionCount'] : 1;
-        $this->ds = new DataStorage($dataSrc, '', true);
+        $this->ds = new DataStorage2($dataSrc);
         $this->purgeExpiredTickets();
     } // __construct
 
@@ -30,26 +43,26 @@ class Ticketing
 
     public function createTicket($rec, $maxConsumptionCount = false, $validityPeriod = null, $type = false)
     {
-        $ticket = $rec;
-        $ticket['lzy_maxConsumptionCount'] = ($maxConsumptionCount !== false) ?$maxConsumptionCount : $this->defaultMaxConsumptionCount;
-        $ticket['lzy_ticketType'] = $type ? $type : $this->defaultType;
+        $ticketRec = $rec;
+        $ticketRec['lzy_maxConsumptionCount'] = ($maxConsumptionCount !== false) ?$maxConsumptionCount : $this->defaultMaxConsumptionCount;
+        $ticketRec['lzy_ticketType'] = $type ? $type : $this->defaultType;
 
         if ($validityPeriod === null) {
-            $ticket['lzy_ticketValidTill'] = time() + $this->defaultValidityPeriod;
+            $ticketRec['lzy_ticketValidTill'] = time() + $this->defaultValidityPeriod;
 
         } elseif (($validityPeriod === false) || ($validityPeriod <= 0)) {
-            $ticket['lzy_ticketValidTill'] = PHP_INT_MAX;
+            $ticketRec['lzy_ticketValidTill'] = PHP_INT_MAX;
 
         } elseif (is_string($validityPeriod)) {
-            $ticket['lzy_ticketValidTill'] = strtotime( $validityPeriod );
-            mylog('ticket till: '.date('Y-m-d', $ticket['lzy_ticketValidTill']));
+            $ticketRec['lzy_ticketValidTill'] = strtotime( $validityPeriod );
+            mylog('ticket till: '.date('Y-m-d', $ticketRec['lzy_ticketValidTill']));
 
         } else {
-            $ticket['lzy_ticketValidTill'] = time() + $validityPeriod;
+            $ticketRec['lzy_ticketValidTill'] = time() + $validityPeriod;
         }
         $ticketHash = $this->createHash();
 
-        $this->ds->write($ticketHash, $ticket);
+        $this->ds->writeElement($ticketHash, $ticketRec);
 
         return $ticketHash;
     } // createTicket
@@ -64,30 +77,41 @@ class Ticketing
         if ($key) {
             return $this->ds->findRec($key, $value, true);
         } else {
-            return $this->ds->read($value); // $value assumed to be the hash
+            return $this->ds->readElement($value); // $value assumed to be the hash
         }
     } // findTicket
 
 
 
+
+    public function updateTicket($ticketHash, $data, $overwrite = false)
+    {
+        $ticketRec = $this->ds->readElement($ticketHash);
+        if (!$overwrite && $ticketRec) {
+            $data = array_merge($ticketRec, $data);
+        }
+        $this->ds->writeElement($ticketHash, $data);
+    } // updateTicket
+
+
+
+
     public function consumeTicket($ticketHash, $type = false)
     {
-        $this->ds->lock($ticketHash);
-        $ticketRec = $this->ds->read($ticketHash);
+        $ticketRec = $this->ds->readElement($ticketHash);
 
         if ($type && ($type !== $ticketRec['lzy_ticketType'])) {
             $ticketRec = false;
 
-        } elseif ($ticketRec['lzy_ticketValidTill'] < time()) {      // ticket expired
+        } elseif (isset($ticketRec['lzy_ticketValidTill']) && ($ticketRec['lzy_ticketValidTill'] < time())) {      // ticket expired
             $this->ds->delete($ticketHash);
             $ticketRec = false;
 
-        } else {
+        } elseif (isset($ticketRec['lzy_maxConsumptionCount'])) {
             $n = $ticketRec['lzy_maxConsumptionCount'];
             if ($n > 1) {
                 $ticketRec['lzy_maxConsumptionCount'] = $n - 1;
-                $this->ds->write($ticketHash, $ticketRec);
-                $this->ds->unlock($ticketHash);
+                $this->ds->writeElement($ticketHash, $ticketRec);
             } else {
                 $this->ds->delete($ticketHash);
             }
@@ -120,20 +144,21 @@ class Ticketing
 
     private function purgeExpiredTickets()
     {
-        $lastPurge = $this->ds->readMeta('lastPurge');
-        if ($lastPurge > (time() - 3600)) { // perform purge only once per hour at most
-            return;
-        }
-        $this->ds->doLockDB();
         $tickets = $this->ds->read();
         $now = time();
-        foreach ($tickets as $key => $ticket) {
-            if ($ticket['lzy_ticketValidTill'] < $now) {    // has expired
-                $this->ds->delete($key);
+        $ticketsToPurge = false;
+        if ($tickets) {
+            foreach ($tickets as $key => $ticket) {
+                if (isset($ticket['lzy_ticketValidTill']) &&
+                    ($ticket['lzy_ticketValidTill'] < $now)) {    // has expired
+                    unset($tickets[$key]);
+                    $ticketsToPurge = true;
+                }
+            }
+            if ($ticketsToPurge) {
+                $this->ds->write($tickets);
             }
         }
-        $this->ds->writeMeta('lastPurge', time());
-        $this->ds->doUnlockDB();
     } // purgeExpiredTickets
 
 } // Ticketing
