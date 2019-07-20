@@ -12,7 +12,7 @@ define('PATH_TO_APP_ROOT',      '');
 define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 
-define('LIZZY_DB',             'data/.lzy_db.sqlite');
+//define('LIZZY_DB',             'data/.lzy_db.sqlite'); -> defined in datastorage2.class.php
 define('DATA_PATH',            'data/');
 define('CACHE_PATH',            '.#cache/');
 define('LOGS_PATH',             '.#logs/');
@@ -67,6 +67,7 @@ require_once SYSTEM_PATH.'datastorage2.class.php';
 require_once SYSTEM_PATH.'sandbox.class.php';
 require_once SYSTEM_PATH.'uadetector.class.php';
 require_once SYSTEM_PATH.'user-account-form.class.php';
+require_once SYSTEM_PATH.'ticketing.class.php';
 
 
 $globalParams = array(
@@ -154,8 +155,6 @@ class Lizzy
             die("Error: file not found: ".$configFile);
         }
 
-        $this->initLizzyDB();
-
         session_start();
         $this->sessionId = session_id();
 
@@ -228,18 +227,6 @@ class Lizzy
         $this->config->cachingActive = $this->config->site_enableCaching;
         $GLOBALS['globalParams']['cachingActive'] = $this->config->site_enableCaching;
     } // init
-
-
-
-
-    private function initLizzyDB()
-    {
-        if (!file_exists(LIZZY_DB)) {
-            preparePath(LIZZY_DB);
-            touch(LIZZY_DB);
-        }
-        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
-    } // initLizzyDB
 
 
 
@@ -1004,7 +991,6 @@ EOT;
 				$dataFilename = " data-lzy-filename='$f'";
                 $editingClass = 'lzy-src-wrapper ';
 			}
-//			if ($wrapperClass = $newPage->get('wrapping_class')) {
 			if ($wrapperClass = $newPage->get('wrapperClass')) {
 				$cls .= ' '.$wrapperClass;
 			}
@@ -2068,6 +2054,13 @@ EOT;
         $this->trans->addVariable('lzy-page-switcher-links', $str);
     } // definePageSwitchLinks
 
+
+
+
+    public function getLzyDb()
+    {
+        return $this->lzyDb;
+    }
 } // class WebPage
 
 

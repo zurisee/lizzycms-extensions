@@ -18,7 +18,6 @@ class HtmlTable
     private $errMsg = '';
 
     public function __construct($lzy, $inx, $options)
-//    public function __construct($page, $inx, $options)
     {
         global $tableCounter;
         $this->options      = $options;
@@ -64,7 +63,6 @@ class HtmlTable
         $this->checkArguments($inx);
         
         $this->handleDatatableOption($this->page);
-//        $this->handleDatatableOption($page);
 
         $tableCounter = $this->handleCaption($tableCounter);
     } // __construct
@@ -126,7 +124,6 @@ class HtmlTable
 
     private function renderHtmlTable()
     {
-        $header = '';
         $data = &$this->data;
         $header = ($this->headers != false);
         $tableClass = trim('lzy-table '.$this->tableClass);
@@ -142,7 +139,7 @@ class HtmlTable
                     $thead .= "\t\t\t<th class='lzy-table-row-nr'></th>\n";
                 }
                 for ($c = 0; $c < $nCols; $c++) {
-                    $cell = $this->getDataElem($r, $c, 'th');
+                    $cell = $this->getDataElem($r, $c, 'th', true);
                     $thead .= "\t\t\t$cell\n";
                 }
                 $thead .= "\t\t</tr>\n\t</thead>\n";
@@ -187,6 +184,7 @@ EOT;
     private function renderDiv()
     {
         $data = &$this->data;
+        $header = ($this->headers != false);
         $body = '';
         $nRows = sizeof($data);
         $nCols = sizeof($data[0]);
@@ -200,10 +198,17 @@ EOT;
             if ($this->renderDivRows) {
                 $body .= "\t\t<div class='lzy-div-table-row'>\n";
             }
-            for ($c = 0; $c < $nCols; $c++) {
-                $c1 = $c + 1;
-                $cell = $this->getDataElem($r, $c, 'div');
-                $body .= "\t\t\t$cell\n";
+            if ($header && ($r == 0)) {
+                for ($c = 0; $c < $nCols; $c++) {
+                    $cell = $this->getDataElem($r, $c, 'div', true);
+                    $body .= "\t\t\t$cell\n";
+                }
+
+            } else {
+                for ($c = 0; $c < $nCols; $c++) {
+                    $cell = $this->getDataElem($r, $c, 'div');
+                    $body .= "\t\t\t$cell\n";
+                }
             }
             if ($this->renderDivRows) {
                 $body .= "\t\t</div>\n";
@@ -661,14 +666,14 @@ EOT;
 
 
 
-    private function getDataElem($row, $col, $tag = 'td')
+    private function getDataElem($row, $col, $tag = 'td', $hdrElem = false)
     {
         $cell = $this->data[$row][$col];
         $col1 = $col + 1;
-        if ($tag == 'td') {
-            $tdClass = $this->cellClass;
-        } else {
+        if ($hdrElem) {
             $tdClass = $this->cellClass.'-hdr';
+        } else {
+            $tdClass = $this->cellClass;
         }
         $tdId = '';
         $ref = '';
@@ -690,7 +695,7 @@ EOT;
         $tdClass = trim(str_replace('  ', ' ', "$tdClass lzy-col-$col1"));
         $tdClass = " class='$tdClass'";
         $cell = str_replace("\n", '<br />', $cell);
-        if ($this->headersAsVars && ($tag == 'th')) {
+        if ($this->headersAsVars && $hdrElem) {
             $cell = "{{ $cell }}";
         }
         return "<$tag$tdId$tdClass$ref><div>$cell</div></$tag>";
@@ -771,15 +776,14 @@ EOT;
 
         $this->data = [[]];
         if ($this->dataSource) {
-            $ds = new DataStorage2($this->lzy, ['dbFile' => $this->dataSource]);
-//            $ds = new DataStorage(['dbFile' => $this->dataSource]);
-            $this->data = $ds->read('*');
+            $ds = new DataStorage2(['dataFile' => $this->dataSource, 'headersTop' => $this->headers]);
+            $this->data = $ds->read();
             $structure = $ds->getRecStructure();
-            if ($structure['key'] === 'index') {
+            if (isset($structure['key']) && ($structure['key'] === 'index')) {
                 $headers = $structure['labels'];
                 array_unshift($this->data, $headers);
             }
-            $this->arrangeData();
+//            $this->arrangeData();???????
         }
 
         $this->adjustTableSize();
@@ -1013,6 +1017,9 @@ EOT;
         $data = [];
         $headers = false;
         foreach ($this->data as $key => $rec) {
+            if ($key[0] === '_') {
+                continue;
+            }
             if (!$headers) {
                 foreach ($rec as $name => $item) {
                     $headers[] = $name;
