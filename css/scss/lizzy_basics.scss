@@ -272,6 +272,15 @@ figure a {
 	justify-content: center;
 }
 
+/* === Tables: */
+.lzy-div-table-row {
+	display: flex;
+}
+
+div.lzy-editable-hdr {
+	width: 16em;
+}
+
 /* === Module Encapsulation: */
 #lzy .lzy-encapsulated {
     p,
