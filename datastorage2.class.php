@@ -590,18 +590,19 @@ EOT;
         }
 
         // check data file
-        if ($this->dataFile && !file_exists($this->dataFile)) {
-            $path = pathinfo($this->dataFile, PATHINFO_DIRNAME);
+        $dataFile = $this->dataFile;
+        if ($dataFile && !file_exists($dataFile)) {
+            $path = pathinfo($dataFile, PATHINFO_DIRNAME);
             if (!file_exists($path) && $path) {
                 if (!mkdir($path, 0777, true) || !is_writable($path)) {
                     if (function_exists('fatalError')) {
-                        fatalError("DataStorage: unable to create file '{$this->dataFile}'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
+                        fatalError("DataStorage: unable to create file '{$dataFile}'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
                     } else {
-                        die("DataStorage: unable to create file '{$this->dataFile}'");
+                        die("DataStorage: unable to create file '{$dataFile}'");
                     }
                 }
             }
-            touch($this->dataFile);
+            touch($dataFile);
         }
 
         $this->openDbReadWrite();
@@ -653,7 +654,7 @@ EOT;
             }
 
         } else { // if table exists, check whether update necessary:
-            $ftime = floatval(filemtime($this->dataFile));
+            $ftime = floatval(filemtime($dataFile));
             $rawData = $this->getRawData();
             if ($ftime > $rawData['lastUpdate']) {
                 $res = $this->importFromFile();
@@ -1031,7 +1032,9 @@ EOT;
     public function __destruct()
     {
         $this->exportToFile(); // saves data if modified
-        $this->lzyDb->close();
+        if ($this->lzyDb) {
+            $this->lzyDb->close();
+        }
     } // __destruct
 
 } // DataStorage
