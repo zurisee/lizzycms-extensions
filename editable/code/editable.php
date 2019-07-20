@@ -2,15 +2,18 @@
 
 // @info: Renders a field that can be modified by the user. Changes are persistent and can immediately be seen by other visitors.
 
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
-//define('DEFAULT_EDITABLE_DATA_FILE', 'editable.json');
+//define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.yaml');
+
+require_once SYSTEM_PATH . 'elementLevelDataStorage.class.php';
 
 $macroName = basename(__FILE__, '.php');
 
-$page->addModules('EDITABLE');
+$page->addModules(['~sys/extensions/editable/css/editable.css', '~sys/extensions/editable/js/editable.js']);
 
 $msg = $this->getVariable('lzy-editable-temporarily-locked');
 $page->addJs("var lzy_editable_msg = '$msg';");
+$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
 
 $_SESSION['lizzy']['pagePath'] = $GLOBALS['globalParams']['pagePath'];
 $_SESSION['lizzy']['pagesFolder'] = $GLOBALS['globalParams']['pagesFolder'];
@@ -33,7 +36,6 @@ $this->addMacro($macroName, function () {
     $args['showRowNumbers'] = $this->getArg($macroName, 'showRowNumbers', '[true|false] Adds an index number to every row (default: true)', true);
     $args['useRecycleBin'] = $this->getArg($macroName, 'useRecycleBin', '[true|false] If true, previous values will be saved in a recycle bin rather than discared (default: false)', false);
     $args['freezeFieldAfter'] = $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
-//    $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
 
 
     if (($args['id'] == 'help') || ($args['id'] === false)) {
@@ -44,19 +46,33 @@ $this->addMacro($macroName, function () {
     $args = prepareArguments($args, $inx);
     $args = prepareDataSource($args, $inx);
 
-
-    require_once SYSTEM_PATH.'ticketing.class.php';
+    // create or obtain ticket from previous session:
+    $ticket = false;
     $ticketing = new Ticketing(['hashSize' => 8, 'defaultType' => 'editable', 'defaultValidityPeriod' => 900]);
-
+    $pgId = $_SESSION["lizzy"]["pathToPage"];
+    if (isset($_SESSION['lizzy']['editable-tickets'][$pgId])) {
+        $ticket = $_SESSION['lizzy']['editable-tickets'][$pgId];
+    }
     $rec = [
-        'dataSrc' => $args['dbFile'],
+        'dataSrc' => $args['dataFile'],
         'useRecycleBin' => $args['useRecycleBin'],
         'protectedCells' => $args['protectedCells'],
+        'freezeFieldAfter' => $args['freezeFieldAfter'],
+        'useRecycleBin' => $args['useRecycleBin'],
     ];
-    $ticket = $ticketing->createTicket($rec, 99999);
+    if (!$ticket) {
+        $rec[0] = $rec;
+        $ticket = $ticketing->createTicket($rec, 99999);
+        $_SESSION['lizzy']['editable-tickets'][$pgId] = $ticket;
+
+    } else {
+        $newRec[$inx-1] = $rec;
+        $ticketing->updateTicket($ticket, $newRec, ($inx === 1));
+    }
+    $ticket = "$ticket:".($inx-1);
 
     if (($args['nCols'] > 1) || ($args['nRows'] > 1)) {
-        $out = renderTable($this->page, $inx, $args, $ticket);
+        $out = renderTable($this->lzy, $inx, $args, $ticket);
 
     } else {
         $out = renderEditableField($args, $ticket);
@@ -70,20 +86,20 @@ $this->addMacro($macroName, function () {
 //---------------------------------------------------------------
 function renderEditableField($args, $ticket)
 {
+    $id = isset($args['id']) ? $args['id'] : false;
     if ($args['dataIndex']) {
-        $val = $args['db']->read($args['dataIndex']);
+        $val = $args['db']->readElement($args['dataIndex']);
         $args['dataIndex'] = " data-lzy-cell='{$args['dataIndex']}'";
     } else {
-        $val = $args['db']->read($args['id']);
+        $val = $args['db']->readElement($id);
         $args['dataIndex'] = '';
     }
-    $modifTime = $args['db']->lastModified($args['id']);
-    $lockedClass = ($args['db']->isLocked($args['id'])) ? ' lzy-locked' : '';
-    $id = $args['id'] = translateToIdentifier($args['id']);
+    $modifTime = $args['db']->elementLastModified($id);
+    $lockedClass = ($args['db']->isElementLocked($id)) ? ' lzy-locked' : '';
     if ($val && $args['freezeThreshold'] && ($modifTime < $args['freezeThreshold'])) {
-        $out = "<div id='$id' class='lzy-editable-frozen{$args['class']}'>$val</div>";;
+        $out = "<div id='$id' class='lzy-editable-frozen{$args['class']}' title='{{ lzy-editable-field-frozen }}'>$val</div>";;
     } else {
-        $out = "<div id='$id' class='lzy-editable {$args['showButtonClass']}{$args['class']}$lockedClass' data-lzy-editable='$ticket'{$args['dataIndex']}>$val</div>";;
+        $out = "<div id='$id' class='lzy-editable {$args['showButtonClass']}{$args['class']}$lockedClass' data-lzy-editable='$ticket'{$args['dataIndex']}>$val</div>";
     }
     return $out;
 } // renderEditableField
@@ -91,7 +107,7 @@ function renderEditableField($args, $ticket)
 
 
 //---------------------------------------------------------------
-function renderTable($page, $inx, $args, $ticket)
+function renderTable($lzy, $inx, $args, $ticket)
 {
     require_once SYSTEM_PATH.'htmltable.class.php';
 
@@ -101,7 +117,9 @@ function renderTable($page, $inx, $args, $ticket)
     $options['includeCellRefs'] = true;
     $options['cellMask'] = $args['protectedCells'];
     $options['cellMaskedClass'] = 'lzy-non-editable';
-    $tbl = new HtmlTable($page, $inx, $options);
+    unset($options['dataSource']);
+
+    $tbl = new HtmlTable($lzy, $inx, $options);
     $out = $tbl->render();
     return $out;
 } // renderTable
@@ -125,7 +143,6 @@ function prepareArguments($args, $inx)
     if ($args['showButton'] === 'auto') {
         $args['showButtonClass'] = ' lzy-editable-auto-show-button';
     } elseif ($args['showButton']) {
-//    } else if ($args['showButton'] == 'true') {
         $args['showButtonClass'] = ' lzy-editable-show-button';
     }
 
@@ -197,25 +214,22 @@ function prepareDataSource($args, $inx)
         $dataSource1 = resolvePath($args['dataSource'], true);
         if (file_exists($dataSource1)) {
             if (is_file($dataSource1)) {
-                $args['dbFile'] = $dataSource1;
+                $args['dataFile'] = $dataSource1;
             } elseif (is_dir($dataSource1)) {
-                $args['dbFile'] = $dataSource1 . DEFAULT_EDITABLE_DATA_FILE;
+                $args['dataFile'] = $dataSource1 . DEFAULT_EDITABLE_DATA_FILE;
             } else {
                 fatalError("Error: folder to store editable data does not exist.");
             }
         } elseif (file_exists(basename($dataSource1))) {    // folder exists, but not the file
-            $args['dbFile'] = $dataSource1 . DEFAULT_EDITABLE_DATA_FILE;
+            $args['dataFile'] = $dataSource1 . DEFAULT_EDITABLE_DATA_FILE;
         } else {
-            fatalError("Error: folder to store editable data does not exist.");
+            preparePath($dataSource1);
+            touch($dataSource1);
+            $args['dataFile'] = $dataSource1;
         }
     } else {
-        $args['dbFile'] = $GLOBALS['globalParams']['pathToPage'] . DEFAULT_EDITABLE_DATA_FILE;
+        $args['dataFile'] = $GLOBALS['globalParams']['pathToPage'] . DEFAULT_EDITABLE_DATA_FILE;
     }
-    $args['db'] = new DataStorage($args['dbFile']);
-
-    if ($args['freezeFieldAfter']) {
-        $args['db']->writeMeta("{$args['id']}/lzy-editable-freeze-after", $args['freezeFieldAfter']);
-//        $args['db']->write("_meta_/{$args['id']}/lzy-editable-freeze-after", $args['freezeFieldAfter']);
-    }
+    $args['db'] = new ElementLevelDataStorage($args['dataFile']);
     return $args;
 } // prepareDataSource

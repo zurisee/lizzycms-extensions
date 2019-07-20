@@ -3,7 +3,7 @@
 */
 
 var editableObj = new Object();
-editableObj.backend = systemPath+'_ajax_server.php';
+editableObj.backend = systemPath+'extensions/editable/backend/_editable_backend.php';
 editableObj.doSave = false;
 editableObj.lastText = {};
 editableObj.editing = false;
@@ -17,12 +17,12 @@ var instanceCounter = 0;
 (function ( $ ) {
 
     $.fn.editable = function( options ) {
-        if ( this.length == 0 ) {
+        if ( this.length === 0 ) {
             return;
         }
         instanceCounter++;
         var invokingClass = $(this).attr('class').replace(/\s.*/, '');
-        if (typeof invokingClass == 'undefined') {
+        if (typeof invokingClass === 'undefined') {
             invokingClass = 'lzy-editable';
         }
         initializeEditableField(invokingClass);
@@ -30,7 +30,6 @@ var instanceCounter = 0;
 
     $( window ).bind('beforeunload', function(){
         endEdit(editableObj, false, true);
-        serverLog('Client disconnected');
     });
 }( jQuery ));
 
@@ -40,8 +39,7 @@ var instanceCounter = 0;
 function initializeEditableField(invokingClass)
 {
     var edObj = editableObj;
-    // edObj.editModeTimeout = 15000;  // automatically terminate editing after 20s of no key activity
-    edObj.editModeTimeout = 60000;  // automatically terminate editing after 20s of no key activity
+    edObj.editModeTimeout = 60000;  // automatically terminate editing after given time of no key activity
     edObj.invokingClass = invokingClass;
     if ($('body').hasClass('touch')) {
         edObj.isTouchDevice = true;
@@ -51,10 +49,10 @@ function initializeEditableField(invokingClass)
         edObj.isTouchDevice = 'ontouchstart' in document.documentElement;
     }
 
-    // initializeConnection();
     initEditableFields();
     setupKeyHandler();
-    // initializeConnection();
+    initializeConnection();
+    updateFieldContents(edObj);
 
     mylog('Editable.js started for class ".'+edObj.invokingClass+'" ('+ ((edObj.isTouchDevice) ? 'touch-device' : 'non-touch-device') + ', backend: '+ edObj.backend+')');
 } // initializeEditableField
@@ -67,8 +65,9 @@ function initializeConnection()
 {
     var edObj = editableObj;
     var res = false;
-    var json = JSON.stringify(edObj.fieldIDs);
-    $('.lzy-editable input').addClass('lzy-wait');
+    var json = '';
+
+    $('.' + edObj.invokingClass + ' input').addClass('lzy-wait');
     this.ajaxSend(edObj, 'conn', '', json, function(json) {
         mylog('Server connection established: ' + json);
         if (json.match(/^</)) {
@@ -81,7 +80,7 @@ function initializeConnection()
             res = false;
         }
         res = true;
-        $('.lzy-editable input').removeClass('lzy-wait');
+        $('.' + edObj.invokingClass + ' input').removeClass('lzy-wait');
     });
     return res;
 } // initializeConnection
@@ -108,27 +107,18 @@ function initEditableFields()
         var id = $elem.attr('id');
 
         var showButton = $elem.hasClass('lzy-editable-show-button');
-        // showButton: in auto-mode on touch-device we need to add class:
         if ($elem.hasClass('lzy-editable-auto-show-button') && edObj.isTouchDevice) {
             $elem.addClass('lzy-editable-show-button');
             showButton = true;
         }
 
-        if (typeof id == 'undefined') {
+        if (typeof id === 'undefined') {
             id =  edObj.invokingClass + '-field_' + (parseInt(inx) + 1);
             $elem.attr('id', id);
         }
 
         edObj.fieldIDs.push(id); // keep track of fieldIDs
-
-        var dataRef = $elem.attr('data-lzy-editable');
-        if (typeof dataRef === 'undefined') {
-            dataRef = $elem.closest('[data-lzy-editable]').attr('data-lzy-editable');
-            if (typeof dataRef === 'undefined') {
-                dataRef = '';
-            }
-        }
-        edObj.dataRef[id] = dataRef;
+        edObj.dataRef = $('[data-lzy-editable]').attr('data-lzy-editable').replace(/:.*/, '');
 
         var origText = $elem.text();
         $elem.text('');
@@ -149,14 +139,11 @@ function initEditableFields()
 
     var $edInput = $('input', $editable);
     
-    // activate 'loading' indication
-    // $editable.addClass('lzy-wait');
-
-    $edInput.focus(function(e) {        // on focus()
+    $edInput.focus(function() {        // on focus()
         onFocus(edObj, this);
     });
 
-    $edInput.blur(function(e) {                 // on blur
+    $edInput.blur(function() {                 // on blur
         onBlur(edObj, this);
     });
 
@@ -178,9 +165,6 @@ function initEditableFields()
        e.stopPropagation();
         onOkClick(edObj, this);
     });
-
-    updateFieldContent(edObj);
-
 } // initEditableFields()
 
 
@@ -195,12 +179,12 @@ function initEdit(edObj, id) {
 
 
 
+
 //--------------------------------------------------------------
 function lockField(edObj, id)
 {
     mylog( 'lockField: '+id );
-    // var url = edObj.backend + "?lock=" + id + "&ds=" + dataSrc +'&pg='+pagePath;
-    var url = edObj.backend + "?lock=" + id + "&ds=" + edObj.dataRef[id];
+    var url = edObj.backend + "?lock=" + id + "&ds=" + getDataRef(id);
     var $editableField = $('#' + id);
     var $inputField = $('#_' + id);
     edObj.lastText[id] = $inputField.val();
@@ -224,8 +208,6 @@ function lockField(edObj, id)
 
         } else if (json.match(/^failed/)) {      // field already locked
             $inputField.val(edObj.lastText[id]).blur().addClass('lzy-locked');
-            // $inputField.parent().addClass('lzy-locked');
-            // alert(lzy_editable_msg); //???
             mylog( 'field was locked: '+id );
             setTimeout(function() {$inputField.removeClass('lzy-locked'); }, 60000);
             return false;
@@ -273,7 +255,7 @@ function endEdit(edObj, _id, sendToServer)
     if (!_id) {
         _id = $('.lzy-editable-active').attr('id');
     }
-    if (typeof _id == 'undefined') {
+    if (typeof _id === 'undefined') {
         mylog('Error: endEdit -> no lzy-editable-active found');
         return;
     }
@@ -286,7 +268,7 @@ function endEdit(edObj, _id, sendToServer)
     }
 
     var id = _id.substr(1);
-    if (sendToServer && (edObj.value != edObj.lastText[id])) {
+    if (sendToServer && (edObj.value !== edObj.lastText[id])) {
         saveAndUnlockField(edObj, id, edObj.value);
     } else {
         unlockField(edObj, id);
@@ -336,7 +318,6 @@ function showButton(id)
 function hideButton(_id)
 {
     if ($('#' + _id).parent().hasClass('lzy-editable-show-button')) {
-        // var w = $('#' + _id.substr(1)).width();
         $('#'+_id).animate({width: '100%'}, 150);
     }
 } // hideButton
@@ -344,43 +325,47 @@ function hideButton(_id)
 
 
 //--------------------------------------------------------------
-function updateFieldContent(edObj)
+function updateFieldContents(edObj)
 {
-    this.ajaxSend(edObj, 'get', '*', '', false);
-} // updateFieldContent
+    this.ajaxSend(edObj, 'get', '_all', '', false);
+} // updateFieldContents
 
 
 
 //--------------------------------------------------------------
 function ajaxSend(edObj, cmd, id, data, onSuccess)
+//  ds => ticket hash identifying db
+//  ref => data index in case of 2D data
 {
+    if (id === '_all') {
+        var method = 'GET';
+        var postData = '';
+        var arg = 'get=_all&ds=' + edObj.dataRef + ':0';
+        _ajaxSend(edObj, arg, method, postData, onSuccess);
+        return;
+    }
+
+    var dataRef = '';
     if (id) {
         $('#_' + id).addClass('lzy-wait');
-    }
-    if (id === '*') {
-        var $dataRefs = $('[data-lzy-editable]');
-        var dataRef = '&ds=' + $dataRefs.attr('data-lzy-editable');
-        // if ($dataRefs.length == 1) {
-        //     var dataRef = "&ds=" + $dataRefs.attr('data-lzy-editable');
-        // }
-    } else if (id) {
-        var dataRef = '&ds=' + edObj.dataRef[id];
+
+        // 1. data-lzy-editable -> defines datasource
+        dataRef = '&ds=' + getDataRef(id);
+
+        // 2. data-lzy-cell -> optional cell index
         var dataIndex = $('#' + id).attr('data-lzy-cell');
         if (typeof dataIndex !== 'undefined') {
             dataRef = dataRef + '&ref=' + dataIndex;
         }
-    } else {
-        var dataRef = '';
     }
 
-    if (cmd == 'conn') {
+    if (cmd === 'conn') {
         data = encodeURIComponent(data);
         var method = 'POST';
-        // var arg = 'conn'+'&pg='+pagePath;
         var arg = 'conn' + dataRef;
         var postData = 'ids='+data;
 
-    } else if (cmd == 'save') {
+    } else if (cmd === 'save') {
         data = encodeURIComponent(data);
         var method = 'POST';
         var arg = 'save=' + id + dataRef;
@@ -391,66 +376,83 @@ function ajaxSend(edObj, cmd, id, data, onSuccess)
         var arg = cmd+'=' + id + dataRef;
         var postData = '';
     }
+    _ajaxSend(edObj, arg, method, postData, onSuccess);
+} // ajaxSend
+
+
+
+//--------------------------------------------------------------
+function _ajaxSend(edObj, arg, method, postData, onSuccess)
+{
+    console.log('- request: ' + arg);
     $.ajax({
-        url: edObj.backend + "?" + arg,
+        url: edObj.backend + '?' + arg,
         type: method,
         data: postData,
         cache: false,
         success: function (json) {
             if (json.match(/^</)) {
-                console.log('response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
+                console.log('- response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
                 return;
             }
+            console.log('- response: ' + json);
             if ((json != 'failed') && onSuccess) {
                 onSuccess(json);
             }
             updateUi(edObj, json);
         }
     });
-} // ajaxSend
+} // _ajaxSend
+
 
 
 //--------------------------------------------------------------
 function updateUi(edObj, json)
 {
-    if (json && json.match(/^\{/)) {
-        json = json.replace(/(\{.*\}).*/, "$1");    // remove trailing #comment
+    if (json && json.match(/^[\[{]/)) { // it's an array
+        json = json.replace(/(.*[\]}])\#.*/, "$1");    // remove trailing #comment
         var data = JSON.parse(json);
         if (data) {
-            var editingField = $('.lzy-editable-active').attr('id');
-            for (var id in data) {
-                if ((id == 'undefined') || !id || (id.substr(0,1) == '_')) {
-                    continue;
-                }
-
-                if (editingField == '_'+id) {  // curr editing field is editing field
-                    continue;   // do not update editing field
-                }
-
-                var $input = $('#'+id+' input');
-                if (typeof data[id] != 'undefined') {
-                    var value = data[id];
-                    if (value.match(/\*\*LOCKED\*\*/)) {
-                        value = data[id].replace('**LOCKED**', '');
-                        $input.addClass('lzy-locked').attr('title', 'Currently being editied by another user.').attr('disabled','');
-
-                    } else if ($input.hasClass('lzy-locked')) {
-                        $input.removeClass('lzy-locked').removeAttr('title').removeAttr('disabled');
-                        $('.lzy-edit_buttons', '#'+id).show();
+            if (typeof data[0] !== 'undefined') {   // array data:
+                for (var i in data) {
+                    var srcRef = edObj.dataRef + ':' + i;
+                    var $area = $('[data-lzy-editable="' + srcRef + '"]');
+                    for (var r in data[i]) {
+                        for (var c in data[i][r]) {
+                            var val = data[i][r][c];
+                            var ref = c + ',' + r;
+                            $('[data-lzy-cell="' + ref + '"] input', $area).val(val);
+                        }
                     }
-                    $input.val(value);
                 }
+
+            } else {    // data identified by ids:
+                for (var id in data) {
+                    if ((id === 'undefined') || !id || (id.substr(0,1) == '_')) {
+                        continue;
+                    }
+                    var $input = $('#'+id+' input');
+                    if (typeof data[id] != 'undefined') {
+                        var value = data[id];
+                        console.log('-- ' + id + ': ' + value);
+                        if (value && value.match(/\*\*LOCKED\*\*/)) {
+                            value = data[id].replace('**LOCKED**', '');
+                            $input.addClass('lzy-locked').attr('title', 'Currently being editied by another user.').attr('disabled','');
+
+                        } else if (value && value.match(/\*\*FROZEN\*\*/)) {
+                            value = data[id].replace('**FROZEN**', '');
+                            $input.addClass('lzy-editable-frozen').attr('title', 'Editing time expired.').attr('disabled','');
+
+                        } else if ($input.hasClass('lzy-locked')) {
+                            $input.removeClass('lzy-locked').removeAttr('title').removeAttr('disabled');
+                            $('.lzy-edit_buttons', '#'+id).show();
+                        }
+                        $input.val(value);
+                    }
+                }
+
             }
         }
-    } else if (json && json.match(/^\[/)) { // it's an array
-        json = json.replace(/(.*)\#.*/, "$1");    // remove trailing #comment
-        var data = JSON.parse(json);
-        $('[data-lzy-cell]').each(function() {
-            var ref = $( this ).attr('data-lzy-cell');
-            var xy = ref.split(',');
-            var value = data[xy[1]][xy[0]];
-            $( 'input', this ).val(value);
-        });
 
     } else if (json.match(/^restart/)) {
         lzyReload();
@@ -459,9 +461,20 @@ function updateUi(edObj, json)
         $('#' + editingField).addClass('lzy-editable-frozen');
     }
 
-    $('.lzy-wait').removeClass('lzy-wait'); // de-activate 'loading' indication
+    $('.lzy-wait').removeClass('lzy-wait'); // de-activate 'wait' indication
 
 } // updateUi
+
+
+
+//--------------------------------------------------------------
+function getDataRef(id) {
+    var dataRef = $('#' + id).attr('data-lzy-editable');
+    if (typeof dataRef === 'undefined') {
+        dataRef = $('#' + id).closest('[data-lzy-editable]').attr('data-lzy-editable');
+    }
+    return dataRef;
+} // getDataRef
 
 
 
