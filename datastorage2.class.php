@@ -1,53 +1,22 @@
 <?php
 /*
- *	LZY - small and fast web-page rendering engine
- *
- * Simple file-based key-value database
- *
- * $db = new DataStorage($dbFile, $sid = '', $lockDB = false, $format = '', $lockTimeout = 120, $secure = false)
- *      $dbFile:        file where data is stored
- *      $sid:           session id - required if file locking is used
- *      $lockDB:        activates file locking
- *      $format:        json, yaml or csv, if not set, file extension is used
- *      $lockTimeout:   time (ms) till a locked file is unlocked automatically
- *      $secure:        prevents accessing files in the 'config/' folder
- *
- * write($key, $value = null)
- *      -> $key == key && $value == value   -> store tuple
- *      -> $key == tuple [key =>value,...]  -> store array
- *      -> $key == array ** $value != null  -> replace data
- *
- * read($key = '*')
- *      -> $key == null || '*'  -> read all records, return array
- *      -> $key == key  -> return value
- *
- * lock($key)
- *
- * unlock($key = true)
- *      -> $key == true  -> unlock all owner's records
- *      -> $key == '*'  -> unlock all records
- *
- * convert($source, $destinationFormat)
- *
- * Modified:
- *      writeAll($data, $destFile = '')  -> write($data)
- *      readValue($key) -> read($key)
- *      readRec($key = '*') -> read('*')
- *
- * 2D Data:
- *      -> when using csv files
- *      -> $key of type 'x,y' (column,row) instead of field id, indices start at 0
- *      e.g. $db->read('0,4');
- *
- * Meta-Data:
- *      is maintained either in same file, then under key '_mega_'
- *      or in separate file in case of 2D data in .csv files -> in this case meta data is not under '_mega_'
+ * Lizzy maintains *one* SQlite DB (located in 'data/.lzy_db.sqlite')
+ * So, all data managed by DataStorage2 is stored in there.
+ * However, shadow data files in yaml, json or cvs format may be maintained:
+ *      they are imported at construction and exported at deconstruction time
 */
 
 
-if (!defined('LIZZY_DB')) {
-    define('LIZZY_DB',  SYSTEM_PATH.'data/.lzy_db.sqlite');
+define('LIZZY_DB',  PATH_TO_APP_ROOT.'data/_lzy_db.sqlite');
+
+if (!defined('LZY_LOCK_ALL_DURATION_DEFAULT')) {
     define('LZY_LOCK_ALL_DURATION_DEFAULT', 900.0); // 15 minutes
+}
+if (!defined('LZY_DEFAULT_FILE_TYPE')) {
+    define('LZY_DEFAULT_FILE_TYPE', 'json');
+}
+if (!defined('LZY_META')) {
+    define('LZY_META', '_meta');
 }
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
@@ -59,27 +28,22 @@ class DataStorage2
 {
     private $lzyDb = null;
 	protected $dataFile;
-//	private $dataFile;
-	private $tableName;
-	private $data = null;
-	private $rawData = null;
-	private $sid;
-	private $format;
-	private $lockDB = false;
-	private $defaultTimeout = 30; // [s]
-	private $defaultPollingSleepTime = 500; // [ms]
+	protected $tableName;
+	protected $data = null;
+	protected $rawData = null;
+	protected $is2Ddata = false;
+	protected $sid;
+	protected $format;
+	protected $lockDB = false;
+	protected $defaultTimeout = 30; // [s]
+	protected $defaultPollingSleepTime = 500; // [ms]
 
 
     //--------------------------------------------------------------
-    public function __construct($lzy, $args)
+    public function __construct($args)
     {
-        if (isset($lzy->lzyDb) && ($lzy->lzyDb !== null)) {   // open DB if not already opened:
-            $this->lzyDb = $lzy->lzyDb;
-        } else {
-            $this->initLizzyDB();
-        }
-
         $this->parseArguments($args);
+        $this->initLizzyDB();
         $this->initDbTable();
     } // __construct
 
@@ -87,8 +51,12 @@ class DataStorage2
 
     public function read()
     {
-        return $this->getData();
-    }
+        $data = $this->getData();
+        if (isset($data[LZY_META])) {
+            unset($data[LZY_META]);
+        }
+        return $data;
+    } // read
 
 
 
@@ -118,24 +86,17 @@ class DataStorage2
 
 
 
-    public function append($newData)
+
+    public function write($data, $replace = true)
     {
         if ($this->isLockDB()) {
             return false;
         }
-        $data = $this->getData();
-        $data = array_merge($data, $newData);
-        return $this->update($data);
-    } // append
-
-
-
-    public function write($data)
-    {
-        if ($this->isLockDB()) {
-            return false;
+        if ($replace) {
+            return $this->lowLevelWrite($data);
+        } else {
+            return $this->update($data);
         }
-        return $this->update($data);
     } // write
 
 
@@ -145,7 +106,7 @@ class DataStorage2
         if ($this->isLockDB()) {
             return false;
         }
-        $data = $this->getData();
+        $data = $this->getData( true );
         if (strpos($key, ',') !== false) {
             $keys = explode(',', $key);
             if ($this->format === 'csv') {
@@ -164,8 +125,78 @@ class DataStorage2
         } else {
             $data[$key] = $value;
         }
-        return $this->update($data);
+        return $this->lowLevelWrite($data);
     } // writeElement
+
+
+
+
+    public function append($key, $value = null)
+    {
+        if ($this->isLockDB()) {
+            return false;
+        }
+        $data = $this->getData( true );
+
+        if (is_array($key)) {
+            $data = array_merge($data, $key);
+        } else {
+            $data[$key] = $value;
+        }
+        return $this->lowLevelWrite($data);
+    } // append
+
+
+
+    public function delete($key)
+    {
+        if ($this->isLockDB()) {
+            return false;
+        }
+        $modified = false;
+        $data = $this->getData( true );
+        if (is_array($key)) {
+            foreach ($key as $k) {
+                if (isset($data[$k])) {
+                    unset($data[$k]);
+                    $modified = true;
+                }
+            }
+
+        } else {
+            if (isset($data[$key])) {
+                unset($data[$key]);
+                $modified = true;
+            }
+        }
+        if ($modified) {
+            $this->lowLevelWrite($data);
+        }
+    } // delete
+
+
+
+    //---------------------------------------------------------------------------
+    public function findRec($key, $value, $returnKey = false)
+    {
+        // find rec for which key AND value match
+        // returns the record unless $returnKey is true, then it returns the key
+        //TODO: extend for 2D data
+        $data = $this->getData();
+
+        foreach ($data as $datakey => $rec) {
+            foreach ($rec as $k => $v) {
+                if (($key === $k) && ($value === $v)) {
+                    if ($returnKey) {
+                        return $datakey;
+                    } else {
+                        return $rec;
+                    }
+                }
+            }
+        }
+        return false;
+    } // findRec
 
 
 
@@ -187,7 +218,7 @@ class DataStorage2
         if ($rawData['lockTime'] < (microtime(true) - LZY_LOCK_ALL_DURATION_DEFAULT)) {
             $rawData['lockedBy'] = '';
             $rawData['lockTime'] = 0.0;
-            $this->updateMetaData($rawData);
+            $this->updateRawMetaData($rawData);
             return false;   // lock timed out
         }
         if ($rawData['lockedBy'] !== '') {  // it's locked
@@ -225,7 +256,7 @@ class DataStorage2
             $rawData['lockedBy'] = $mySessionID;
             $rawData['lockTime'] = microtime(true);
         }
-        $this->updateMetaData($rawData);
+        $this->updateRawMetaData($rawData);
         return true;
     } // lockDB
 
@@ -249,9 +280,42 @@ class DataStorage2
                 return false;
             }
         }
-        $this->updateMetaData($rawData);
+        $this->updateRawMetaData($rawData);
         return true;
-    }
+    } // unLockDB
+
+
+
+
+    public function getMetaElement($key)
+    {
+        $meta = $this->getMetaData();
+        if (isset($meta[$key])) {
+            return $meta[$key];
+        } else {
+            return null;
+        }
+    } // getMetaElement
+
+
+
+
+    public function getMetaData()
+    {
+        if ($this->separateMetaData) {
+            $query = "SELECT \"meta\" FROM \"{$this->tableName}\"";
+            $metaData = $this->lzyDb->querySingle($query, true);
+            $meta = $this->jsonDecode($metaData);
+
+        } else {
+            $data = $this->getData( true );
+            $meta = isset($data[LZY_META]) ? $data[LZY_META] : [];
+        }
+        if (!$meta || !is_array($meta)) {
+            $meta = [];
+        }
+        return $meta;
+    } // getMetaData
 
 
 
@@ -261,7 +325,7 @@ class DataStorage2
     {
         $rawData = $this->getRawData();
         return $rawData['lastUpdate'];
-    }
+    } // lastModified
 
 
 
@@ -280,7 +344,7 @@ class DataStorage2
         } else {
             return null;
         }
-    }
+    } // checkNewData
 
 
 
@@ -309,29 +373,76 @@ class DataStorage2
 
 
 
-
-// === private methods ===============
-//    private function update($data, $isJson = false, $markModified = true)
-    private function update($data, $isJson = false, $markModified = true, $structure = false)
+    public function doLockDB()  // alias for compatibility
     {
-        $this->lzyDb->close();
-        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READWRITE);
-        $this->lzyDb->exec('PRAGMA journal_mode = wal;'); // https://www.php.net/manual/de/sqlite3.exec.php
+        return $this->lockDB();
+    } // doLockDB
 
-//        if ($isJson) {
-//            $json = $data;
-//        } else {
-//            $json = json_encode($data);
-//        }
-        $json = $this->jsonEncode($data, $isJson);
-//        $json = str_replace('"', '⌑⌇⌑', $json);
-//TODO: use SQLITE3_TEXT instead -> https://www.php.net/manual/de/sqlite3stmt.bindparam.php
+
+
+
+    public function doUnlockDB()  // alias for compatibility
+    {
+        return $this->unLockDB();
+    } // doUnlockDB
+
+
+
+
+    public function dumpDb()
+    {
+        $d = $this->getRawData();
+        return var_r($d);
+    } // dumpDb
+
+
+
+
+    public function is2Ddata()
+    {
+        $rawData = $this->getRawData();$res = (bool) $rawData['2D'];
+        return (bool) $rawData['2D'];
+    } // is2Ddata
+
+
+
+// === protected methods ===============
+    protected function update($newData)
+    {
+        $data = $this->getData( true );
+        if ($data) {
+            $newData = array_merge($data, $newData);
+        }
+        $this->lowLevelWrite($newData);
+    } // update
+
+
+
+
+    protected function updateElement($key, $value)
+    {
+        $data = $this->getData( true );
+        if (preg_match('/^(\d+),(\d+)/', $key, $m)) {
+            $data[$m[2]][$m[1]] = $value;
+        } else {
+            $data[$key] = $value;
+        }
+        $this->lowLevelWrite($data);
+    } // updateElement
+
+
+
+
+    protected function lowLevelWrite($newData, $isJson = false, $markModified = true, $structure = false)
+    {
+        $this->openDbReadWrite();
+
+        $json = $this->jsonEncode($newData, $isJson);
         $json = SQLite3::escapeString($json);
         $ftime = microtime(true);
         $modified = $markModified ? 1 : 0;
 
         if ($structure) {
-//            $structure = $this->jsonEncode($structure);
             $sql = <<<EOT
 UPDATE "{$this->tableName}" SET 
     "data" = "$json", 
@@ -350,22 +461,23 @@ UPDATE "{$this->tableName}" SET
 EOT;
         }
 
-        $res = $this->lzyDb->query($sql);
-        $this->lzyDb->close();
-        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
+        try {
+            $res = $this->lzyDb->query($sql);
+        }
+        catch (exception $e) {
+            fatalError($e->getMessage());
+        }
         $this->rawData = $this->getRawData();
 
         return $res;
-    } // update
+    } // lowLevelWrite
 
 
 
 
-    private function updateMetaData($rawData)
+    protected function updateRawMetaData($rawData)
     {
-        $this->lzyDb->close();
-        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READWRITE);
-        $this->lzyDb->exec('PRAGMA journal_mode = wal;'); // https://www.php.net/manual/de/sqlite3.exec.php
+        $this->openDbReadWrite();
         $sql = <<<EOT
 UPDATE "{$this->tableName}" SET 
     'modified' = 1,
@@ -374,31 +486,101 @@ UPDATE "{$this->tableName}" SET
 
 EOT;
 
-        $res = $this->lzyDb->query($sql);
-        $this->lzyDb->close();
-        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
+        try {
+            $res = $this->lzyDb->query($sql);
+        }
+        catch (exception $e) {
+            fatalError($e->getMessage());
+        }
         $this->rawData = $this->getRawData();
-    }
+    } // updateRawMetaData
+
+
+
+
+    protected function updateMetaData($key, $value = null)
+    {
+        if ($this->separateMetaData || $this->rawData["2D"]) {
+            $query = "SELECT \"meta\" FROM \"{$this->tableName}\"";
+            $metaData = $this->lzyDb->querySingle($query, true);
+            $metaData = $this->jsonDecode($metaData['meta']);
+            if (is_array($key)) {
+                if (is_array($metaData)) {
+                    $metaData = array_merge($metaData, $key);
+                } else {
+                    $metaData = $key;
+                }
+            } else {
+                $metaData[$key] = $value;
+            }
+            $metaData = $this->jsonEncode($metaData);
+            $sql = <<<EOT
+UPDATE "{$this->tableName}" SET 
+    'meta' = "$metaData"
+
+EOT;
+
+            $res = $this->lzyDb->query($sql);
+            return $res;
+
+        } else {
+            $data = $this->getData( true );
+            if (!isset($data[LZY_META])) {
+                $data[LZY_META] = [];
+            }
+            $metaData = &$data[LZY_META];
+
+            if (is_array($key) && is_array($metaData)) {
+                $metaData = array_merge($metaData, $key);
+            } else {
+                $metaData[$key] = $value;
+            }
+            return $this->lowLevelWrite($data);
+        }
+    } // updateMetaData
 
 
 
 
     //---------------------------------------------------------------------------
-    private function initLizzyDB()
+    protected function initLizzyDB()
     {
-        $lizzyDbFile = PATH_TO_APP_ROOT.LIZZY_DB;
-        if (!file_exists($lizzyDbFile)) {
-            preparePath($lizzyDbFile);
-            touch($lizzyDbFile);
+        if (!file_exists(LIZZY_DB)) {
+            preparePath(LIZZY_DB);
+            touch(LIZZY_DB);
         }
-        $this->lzyDb = new SQLite3($lizzyDbFile, SQLITE3_OPEN_READONLY);
     } // initLizzyDB
 
 
 
 
+    public function getDbRef()
+    {
+        if (!$this->lzyDb) {
+            $this->openDbReadWrite();
+        }
+        return $this->lzyDb;
+    }
+
+
+
+    protected function openDbReadWrite()
+    {
+        if ($this->lzyDb) {
+            return;
+        }
+        $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READWRITE);
+        $this->lzyDb->busyTimeout(5000);
+        $this->lzyDb->exec('PRAGMA journal_mode = wal;'); // https://www.php.net/manual/de/sqlite3.exec.php
+        mylog("LzyDB opened for readwrite");
+    } // openDbReadWrite
+
+
+
+
+
     //---------------------------------------------------------------------------
-    private function initDbTable()
+    protected function initDbTable()
     {
         // 'dataFile' refers to a yaml or csv file that contains the original data source
         // each dataFile is copied into a table within the lizzyDB
@@ -408,9 +590,9 @@ EOT;
         }
 
         // check data file
-        if (!file_exists($this->dataFile)) {
+        if ($this->dataFile && !file_exists($this->dataFile)) {
             $path = pathinfo($this->dataFile, PATHINFO_DIRNAME);
-            if (!file_exists($path)) {
+            if (!file_exists($path) && $path) {
                 if (!mkdir($path, 0777, true) || !is_writable($path)) {
                     if (function_exists('fatalError')) {
                         fatalError("DataStorage: unable to create file '{$this->dataFile}'", 'File: ' . __FILE__ . ' Line: ' . __LINE__);
@@ -422,32 +604,45 @@ EOT;
             touch($this->dataFile);
         }
 
+        $this->openDbReadWrite();
+
         // check whether dataFile-table exists:
         if ($this->tableName) {
             $tableName = $this->tableName;
+
+        } elseif (!$this->dataFile) { // neither file- nor tablename -> nothing to do
+            return;
+
         } else {
             $tableName = $this->deriveTableName();
             $this->tableName = $tableName;
         }
 
         $sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='$tableName';";
-        $res = $this->lzyDb->query($sql);
+        $stmt = $this->lzyDb->prepare($sql);
+        $res = $stmt->execute();
         $table = $res->fetchArray(SQLITE3_ASSOC);
         if (!$table) {  // if table does not exist: create it and populate it with data from origFile
-            $this->lzyDb->close();
-            $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READWRITE);
             $sql = "CREATE TABLE IF NOT EXISTS \"$tableName\" (";
             $sql .= '"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,';
-            $sql .= '"data" VARCHAR, "lastUpdate" REAL, "structure" VARCHAR, "origFile" VARCHAR, "modified" INTEGER, "lockedBy" VARCHAR, "lockTime" REAL)';
+            $sql .= '"data" VARCHAR, "meta" VARCHAR, "lastUpdate" REAL, "structure" VARCHAR, "2D" BIT, "origFile" VARCHAR, "modified" INTEGER, "lockedBy" VARCHAR, "lockTime" REAL)';
             $res = $this->lzyDb->query($sql);
             if ($res === false) {
                 die("Error: unable to create table in lzyDB: '$tableName'");
             }
+
+            $origFileName = $this->dataFile;
+            if (PATH_TO_APP_ROOT && (strpos($origFileName, PATH_TO_APP_ROOT) === 0)) {
+                $origFileName = substr($origFileName, strlen(PATH_TO_APP_ROOT));
+            }
+            $is2D = (stripos($origFileName, '.csv') !== false) ? 1: 0;
+
             $sql = <<<EOT
-INSERT INTO "$tableName" ("data", "lastUpdate", "structure", "origFile", "modified", "lockedBy", "lockTime")
-VALUES ("", 0.0, "", "{$this->dataFile}", 0, "", 0.0);
+INSERT INTO "$tableName" ("data", "meta", "lastUpdate", "structure", "2D", "origFile", "modified", "lockedBy", "lockTime")
+VALUES ("", "", 0.0, "", $is2D, "$origFileName", 0, "", 0.0);
 EOT;
-            $res = $this->lzyDb->query($sql);
+            $stmt = $this->lzyDb->prepare($sql);
+            $res = $stmt->execute();
             if ($res === false) {
                 die("Error: unable to initialize table in lzyDB: '$tableName'");
             }
@@ -456,8 +651,6 @@ EOT;
             if ($res === false) {
                 die("Error: unable to populate table in lzyDB: '$tableName'");
             }
-            $this->lzyDb->close();
-            $this->lzyDb = new SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
 
         } else { // if table exists, check whether update necessary:
             $ftime = floatval(filemtime($this->dataFile));
@@ -471,6 +664,7 @@ EOT;
                 $this->getData();
             }
         }
+        mylog("LzyDB: table '$tableName' opened");
 
         return;
     } // initDbTable
@@ -479,7 +673,7 @@ EOT;
 
 
     //--------------------------------------------------------------
-    private function importFromFile($initial = false)
+    protected function importFromFile($initial = false)
     {
         $lines = file($this->dataFile);
         $rawData = '';
@@ -489,11 +683,10 @@ EOT;
             }
         }
         list($json, $structure) = $this->decode($rawData, false, true);
-//        $json = $this->decode($rawData, false, true);
         if ($initial) {
-            $this->update($json, true, false, $structure);
+            $this->lowLevelWrite($json, true, false, $structure);
         } else {
-            $this->update($json, true, false);
+            $this->lowLevelWrite($json, true, false);
         }
     } // importFromFile
 
@@ -501,11 +694,20 @@ EOT;
 
 
     //--------------------------------------------------------------
-    private function exportToFile()
+    protected function exportToFile()
     {
         $rawData = $this->getRawData();
         if ($rawData['modified']) {
-            $filename = $rawData['origFile'];
+            if (isset($GLOBALS["appRoot"])) {
+                $filename = $GLOBALS["appRoot"] . $rawData['origFile'];
+
+            } else {
+                $filename = PATH_TO_APP_ROOT . $rawData['origFile'];
+            }
+            if (!file_exists($filename)) {
+                mylog("Error: unable to export data to file '$filename'");
+                return;
+            }
 
             if ($this->useRecycleBin) {
                 require_once SYSTEM_PATH.'page-source.class.php';
@@ -513,15 +715,15 @@ EOT;
                 $ps->copyFileToRecycleBin($filename);
             }
 
+            $data = $this->getData( true );
             if ($this->format == 'yaml') {
-                $this->writeToYamlFile($filename, $this->data);
+                $this->writeToYamlFile($filename, $data);
 
             } elseif ($this->format == 'json') {
-                file_put_contents($filename, $this->jsonEncode($this->data));
-//                file_put_contents($filename, json_encode($this->data));
+                file_put_contents($filename, json_encode($data));
 
             } elseif ($this->format == 'csv') {
-                $this->writeToCsvFile($filename, $this->data);
+                $this->writeToCsvFile($filename, $data);
             }
         }
         return;
@@ -531,7 +733,7 @@ EOT;
 
 
     //--------------------------------------------------------------
-    private function writeToYamlFile($filename, $data)
+    protected function writeToYamlFile($filename, $data)
     {
         $yaml = Yaml::dump($data, 3);
 
@@ -551,8 +753,12 @@ EOT;
 
 
     //--------------------------------------------------------------
-    private function writeToCsvFile($filename, $array, $quote = '"', $delim = ',', $forceQuotes = true)
+    protected function writeToCsvFile($filename, $array, $quote = '"', $delim = ',', $forceQuotes = true)
     {
+        if (isset($array[LZY_META])) {
+            unset($array[LZY_META]);
+        }
+
         $out = '';
         foreach ($array as $row) {
             foreach ($row as $i => $elem) {
@@ -569,14 +775,22 @@ EOT;
 
 
 
-    private function getData()
+    protected function getData( $includeMetaData = false )
     {
         $rawData = $this->getRawData();
         $json = $rawData['data'];
-//TODO: use SQLITE3_TEXT instead -> https://www.php.net/manual/de/sqlite3stmt.bindparam.php
         $json = str_replace('⌑⌇⌑', '"', $json);
         $data = $this->jsonDecode($json);
-//        $data = json_decode($json, true);
+        if ($includeMetaData && $this->is2Ddata()) {
+            $meta = $this->jsonDecode($rawData['meta']);
+            if ($meta) {
+                $data = array_merge($data, [LZY_META => $meta]);
+            }
+        }
+
+        if (!$includeMetaData && isset($data[LZY_META])) {
+            unset($data[LZY_META]);
+        }
         $this->data = $data;
         return $data;
     } // getData
@@ -586,6 +800,9 @@ EOT;
 
     protected function getRawData()
     {
+        if (!$this->tableName) {
+            return null;
+        }
         $query = "SELECT * FROM \"{$this->tableName}\"";
         $this->rawData = $this->lzyDb->querySingle($query, true);
         return $this->rawData;
@@ -594,7 +811,7 @@ EOT;
 
 
 
-    private function jsonEncode($data, $isAlreadyJson = false)
+    protected function jsonEncode($data, $isAlreadyJson = false)
     {
         if ($isAlreadyJson) {
             $json = $data;
@@ -608,8 +825,11 @@ EOT;
 
 
 
-    private function jsonDecode($json)
+    protected function jsonDecode($json)
     {
+        if (!is_string($json)) {
+            return null;
+        }
         $json = str_replace('⌑⌇⌑', '"', $json);
         $data = json_decode($json, true);
         return $data;
@@ -619,16 +839,21 @@ EOT;
 
 
     //---------------------------------------------------------------------------
-    private function parseArguments($args)
+    protected function parseArguments($args)
     {
+        if (is_string($args)) {
+            $args = ['dataFile' => $args];
+        }
         $this->dataFile = isset($args['dataFile']) ? $args['dataFile'] :
             (isset($args['dbFile']) ? $args['dbFile'] : ''); // for compatibility
+        $this->dataFile = resolvePath($this->dataFile);
         $this->sid = isset($args['sid']) ? $args['sid'] : '';
         $this->lockDB = isset($args['lockDB']) ? $args['lockDB'] : false;
         $this->format = isset($args['format']) ? $args['format'] : '';
-        $this->lockTimeout = isset($args['lockTimeout']) ? $args['lockTimeout'] : 120;
         $this->secure = isset($args['secure']) ? $args['secure'] : false;
+        $this->headersTop = isset($args['headersTop']) ? $args['headersTop'] : false;
         $this->useRecycleBin = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
+        $this->separateMetaData = isset($args['separateMetaData']) ? $args['separateMetaData'] : false;
         $this->format = ($this->format) ? $this->format : pathinfo($this->dataFile, PATHINFO_EXTENSION) ;
         $this->tableName = isset($args['tableName']) ? $args['tableName'] : '';
         if ($this->tableName && !$this->dataFile) {
@@ -642,8 +867,11 @@ EOT;
 
 
     //---------------------------------------------------------------------------
-    private function decode($rawData, $format = false, $outputAsJson = false)
+    protected function decode($rawData, $format = false, $outputAsJson = false)
     {
+        if (!$rawData) {
+            return null;
+        }
         $data = false;
         $structure = [];
         if (!$format) {
@@ -653,19 +881,22 @@ EOT;
             $rawData = str_replace(["\r", "\n", "\t"], '', $rawData);
             if ($outputAsJson) {
                 $this->data = $this->jsonDecode($rawData);
-//                $this->data = json_decode($rawData, true);
-//                $data = $rawData;
 
                 $rec0 = $data[0];
                 $structure['key'] = 'index';
-                $structure['labels'] = array_values($rec0);
-                $structure['types'] = array_fill(0, sizeof($rec0), 'string');
+                if (is_array($rec0)) {
+                    $structure['labels'] = array_values($rec0);
+                    $structure['types'] = array_fill(0, sizeof($rec0), 'string');
+                } else {
+                    $structure['labels'] = [];
+                    $structure['types'] = [];
+
+                }
                 $structure = $this->jsonEncode($structure);
 
                 $data = [$rawData, $structure];
             } else {
                 $data = $this->jsonDecode($rawData, true);
-//                $data = json_decode($rawData, true);
             }
 
         } elseif ($format === 'yaml') {
@@ -701,7 +932,9 @@ EOT;
                 $structure['key'] = 'index';
                 $structure['labels'] = array_values($rec0);
                 $structure['types'] = array_fill(0, sizeof($rec0), 'string');
-                array_shift($data); // first row contains headers, so remove it from payload data
+                if ($this->headersTop) {
+                    array_shift($data); // first row contains headers, so remove it from payload data
+                }
 
                 $structure = $this->jsonEncode($structure);
                 $data = [$this->jsonEncode($data), $structure];
@@ -718,7 +951,7 @@ EOT;
 
 
     //--------------------------------------------------------------
-    private function convertYaml($str)
+    protected function convertYaml($str)
     {
         $data = null;
         if ($str) {
@@ -737,7 +970,7 @@ EOT;
 
 
     //--------------------------------------------------------------
-    private function parseCsv($str, $delim = false, $enclos = false) {
+    protected function parseCsv($str, $delim = false, $enclos = false) {
 
         if (!$delim) {
             $delim = (substr_count($str, ',') > substr_count($str, ';')) ? ',' : ';';
@@ -759,7 +992,7 @@ EOT;
 
 
 
-    private function getSessionID()
+    protected function getSessionID()
     {
         if (!$sessionId = session_id()) {
             session_start();
@@ -772,7 +1005,7 @@ EOT;
 
 
 
-    private function isMySessionID( $sid )
+    protected function isMySessionID( $sid )
     {
         if (!$sessionId = session_id()) {
             session_start();
@@ -783,10 +1016,10 @@ EOT;
     } // isMySessionID
 
 
+
+
     protected function deriveTableName()
-//    private function deriveTableName()
     {
-//        $tableName = str_replace(['/', '.'], '_', preg_replace("/\.[^.]+$/", "", $this->dataFile));
         $tableName = str_replace(['/', '.'], '_', $this->dataFile);
         $tableName = preg_replace('|^[\./_]*|', '', $tableName);
         return $tableName; // remove leading '../...'
@@ -798,6 +1031,7 @@ EOT;
     public function __destruct()
     {
         $this->exportToFile(); // saves data if modified
+        $this->lzyDb->close();
     } // __destruct
 
 } // DataStorage
