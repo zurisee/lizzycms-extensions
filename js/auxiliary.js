@@ -62,6 +62,20 @@ function serverLog(text)
 
 
 //--------------------------------------------------------------
+function isServerErrMsg(json)
+{
+    if (json.match(/^</)) {
+        console.log('- response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
+        return true;
+    }
+    console.log('- response: ' + json);
+    return false;
+} // isServerErrMsg
+
+
+
+
+//--------------------------------------------------------------
 function lzyReload( arg, url )
 {
     var call = window.location.pathname.replace(/\?.*/, '');
