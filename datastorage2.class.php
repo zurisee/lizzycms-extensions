@@ -4,6 +4,9 @@
  * So, all data managed by DataStorage2 is stored in there.
  * However, shadow data files in yaml, json or cvs format may be maintained:
  *      they are imported at construction and exported at deconstruction time
+ *
+ * Old:
+ *     public function __construct($args, $sid, $lockDB, $format, $lockTimeout, $secure)
 */
 
 
@@ -279,8 +282,8 @@ class DataStorage2
             } else {
                 return false;
             }
+            $this->updateRawMetaData($rawData);
         }
-        $this->updateRawMetaData($rawData);
         return true;
     } // unLockDB
 
@@ -438,7 +441,9 @@ class DataStorage2
         $this->openDbReadWrite();
 
         $json = $this->jsonEncode($newData, $isJson);
-        $json = SQLite3::escapeString($json);
+        if (is_string($json)) {
+            $json = SQLite3::escapeString($json);
+        }
         $ftime = microtime(true);
         $modified = $markModified ? 1 : 0;
 
@@ -814,14 +819,14 @@ EOT;
 
     protected function jsonEncode($data, $isAlreadyJson = false)
     {
-        if ($isAlreadyJson) {
+        if ($isAlreadyJson && is_string($data)) {
             $json = $data;
         } else {
             $json = json_encode($data);
         }
         $json = str_replace('"', '⌑⌇⌑', $json);
         return $json;
-    }
+    } // jsonEncode
 
 
 
@@ -834,7 +839,7 @@ EOT;
         $json = str_replace('⌑⌇⌑', '"', $json);
         $data = json_decode($json, true);
         return $data;
-    }
+    } // jsonDecode
 
 
 
@@ -851,7 +856,7 @@ EOT;
         $this->sid = isset($args['sid']) ? $args['sid'] : '';
         $this->lockDB = isset($args['lockDB']) ? $args['lockDB'] : false;
         $this->format = isset($args['format']) ? $args['format'] : '';
-        $this->secure = isset($args['secure']) ? $args['secure'] : false;
+        $this->secure = isset($args['secure']) ? $args['secure'] : true;
         $this->headersTop = isset($args['headersTop']) ? $args['headersTop'] : false;
         $this->useRecycleBin = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
         $this->separateMetaData = isset($args['separateMetaData']) ? $args['separateMetaData'] : false;
@@ -906,7 +911,7 @@ EOT;
                 if (isset($data["_structure"])) {
                     $structure = $data["_structure"];
                     unset($data["_structure"]);
-                } else {
+                } elseif ($data) {
                     $rec0 = reset($data);
                     $key0 = (array_keys($data))[0];
                     if (preg_match('/^ \d{2,4} - \d\d - \d\d/x', $key0)) {
@@ -916,6 +921,8 @@ EOT;
                     }
                     $structure['labels'] = array_keys($rec0);
                     $structure['types'] = array_fill(0, sizeof($rec0), 'string');
+                } else {
+                    return [[], $structure];
                 }
 
                 $this->data = $data;
