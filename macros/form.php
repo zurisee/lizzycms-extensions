@@ -5,9 +5,6 @@
 
 require_once SYSTEM_PATH.'forms.class.php';
 
-//$page->addCssFiles('~sys/css/lizzy_forms.css');
-//$page->addJqFiles('JQUERY');
-
 
 $macroName = basename(__FILE__, '.php');
 
@@ -18,7 +15,7 @@ if (isset($_GET['lizzy_form']) || isset($_POST['lizzy_form'])) {	// we received 
 	unset($this->form);
 }
 
-$jsFloatPath = "{$sys}third-party/floatlabel/";
+$jsFloatPath = "~sys/third-party/floatlabel/";
 
 $page->addCssFiles( [ "{$jsFloatPath}jquery.FloatLabel.css", "{$jsFloatPath}main.css" ]);
 $page->addJqFiles("{$jsFloatPath}jquery.FloatLabel.js");
