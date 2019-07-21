@@ -13,7 +13,8 @@ use Symfony\Component\Yaml\Yaml;
 require dirname(__FILE__) . '/utils.php';
 
 // Require Datastorage class:
-require_once SYSTEM_PATH.'datastorage.class.php';
+require_once SYSTEM_PATH.'datastorage2.class.php';
+require_once SYSTEM_PATH.'backend_aux.php';
 
 
 // Check whether there is custome backend code 'code/_custom-cal-backend.php':
@@ -33,16 +34,13 @@ $dataSrc = PATH_TO_APP_ROOT.$_SESSION['lizzy']['cal'][$inx];
 $backend = new CalendarBackend($dataSrc);
 
 if (isset($_GET['save'])) {
-    echo $backend->saveNewData($_POST);
-    exit;
+    exit( $backend->saveNewData($_POST) );
 }
 if (isset($_GET['del'])) {
-    echo $backend->deleteRec($_POST);
-    exit;
+    exit( $backend->deleteRec($_POST) );
 }
 if (isset($_GET['mode'])) {
-    $backend->saveMode($_GET['mode']);
-    exit;
+    exit( $backend->saveMode($_GET['mode']) );
 }
 
 exit( $backend->getData() );
@@ -71,7 +69,7 @@ class CalendarBackend {
             $this->timezone = new DateTimeZone($_GET['timezone']);
         }
 
-        $this->ds = new DataStorage($dataSrc,'', false, '', 120, true);
+        $this->ds = new DataStorage2(['dataFile' => $dataSrc]);
     } // __construct
 
 
@@ -145,7 +143,7 @@ class CalendarBackend {
                 if (function_exists('customPrepareData')) {
                     $rec = customPrepareData($rec);
                 }
-                $this->ds->write($recId++, $rec);
+                $this->ds->writeElement($recId++, $rec);
             }
 
         } else {        // single event:
@@ -164,7 +162,7 @@ class CalendarBackend {
             if (function_exists('customPrepareData')) {
                 $rec = customPrepareData($rec);
             }
-            $this->ds->write($recId, $rec);
+            $this->ds->writeElement($recId, $rec);
         }
 
         return 'ok';
@@ -187,9 +185,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveMode($mode)
     {
-        session_start();
         $_SESSION['lizzy']['calMode'] = $mode;
-        session_write_close();
         return 'ok';
     } // saveMode
 
@@ -234,4 +230,5 @@ class CalendarBackend {
     }
 
 } // class
+
 

@@ -98,11 +98,13 @@ function calEventChanged(inx, e) {
 
     var json = JSON.stringify(rec);
 
+    console.log('calEventChanged: ' + json);
     $.ajax({
         url : calBackend + '?inx=' + inx + '&save',
         type: 'post',
         data : 'json='+json,
     }).done(function(response){
+        if (isServerErrMsg(response)) { return; }
         if (response && response != 'ok') { console.log(response); }
     });
 } // calEventChanged
@@ -110,11 +112,14 @@ function calEventChanged(inx, e) {
 
 
 function storeViewMode(inx, viewName) {
+    console.log('save view mode: ' + viewName);
     $.ajax({
         url : calBackend + '?inx=' + inx + '&mode=' + viewName,
         type: 'get',
     }).done(function(response){
-        if (response && response != 'ok') { console.log(response); }
+        if (isServerErrMsg(response)) { return; }
+        if (response && response !== 'ok') { console.log(response); }
+        // if (response && response != 'ok') { console.log(response); }
     });
 } // storeViewMode
 
@@ -221,11 +226,13 @@ function defaultOpenCalPopup(inx, e) {
         var request_method = $this.attr("method");
         var form_data = $this.serialize();
 
+        // console.log(': ' + viewName);
         $.ajax({
             url: post_url,
             type: request_method,
             data: form_data
         }).done(function (response) {
+            if (isServerErrMsg(response)) { return; }
             if (response && response != 'ok') { console.log(response); alert(response); }
             lzyReload();
         });
@@ -242,11 +249,13 @@ function defaultOpenCalPopup(inx, e) {
         var post_url = $form.attr("action") + '?del';
         var request_method = $form.attr("method");
         var form_data = $form.serialize();
+        console.log('delete entry');
         $.ajax({
             url: post_url,
             type: request_method,
             data: form_data
         }).done(function (response) {
+            if (isServerErrMsg(response)) { return; }
             if (response && response != 'ok') { console.log(response); alert(response); }
             lzyReload();
         });

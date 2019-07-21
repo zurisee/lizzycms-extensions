@@ -33,17 +33,21 @@ $this->addMacro($macroName, function () {
     $lang = $this->config->lang;
 
     $source = $this->getArg($macroName, 'file', 'File path where data shall be fetched and stored.', 'calendar.yaml');
-    $source = resolvePath($source, true);
 
     $edPermitted = $this->getArg($macroName, 'calEditingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
 
     $publish = $this->getArg($macroName, 'publish', 'If set, Lizzy will switch to calendar publishing mode (using given name). Use a calendar app to subscribe to this calendar.', false);
+
+    $tooltips = $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', '');
+
+    if ($source == 'help') {
+        return '';
+    }
+    $source = resolvePath($source, true);
     if ($publish) {
         $domain = $this->getArg($macroName, 'domain', 'Domain info that will be included in the published calendar.', $this->lzy->pageUrl);
         exit( renderICal($source, $publish, $domain) );
     }
-
-    $tooltips = $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', '');
     if ($tooltips) {
         $tooltips = <<<EOT
             element.qtip({
@@ -55,9 +59,6 @@ EOT;
         $this->page->addJqFiles("~sys/extensions/calendar/third-party/qtip/jquery.qtip.min.js,");
     }
 
-    if ($source == 'help') {
-        return '';
-    }
 
     $backend = CALENDAR_BACKEND;
     $viewMode = (isset($_SESSION['lizzy']['calMode'])) ? $_SESSION['lizzy']['calMode'] : 'agendaWeek';
@@ -210,7 +211,7 @@ function loadDefaultPopup($inx, $lzy, $popupForm, $calEditingPermission)
 
 function renderICal($source, $name, $domain)
 {
-    $ds = new DataStorage($source,'', false, '', 120, true);
+    $ds = new DataStorage2(['dataFile'=> $source]);
     $data = $ds->read();
 
 
