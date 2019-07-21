@@ -446,7 +446,9 @@ class MyMarkdown
                 return $str;
             }
         }
-        if ($enabled || $this->trans->lzy->config->feature_autoConvertLinks) {
+        $feature_autoConvertLinks = isset($this->trans->lzy->config->feature_autoConvertLinks)? $this->trans->lzy->config->feature_autoConvertLinks : false;
+        if ($enabled || $feature_autoConvertLinks) {
+//        if ($enabled || $this->trans->lzy->config->feature_autoConvertLinks) {
             $lines = explode("\n", $str);
             foreach ($lines as $i => $l) {
 
