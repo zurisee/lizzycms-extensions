@@ -903,8 +903,9 @@ EOT;
         $names = $currFormDescr->formData['names'];
         $labels = $currFormDescr->formData['labels'];
 
-        $db = new DataStorage($fileName);
-        $data = $db->read('*');
+        $db = new DataStorage2($fileName);
+//        $db = new DataStorage($fileName);
+        $data = $db->read();
 
         if (!$data) {   // no data yet -> prepend header row containing labels:
             $data = [];
