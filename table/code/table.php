@@ -4,7 +4,7 @@
 
 
 define('ORD_A', 	ord('a'));
-require_once SYSTEM_PATH.'datastorage.class.php';
+require_once SYSTEM_PATH.'datastorage2.class.php';
 require_once SYSTEM_PATH.'htmltable.class.php';
 
 global $tableCounter;
@@ -16,19 +16,18 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-    $options = $this->getArgsArray($macroName, false);
-
-    if (isset($options[0]) && ($options[0] == 'help')) {
+    $dataSource = $this->getArg($macroName, 'dataSource', '', '');
+    if ($dataSource === 'help') {
         return renderHelp($this, $macroName);
     }
-
-    $dataSource = $this->getArg($macroName, 'dataSource', '', '');
     $file = resolvePath($dataSource, true);
     if ($dataSource && !file_exists($file)) {
-        return "<div>Error: Datasource-File '$dataSource' not found.</div>\n";
+        return "<div>Error: Datasource-File '$dataSource' not found for macro 'table()'.</div>\n";
     }
 
-    $dataTable = new HtmlTable($this->page, $inx, $options);
+    $options = $this->getArgsArray($macroName, false);
+
+    $dataTable = new HtmlTable($this->lzy, $inx, $options);
 	$table = $dataTable->render();
 	
 	return $table;
@@ -37,12 +36,12 @@ $this->addMacro($macroName, function () {
 
 
 
-function renderHelp($page, $macroName)
+function renderHelp($trans, $macroName)
 {
-    $dataTable = new HtmlTable($page, 0, 'help');
+    $dataTable = new HtmlTable($trans->lzy, 0, 'help');
     $help = $dataTable->render('help');
     foreach ($help as $helpText) {
-        $page->getArg($macroName, $helpText['option'], $helpText['text']);
+        $trans->getArg($macroName, $helpText['option'], $helpText['text']);
     }
     return '';
 }
