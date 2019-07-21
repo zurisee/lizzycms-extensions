@@ -370,7 +370,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // ---------------------------------------------------------------
     protected function identifyCheckList($line, $lines, $current)
     {
-        if (preg_match('/^\s*\[\s?x?\s?\]/', $line)) {
+        if (preg_match('/^\s*-\s?\[\s?x?\s?\]/', $line)) {
             return 'checkList';
         }
         return false;
@@ -393,7 +393,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                     break;
                 }
                 continue;
-            } elseif ($line && !preg_match('/^\s* \[ \s?x?\s? \] /x', $line)) {  // no pattern [] or [x]
+            } elseif ($line && !preg_match('/^\s* -\s? \[ \s?x?\s? \] /x', $line)) {  // no pattern [] or [x]
                 $i--;
                 break;
             }
@@ -435,7 +435,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $out = '';
         while ($i<sizeof($lines)) {
             $line = $lines[$i];
-            if (preg_match('/^(\s*) \[ \s?(x?)\s? \]\s (.*) /x', $line, $m)) {
+            if (preg_match('/^(\s*) -\s? \[ \s?(x?)\s? \]\s (.*) /x', $line, $m)) {
                 $elem = $m[3];
                 $checked = $m[2] ? ' checked': '';
                 $lead = str_replace("\t", '    ', $m[1]);
