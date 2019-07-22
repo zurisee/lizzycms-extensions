@@ -585,6 +585,10 @@ class MyMarkdown
                 $head .= "<span $attr>$span</span>";
 
 			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $m)) {	// now insert into preceding tag
+			    if ($tag) {
+			        $m[1] = "<$tag";
+			        $tail = "</$tag>";
+                }
 				$head = $m[1] . "$attr>" . $m[2] . $span;
 			}
 			$line = $head.$tail;
