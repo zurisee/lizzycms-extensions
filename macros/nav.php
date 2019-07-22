@@ -132,7 +132,7 @@ function inPageHierarchie($page, $inx, $depth, $listElemTag, $inPageSizeThreshol
             return;
         }
         var hdrText = \$this.text();
-        var id = hdrText.replace(/\s/, '_');
+        var id = hdrText.replace(/[^a-z0-9]/gi, '_');
         \$this.attr('id', id);
         var hdrId =  \$this.attr('id');
         var nodeName = this.nodeName;
@@ -166,7 +166,7 @@ function inPageByTargetElement($page, $inx, $targetElem, $listElemTag, $inPageSi
             return;
         }
         var hdrText = \$this.text();
-        var id = hdrText.replace(/\s/, '_');
+        var id = hdrText.replace(/[^a-z0-9]/gi, '_');
         \$this.attr('id', id);
         var hdrId =  \$this.attr('id');
         str += '<$listElemTag><a href="#'+hdrId+'">'+hdrText+'</a></$listElemTag>';
