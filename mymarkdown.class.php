@@ -582,7 +582,10 @@ class MyMarkdown
             list($tag, $attr, $lang, $comment, $literal, $mdCompile) = parseInlineBlockArguments($args);
 
 			if ($span) {
-                $head .= "<span $attr>$span</span>";
+                if (!$tag) {
+                    $tag = 'span';
+                }
+                $head .= "<$tag $attr>$span</$tag>";
 
 			} elseif (preg_match('/([^\<]*\<[^\>]*) \> (.*)/x', $head, $m)) {	// now insert into preceding tag
 			    if ($tag) {
