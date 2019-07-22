@@ -136,7 +136,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             }
 
             if (isset($line[0]) && ($line[0] == '|')) {  // next cell starts
-                $line = trim($line, '|');
+                $line = substr($line,1);
                 $cells = preg_split('/(?<!\\\)\|/', $line);
                 foreach ($cells as $cell) {
                     $col++;
@@ -158,6 +158,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $out .= "\t  <caption>{$block['caption']}</caption>\n";
         }
 
+        // render header as defined in opening line, e.g. |=== |H1|H2
         if ($block['header']) {     // table header
             $out .= "\t  <thead>\n";
             for ($col = 0; $col < $nCols; $col++) {
@@ -167,19 +168,46 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $out .= "\t  </thead>\n";
         }
 
-        $out .= "\t  <tbody>\n";
-        for ($row = 0; $row < $nRows; $row++) {
-            $out .= "\t\t<tr>\n";
+        // render header as defined in first row, e.g. |# H1|H2
+        $row = 0;
+        if (isset($table[0][0]) && ($table[0][0][0] === '#')) {
+            $row = 1;
+            $table[0][0] = substr($table[0][0],1);
+            $out .= "\t  <thead>\n";
             for ($col = 0; $col < $nCols; $col++) {
-                $cell = isset($table[$row][$col]) ? trim($table[$row][$col]) : '';
-                if ($cell) {
-                    $cell = compileMarkdownStr($cell);
+                $cell = isset($table[0][$col]) ? $table[0][$col] : '';
+                $cell = compileMarkdownStr(trim($cell));
+                $cell = trim($cell);
+                if (preg_match('|^<p>(.*)</p>$|', $cell, $m)) {
+                    $cell = $m[1];
+                }
+                $out .= "\t\t\t<th class='th$col'>$cell</th>\n";
+            }
+            $out .= "\t  </thead>\n";
+        }
+
+        $out .= "\t  <tbody>\n";
+        for (; $row < $nRows; $row++) {
+            $out .= "\t\t<tr>\n";
+            $colspan = 1;
+            for ($col = 0; $col < $nCols; $col++) {
+                $cell = isset($table[$row][$col]) ? $table[$row][$col] : '';
+                if ($cell === '>') {    // colspan?
+                    $colspan++;
+                    continue;
+                } elseif ($cell) {
+                    $cell = compileMarkdownStr(trim($cell));
                     $cell = trim($cell);
                     if (preg_match('|^<p>(.*)</p>$|', $cell, $m)) {
                         $cell = $m[1];
                     }
                 }
-                $out .= "\t\t\t<td class='row".($row+1)." col".($col+1)."'>$cell</td>\n";
+                $colspanAttr = '';
+                if ($colspan > 1) {
+                    $colspanAttr = " colspan='$colspan'";
+                }
+                $out .= "\t\t\t<td class='row".($row+1)." col".($col+1)."'$colspanAttr>$cell</td>\n";
+                $colspan = 1;
             }
             $out .= "\t\t</tr>\n";
         }
