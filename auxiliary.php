@@ -137,7 +137,7 @@ function parseInlineBlockArguments($str, $returnElements = false)
         $style = ' style="'. trim($style) .'"';
     }
 
-    if (preg_match_all('/( [\w-]+ \=\s* " .*? " ) /x', $str, $m)) {  // attr='arg '
+    if (preg_match_all('/( [\w-]+ \=\s* " .*? " ) /x', $str, $m)) {  // attr="arg "
         $elems = $m[1];
         $str = str_replace($m[1], '', $str);
     }
@@ -145,7 +145,7 @@ function parseInlineBlockArguments($str, $returnElements = false)
         $elems = array_merge($elems, $m[1]);
         $str = str_replace($m[1], '', $str);
     }
-    if (preg_match_all("/( [\w-]+ \=\s* [^\s,]+ ) /x", $str, $m)) {  // attr='arg '
+    if (preg_match_all("/( [\w-]+ \=\s* [^\s,]+ ) /x", $str, $m)) {  // attr=arg
         $elems = array_merge($elems, $m[1]);
         $str = str_replace($m[1], '', $str);
     }
