@@ -41,23 +41,24 @@ getfile
 */
 
 define('SYSTEM_PATH', 		'');		                            // same directory
-define('EXTENSIONS_PATH', 	'extensions/');		                            // same directory
+//define('EXTENSIONS_PATH', 	'extensions/');		                            // same directory
 define('PATH_TO_APP_ROOT', 	'../');		                            // root folder of web app
-define('DATA_PATH', 		PATH_TO_APP_ROOT.'data/');		        // must correspond to lizzy app
-define('CACHE_PATH',        PATH_TO_APP_ROOT.'.#cache/');           // required by Ticketing class
-define('SERVICE_LOG',       PATH_TO_APP_ROOT.'.#logs/log.txt');	    //
-define('ERROR_LOG',         PATH_TO_APP_ROOT.'.#logs/errlog.txt');	//
+//define('DATA_PATH', 		PATH_TO_APP_ROOT.'data/');		        // must correspond to lizzy app
+//define('CACHE_PATH',        PATH_TO_APP_ROOT.'.#cache/');           // required by Ticketing class
+//define('SERVICE_LOG',       PATH_TO_APP_ROOT.'.#logs/log.txt');	    //
+//define('ERROR_LOG',         PATH_TO_APP_ROOT.'.#logs/errlog.txt');	//
 define('LOCK_TIMEOUT', 		120);	                                // max time till field is automatically unlocked
 define('MAX_URL_ARG_SIZE',  255);
 define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
-define('RECYCLE_BIN',           '.#recycleBin/');
-define('RECYCLE_BIN_PATH',      '~page/'.RECYCLE_BIN);
+//define('RECYCLE_BIN',           '.#recycleBin/');
+//define('RECYCLE_BIN_PATH',      '~page/'.RECYCLE_BIN);
 
 require_once 'vendor/autoload.php';
+require_once 'backend_aux.php';
 require_once 'datastorage2.class.php';
 require_once 'ticketing.class.php';
 
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
+//define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
 
 use Symfony\Component\Yaml\Yaml;
 
@@ -316,14 +317,14 @@ EOT;
 
 
 
-//	//---------------------------------------------------------------------------
-//	private function getAllData()
-//    {
-//        if (!$this->openDB( )) {
-//            exit('failed#save');
-//        }
-//        exit($this->prepareClientData().'#get-all');
-//    } // getAllData
+	//---------------------------------------------------------------------------
+	private function getAllData()
+    {
+        if (!$this->openDB( )) {
+            exit('failed#save');
+        }
+        exit($this->prepareClientData().'#get-all');
+    } // getAllData
 
 
 
@@ -370,26 +371,26 @@ EOT;
 
 
 
-//	//------------------------------------------------------------
-//	private function prepareClientData($key = false)
-//	{
-//        if (!$this->openDB()) {
-//            exit('failed#getData');
-//        }
-//        if ($key === '_all') {
-//            $data = $this->db->read();
-//        } else {
-//            $data = $this->db->readElement($key);
-//        }
-////        $data = $this->db->read('*');
-//		if (!$data) {
-//			$data = [];
-//		} elseif ($key && isset($data[$key])) {
-//		    $data = $data[$key];
-//        }
-//		$t = json_encode($data);
-//		return json_encode($data);
-//	} // prepareClientData
+	//------------------------------------------------------------
+	private function prepareClientData($key = false)
+	{
+        if (!$this->openDB()) {
+            exit('failed#getData');
+        }
+        if ($key === '_all') {
+            $data = $this->db->read();
+        } else {
+            $data = $this->db->readElement($key);
+        }
+//        $data = $this->db->read('*');
+		if (!$data) {
+			$data = [];
+		} elseif ($key && isset($data[$key])) {
+		    $data = $data[$key];
+        }
+		$t = json_encode($data);
+		return json_encode($data);
+	} // prepareClientData
 
 
 
@@ -403,7 +404,7 @@ EOT;
 	    $useRecycleBin = false;
         $dataRef = $this->get_request_data('ds');
         if ($dataRef &&preg_match('/^[A-Z0-9]{4,20}$/', $dataRef)) {     // dataRef (=ticket hash) available
-            require_once SYSTEM_PATH . 'ticketing.class.php';
+//            require_once SYSTEM_PATH . 'ticketing.class.php';
             $ticketing = new Ticketing();
             $ticketRec = $ticketing->consumeTicket($dataRef);
             if ($ticketRec) {      // corresponding ticket found
@@ -419,13 +420,13 @@ EOT;
         }
 
         if ($this->dbFile) {
-//            $this->db = new DataStorage2([
-            $this->db = new ElementLevelDataStorage([
-                'dbFile' => $this->dbFile,
-                'sid' => $this->sessionId,
-                'lockDB' => $lockDB,
-                'useRecycleBin' => $useRecycleBin
-            ]);
+            $this->db = new DataStorage2(['dataFile' => $this->dbFile]);
+//            $this->db = new ElementLevelDataStorage([
+//                'dbFile' => $this->dbFile,
+//                'sid' => $this->sessionId,
+//                'lockDB' => $lockDB,
+//                'useRecycleBin' => $useRecycleBin
+//            ]);
 //            $this->db = new DataStorage([
 //                'dbFile' => $this->dbFile,
 //                'sid' => $this->sessionId,
@@ -709,111 +710,111 @@ EOT;
 
 
 //--------------------------------------------------------------
-function convertYaml($str)
-{
-	$data = null;
-	if ($str) {
-		$str = str_replace("\t", '    ', $str);
-		try {
-			$data = Yaml::parse($str);
-		} catch(Exception $e) {
-            fatalError("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
-		}
-	}
-	return $data;
-} // convertYaml
-
-
-
-
-//--------------------------------------------------------------
-function convertToYaml($data, $level = 3)
-{
-	return Yaml::dump($data, $level);
-} // convertToYaml
-
-
-
-
-//-----------------------------------------------------------------------------
-function trunkPath($path, $n = 1)
-{
-	$path = ($path[strlen($path)-1] == '/') ? rtrim($path, '/') : dirname($path);
-	return implode('/', explode('/', $path, -$n)).'/';
-} // trunkPath
-
-
-
-
-//------------------------------------------------------------
-function preparePath($path)
-{
-    $path = dirname($path.'x');
-    if (!file_exists($path)) {
-        if (!mkdir($path, MKDIR_MASK, true)) {
-            fatalError("Error: failed to create folder '$path'");
-        }
-    }
-} // preparePath
-
-
-
-//------------------------------------------------------------
-function fatalError($msg)
-{
-    $msg = date('Y-m-d H:i:s')." [_ajax_server.php]\n$msg\n";
-    file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
-    exit;
-} // fatalError
-
-
-//------------------------------------------------------------
-function resolvePath($path)
-{
-    global $globalParams;
-
-    if (strpos($path, ':') !== false) {   // https://, tel:, sms:, etc.
-        return $path;
-    }
-    $path = trim($path);
-//    if ((($ch1=$path[0]) != '/') && ($ch1 != '~') && ($ch1 != '.')/* && ($ch1 != '_')*/) {	//default to path local to page ???always ok?
-//        $path = '~/'.$path;
-//    }
-
-    $from = [
-        '|~/|',
-        '|~data/|',
-        '|~sys/|',
-        '|~ext/|',
-        '|~page/|',
-    ];
-    $to = [
-        '',
-        $_SESSION["lizzy"]["dataPath"],
-//        $globalParams['dataPath'],
-        SYSTEM_PATH,
-        EXTENSIONS_PATH,
-        $_SESSION["lizzy"]["pathToPage"],
-//        $globalParams['pathToPage'],
-//        $globalParams['pathToRoot'].$globalParams['pagePath'];
-    ];
-
-//    $pathToRoot = $globalParams['pathToRoot'];
-//    if ($resourceAccess) {    // -> include 'pages/' in path
-//        for ($i=0; $i<4; $i++) {
-//            $to[$i] = $pathToRoot.$to[$i];
+//function convertYaml($str)
+//{
+//	$data = null;
+//	if ($str) {
+//		$str = str_replace("\t", '    ', $str);
+//		try {
+//			$data = Yaml::parse($str);
+//		} catch(Exception $e) {
+//            fatalError("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
+//		}
+//	}
+//	return $data;
+//} // convertYaml
+//
+//
+//
+//
+////--------------------------------------------------------------
+//function convertToYaml($data, $level = 3)
+//{
+//	return Yaml::dump($data, $level);
+//} // convertToYaml
+//
+//
+//
+//
+////-----------------------------------------------------------------------------
+//function trunkPath($path, $n = 1)
+//{
+//	$path = ($path[strlen($path)-1] == '/') ? rtrim($path, '/') : dirname($path);
+//	return implode('/', explode('/', $path, -$n)).'/';
+//} // trunkPath
+//
+//
+//
+//
+////------------------------------------------------------------
+//function preparePath($path)
+//{
+//    $path = dirname($path.'x');
+//    if (!file_exists($path)) {
+//        if (!mkdir($path, MKDIR_MASK, true)) {
+//            fatalError("Error: failed to create folder '$path'");
 //        }
-//        $to[4] = $globalParams["host"].$globalParams['pathToPage'];
 //    }
-//    if ($pageAccess) {    // -> exclude 'pages/' in path
-//        for ($i=0; $i<4; $i++) {
-//            $to[$i] = $pathToRoot.$to[$i];
-//        }
-//        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
+//} // preparePath
+//
+//
+//
+////------------------------------------------------------------
+//function fatalError($msg)
+//{
+//    $msg = date('Y-m-d H:i:s')." [_ajax_server.php]\n$msg\n";
+//    file_put_contents(ERROR_LOG, $msg, FILE_APPEND);
+//    exit;
+//} // fatalError
+//
+//
+////------------------------------------------------------------
+//function resolvePath($path)
+//{
+//    global $globalParams;
+//
+//    if (strpos($path, ':') !== false) {   // https://, tel:, sms:, etc.
+//        return $path;
 //    }
-
-    $path = preg_replace($from, $to, $path);
-    return $path;
-} // resolvePath
-
+//    $path = trim($path);
+////    if ((($ch1=$path[0]) != '/') && ($ch1 != '~') && ($ch1 != '.')/* && ($ch1 != '_')*/) {	//default to path local to page ???always ok?
+////        $path = '~/'.$path;
+////    }
+//
+//    $from = [
+//        '|~/|',
+//        '|~data/|',
+//        '|~sys/|',
+//        '|~ext/|',
+//        '|~page/|',
+//    ];
+//    $to = [
+//        '',
+//        $_SESSION["lizzy"]["dataPath"],
+////        $globalParams['dataPath'],
+//        SYSTEM_PATH,
+//        EXTENSIONS_PATH,
+//        $_SESSION["lizzy"]["pathToPage"],
+////        $globalParams['pathToPage'],
+////        $globalParams['pathToRoot'].$globalParams['pagePath'];
+//    ];
+//
+////    $pathToRoot = $globalParams['pathToRoot'];
+////    if ($resourceAccess) {    // -> include 'pages/' in path
+////        for ($i=0; $i<4; $i++) {
+////            $to[$i] = $pathToRoot.$to[$i];
+////        }
+////        $to[4] = $globalParams["host"].$globalParams['pathToPage'];
+////    }
+////    if ($pageAccess) {    // -> exclude 'pages/' in path
+////        for ($i=0; $i<4; $i++) {
+////            $to[$i] = $pathToRoot.$to[$i];
+////        }
+////        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
+////    }
+//
+//    $path = preg_replace($from, $to, $path);
+//    return $path;
+//} // resolvePath
+//
 
