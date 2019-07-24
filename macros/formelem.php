@@ -16,8 +16,9 @@ if (isset($_GET['lizzy_form']) || isset($_POST['lizzy_form'])) {	// we received 
 	unset($this->form);
 }
 
+$jsFloatPath = "~sys/third-party/floatlabel/";
 //$jsFloatPath = "{$sys}third-party/floatlabel/";
-//
+
 //$page->addCssFiles( [ "{$jsFloatPath}jquery.FloatLabel.css", "{$jsFloatPath}main.css" ]);
 //$page->addJqFiles("{$jsFloatPath}jquery.FloatLabel.js");
 
