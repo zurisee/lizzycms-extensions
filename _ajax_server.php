@@ -400,7 +400,7 @@ EOT;
 	    if ($this->db) {
 	        return true;    // already opened
         }
-        $this->dbFile = false;
+        $this->dataFile = false;
 	    $useRecycleBin = false;
         $dataRef = $this->get_request_data('ds');
         if ($dataRef &&preg_match('/^[A-Z0-9]{4,20}$/', $dataRef)) {     // dataRef (=ticket hash) available
@@ -408,27 +408,27 @@ EOT;
             $ticketing = new Ticketing();
             $ticketRec = $ticketing->consumeTicket($dataRef);
             if ($ticketRec) {      // corresponding ticket found
-                $this->dbFile = PATH_TO_APP_ROOT . $ticketRec['dataSrc'];
+                $this->dataFile = PATH_TO_APP_ROOT . $ticketRec['dataSrc'];
                 $this->config = $ticketRec;
             }
         }
 
         // if primary method didn't work, try default DB in page folder
         $pagePath = isset($_SESSION["lizzy"]["pathToPage"]) ? $_SESSION["lizzy"]["pathToPage"] : '';
-        if (!$this->dbFile && $pagePath) {
-            $this->dbFile = PATH_TO_APP_ROOT . $pagePath . DEFAULT_EDITABLE_DATA_FILE;
+        if (!$this->dataFile && $pagePath) {
+            $this->dataFile = PATH_TO_APP_ROOT . $pagePath . DEFAULT_EDITABLE_DATA_FILE;
         }
 
-        if ($this->dbFile) {
-            $this->db = new DataStorage2(['dataFile' => $this->dbFile]);
+        if ($this->dataFile) {
+            $this->db = new DataStorage2(['dataFile' => $this->dataFile]);
 //            $this->db = new ElementLevelDataStorage([
-//                'dbFile' => $this->dbFile,
+//                'dataFile' => $this->dataFile,
 //                'sid' => $this->sessionId,
 //                'lockDB' => $lockDB,
 //                'useRecycleBin' => $useRecycleBin
 //            ]);
 //            $this->db = new DataStorage([
-//                'dbFile' => $this->dbFile,
+//                'dataFile' => $this->dataFile,
 //                'sid' => $this->sessionId,
 //                'lockDB' => $lockDB,
 //                'useRecycleBin' => $useRecycleBin
