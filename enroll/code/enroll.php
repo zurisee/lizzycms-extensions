@@ -19,18 +19,29 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 
     $enroll_list_name = $this->getArg($macroName, 'listname', 'Any word identifying the enrollment list', "Enrollment-List$inx");
-    $n_needed = $this->getArg($macroName, 'n_needed', 'Number of fields in category "needed"', 1);
-    $n_reserve = $this->getArg($macroName, 'n_reserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
+    $nNeeded = $this->getArg($macroName, 'nNeeded', 'Number of fields in category "needed"', 1);
+    $n_needed = $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
+    $nReserve = $this->getArg($macroName, 'nReserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
+    $n_reserve = $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
     $data_path = $this->getArg($macroName, 'data_path', 'Where to store data files, default is folder local to current page', '~page/');
 
     if ($enroll_list_name == 'help') {
         return '';
     }
+    if ($n_needed !== false) {
+        $nNeeded = $n_needed;
+    }
+    if ($n_reserve !== false) {
+        $nReserve = $n_reserve;
+    }
 
     $enroll = new enroll($inx, $data_path, $this);
-	$out = $enroll->enroll($enroll_list_name, $n_needed, $n_reserve);
+	$out = $enroll->enroll($enroll_list_name, $nNeeded, $nReserve);
 	return $out;
 });
+
+
+
 
 //=== class ====================================================================
 class enroll
