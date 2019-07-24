@@ -52,6 +52,9 @@ class CreateLink
                 $href .= "?&body=$body";
             }
             $target = " target='_blank' rel='noopener noreferrer'";
+            if (preg_match('|^(\w+:) ([^/]{2} .*)|x', $href, $m)) {
+                $href = "{$m[1]}//{$m[2]}";
+            }
 
         } elseif ((stripos($href, 'tel:') === 0) || (stripos($type, 'tel') !== false)) {
             $class = ($class) ?  "$class tel_link" : 'tel_link';
@@ -60,6 +63,9 @@ class CreateLink
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
             }
             $target = " target='_blank' rel='noopener noreferrer'";
+            if (preg_match('|^(\w+:) ([^/]{2} .*)|x', $href, $m)) {
+                $href = "{$m[1]}//{$m[2]}";
+            }
 
         } elseif ((stripos($href, 'geo:') === 0) || (stripos($type, 'geo') !== false)) {
             $class = ($class) ?  "$class geo_link" : 'geo_link';
@@ -69,7 +75,15 @@ class CreateLink
             }
             $target = " target='_blank' rel='noopener noreferrer'";
 
-        } elseif ((stripos($href, 'pdf:') === 0) || (stripos($type, 'pdf') !== false)) {
+        } elseif ((stripos($href, 'slack:') === 0) || (stripos($type, 'slack') !== false)) {
+            $class = ($class) ?  "$class slack_link" : 'slack_link';
+            $title = ($title) ? $title : " title='{{ opens slack app }}'";
+            if (!$text) {
+                $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
+            }
+            $target = " target='_blank' rel='noopener noreferrer'";
+
+        } elseif ((stripos($href, 'pdf:') === 0) || (stripos($href, '.pdf') !== false) || (stripos($type, 'pdf') !== false)) {
             $class = ($class) ?  "$class pdf_link" : 'pdf_link';
             $title = ($title) ? $title : " title='{{ opens PDF in new window }}'";
             if (!$text) {
