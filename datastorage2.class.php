@@ -409,6 +409,13 @@ class DataStorage2
 
 
 
+    public function getSourceFormat() {
+        return $this->format;
+    } // getSourceFormat
+
+
+
+
 // === protected methods ===============
     protected function update($newData)
     {
@@ -851,13 +858,12 @@ EOT;
             $args = ['dataFile' => $args];
         }
         $this->dataFile = isset($args['dataFile']) ? $args['dataFile'] :
-            (isset($args['dbFile']) ? $args['dbFile'] : ''); // for compatibility
+            (isset($args['dataSource']) ? $args['dataSource'] : ''); // for compatibility
         $this->dataFile = resolvePath($this->dataFile);
         $this->sid = isset($args['sid']) ? $args['sid'] : '';
         $this->lockDB = isset($args['lockDB']) ? $args['lockDB'] : false;
         $this->format = isset($args['format']) ? $args['format'] : '';
         $this->secure = isset($args['secure']) ? $args['secure'] : true;
-        $this->headersTop = isset($args['headersTop']) ? $args['headersTop'] : false;
         $this->useRecycleBin = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
         $this->separateMetaData = isset($args['separateMetaData']) ? $args['separateMetaData'] : false;
         $this->format = ($this->format) ? $this->format : pathinfo($this->dataFile, PATHINFO_EXTENSION) ;
@@ -914,13 +920,16 @@ EOT;
                 } elseif ($data) {
                     $rec0 = reset($data);
                     $key0 = (array_keys($data))[0];
-                    if (preg_match('/^ \d{2,4} - \d\d - \d\d/x', $key0)) {
+                    if (is_int($key0)) {
+                        $structure['key'] = 'index';
+                    } elseif (preg_match('/^ \d{2,4} - \d\d - \d\d/x', $key0)) {
                         $structure['key'] = 'date';
                     } else {
                         $structure['key'] = 'string';
                     }
                     $structure['labels'] = array_keys($rec0);
                     $structure['types'] = array_fill(0, sizeof($rec0), 'string');
+
                 } else {
                     return [[], $structure];
                 }
@@ -940,9 +949,6 @@ EOT;
                 $structure['key'] = 'index';
                 $structure['labels'] = array_values($rec0);
                 $structure['types'] = array_fill(0, sizeof($rec0), 'string');
-                if ($this->headersTop) {
-                    array_shift($data); // first row contains headers, so remove it from payload data
-                }
 
                 $structure = $this->jsonEncode($structure);
                 $data = [$this->jsonEncode($data), $structure];
