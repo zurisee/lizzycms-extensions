@@ -831,13 +831,12 @@ function resolvePath($path, $relativeToCurrPage = false, $resourceAccess = false
         for ($i=0; $i<4; $i++) {
             $to[$i] = $pathToRoot.$to[$i];
         }
-        $to[4] = $globalParams["host"].$globalParams['pathToPage'];
+        $to[4] = $globalParams["host"].$globalParams["appRoot"].$globalParams['pathToPage'];
+//        $to[4] = $globalParams["host"].$globalParams['pathToPage'];
     }
     if ($pageAccess) {    // -> exclude 'pages/' in path
-//        for ($i=0; $i<4; $i++) {
-//            $to[$i] = $pathToRoot.$to[$i];
-//        }
-        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
+        $to[4] = './';
+//        $to[4] = $globalParams['pathToRoot'].$globalParams['pagePath'];
     }
 
     $path = preg_replace($from, $to, $path);
