@@ -10,6 +10,10 @@
 
 $str =  <<<EOT
 
+			$('.post-it').click(function() {
+			    $('.post-it').css('z-index', '');
+			    $( this ).css('z-index', '99');
+			});
 			$('.post-it').panzoom();
 			$('.post-it .close_icon').click(function() {
 				$(this).parent().parent().hide();
@@ -37,6 +41,10 @@ $this->addMacro($macroName, function () {
     $bottom = $this->getArg($macroName, 'bottom', 'Where to place measured from bottom ', false);
     $angle = $this->getArg($macroName, 'angle', 'Angle by which the Post-it is tilted', '');
     $color = $this->getArg($macroName, 'color', 'Background-color for Post-it', '');
+
+    if ($text === 'help') {
+        return '';
+    }
 
     if ($contentFrom) {
         $text .= "<div id='lzy-postit-wrapper$inx'></div>\n";
