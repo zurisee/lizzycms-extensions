@@ -16,15 +16,19 @@ $this->addMacro($macroName, function () {
     $options = $this->getArg($macroName, 'options', 'A string containing a list of options. Separeate options by vertical bars ("|").', '');
     $optionsFile = $this->getArg($macroName, 'optionsFile', 'As an alternative to "options", you can provide a file name. The file should contain one option per line.', false);
     $multAnswers = $this->getArg($macroName, 'multipleAnswers', 'Allow multiple answers per poll.', false);
+    $name = $this->getArg($macroName, 'name', 'Name of poll that will appear in the results file', false);
     $resultFile = $this->getArg($macroName, 'resultFile', 'File in which to store results. (default: "poll-results.yaml"', "poll-results.yaml");
     $showResults = $this->getArg($macroName, 'showResults', 'Immediately show number of votes per option.', false);
     $limitVotesPerUser = $this->getArg($macroName, 'limitVotesPerUser', '[integer] Monitor who has already voted and exclude this user, if limit is reached.', false);
     $votesCountFile = resolvePath("~page/.#votesCount.yaml");
 
+    if ($options === 'help') {
+        return '';
+    }
 
     $options = determineOptions($optionsFile, $options);
 
-    $pollName = "lizzy-poll$inx";
+    $pollName = $name ? $name : "lizzy-poll$inx";
 
     $data = getPreviousResults($resultFile, $pollName, $limitVotesPerUser, $votesCountFile, $multAnswers);
 
@@ -70,7 +74,7 @@ function getPreviousResults($resultFile, $pollName, $limitVotesPerUser, $votesCo
     if ($data == null) {
         $data = [];
     }
-    if (isset($_POST['lzy-poll']) && ($_POST['lzy-poll'] == $pollName) && isset($_POST['lzy-poll-option'])) {
+    if (isset($_POST['lzy-poll']) && ($_POST['lzy-poll'] === $pollName) && isset($_POST['lzy-poll-option'])) {
         $ignoreVote = false;
         if ($limitVotesPerUser) {
             if (file_exists($votesCountFile)) {
