@@ -54,7 +54,7 @@ function initializeEditableField(invokingClass)
     initializeConnection();
     updateFieldContents(edObj);
 
-    mylog('Editable.js started for class ".'+edObj.invokingClass+'" ('+ ((edObj.isTouchDevice) ? 'touch-device' : 'non-touch-device') + ', backend: '+ edObj.backend+')');
+    console.log('Editable.js started for class ".'+edObj.invokingClass+'" ('+ ((edObj.isTouchDevice) ? 'touch-device' : 'non-touch-device') + ', backend: '+ edObj.backend+')');
 } // initializeEditableField
 
 
@@ -69,13 +69,13 @@ function initializeConnection()
 
     $('.' + edObj.invokingClass + ' input').addClass('lzy-wait');
     this.ajaxSend(edObj, 'conn', '', json, function(json) {
-        mylog('Server connection established: ' + json);
+        console.log('Server connection established: ' + json);
         if (json.match(/^</)) {
             console.log('response: ' + json.replace(/<(?:.|\n)*?>/gm, ''));
             return;
         }
         if (json.match(/failed/)) {
-            mylog('Session aborted');
+            console.log('Session aborted');
             $('main').html("<h1>Error connecting to server.</h1><p>Please try again with another browser or another computer.</p>");
             res = false;
         }
@@ -157,7 +157,7 @@ function initEditableFields()
         var width = $('.lzy-editable-submit-button', $this).width();
         var x = $(e.target).width() - e.offsetX;    // width of submit button
         if (x < width) {
-            mylog('### click on assumed button');
+            console.log('### click on assumed button');
             onOkClick(edObj, this);
         }
     });
@@ -183,7 +183,7 @@ function initEdit(edObj, id) {
 //--------------------------------------------------------------
 function lockField(edObj, id)
 {
-    mylog( 'lockField: '+id );
+    console.log( 'lockField: '+id );
     var url = edObj.backend + "?lock=" + id + "&ds=" + getDataRef(id);
     var $editableField = $('#' + id);
     var $inputField = $('#_' + id);
@@ -208,7 +208,7 @@ function lockField(edObj, id)
 
         } else if (json.match(/^failed/)) {      // field already locked
             $inputField.val(edObj.lastText[id]).blur().addClass('lzy-locked');
-            mylog( 'field was locked: '+id );
+            console.log( 'field was locked: '+id );
             setTimeout(function() {$inputField.removeClass('lzy-locked'); }, 60000);
             return false;
 
@@ -219,7 +219,7 @@ function lockField(edObj, id)
 
         } else if (json.match(/^frozen/)) {      // field already locked
             $editableField.addClass('lzy-editable-frozen').text(edObj.lastText[id]);
-            mylog( 'field has been frozen: '+id );
+            console.log( 'field has been frozen: '+id );
             return false;
 
         } else {
@@ -256,7 +256,7 @@ function endEdit(edObj, _id, sendToServer)
         _id = $('.lzy-editable-active').attr('id');
     }
     if (typeof _id === 'undefined') {
-        mylog('Error: endEdit -> no lzy-editable-active found');
+        console.log('Error: endEdit -> no lzy-editable-active found');
         return;
     }
     var $edInput = $('#'+_id);
@@ -264,7 +264,7 @@ function endEdit(edObj, _id, sendToServer)
 
     if (edObj.value === false) {
         edObj.value = $edInput.val();
-        mylog('WARNING: edObj.value was not properly set in endEdit()');
+        console.log('WARNING: edObj.value was not properly set in endEdit()');
     }
 
     var id = _id.substr(1);
@@ -288,7 +288,7 @@ function endEdit(edObj, _id, sendToServer)
 //--------------------------------------------------------------
 function saveAndUnlockField(edObj, id, val)
 {
-    mylog('saveAndUnlockField '+id+' => '+val);
+    console.log('saveAndUnlockField '+id+' => '+val);
     this.ajaxSend(edObj, 'save', id, val, false);
 } // saveAndUnlockField
 
@@ -297,7 +297,7 @@ function saveAndUnlockField(edObj, id, val)
 //--------------------------------------------------------------
 function unlockField(edObj, id)
 {
-    mylog('unlockField '+id);
+    console.log('unlockField '+id);
     this.ajaxSend(edObj, 'unlock', id, '', false);
 } // unlock
 
