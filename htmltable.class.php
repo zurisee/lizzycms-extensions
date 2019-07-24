@@ -1,16 +1,5 @@
 <?php
 
-/*
- * todo
-
-- datatable options
-
-- class UserData
-
-- visibleTo / modifiableBy  [all,user,session]
-
-
- */
 
 
 class HtmlTable
@@ -101,6 +90,13 @@ class HtmlTable
         }
 
         $data = &$this->data;
+
+        if ($this->headers === true) {
+            $structure = $this->ds->getRecStructure();
+            $headers = $structure['labels'];
+            array_unshift($data, $headers);
+
+        } else
         if (($this->headers) && ($this->headers !== true)) {
             $headers = $this->extractList($this->headers, true);
             $headers = array_pad ( $headers , sizeof($data[0]) , '' );
@@ -293,10 +289,11 @@ EOT;
         }
 
         foreach ($data as $i => $row) {
+            $content1 = $content;
             if (($i === 0) && $header) {
-                $content = $header;
+                $content1 = $header;
             }
-            array_splice($data[$i], $_newCol, 0, $content);
+            array_splice($data[$i], $_newCol, 0, $content1);
         }
         $this->nCols++;
 
@@ -671,7 +668,7 @@ EOT;
         $cell = $this->data[$row][$col];
         $col1 = $col + 1;
         if ($hdrElem) {
-            $tdClass = $this->cellClass.'-hdr';
+            $tdClass = $this->cellClass ? $this->cellClass.'-hdr' : 'lzy-div-table-hdr';
         } else {
             $tdClass = $this->cellClass;
         }
@@ -766,7 +763,6 @@ EOT;
     private function loadData()
     {
         if ($this->dataSource) {
-            $this->dataSource = resolvePath($this->dataSource, true);
             if (!file_exists($this->dataSource)) {
                 $this->dataSource = false;
             }
@@ -776,12 +772,14 @@ EOT;
 
         $this->data = [[]];
         if ($this->dataSource) {
-            $ds = new DataStorage2(['dataFile' => $this->dataSource, 'headersTop' => $this->headers]);
+            $ds = new DataStorage2($this->options);
+            $this->ds = $ds;
             $this->data = $ds->read();
-            $structure = $ds->getRecStructure();
-            if (isset($structure['key']) && ($structure['key'] === 'index')) {
-                $headers = $structure['labels'];
-                array_unshift($this->data, $headers);
+            if ($ds->getSourceFormat() !== 'csv') {
+                $this->convertTo2D();
+
+            } elseif ($this->headers === true) {
+                array_shift($this->data);
             }
 //            $this->arrangeData();???????
         }
@@ -874,7 +872,7 @@ EOT;
     {
         $data = &$this->data;
         if (!isset($data[0])) {
-            $data[0] = '';
+            $data[0] = [];
         }
 
         $nCols = $this->nCols ? $this->nCols : sizeof($data[0]);
@@ -1007,37 +1005,55 @@ EOT;
 
 
 
-    private function arrangeData()
-    {
-        if (isset($this->data[0])) {    // tabular data (probably from csv -> nothing to do
-            return;
-        }
+//    private function arrangeData()
+//    {
+//        if (isset($this->data[0])) {    // tabular data (probably from csv -> nothing to do
+//            return;
+//        }
+//
+//        // data is array of records (probably from a yaml source):
+//        $data = [];
+//        $headers = false;
+//        foreach ($this->data as $key => $rec) {
+//            if ($key[0] === '_') {
+//                continue;
+//            }
+//            if (!$headers) {
+//                foreach ($rec as $name => $item) {
+//                    $headers[] = $name;
+//                }
+//                $headers[] = 'index';
+//                $data[] = $headers;
+//            }
+//            $newRec = [];
+//            foreach ($headers as $name) {
+//                if ($name == 'index') {
+//                    $newRec[] = $key;
+//                } else {
+//                    $newRec[] = isset($rec[$name]) ? $rec[$name] : '???';
+//                }
+//            }
+//            $data[] = $newRec;
+//        }
+//        $this->data = $data;
+//    } // arrangeData
 
-        // data is array of records (probably from a yaml source):
+
+
+
+    private function convertTo2D()
+    {
         $data = [];
-        $headers = false;
-        foreach ($this->data as $key => $rec) {
-            if ($key[0] === '_') {
-                continue;
+        $r = 0;
+        foreach ($this->data as $rec) {
+            $c = 0;
+            foreach ($rec as $value) {
+                $data[$r][$c] = $value;
+                $c++;
             }
-            if (!$headers) {
-                foreach ($rec as $name => $item) {
-                    $headers[] = $name;
-                }
-                $headers[] = 'index';
-                $data[] = $headers;
-            }
-            $newRec = [];
-            foreach ($headers as $name) {
-                if ($name == 'index') {
-                    $newRec[] = $key;
-                } else {
-                    $newRec[] = isset($rec[$name]) ? $rec[$name] : '???';
-                }
-            }
-            $data[] = $newRec;
+            $r++;
         }
         $this->data = $data;
-    } // arrangeData
+    } // convertTo2D
 
 } // HtmlTable
