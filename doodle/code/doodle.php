@@ -42,6 +42,10 @@ $this->addMacro($macroName, function () {
 	$multipleAnswers = $this->getArg($macroName, 'multipleAnswers', '[true,false] Defines whether multiple answers are permitted.', true);
     $multipleAnswers = ($multipleAnswers != 'false');
 
+    if ($options === 'help') {
+        return '';
+    }
+
     $file0 = $this->getArg($macroName, 'output', '(optional) File in which to store data', "~page/doodle$inx.yaml");
     $options = ltrim($options, '[');
     $options = rtrim($options, ']');
