@@ -13,7 +13,7 @@ $this->addMacro($macroName, function () {
 
     $href = $this->getArg($macroName, 'href', 'Path or URL to link target', '');
     $this->getArg($macroName, 'text', 'Link-text. If missing, "href" will be displayed instead.', '');
-    $this->getArg($macroName, 'type', '[mail,intern,extern] "mail" renders link as "mailto:", "intern" suppresses automatic prepending of "https://", "extern" causes link target to be opened in new window.', '');
+    $this->getArg($macroName, 'type', '[intern, extern or mail, pdf, sms, tel, geo, slack] "mail" renders link as "mailto:", "intern" suppresses automatic prepending of "https://", "extern" causes link target to be opened in new window.', '');
     $this->getArg($macroName, 'class', 'Class to be applied to the &lt;a> Tag.', '');
     $this->getArg($macroName, 'title', 'Title attribute to be applied to the &lt;a> Tag.', '');
     $this->getArg($macroName, 'target', 'Target attribute to be applied to the &lt;a> Tag.', '');
@@ -30,6 +30,10 @@ $this->addMacro($macroName, function () {
 
 
     $cl = new CreateLink();
+
+    if (isset($args['href'])) {
+        $args['href'] = resolvePath($args['href'], true, false, true);
+    }
 
     $str = $cl->render($args);
 
