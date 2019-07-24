@@ -20,12 +20,14 @@ $this->addMacro($macroName, function () {
     if ($dataSource === 'help') {
         return renderHelp($this, $macroName);
     }
+
     $file = resolvePath($dataSource, true);
     if ($dataSource && !file_exists($file)) {
         return "<div>Error: Datasource-File '$dataSource' not found for macro 'table()'.</div>\n";
     }
 
     $options = $this->getArgsArray($macroName, false);
+    $options['dataSource'] = $file;
 
     $dataTable = new HtmlTable($this->lzy, $inx, $options);
 	$table = $dataTable->render();
