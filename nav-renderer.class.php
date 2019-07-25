@@ -296,7 +296,8 @@ EOT;
                 // case path starts with '/', -> assume app-root, turn it into '~/':
                 $path = '~'.$path;
 
-            } elseif (substr($path, 0, 2) != '~/') {
+            } elseif ((substr($path, 0, 2) != '~/') &&
+                (stripos($path, 'http') !== 0)) {
                 // case path starts without indicator, where it's rooted -> assume app-root:
                 $path = '~/'.$path;
             }
