@@ -291,6 +291,9 @@ class SiteStructure
                 } else {
                     $rec['actualFolder'] = $rec['folder'];
                 }
+                if (isset($rec['alias']) && $rec['alias']) {
+                    $rec['alias'] = resolvePath(fixPath($rec['alias']),false,false,true);
+                }
                 $list[] = $rec;
             }
         }
@@ -423,7 +426,7 @@ class SiteStructure
 
 
 	//....................................................
-	public function findSiteElem($str, $returnRec = false)
+	public function findSiteElem($str, $returnRec = false, $allowNameToSearch = false)
 	{
 	    if (($str == '/') || ($str == './')) {
             $str = '';
@@ -439,7 +442,8 @@ class SiteStructure
 		$list = $this->list;
 		$found = false;
 		foreach($list as $key => $elem) {
-			if ($found || ($str == $elem['name']) || ($str == $elem['folder']) || ($str.'/' == $elem['folder'])) {
+			if ($found || ($str === $elem['folder']) || ($str.'/' === $elem['folder'])) {
+//			if ($found || ($str === $elem['name']) || ($str === $elem['folder']) || ($str.'/' === $elem['folder'])) {
 				$folder = $this->config->path_pagesPath.$elem['folder'];
 				if (isset($elem['showthis']) && $elem['showthis']) {	// no 'skip empty folder trick' in case of showthis
                     $found = true;
@@ -461,10 +465,13 @@ class SiteStructure
 					$found = true;
                     $this->noContent = true;
 				}
-			} elseif (isset($elem['alias']) && ($str == $elem['alias'])) {
+			} elseif (isset($elem['alias']) && ($str === $elem['alias'])) {
                 $found = true;
                 break;
-			}
+			} elseif ($allowNameToSearch && (stripos($elem['name'], $str) === 0)) {
+                $found = true;
+                break;
+            }
 		}
 		if ($returnRec && $found) {
 		    return $list[$key];

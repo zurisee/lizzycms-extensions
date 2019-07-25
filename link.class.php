@@ -3,6 +3,10 @@
 
 class CreateLink
 {
+    public function __construct($lzy)
+    {
+        $this->lzy = $lzy;
+    }
 
     //----------------------------------------------------------
     public function render($args)
@@ -97,9 +101,13 @@ class CreateLink
             }
 
         } else {
-            $href0 = $href;
-            if ($href[0] == '~') {
+            if ($href[0] === '~') {
                 $href = resolvePath($href, true, true);
+
+                $rec = $this->lzy->siteStructure->findSiteElem($href, true, true);
+                if ($rec) {
+
+                }
             } else {
                 // prepend 'https://' unless 'http' or something like mailto:
                 if (!preg_match('/: [^\?&]*/x', $href)) {
@@ -111,10 +119,20 @@ class CreateLink
                     $href = resolvePath($href, false, 'https');
                 }
             }
+
+            $href1 = $href;
+            if (strpos($href, './') === 0) {
+                $href1 = substr($href,2);
+            }
+
+            // check whether URL matches with a page-path or page-name in the sitemap:
+            $rec = $this->lzy->siteStructure->findSiteElem($href1, true, true);
+            if ($rec) {
+                $href = resolvePath('~/'.$rec['folder'], false, true);
+            }
+
             if (!$text) {
-                $rec = isset($this->siteStructure) ? $this->siteStructure->findSiteElem($href0, true) : false;
                 if ($rec) {
-                    $href = resolvePath('~/'.$rec['folder'], false, 'https');
                     $text = $rec['name'];
                 } else {
                     $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
