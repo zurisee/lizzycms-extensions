@@ -281,11 +281,7 @@ EOT;
                 $name = $elem['name'];
             }
             if (isset($elem['goto'])) {
-                $targInx = $this->lzy->siteStructure->findSiteElem($elem['goto']);
-                $list = $this->lzy->siteStructure->getSiteList();
-                $targ = $list[$targInx];
-                $name = $targ['name'];
-                $path = $targ['folder'];
+                $path = $elem['goto'];    // render goto url
             } else {
                 $path = (isset($elem['folder'])) ? $elem['folder'] : '';
             }
