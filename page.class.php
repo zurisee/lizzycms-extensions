@@ -775,15 +775,15 @@ EOT;
         $rootJs .= "\t\tvar screenSizeBreakpoint = $screenSizeBreakpoint;\n";
         $rootJs .= "\t\tvar pagePath = '{$this->lzy->pagePath}';\n";
 
-        if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->admin_hideWhileEditing) {  // for online-editing: add admin_hideWhileEditing
-            $selectors = '';
-            foreach (explode(',', $this->config->admin_hideWhileEditing) as $elem) {
-                $elem = trim(str_replace(['"',"'"], '', $elem));
-                $selectors .= "'".$elem."',";
-            }
-            $selectors = rtrim($selectors, ',');
-            $rootJs .= "\n\t\tvar admin_hideWhileEditing = [$selectors];";
-        }
+//        if (isset($this->config->editingMode) && $this->config->editingMode && $this->config->admin_hideWhileEditing) {  // for online-editing: add admin_hideWhileEditing
+//            $selectors = '';
+//            foreach (explode(',', $this->config->admin_hideWhileEditing) as $elem) {
+//                $elem = trim(str_replace(['"',"'"], '', $elem));
+//                $selectors .= "'".$elem."',";
+//            }
+//            $selectors = rtrim($selectors, ',');
+//            $rootJs .= "\n\t\tvar admin_hideWhileEditing = [$selectors];";
+//        }
 
         if (($this->config->debug_allowDebugInfo) &&
             (($this->config->debug_showDebugInfo)) || getUrlArgStatic('debug')) {

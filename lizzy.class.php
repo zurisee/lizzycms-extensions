@@ -12,7 +12,6 @@ define('PATH_TO_APP_ROOT',      '');
 define('SYSTEM_PATH',           basename(dirname(__FILE__)).'/'); // _lizzy/
 define('DEFAULT_CONFIG_FILE',   CONFIG_PATH.'config.yaml');
 
-//define('LIZZY_DB',             'data/.lzy_db.sqlite'); -> defined in datastorage2.class.php
 define('DATA_PATH',            'data/');
 define('CACHE_PATH',            '.#cache/');
 define('LOGS_PATH',             '.#logs/');
@@ -62,7 +61,6 @@ require_once SYSTEM_PATH.'defaults.class.php';
 require_once SYSTEM_PATH.'sitestructure.class.php';
 require_once SYSTEM_PATH.'authentication.class.php';
 require_once SYSTEM_PATH.'image-resizer.class.php';
-//require_once SYSTEM_PATH.'datastorage.class.php';
 require_once SYSTEM_PATH.'datastorage2.class.php';
 require_once SYSTEM_PATH.'sandbox.class.php';
 require_once SYSTEM_PATH.'uadetector.class.php';
@@ -105,7 +103,7 @@ class Lizzy
 		$this->init();
 		$this->setupErrorHandling();
 
-        $globalParams['debug_autoForceBrowserCache'] = $this->config->debug_autoForceBrowserCache;
+//        $globalParams['debug_autoForceBrowserCache'] = $this->config->debug_autoForceBrowserCache;
 
         if ($this->config->site_sitemapFile || $this->config->feature_sitemapFromFolders) {
 			$this->siteStructure = new SiteStructure($this, $this->reqPagePath);
@@ -359,8 +357,8 @@ class Lizzy
         } elseif ($this->config->debug_forceBrowserCacheUpdate) {
             $forceUpdate = getVersionCode( true );
 
-        } elseif ($this->config->debug_autoForceBrowserCache) {
-            $forceUpdate = getVersionCode();
+//        } elseif ($this->config->debug_autoForceBrowserCache) {
+//            $forceUpdate = getVersionCode();
         } else {
             return;
         }
@@ -1656,12 +1654,17 @@ EOT;
 	{
         $configItems = $this->config->getConfigInfo();
         ksort($configItems);
-        $out = "<h1>Lizzy Config-Items and their Purpose:</h1>\n<dl class='lzy-config-viewer'>\n";
-        $out .= "<p>Settings stored in file <code>{$this->configFile}</code>.</p>";
+        $out = "<h1>Lizzy Config-Items and their Purpose:</h1>\n";
+        $out .= "<p>Settings stored in file <code>{$this->configFile}</code>.<br/>\n";
+        $out .= "&rarr; Default values in (), values deviating from defaults are marked <span class='lzy-config-viewer-hl'>red</span>)</p>\n";
+        $out .= "<dl class='lzy-config-viewer'>\n";
         $out2 = '';
         $ch = '';
         foreach ($configItems as $name => $rec) {
             $value = $this->config->$name;
+            if ($name === 'site_sitemapFile') {
+                $value = base_name($value);
+            }
             if (is_bool($value)) {
                 $value = ($value) ? 'true' : 'false';
             } elseif (is_array($value)) {

@@ -133,7 +133,7 @@ class AdminTasks
             if ($adminTask == 'login') {
                 $pg = $accountForm->renderLoginForm($notification);
 
-            } elseif (($adminTask == 'self-signup') && $this->lzy->config->feature_enableSelfSignUp) {
+            } elseif (($adminTask == 'self-signup') && $this->lzy->config->admin_enableSelfSignUp) {
                 $pg = $accountForm->renderSignUpForm($notification);
                 return $pg;
             }
