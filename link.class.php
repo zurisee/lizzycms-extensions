@@ -104,10 +104,6 @@ class CreateLink
             if ($href[0] === '~') {
                 $href = resolvePath($href, true, true);
 
-                $rec = $this->lzy->siteStructure->findSiteElem($href, true, true);
-                if ($rec) {
-
-                }
             } else {
                 // prepend 'https://' unless 'http' or something like mailto:
                 if (!preg_match('/: [^\?&]*/x', $href)) {

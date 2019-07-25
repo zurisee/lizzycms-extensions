@@ -465,12 +465,16 @@ class SiteStructure
 					$found = true;
                     $this->noContent = true;
 				}
+
 			} elseif (isset($elem['alias']) && ($str === $elem['alias'])) {
                 $found = true;
                 break;
-			} elseif ($allowNameToSearch && (stripos($elem['name'], $str) === 0)) {
-                $found = true;
-                break;
+
+			} elseif ($allowNameToSearch) {
+			    if (strtolower($elem['name']) === strtolower($str)) {
+                    $found = true;
+                    break;
+                }
             }
 		}
 		if ($returnRec && $found) {
