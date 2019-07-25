@@ -255,13 +255,26 @@ class SiteStructure
                     $rec['hide!'] = !$this->config->isPrivileged;
                 }
 
-                // check time dependency:
-				if (isset($rec['showfrom'])) {
-				    $t = strtotime($rec['showfrom']);
+                // check time dependencies:
+				if (isset($rec['availablefrom'])) {
+				    $t = strtotime($rec['availablefrom']);
+                    if (time() < $t) {
+                        continue;
+                    }
+                }
+				if (isset($rec['availabletill'])) {
+				    $t = strtotime($rec['availabletill']);
+                    if (time() > $t) {
+                        continue;
+                    }
+                }
+
+                if (isset($rec['showfrom'])) {
+                    $t = strtotime($rec['showfrom']);
                     $rec['hide!'] |= (time() < $t);
                 }
-				if (isset($rec['showtill'])) {
-				    $t = strtotime($rec['showtill']);
+                if (isset($rec['showtill'])) {
+                    $t = strtotime($rec['showtill']);
                     $rec['hide!'] |= (time() > $t);
                 }
                 if (isset($rec['hidefrom'])) {
