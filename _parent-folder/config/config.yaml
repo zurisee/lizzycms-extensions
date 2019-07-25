@@ -18,12 +18,11 @@ feature_selflinkAvoid: false
 #admin_defaultGuestGroup: ''                      # default=guest
 #admin_defaultLoginValidityPeriod: ''             # default=86400
 #admin_enableAccessLink: false                    # default=true
-#admin_enableDailyUserTask: false                 # default=true
+#admin_enableDailyUserTask: true                  # default=false
 #admin_enableEditing: false                       # default=true
-#admin_hideWhileEditing: true                     # default=false
-#admin_logClientAccesses: true                    # default=false
+#admin_enableSelfSignUp: true                     # default=false
 #admin_useRequestRewrite: false                   # default=true
-#admin_userAllowSelfAdmin: false                  # default=true
+#admin_userAllowSelfAdmin: true                   # default=false
 
 #custom_permitUserCode: true                      # default=false
 #custom_permitUserInitCode: true                  # default=false
@@ -31,7 +30,6 @@ feature_selflinkAvoid: false
 #custom_wrapperTag: true                          # default=false
 
 #debug_allowDebugInfo: true                       # default=false
-#debug_autoForceBrowserCache: true                # default=false
 #debug_collectBrowserSignatures: true             # default=false
 #debug_compileScssWithLineNumbers: true           # default=false
 #debug_errorLogging: true                         # default=false
@@ -45,12 +43,11 @@ feature_selflinkAvoid: false
 
 #feature_ImgDefaultMaxDim: ''                     # default=1600x1200
 #feature_SrcsetDefaultStepSize: ''                # default=300
+#feature_autoConvertLinks: true                   # default=false
 #feature_autoLoadClassBasedModules: false         # default=true
 #feature_autoLoadJQuery: false                    # default=true
-#feature_cssFramework: ''                         # default=
 #feature_enableAllowOrigin: true                  # default=false
 #feature_enableIFrameResizing: true               # default=false
-#feature_enableSelfSignUp: true                   # default=false
 #feature_filterRequestString: true                # default=false
 #feature_frontmatterCssLocalToSection: true       # default=false
 #feature_jQueryModule: ''                         # default=JQUERY
@@ -63,7 +60,6 @@ feature_selflinkAvoid: false
 #feature_screenSizeBreakpoint: ''                 # default=480
 #feature_selflinkAvoid: false                     # default=true
 #feature_sitemapFromFolders: true                 # default=false
-#feature_slideShowSupport: true                   # default=false
 #feature_supportLegacyBrowsers: true              # default=false
 #feature_touchDeviceSupport: false                # default=true
 
@@ -77,6 +73,7 @@ feature_selflinkAvoid: false
 #site_defaultLanguage: ''                         # default=en
 #site_defaultLocale: ''                           # default=en_US
 #site_enableCaching: true                         # default=false
+#site_enableRelLinks: false                       # default=true
 #site_extractSelector: ''                         # default=body main
 #site_multiLanguageSupport: true                  # default=false
 #site_pageTemplateFile: ''                        # default=page_template.html
@@ -84,3 +81,4 @@ feature_selflinkAvoid: false
 #site_sitemapFile: ''                             # default=sitemap.txt
 #site_supportedLanguages: ''                      # default=
 #site_timeZone: true                              # default=false
+
