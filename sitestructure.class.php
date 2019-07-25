@@ -216,7 +216,6 @@ class SiteStructure
 					if (is_array($args)) {
 						foreach($args as $key => $value) {
 							if (($key === 'folder') || ($key === 'showthis')) {
-//							if (($key == 'folder') || ($key === 'showthis') || ($key == 'goto')) {
 
 							    // if it's folder, take care of absolute URLs, e.g. HTTP://
 							    if (preg_match('|^https?\://|i', $value)) { // external link:
@@ -229,8 +228,6 @@ class SiteStructure
                                     }
                                 }
 								$rec[strtolower($key)] = $folder;
-//							} elseif ($key === 'goto') {
-//$f = '';
 
 							} else {
 								$rec[strtolower($key)] = $value;
