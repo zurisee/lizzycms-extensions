@@ -2,7 +2,7 @@
 
 // type: [top, side, sitemap, in-page] Specifies the type of output to be rendered.
 // layout: [horizontal, vertical] Specifies direction of top-level items.
-// animation: [dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.
+// animation: [dropdown, slidedown, collapsible] Defines the type of animation applied to the rendered tree.
 // options: [top-level, curr-branch, hidden] These are filters that render a subset of items.
 
 define('NAV_ARROW', '&#9657;'); // '&#9013;'; // '&#9657;'; //'&#9656;';
@@ -66,11 +66,16 @@ class NavRenderer
 
         // no specific php-file, so render standard output of predefined types:
         if ($type == 'top') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-animated lzy-nav-colored lzy-nav-hoveropen lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-accordion lzy-nav-collapsed lzy-nav-animated lzy-nav-colored lzy-nav-hoveropen lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-collapsible lzy-nav-animated lzy-encapsulated');
+//            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-encapsulated');
+            $options['options'] .= " editable $primaryClass";
+
+        } elseif ($type == 'side-accordion') {
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-accordion lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'sitemap') {
@@ -124,14 +129,14 @@ class NavRenderer
             $options['navClass'] .= ' lzy-nav-small-tree';
         }
         $this->options = $options;
-        return $this->renderSitemap();
+        return $this->renderNav();
     } // render
 
 
 
 
     //....................................................
-    public function renderSitemap()
+    public function renderNav()
     {
         $options = $this->options;
         $type = isset($options[0]) ? $options[0] :  (isset($options['type']) ? $options['type'] : '');
@@ -157,12 +162,14 @@ class NavRenderer
         if ($this->horizTop) {
             $this->arrow = NAV_ARROW_TOP;
         }
-        $this->openCurr = (strpos($navClass, 'lzy-nav-open-current') !== false);
+        $this->accordion = ((strpos($navClass, 'lzy-nav-accordion') !== false) ||
+            (strpos($navClass, 'lzy-nav-collapsible') !== false));
         $this->collapse = (strpos($navClass, 'lzy-nav-collapsed') !== false);
+        $this->openCurr = (strpos($navClass, 'lzy-nav-open-current') !== false);
         $this->currBranch = (strpos($navOptions, 'curr-branch') !== false);
         $this->currBranchEmpty = true;
 
-        $nav = $this->_renderSitemap(false, $type, 0, "\t\t", '', $navOptions);
+        $nav = $this->_renderNav(false, $type, 0, "\t\t", '', $navOptions);
 
         if ($this->currBranch && $this->currBranchEmpty) {
             return null;
@@ -220,13 +227,13 @@ EOT;
         $this->addNoScriptCode($navClass);
 
         return $out;
-    } // renderSitemap
+    } // renderNav
 
 
 
 
     //....................................................
-    private function _renderSitemap($tree, $type, $level, $indent, $firstElem = '', $navOptions = false)
+    private function _renderNav($tree, $type, $level, $indent, $firstElem = '', $navOptions = false)
     {
         $level++;
         $indent = str_replace('\t', "\t", $indent);
@@ -358,16 +365,18 @@ EOT;
                 }
                 if (!$stop && isset($elem[0])) {	// does it have children?
 
-                    if ($this->horizTop) {
+//                    if ($this->horizTop) {
+                    if ($this->accordion) {
                         $firstElem = "<a href='$path'$aClass$target $tabindex>$name</a>";   // A1
                     }
+//                    if ($this->horizTop && ($level !== 1)) {
                     if ($this->horizTop && ($level !== 1)) {
                         $aria1 = '';
                     }
                     $contentClass = $elem["noContent"] ? ' lzy-nav-no-content': ' lzy-nav-has-content';
 
                     // --- recursion:
-                    $out1 = $this->_renderSitemap($elem, $type, $level, "$indent\t\t", $firstElem, $navOptions);
+                    $out1 = $this->_renderNav($elem, $type, $level, "$indent\t\t", $firstElem, $navOptions);
 
                     if ($out1) {
                         $liClass .= ' '.$this->hasChildrenClass."$liClassOpen$contentClass";
@@ -420,7 +429,7 @@ EOT;
             $out .= "$indent</{$this->listTag}>\n";
         }
         return $out;
-    } // _renderSitemap
+    } // _renderNav
 
 
 

@@ -39,7 +39,6 @@ var largeScreenClasses = '';
     });
     $('.lzy-has-children > a > .lzy-nav-arrow').click(function(e) {  // click arrow
         e.stopPropagation();
-// console.log('arrow');
         var $parentLi = $(this).closest('.lzy-has-children');
         $parentLi.removeClass('lzy-hover');
         var deep = ($('.lzy-nav-top-horizontal').length !== 0);
@@ -50,7 +49,6 @@ var largeScreenClasses = '';
     // hover:
    $('.lzy-nav-hoveropen .lzy-has-children').hover(
         function() {    // mouseover
-// console.log('mouseover');
             var $this = $(this);
             if ($('body').hasClass('touch') || $this.hasClass('lzy-open')) {
                 return;
@@ -113,6 +111,9 @@ function handleAccordion( elem, ev ) {
 // console.log('handleAccordion');
     if ($( 'body' ).hasClass('touch') || $('html').hasClass('touchevents')) {
         var $parentLi = $(elem).parent();
+        if (!$parentLi.closest('.lzy-nav-top-horizontal').length) { // only active for horizontal nav:
+            return true;
+        }
         if ($parentLi.hasClass('lzy-lvl1')) {
             toggleAccordion($parentLi, true);
             return false;
@@ -125,14 +126,25 @@ function handleAccordion( elem, ev ) {
 
 
 function initPrimaryNav() {
-    $('.lzy-large-screen .lzy-primary-nav .lzy-has-children').each(function () {
-        var $elem = $(this);
-        var $nextDivs = $('div', $elem);
-        $elem.removeClass('lzy-open lzy-hover');
-        $('li', $elem).removeClass('lzy-open');       // close all li below parent li
-        $nextDivs.attr({'aria-hidden': 'true'});        // make all sub-elements hidden
-        $('a', $nextDivs).attr({'tabindex': '-1'}); // make sub-menus un-focusable
-    });
+    // return;
+    if ($('.lzy-large-screen .lzy-primary-nav .lzy-nav').hasClass('lzy-nav-collapsed')) {
+        $('.lzy-large-screen .lzy-primary-nav .lzy-has-children').each(function () {
+            closeAllAccordions($( this ), true);
+            return;
+            var $elem = $(this);
+            var $nextDivs = $('div', $elem);
+            $elem.removeClass('lzy-open lzy-hover');
+            $('li', $elem).removeClass('lzy-open');       // close all li below parent li
+            $nextDivs.attr({'aria-hidden': 'true'});        // make all sub-elements hidden
+            $('a', $nextDivs).attr({'tabindex': '-1'}); // make sub-menus un-focusable
+        });
+    } else {
+        $('.lzy-large-screen .lzy-primary-nav .lzy-nav').each(function() {
+            if (!$( this ).hasClass('lzy-nav-collapsed')) {
+                openAccordion($( this ), true, true);
+            }
+        });
+    }
 } // initPrimaryNav
 
 
@@ -234,8 +246,10 @@ function openCurrentElement() {
         $( 'div', $parentLi ).attr({'aria-hidden': 'false'});        // next div
         $('a', $parentLi).attr({'tabindex': ''});  // set aria-expanded and make focusable
     })
-
 } // openCurrentElement
+
+
+
 
 function adaptMainMenuToScreenSize( smallScreen ) {
     if (smallScreen) {
@@ -286,7 +300,10 @@ function operateMobileMenuPane( newState ) {
 
 function setHightOnHiddenElements() {
     if (!($('html').hasClass('touchevents') || $('body').hasClass('touch'))) {
-        $('#lzy .lzy-nav-accordion .lzy-has-children, #lzy .lzy-nav-top-horizontal .lzy-has-children, #lzy .lzy-nav-collapsed .lzy-has-children, #lzy .lzy-nav-collapsible .lzy-has-children').each(function () {
+        $('#lzy .lzy-nav-accordion .lzy-has-children, ' +
+            '#lzy .lzy-nav-top-horizontal .lzy-has-children, ' +
+            '#lzy .lzy-nav-collapsed .lzy-has-children, ' +
+            '#lzy .lzy-nav-collapsible .lzy-has-children').each(function () {
             var h = $('>div>ol', this).height() + 20 + 'px';                // set height to optimize animation
             $('>div>ol', this).css('margin-top', '-' + h);
         });

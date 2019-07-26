@@ -13,10 +13,10 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-    $type = $this->getArg($macroName, 'type', '[top, side, sitemap, in-page] Specifies the type of output to be rendered.', '');
+    $type = $this->getArg($macroName, 'type', '[top, side, side-accordion, sitemap, sitemap-accordion, in-page] Specifies the type of output to be rendered.', '');
     $class = $this->getArg($macroName, 'class', 'Class to be applied to the surrounding NAV tag. (alias for \'navClass\')');
     $this->getArg($macroName, 'layout', '[horizontal, vertical] Specifies direction of top-level items.', '');
-    $this->getArg($macroName, 'animation', '[dropdown, slidedown, collapsable] Defines the type of animation applied to the rendered tree.', '');
+    $this->getArg($macroName, 'animation', '[dropdown, slidedown, collapsible] Defines the type of animation applied to the rendered tree.', '');
     $this->getArg($macroName, 'options', '[top-level, curr-branch] These are filters that render a subset of items.', '');
     $this->getArg($macroName, 'theme', '[dark] Selects coloring defaults.', '');
 
