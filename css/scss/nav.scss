@@ -104,6 +104,10 @@ $xCorr: 1.55em;
     a:hover {
         border-bottom: none;
     }
+    .lzy-nav-label {
+        display: inline-block;
+        max-width: calc(100% - 1.7em);
+    }
     .lzy-nav-arrow {
         display: none;
         user-select: none;
