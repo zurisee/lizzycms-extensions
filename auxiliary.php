@@ -1352,6 +1352,9 @@ function translateToFilename($str, $appendExt = true)
 function translateToIdentifier($str, $removeDashes = false)
 {
 // translates special characters (such as , , ) into "filename-safe" non-special equivalents (a, o, U)
+    if (preg_match('/^ \W* (\w .*? ) \W* $/x', $str, $m)) { // cut leading/trailing non-chars;
+        $str = $m[1];
+    }
 	$str = strToASCII(mb_strtolower(trim($str)));		// replace special chars
 	$str = strip_tags($str);							// strip any html tags
 	$str = preg_replace('/\s+/', '_', $str);			// replace blanks with _
