@@ -79,7 +79,7 @@ private $userConfigurableSettingsAndDefaults      = [
             'site_enableCaching'                => [false, 'If true, Lizzy\'s caching mechanism is activated. (not fully implemented yet)' ],
             'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
             'site_enableRelLinks'               => [true, 'If true, injects "rel links" into header, e.g. "&lt;link rel=\'next\' title=\'Next\' href=\'...\'>"' ],
-            'site_multiLanguageSupport'         => [false, 'If true, Lizzy activates multiple languages support.' ],
+            'site_multiLanguageSupport'         => [null, 'If true, Lizzy activates multiple languages support.' ],
             'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".CONFIG_PATH."'"],
             'site_robots'                       => [false, 'If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],
             'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
@@ -218,7 +218,12 @@ private $userConfigurableSettingsAndDefaults      = [
             $this->path_logPath = LOGS_PATH;
         }
 
-        if (!$this->site_supportedLanguages) {
+//        if (!$this->site_supportedLanguages) {
+        if ($this->site_supportedLanguages) {
+            if ($this->site_multiLanguageSupport !== false) {
+                $this->site_multiLanguageSupport = true;
+            }
+        } else {
             $this->site_supportedLanguages = $this->site_defaultLanguage;
         }
         if ($this->site_multiLanguageSupport) {
