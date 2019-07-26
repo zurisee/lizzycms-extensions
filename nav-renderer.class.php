@@ -70,7 +70,7 @@ class NavRenderer
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-open-current lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-nav-collapsed lzy-nav-open-current lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'sitemap') {
