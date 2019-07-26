@@ -293,6 +293,11 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $attrs = $block['attributes'];
         $comment = $block['comment'];
 
+        // exclude blocks with lang option set but is not current language:
+        if ($block["lang"] && ($block["lang"] !== $GLOBALS["globalParams"]["lang"])) {
+            return '';
+        }
+
         $out = implode("\n", $block['content']);
 
         if (!$block['literal'] && $block['mdcompile']) {  // within such a block we need to compile explicitly:
@@ -792,14 +797,14 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
     //....................................................
-    private function parseInlineStyling($line)
+    private function parseInlineStyling($line, $returnElements = false)
     {
         // examples: '.myclass.sndCls', '#myid', 'color:red; background: #ffe;'
         if (!$line) {
             return ['', '', '', '', false, true];
         }
 
-        return parseInlineBlockArguments($line);
+        return parseInlineBlockArguments($line, $returnElements);
     } // parseInlineStyling
 
 
