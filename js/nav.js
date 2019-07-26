@@ -101,6 +101,7 @@ var largeScreenClasses = '';
 
     setupKeyboardEvents();
     initPrimaryNav();
+    openCurrentElement();
 }( jQuery ));
 
 
@@ -225,6 +226,16 @@ function closeAllAccordions($parentLi, setOpenCls) {
 
 
 
+
+function openCurrentElement() {
+    $('.lzy-nav.lzy-nav-open-current .active').each(function () {
+        $parentLi = $( this );
+        $parentLi.addClass('lzy-open');
+        $( 'div', $parentLi ).attr({'aria-hidden': 'false'});        // next div
+        $('a', $parentLi).attr({'tabindex': ''});  // set aria-expanded and make focusable
+    })
+
+} // openCurrentElement
 
 function adaptMainMenuToScreenSize( smallScreen ) {
     if (smallScreen) {
