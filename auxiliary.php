@@ -119,9 +119,14 @@ function parseInlineBlockArguments($str, $returnElements = false)
     $mdCompile = true;
     $elems = [];
 
-    if (preg_match('/(.*) !([\w-]+) (.*)/x', $str, $m)) {      // !arg
-        if ($m[2]) {    // found
-            $str = $m[1].$m[3];
+    if (preg_match('/(.*) !(\S+) (.*)/x', $str, $m)) {      // !arg
+        $str = $m[1].$m[3];
+        list($k, $v) = explode('=', strtolower($m[2]));
+        if ($k === 'lang') {
+            $attr .= " data-lang='$v'";
+            $lang = $v;
+
+        } elseif ($k === 'off') {
             $style = ' display:none;';
         }
     }
