@@ -796,6 +796,83 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
 
+    // ---------------------------------------------------------------
+    /**
+     * @marker [
+     */
+    // [link text](https://www.google.com)
+    protected function parseLink($markdown)
+    {
+        // check whether the marker really represents a strikethrough (i.e. there is a closing `)
+        if (preg_match('/^\[ ( .+? ) \)/x', $markdown, $matches)) {
+            return [
+                // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
+                // other inline markdown elements inside this tag
+                ['link', $matches[1]],
+                // return the offset of the parsed text
+                strlen($matches[0])
+            ];
+        }
+        // in case we did not find a closing ~~ we just return the marker and skip 2 characters
+        return [['text', '['], 1];
+    }
+
+    // rendering is the same as for block elements, we turn the abstract syntax array into a string.
+    protected function renderLink($element)
+    {
+        list($text, $url) = explode('](', $element[1]);
+        $text = str_replace('"', '&quot;', $text);
+        $attr = '';
+        if (stripos($url, 'http') === 0) {
+            $attr = ", type:'extern'";
+        }
+        return "{{ link(\"$url\", \"$text\"$attr) }}";
+    }
+
+
+
+
+    // ---------------------------------------------------------------
+    /**
+     * @marker ![
+     */
+    // ![alt text](img.jpg "Logo Title Text 1")
+    protected function parseImage($markdown)
+    {
+        // check whether the marker really represents a strikethrough (i.e. there is a closing `)
+        if (preg_match('/^!\[ ( .+? ) \)/x', $markdown, $matches)) {
+            return [
+                // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
+                // other inline markdown elements inside this tag
+                ['image', $matches[1]],
+                // return the offset of the parsed text
+                strlen($matches[0])
+            ];
+        }
+        // in case we did not find a closing ~~ we just return the marker and skip 2 characters
+        return [['text', '!['], 2];
+    }
+
+    // rendering is the same as for block elements, we turn the abstract syntax array into a string.
+    protected function renderImage($element)
+    {
+        list($alt, $src) = explode('](', $element[1]);
+        $alt = str_replace('"', '&quot;', $alt);
+        $caption = '';
+        if (preg_match('/^ (.*?) ["\'] (.+?) ["\'] (.*) /x', $src, $m)) {
+            $src = $m[1];
+            $caption = str_replace('"', '&quot;', $m[2]);
+        }
+        $src = trim($src);
+        if ($caption) {
+            $caption = ", caption: \"$caption\"";
+        }
+        return "{{ img(src:\"$src\", alt:\"$alt\"$caption) }}";
+    }
+
+
+
+
     //....................................................
     private function parseInlineStyling($line, $returnElements = false)
     {
