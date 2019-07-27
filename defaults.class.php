@@ -164,8 +164,6 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['PAGE_SWITCHER']         = array('module' => 'js/page_switcher.js', 'weight' => 30);
         $this->loadModules['TETHER']                = array('module' => 'third-party/tether.js/tether.min.js', 'weight' => 20);
         $this->loadModules['IFRAME_RESIZER']        = array('module' => 'third-party/iframe-resizer/iframeResizer.contentWindow.min.js', 'weight' => 19);
-
-
         $this->loadModules['USER_ADMIN']            = array('module' => 'js/user_admin.js, css/user_admin.css', 'weight' => 5);
 
 
