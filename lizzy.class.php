@@ -1400,8 +1400,12 @@ EOT;
             $this->page->addJq($jq);
         }
 
-        if (!$this->auth->checkGroupMembership('editors')) {  // only localhost or logged in as editor/admin group
+        //=== beyond this point only localhost or logged in as editor/admin group
+        if (!$this->auth->checkGroupMembership('editors')) {
             $this->trans->addVariable('toggle-edit-mode', "");
+            if (getUrlArg('help')) {                              // help
+                $this->page->addMessage("You need to be logged in as admin to see help");
+            }
             return;
         }
 
@@ -1474,29 +1478,25 @@ EOT;
 Available URL-commands:
 
 <a href='?help'>?help</a>		    this message
-<a href='?admin'>?admin</a>		    perform admin tasks
-<a href='?list'>?list</a>		    list of transvars and macros()
+
+<a href='?auto'>?auto</a>		    automatic reload of page when files change 
+                    (&rarr; on Mac localhost only, requires external tool <a href="https://livereload.com" target="_blank">livereload.com</a>)  *)
 <a href='?config'>?config</a>		    list configuration-items in the config-file
-<a href='?localcall'>?localcall=false</a>    to test behavior as if on non-local host
+<a href='?convert'>?convert</a>	    convert password to hash
+<a href='?debug'>?debug</a>		    adds 'debug' class to page on non-local host *)
 <a href='?edit'>?edit</a>		    start editing mode *)
-<a href='?convert=pw'>?convert=</a>	    convert password to hash
+<a href='?iframe'>?iframe</a>		    show code for embedding as iframe
+<a href='?info'>?info</a>		    list debug-info
+<a href='?lang=xy'>?lang=</a>	            switch to given language (e.g. '?lang=en')  *)
+<a href='?list'>?list</a>		    list <samp>transvars</samp> and <samp>macros()</samp>
+<a href='?log'>?log</a>		    displays log files in overlay
 <a href='?login'>?login</a>		    login
 <a href='?logout'>?logout</a>		    logout
-<a href='?reset'>?reset</a>		    clear cache, session-variables and error-log
-<a href='?unused'>?unused</a>		    show unused variables
-<a href='?reset-unused'>?reset-unused</a>       restart monitoring of unused variables
-<a href='?remove-unused'>?remove-unused</a>	    remove unused variables
-<a href='?purge'>?purge</a>		    empty and delete all recycle bins (i.e. copies of modified pages)
+<a href='?mobile'>?mobile</a>,<a href='?touch'>?touch</a>,<a href='?notouch'>?notouch</a>	emulate modes  *)
 <a href='?nc'>?nc</a>		    supress caching (?nc=false to enable caching again)  *)
-<a href='?lang=xy'>?lang=</a>	            switch to given language (e.g. '?lang=en')  *)
+<a href='?purge'>?purge</a>		    empty and delete all recycle bins (i.e. copies of modified pages)
+<a href='?reset'>?reset</a>		    clear cache, session-variables and error-log
 <a href='?timer'>?timer</a>		    switch timer on or off  *)
-<a href='?mobile'>?mobile</a>		    emulate mobile mode  *)
-<a href='?touch'>?touch</a>		    emulate touch mode  *)
-<a href='?notouch'>?notouch</a>	    emulate none-touch mode  *)
-<a href='?auto'>?auto</a>		    automatic reload of page when files change (on localhost only, requires external tool http://livereload.com)  *)
-<a href='?debug'>?debug</a>		    adds 'debug' class to page on non-local host *)
-<a href='?info'>?info</a>		    list debug-info
-<a href='?log'>?log</a>		    displays log files in overlay
 
 *) these options are persistent, they keep their value for further page requests. 
 Unset individually as ?xy=false or globally as ?reset
@@ -1504,8 +1504,15 @@ Unset individually as ?xy=false or globally as ?reset
 </pre>
 EOT;
         // TODO: printall -> add above
-        //<a href='?printall'>?printall</a>	    show all pages in one
-			$this->page->addOverlay($overlay);
+        //<a href='?printall'>?printall</a>	    show all pages in on
+        //<a href='?admin'>?admin</a>		    perform admin tasks
+        //<a href='?localcall'>?localcall=false</a>    to test behavior as if on non-local host
+//            <a href='?unused'>?unused</a>		    show unused variables
+//            <a href='?reset-unused'>?reset-unused</a>       restart monitoring of unused variables
+//            <a href='?remove-unused'>?remove-unused</a>	    remove unused variables
+//            <a href='?touch'>?touch</a>		    emulate touch mode  *)
+//<a href='?notouch'>?notouch</a>	    emulate none-touch mode  *)
+		$this->page->addOverlay($overlay);
         }
 
 

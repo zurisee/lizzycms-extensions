@@ -1100,18 +1100,21 @@ EOT;
         if (file_exists(ERROR_LOG)) {
             $errLog = file_get_contents(ERROR_LOG);
             $errLog = substr($errLog, -1000);
+            $errLog = str_replace("\n", "<br>\n", $errLog);
             $debugInfo .= "\n<p><strong>Error Log:</strong></p><div class='log scrollToBottom'>$errLog</div>\n";
         }
 
         if (file_exists(LOGS_PATH . LOGIN_LOG_FILENAME)) {
             $failedLogins = file_get_contents(LOGS_PATH . LOGIN_LOG_FILENAME);
             $failedLogins = substr($failedLogins, -1000);
+            $failedLogins = str_replace("\n", "<br>\n", $failedLogins);
             $debugInfo .= "\n<p><strong>Log-ins:</strong></p><div class='log scrollToBottom'>$failedLogins</div>\n";
         }
 
         if (file_exists(LOGS_PATH . 'log.txt')) {
             $accessLog = file_get_contents(LOGS_PATH . 'log.txt');
             $accessLog = substr($accessLog, -1000);
+            $accessLog = str_replace("\n", "<br>\n", $accessLog);
             $debugInfo .= "\n<p><strong>Access Log:</strong></p><div class='log scrollToBottom'>$accessLog</div>\n";
         }
 
