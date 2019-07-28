@@ -20,6 +20,23 @@
 
 
 //--------------------------------------------------------------
+function scrollIntoView( selector, container )
+{
+    if (typeof container !== 'undefined') {
+        $( container ).animate({
+            scrollTop: $( selector ).offset().top
+        }, 500);
+
+    } else {
+        $('html, body').animate({
+            scrollTop: $( selector ).offset().top
+        }, 500);
+    }
+} // scrollIntoView
+
+
+
+//--------------------------------------------------------------
 function showMessage( txt )
 {
     $('.MsgBox').remove();
