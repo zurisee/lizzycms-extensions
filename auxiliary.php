@@ -795,7 +795,70 @@ function convertFsToHttpPath($path)
 
 
 //------------------------------------------------------------
-function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $absolutePath = false)
+function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
+{
+    global $globalParams;
+
+    $path = trim($path);
+    if (!$path && !$relativeToCurrPage) {
+        return '';
+    } elseif (preg_match('/^\w{1,6}:/', $path)) {   // https://, tel:, sms:, etc.
+        return $path;
+    }
+    $ch1=$path[0];
+    if ($ch1 === '/') {
+        $path = '~'.$path;
+    } else {
+        if ($relativeToCurrPage) {        // for HTTP Requests
+            $path = makePathRelativeToPage($path);
+
+        } else {
+            if (($ch1 != '/') && ($ch1 != '~')) {    //default to path local to page ???always ok?
+                $path = '~/' . $path;
+            }
+        }
+    }
+
+	$pathToRoot  = $globalParams["pathToRoot"];
+	$pathToPage  = $globalParams["pathToPage"];
+
+    $from = [
+        '|~/|',
+        '|~data/|',
+        '|~sys/|',
+        '|~ext/|',
+        '|~page/|',
+    ];
+
+    if ($httpAccess) {    // relative path for http access:
+        $to = [
+            $pathToRoot,
+            $pathToRoot.$globalParams['dataPath'],
+            $pathToRoot.SYSTEM_PATH,
+            $pathToRoot.EXTENSIONS_PATH,
+            '',
+        ];
+
+    } else {    // relative path for file access:
+        $to = [
+            '',
+            $globalParams['dataPath'],
+            SYSTEM_PATH,
+            EXTENSIONS_PATH,
+            $pathToPage,
+        ];
+    }
+
+    $path = preg_replace($from, $to, $path);
+    $path = normalizePath($path);
+    return $path;
+} // resolvePath
+
+
+
+
+//------------------------------------------------------------
+function resolveToAbsPath($path, $relativeToCurrPage = false, $httpAccess = false)
 {
     global $globalParams;
 
@@ -821,13 +884,13 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $a
 
 	$fullAppRoot = $globalParams["absAppRootUrl"];
 	$fullAppPath = $globalParams["absAppRoot"];
-	$pathToRoot  = $globalParams["pathToRoot"];
+//	$pathToRoot  = $globalParams["pathToRoot"];
 	$pathToPage  = $globalParams["pathToPage"];
 	$url         = $globalParams["pageUrl"];
     if ($httpAccess) {    // http access:
         if (fileExt($path)) {   // it's a path to a resource
-            $pathToRoot = '../'.$pathToRoot;
-            $pathToPage = $globalParams['pagePath'].$pathToPage;
+//            $pathToRoot = '../'.$pathToRoot;
+//            $pathToPage = $globalParams['pagesFolder'].$pathToPage;
             $url = $fullAppRoot.$globalParams["pathToPage"];
         }
     }
@@ -839,50 +902,28 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $a
         '|~ext/|',
         '|~page/|',
     ];
-	if ($absolutePath) {    // render an absolute path:
-	    if ($httpAccess) {    // http access:
-            $to = [
-                $fullAppRoot,
-                $fullAppRoot . $globalParams['dataPath'],
-                $fullAppRoot . SYSTEM_PATH,
-                $fullAppRoot . EXTENSIONS_PATH,
-                $url,
-            ];
-        } else {    // file access:
-            $to = [
-                $fullAppPath,
-                $fullAppPath . $globalParams['dataPath'],
-                $fullAppPath . SYSTEM_PATH,
-                $fullAppPath . EXTENSIONS_PATH,
-                $globalParams["absAppRoot"].$pathToPage,
-            ];
-        }
-
-    } else {    // render a relative path:
-        if ($httpAccess) {    // relative path for http access:
-            $to = [
-                $pathToRoot,
-                $pathToRoot.$globalParams['dataPath'],
-                $pathToRoot.SYSTEM_PATH,
-                $pathToRoot.EXTENSIONS_PATH,
-                '', //$globalParams['pathToPage'],
-            ];
-
-        } else {    // relative path for file access:
-            $to = [
-                '',
-                $globalParams['dataPath'],
-                SYSTEM_PATH,
-                EXTENSIONS_PATH,
-                $pathToPage,
-            ];
-        }
+    if ($httpAccess) {    // http access:
+        $to = [
+            $fullAppRoot,
+            $fullAppRoot . $globalParams['dataPath'],
+            $fullAppRoot . SYSTEM_PATH,
+            $fullAppRoot . EXTENSIONS_PATH,
+            $url,
+        ];
+    } else {    // file access:
+        $to = [
+            $fullAppPath,
+            $fullAppPath . $globalParams['dataPath'],
+            $fullAppPath . SYSTEM_PATH,
+            $fullAppPath . EXTENSIONS_PATH,
+            $globalParams["absAppRoot"].$pathToPage,
+        ];
     }
 
     $path = preg_replace($from, $to, $path);
     $path = normalizePath($path);
     return $path;
-} // resolvePath
+} // resolveToAbsPath
 
 
 
@@ -895,7 +936,7 @@ function normalizePath($path)
         $hdr = $m[1];
         $path = $m[3];
     }
-    while ($path && preg_match('|(.*?) ([^/\.]+/../) (.*)|x', $path, $m)) {
+    while ($path && preg_match('|(.*?) ([^/\.]+/\.\./) (.*)|x', $path, $m)) {
         $path = $m[1] . $m[3];
     }
     return $hdr.$path;
@@ -931,11 +972,29 @@ function resolveAllPaths( &$html, $requestRewriteActive = true)
         resolveHrefs($html);
     }
 
-    $html = preg_replace('|~/|', $pathToRoot, $html);
-	$html = preg_replace('|~data/|', $pathToRoot.$globalParams['dataPath'], $html);
-	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
-	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
-	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
+    $from = [
+        '|~/|',
+        '|~data/|',
+        '|~sys/|',
+        '|~ext/|',
+        '|~page/|',
+    ];
+    $to = [
+        $pathToRoot,
+        $pathToRoot.$globalParams['dataPath'],
+        $pathToRoot.SYSTEM_PATH,
+        $pathToRoot.EXTENSIONS_PATH,
+        '', //$globalParams['pathToPage'],
+    ];
+
+    $html = preg_replace($from, $to, $html);
+//    $html = normalizePath($html);
+
+//    $html = preg_replace('|~/|', $pathToRoot, $html);
+//	$html = preg_replace('|~data/|', $pathToRoot.$globalParams['dataPath'], $html);
+//	$html = preg_replace('|~sys/|', $pathToRoot.SYSTEM_PATH, $html);
+//	$html = preg_replace('|~ext/|', $pathToRoot.EXTENSIONS_PATH, $html);
+//	$html = preg_replace(['|~page/|', '|\^/|'], $pathToRoot.$globalParams['pathToPage'], $html);    // -> only resource links! would be wrong for html links!
 } // resolveAllPaths
 
 
