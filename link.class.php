@@ -101,22 +101,16 @@ class CreateLink
             }
 
         } else {
-//            if ($href[0] === '~') {
-//                $href = resolvePath($href, true, true);
-//
-//            } else {
-                // prepend 'https://' unless 'http' or something like mailto:
-                if (!preg_match('/: [^\?&]*/x', $href)) {
-                    if ((strpos($href, 'http') !== 0) &&
-                        (stripos($type, 'intern') === false) &&
-                        preg_match('/[\w-]+\.[\w-]{2,10}/', $href, $m)) {
-                            $href = 'https://' . $href;
-                    }
-//                    $href = resolvePath($href, false, true);
-                } else {
-                    $href = resolvePath($href, true, true);
+            // prepend 'https://' unless 'http' or something like mailto:
+            if (!preg_match('/: [^\?&]*/x', $href)) {
+                if ((strpos($href, 'http') !== 0) &&
+                    (stripos($type, 'intern') === false) &&
+                    preg_match('/[\w-]+\.[\w-]{2,10}/', $href, $m)) {
+                        $href = 'https://' . $href;
                 }
-//            }
+            } else {
+                $href = resolvePath($href, true, true);
+            }
 
             $href1 = $href;
             if (strpos($href, './') === 0) {
