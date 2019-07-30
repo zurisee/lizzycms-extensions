@@ -643,7 +643,8 @@ EOT;
     public function applyRedirect()
     {
         if ($this->redirect) {
-            $url = resolvePath($this->redirect, false, true);
+            $url = resolvePath($this->redirect, true, true);
+//            $url = resolvePath($this->redirect, false, true);
             header('Location: ' . $url);
             exit;
         }
@@ -835,13 +836,15 @@ EOT;
 
         if ($type == 'css') {
             foreach ($this->cssModules as $item) {
-                $item = resolvePath($item, false, true);
+                $item = resolvePath($item, true, true);
+//                $item = resolvePath($item, false, true);
                 $out .= "\t<link href='$item' rel='stylesheet' />\n";
             }
 
         } else {
             foreach ($this->jsModules as $item) {
-                $item = resolvePath($item, false, true);
+                $item = resolvePath($item, true, true);
+//                $item = resolvePath($item, false, true);
                 $out .= "\t<script src='$item'></script>\n";
             }
 

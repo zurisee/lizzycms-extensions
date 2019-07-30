@@ -293,7 +293,8 @@ class SiteStructure
                     $rec['actualFolder'] = $rec['folder'];
                 }
                 if (isset($rec['alias']) && $rec['alias']) {
-                    $rec['alias'] = resolvePath(fixPath($rec['alias']),false,false,true);
+                    $rec['alias'] = resolvePath(fixPath($rec['alias']));
+//                    $rec['alias'] = resolvePath(fixPath($rec['alias']),false,false,true);
                 }
                 $list[] = $rec;
             }

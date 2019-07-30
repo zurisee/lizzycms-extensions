@@ -98,8 +98,8 @@ class DirRenderer
                 continue;
             }
             $name = base_name($file);
-            $file = resolvePath($this->path0 . basename($file), true, true);
-            $str .= "\t\t<li><a href='$file'{$this->target}>$name</a></li>\n";
+            $fileUrl = resolvePath($this->path0 . basename($file), true, true);
+            $str .= "\t\t<li><a href='$fileUrl'{$this->target}>$name</a></li>\n";
         }
         $str = <<<EOT
 

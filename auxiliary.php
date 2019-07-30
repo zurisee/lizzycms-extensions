@@ -905,7 +905,7 @@ function normalizePath($path)
 
 
 //------------------------------------------------------------
-function makePathRelativeToPage($path, $forImgRessources = false)
+function makePathRelativeToPage($path)
 {
     if (!$path) {
         return '';
@@ -1200,7 +1200,7 @@ function reloadAgent($target = false, $getArg = false)
     if ($target === true) {
         $target = $globalParams['requestedUrl'];
     } elseif ($target) {
-        $target = resolvePath($target, false, 'https');
+        $target = resolvePath($target, false, true);
     } else {
         $target = $globalParams['pageUrl'];
     }
