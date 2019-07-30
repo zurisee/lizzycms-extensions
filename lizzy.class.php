@@ -555,6 +555,7 @@ class Lizzy
         $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
         $globalParams['requestedUrl'] = $requestedUrl;
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
+        $globalParams['absAppRootUrl'] = $globalParams["host"] . substr($appRoot, 1);  // path from FS root to base folder of app, e.g. /Volumes/...
 
         $pagePath = $this->auth->handleAccessCodeInUrl( $pagePath0 );
 
