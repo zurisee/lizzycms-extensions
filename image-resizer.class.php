@@ -132,6 +132,14 @@ class ImageResizer
     //----------------------------------------------------------------
     public function resizeImage($src, $dst, $width = false, $height = false, $crop = false)
     {
+        // remove appRoot if included in the path:
+        $p = $GLOBALS['globalParams']['appRoot'];
+        if (strpos("/$src", $p) === 0) {
+            $l = strlen($p);
+            $src = substr($src, $l - 1);
+            $dst = substr($dst, $l);
+        }
+
         if(!$src || !file_exists($src)) {   // nothing to do:
             return false;
         }

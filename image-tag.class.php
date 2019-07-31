@@ -31,8 +31,9 @@ class ImageTag
 
 
 
-    public function render($id) {
-
+    public function render($id)
+    {
+        global $globalParams;
         // load late-loading code if not done yet:
         if ($this->lateImgLoading && (!isset($this->lateImgLoadingCodeLoaded))) {
             $this->lateImgLoadingCodeLoaded = true;
@@ -54,12 +55,11 @@ class ImageTag
 
         $genericAttibs = $this->imgTagAttributes ? ' '.$this->imgTagAttributes : '';
 
-        $src = $GLOBALS["globalParams"]["appRoot"].$GLOBALS["globalParams"]["pathToPage"].$this->src;
+        $src = $globalParams["appRoot"].$globalParams["pathToPage"].'_/'.base_name($this->src);
 
 
         // basic img code:
         $str = "<img id='$id' class='$class' {$this->lateImgLoadingPrefix}src='{$src}'{$srcset} title='{$this->alt}' alt='{$this->alt}'$genericAttibs $qvDataAttr />";
-//        $str = "<img id='$id' class='$class' {$this->lateImgLoadingPrefix}src='{$this->src}'{$srcset} title='{$this->alt}' alt='{$this->alt}'$genericAttibs $qvDataAttr />";
 
         return $str;
     } // render
