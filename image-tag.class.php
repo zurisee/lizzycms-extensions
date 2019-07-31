@@ -5,9 +5,6 @@
 
 class ImageTag
 {
-//    private $path = null;
-//    private $basename = null;
-//    private $ext = null;
     private $aspRatio = null;
     private $imgFullsizeWidth = null;
     private $imgFullsizeHeight = null;
@@ -141,10 +138,10 @@ class ImageTag
         // file type
 
         list($w, $h) = $this->parseFileName($this->origSrc);
+        list($w0, $h0) = getimagesize($this->srcFile);
         if ($w && $h) {
             $aspectRatio = $h / $w;
         } else {
-            list($w0, $h0) = getimagesize($this->srcFile);
             $aspectRatio = $h0 / $w0;
         }
         if (!$w && $h) {
@@ -155,6 +152,8 @@ class ImageTag
         $this->w = $w;
         $this->h = $h;
         $this->aspRatio = $aspectRatio;
+        $this->imgFullsizeWidth = $w0;
+        $this->imgFullsizeHeight = $h0;
     } // getFileInfo
 
 
@@ -170,19 +169,5 @@ class ImageTag
 
         return [null, null];
     } // parseFileName
-
-
-
-
-//    private function determineFilePaths()
-//    {
-//        $this->src = makePathRelativeToPage($this->fullsizeImg, true);
-//        $this->srcFile = resolvePath($this->src, true);
-//        list($this->src, $this->path, $this->basename, $this->ext, $this->w, $this->h, $dimFound) = parseFileName($this->src, $this->aspRatio);
-//        $this->w = ($dimFound) ? $this->w : null;
-//        $this->h = ($dimFound) ? $this->h : null;
-//
-//        $this->srcFile = resolvePath($this->path) . $this->basename . $this->ext;
-//    } // determineFilePaths
 
 } // class ImagePrep
