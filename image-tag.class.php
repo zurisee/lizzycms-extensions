@@ -54,8 +54,12 @@ class ImageTag
 
         $genericAttibs = $this->imgTagAttributes ? ' '.$this->imgTagAttributes : '';
 
+        $src = $GLOBALS["globalParams"]["appRoot"].$GLOBALS["globalParams"]["pathToPage"].$this->src;
+
+
         // basic img code:
-        $str = "<img id='$id' class='$class' {$this->lateImgLoadingPrefix}src='{$this->src}'{$srcset} title='{$this->alt}' alt='{$this->alt}'$genericAttibs $qvDataAttr />";
+        $str = "<img id='$id' class='$class' {$this->lateImgLoadingPrefix}src='{$src}'{$srcset} title='{$this->alt}' alt='{$this->alt}'$genericAttibs $qvDataAttr />";
+//        $str = "<img id='$id' class='$class' {$this->lateImgLoadingPrefix}src='{$this->src}'{$srcset} title='{$this->alt}' alt='{$this->alt}'$genericAttibs $qvDataAttr />";
 
         return $str;
     } // render
@@ -104,7 +108,7 @@ class ImageTag
 
         $basename = '_/'.base_name($srcFile, false);
         $ext = '.'.fileExt($srcFile);
-        $path = $GLOBALS["globalParams"]["pathToPage"];
+        $path = $GLOBALS["globalParams"]["appRoot"].$GLOBALS["globalParams"]["pathToPage"]; // absolute path from app root
 
         if ($this->srcset && ($this->fileSize > 50000)) {   // activate only if source file is largen than 50kb
             $w1 = ($this->w) ? $this->w : 300;
