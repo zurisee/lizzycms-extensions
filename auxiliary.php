@@ -1930,93 +1930,109 @@ function handleFatalPhpError() {
 
 
 //....................................................
-function parseDimString($str, $imageFile = false, $aspectRatio = false)
+function parseDimString($str)
 {
-    // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
-    $h = $w = 0;
-    if (strpos($str, 'x') === false) {      // no 'x' present
-        if (!$str) {
-            $w = $h = $aspectRatio = 0;
-
-        } else {
-            if (!$aspectRatio) {
-                if (file_exists($imageFile)) {
-                    list($w0, $h0) = getimagesize($imageFile);
-                    $aspectRatio = $h0 / $w0;
-                } else {
-                    $aspectRatio = DEFAULT_ASPECT_RATIO;
-                }
-            } elseif ($aspectRatio < 1) {
-                $w = intval($str);
-                $h = (int)round($w * $aspectRatio);
-            } else {
-                $h = intval($str);
-                $w = (int)round($h / $aspectRatio);
-            }
-        }
-
-    } else {                    // 'x' present
-        list($w, $h) = explode('x', $str);
-        $w = intval($w);
-        $h = intval($h);
-        if (!$aspectRatio && $imageFile) {
-            if ($imageFile{0} == '~') {
-                $imageFile = resolvePath($imageFile, true);
-            }
-            if (file_exists($imageFile)) {
-                list($w0, $h0) = getimagesize($imageFile);
-                if ($w0 && $h0) {
-                    $aspectRatio = $h0 / $w0;
-                } else {
-                    $aspectRatio = DEFAULT_ASPECT_RATIO;
-                }
-            } else {
-                $aspectRatio = DEFAULT_ASPECT_RATIO;
-            }
-        } elseif (!$aspectRatio) {
-            $aspectRatio = DEFAULT_ASPECT_RATIO;
-        }
-
-        if (!$w) {
-            $w = (int) round($h / $aspectRatio);
-        } elseif (!$h) {
-            $h = (int) round($w * $aspectRatio);
-        }
+    // E.g. 200x150, or 200x  or x150 or 200 etc.
+    $h = $w = null;
+    if (preg_match('/(\d*)x(\d*)/', $str, $m)) {
+        $w = intval($m[1]);
+        $h = intval($m[2]);
+    } elseif (preg_match('/(\d+)/', $str, $m)) {
+        $w = intval($m[1]);
     }
     return [$w, $h];
 } // parseDimString
 
 
 
+//function parseDimString($str, $imageFile = false, $aspectRatio = false)
+//{
+//    // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
+//    $h = $w = 0;
+//    if (strpos($str, 'x') === false) {      // no 'x' present
+//        if (!$str) {
+//            $w = $h = $aspectRatio = 0;
+//
+//        } else {
+//            if (!$aspectRatio) {
+//                if (file_exists($imageFile)) {
+//                    list($w0, $h0) = getimagesize($imageFile);
+//                    $aspectRatio = $h0 / $w0;
+//                } else {
+//                    $aspectRatio = DEFAULT_ASPECT_RATIO;
+//                }
+//            } elseif ($aspectRatio < 1) {
+//                $w = intval($str);
+//                $h = (int)round($w * $aspectRatio);
+//            } else {
+//                $h = intval($str);
+//                $w = (int)round($h / $aspectRatio);
+//            }
+//        }
+//
+//    } else {                    // 'x' present
+//        list($w, $h) = explode('x', $str);
+//        $w = intval($w);
+//        $h = intval($h);
+//        if (!$aspectRatio && $imageFile) {
+//            if ($imageFile{0} == '~') {
+//                $imageFile = resolvePath($imageFile, true);
+//            }
+//            if (file_exists($imageFile)) {
+//                list($w0, $h0) = getimagesize($imageFile);
+//                if ($w0 && $h0) {
+//                    $aspectRatio = $h0 / $w0;
+//                } else {
+//                    $aspectRatio = DEFAULT_ASPECT_RATIO;
+//                }
+//            } else {
+//                $aspectRatio = DEFAULT_ASPECT_RATIO;
+//            }
+//        } elseif (!$aspectRatio) {
+//            $aspectRatio = DEFAULT_ASPECT_RATIO;
+//        }
+//
+//        if (!$w) {
+//            $w = (int) round($h / $aspectRatio);
+//        } elseif (!$h) {
+//            $h = (int) round($w * $aspectRatio);
+//        }
+//    }
+//    return [$w, $h];
+//} // parseDimString
+//
+
+
 //....................................................
-function parseFileName($filename, $aspectRatio)
-{
-    $path = dirname($filename).'/';
-    $fname = base_name($filename);
-    $dimFound = false;
-    $w = $h = '';
-
-    if (preg_match('/([^\(]*) \( (.*) \) (\.\w+)/x', $fname, $m)) {    // (WxH) size specifier present?
-        $basename = $m[1];
-        $dimStr = $m[2];
-        $ext = $m[3];
-
-        $imgFullsizeFile = $path.$basename.$ext;
-
-        list($w, $h) = parseDimString($dimStr, $imgFullsizeFile, $aspectRatio);
-
-        $filename = $path.$basename."({$w}x$h)".$ext;
-        $dimFound = true;
-
-    } else {
-        $basename = base_name($fname, false);
-        $ext = '.'.fileExt($fname);
-        $f = resolvePath($filename);
-    }
-    $filename = convertFsToHttpPath($filename);
-    $path = convertFsToHttpPath($path);
-    return [$filename, $path, $basename, $ext, $w, $h, $dimFound];
-} // parseFileName
+//function parseFileName($filename, $aspectRatio)
+//{
+////    $path = dirname($filename).'/';
+//    $fname = base_name($filename);
+//    $dimFound = false;
+//    $w = $h = '';
+//
+//    if (preg_match('/([^\(]*) \( (.*) \) (\.\w+)/x', $fname, $m)) {    // (WxH) size specifier present?
+//        $basename = $m[1];
+//        $dimStr = $m[2];
+//        $ext = $m[3];
+//
+//        $imgFullsizeFile = $path.$basename.$ext;
+//
+//        list($w, $h) = parseDimString($dimStr, $imgFullsizeFile, $aspectRatio);
+//
+//        $filename = $path.$basename."({$w}x$h)".$ext;
+//        $dimFound = true;
+//
+//    } else {
+//        $basename = base_name($fname, false);
+//        $ext = '.'.fileExt($fname);
+//        $f = resolvePath($filename);
+//    }
+//    $filename = convertFsToHttpPath($filename);
+////    $path = convertFsToHttpPath($path);
+////    return [$filename, $path, $basename, $ext, $w, $h, $dimFound];
+//    return [$filename, $basename, $ext, $w, $h, $dimFound];
+//} // parseFileName
 
 
 
