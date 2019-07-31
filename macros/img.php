@@ -71,6 +71,10 @@ $this->addMacro($macroName, function () {
         }
     }
 
+    $args['origSrc'] = $args['src'];
+    $args['src'] = prepareImageWorkingCopy($args['src'], $this->config->feature_ImgDefaultMaxDim);
+    $args['srcFile'] = resolvePath($args['src']);
+
     $impTag = new ImageTag($this, $args);
     $str = $impTag->render($id);
     $class = ''; //???
@@ -109,3 +113,44 @@ $this->addMacro($macroName, function () {
     }
     return $str;
 });
+
+
+
+
+
+function prepareImageWorkingCopy($reqImg0, $imgDefaultMaxDim = '1920x1024')
+{
+    // takes the img from the page/ folder, resizes and copies it to _/
+    // requested img may contain sizing code, e.g. xxx[300x200] -> ignored
+    // returns path of working copy of image
+    $reqImg = $reqImg0;
+    if (preg_match('/(.*) ( \[ [^\] ]* \] ) (\.\w{1,6}) $/x', $reqImg, $m)) {
+        $reqImg = $m[1] . $m[3];
+    } elseif (preg_match('/(.*) ( \( [^\) ]* \) ) (\.\w{1,6}) $/x', $reqImg, $m)) {
+        $reqImg = $m[1] . $m[3];
+    }
+
+    $reqImgFile = resolvePath($reqImg, true);
+    $reqImgFile0 = $reqImgFile;
+
+    $path = dir_name($reqImgFile);
+    $fileName = base_name($reqImgFile);
+    if (!file_exists($reqImgFile)) {
+        $reqImgFile = $path.'#'.$fileName;
+    }
+
+    $fileName = str_replace(['(', ')'], '_', $fileName);
+
+    $workSrc = "~page/_/$fileName";
+    $workSrcFile = resolvePath($workSrc);
+
+    if (!file_exists($workSrcFile)) {
+        if (file_exists($reqImgFile)) {
+            $resizer = new ImageResizer($imgDefaultMaxDim);
+            $resizer->resizeImage($reqImgFile, $workSrcFile);
+        } else {
+            fatalError("Error: image source file '$reqImgFile0' not found.");
+        }
+    }
+    return $workSrc;
+} // prepareImageWorkingCopy
