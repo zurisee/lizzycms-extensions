@@ -210,7 +210,7 @@ class SiteStructure
                 $rec['level'] = $level;
 				$lastLevel = $level;
 
-				$rec['folder'] = basename(translateToIdentifier($name, true), '.html').'/';
+				$rec['folder'] = basename(translateToFilename($name, true), '.html').'/';
 				if ($args) {
 					$args = parseArgumentStr($args);
 					if (is_array($args)) {
