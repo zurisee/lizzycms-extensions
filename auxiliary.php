@@ -838,7 +838,8 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
             $pathToRoot.EXTENSIONS_PATH,
             '',
         ];
-        if (fileExt($path)) {   // it's a path to a resource:
+        $ext = fileExt($path);
+        if ($ext && (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,', ",$ext,") !== false)) {
             $to[4] = $pathToRoot.$pathToPage;
         }
 
