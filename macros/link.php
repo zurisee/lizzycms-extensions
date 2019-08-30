@@ -32,7 +32,12 @@ $this->addMacro($macroName, function () {
     $cl = new CreateLink( $this->lzy );
 
     if (isset($args['href'])) {
-        $args['href'] = makePathRelativeToPage($args['href']);
+        $ext = fileExt($args['href']);
+        if ($ext && (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,', ",$ext,") !== false)) {
+            $args['href'] = resolvePath($args['href'], true, true, false);
+        } else {
+            $args['href'] = resolvePath($args['href'], true, false, true);
+        }
     }
 
     $str = $cl->render($args);
