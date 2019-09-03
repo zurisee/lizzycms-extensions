@@ -1441,7 +1441,7 @@ function translateToFilename($str, $appendExt = true)
 // translates special characters (such as , , ) into "filename-safe" non-special equivalents (a, o, U)
 	$str = strToASCII(trim(mb_strtolower($str)));	// replace special chars
 	$str = strip_tags($str);						// strip any html tags
-	$str = str_replace(' ', '_', $str);				// replace blanks with _
+	$str = str_replace([' ', '-'], '_', $str);				// replace blanks with _
 	$str = str_replace('/', '_', $str);				// replace '/' with _
 	$str = preg_replace("/[^[:alnum:]\._-`]/m", '', $str);	// remove any non-printables
 	$str = preg_replace("/\.+/", '.', $str);		// reduce multiple ... to one .
