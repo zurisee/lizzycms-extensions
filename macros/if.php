@@ -41,7 +41,7 @@ $this->addMacro($macroName, function () {
 
     } elseif ($state === 'group') {
         $res = $this->lzy->auth->checkGroupMembership($arg);
-        
+
     } elseif ($state === 'isprivileged') {
         $res = $this->lzy->config->isPrivileged;
 
