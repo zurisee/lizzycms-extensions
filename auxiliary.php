@@ -1534,6 +1534,22 @@ function shield_str($s)
 
 
 
+
+//------------------------------------------------------------------------------
+function revertQuotes($s, $unshield = true)
+{
+    // &#39; -> '
+    // &#34; -> "
+    // unless shielded by preceding '\'
+    $s = preg_replace(['/(?<!\\\) (&\#39;)/x', '/(?<!\\\) (&\#34;)/x'], ["'", '"'], $s);
+    if ($unshield) {
+        $s = str_replace(['\\&#39;', '\\&#34;'], ['&#39;', '&#34;'], $s);
+    }
+	return $s;
+} // revertQuotes
+
+
+
 //------------------------------------------------------------------------------
 function var_r($var, $varName = '', $flat = false)
 {
