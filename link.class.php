@@ -14,6 +14,7 @@ class CreateLink
         $href = $args['href'];
         $text = $args['text'];
         $type = $args['type'];
+        $id = $args['id'];
         $class = $args['class'];
         $title = $args['title'];
         $target = $args['target'];
@@ -23,6 +24,7 @@ class CreateLink
         if ($title) {
             $title = " title='$title'";
         }
+        $id = $id ? " id='$id'" : '';
         $hiddenText = '';
         $arg = '';
         if ((stripos($href, 'mailto:') === 0) || (stripos($type, 'mail') !== false)) {
@@ -148,7 +150,7 @@ class CreateLink
         if (preg_match('/^ ([^\?&]*) (.*)/x', $href, $m)) {     // remove blanks from href
             $href = str_replace(' ', '', $m[1]).str_replace(' ', '%20', $m[2]);
         }
-        $str = "<a href='$href' $class$title$target>$text$hiddenText</a>";
+        $str = "<a href='$href' $id$class$title$target>$text$hiddenText</a>";
 
         return $str;
     } // render
