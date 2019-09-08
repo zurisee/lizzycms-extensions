@@ -33,10 +33,16 @@ $this->addMacro($macroName, function () {
     } elseif (($state === false) || ($state === 'false')) {
         $res = false;
 
-    } elseif ($state == 'islocalhost') {
+    } elseif ($state === 'islocalhost') {
         $res = isLocalCall();
 
-    } elseif ($state == 'isprivileged') {
+    } elseif ($state === 'loggedin') {
+        $res = $this->lzy->auth->getLoggedInUser();
+
+    } elseif ($state === 'group') {
+        $res = $this->lzy->auth->checkGroupMembership($arg);
+        
+    } elseif ($state === 'isprivileged') {
         $res = $this->lzy->config->isPrivileged;
 
     } elseif ($config) {
@@ -142,7 +148,7 @@ function evalResult($trans, $code, $inx)
             case 'macro' :
                 if (preg_match('/([\w-]+) \( (.*) \)/x', $arg, $m)) {
                     $macro = $m[1];
-                    $arg = $m[2];
+                    $arg = revertQuotes($m[2]);
                     $out = $trans->translateMacro($macro, $arg);
                 }
                 break;
