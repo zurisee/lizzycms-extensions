@@ -201,7 +201,8 @@ class AdminTasks
     public function sendSignupMail($email, $group = 'guest')
     {
         $accessCodeValidyTime = $this->lzy->config->admin_defaultAccessLinkValidyTime;
-        $message = $this->sendCodeByMail($email, 'email-signup', $accessCodeValidyTime, 'unknown-user', false);
+        list($message) = $this->sendCodeByMail($email, 'email-signup', $accessCodeValidyTime, 'unknown-user', false);
+//        $message = $this->sendCodeByMail($email, 'email-signup', $accessCodeValidyTime, 'unknown-user', false);
         return $message;
     } // sendSignupMail
 
@@ -213,7 +214,8 @@ class AdminTasks
     {
         $accessCodeValidyTime = $this->lzy->config->admin_defaultAccessLinkValidyTime;
         $userRec = $this->auth->getLoggedInUser(true);
-        $message = $this->sendCodeByMail($email, 'email-change-mail', $accessCodeValidyTime, $userRec);
+        list($message) = $this->sendCodeByMail($email, 'email-change-mail', $accessCodeValidyTime, $userRec);
+//        $message = $this->sendCodeByMail($email, 'email-change-mail', $accessCodeValidyTime, $userRec);
         return $message;
     } // sendChangeMailAddress_Mail
 
@@ -523,7 +525,8 @@ class AdminTasks
         if (isset($userRec['displayName'])) {
             $displayName = $userRec['displayName'];
         } else {
-            $displayName = $user;
+            $displayName = $submittedEmail;
+//            $displayName = $user;
         }
 
         $tick = new Ticketing();
@@ -569,7 +572,8 @@ class AdminTasks
 
             $message = $userAcc->renderOnetimeLinkEntryForm($submittedEmail, $validUntilStr, 'lzy-change-mail-link');
         }
-        return $message;
+        return [$message, $displayName];
+//        return $message;
     }
 
 

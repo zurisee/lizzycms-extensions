@@ -145,9 +145,10 @@ class Authentication
             $user = $userRec['username'];
             $this->setUserAsLoggedIn( $user, null, $oneTimeRec["email"] );
             $displayName = $this->getDisplayName();
-            if ($displayName) {
-                $user .= " ({$displayName})";
-            }
+//            if ($displayName) {
+//                $user .= " ({$displayName})";
+//            }
+            $user .= " ({$oneTimeRec['email']})";
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
 
             // access granted, remove hash-code from url, if there is one:
@@ -163,7 +164,9 @@ class Authentication
                 $rep = ' REPEATED';
             }
             $this->monitorFailedLoginAttempts();
-            writeLog("*** one time link rejected$rep: $code [".getClientIP().']', LOGIN_LOG_FILENAME);
+            if ($rep) {
+                writeLog("*** one time link rejected$rep: $code [" . getClientIP() . ']', LOGIN_LOG_FILENAME);
+            }
             $getArg = 'login-failed';
         }
         return $getArg;
@@ -181,7 +184,9 @@ class Authentication
         $ticket = $tick->consumeTicket($code);
         if (!$ticket) {
             $this->monitorFailedLoginAttempts();
-            writeLog("*** one-time link rejected: $code [".getClientIP().']', LOGIN_LOG_FILENAME);
+            $errMsg = $tick->getLastError();
+
+            writeLog("*** one-time link rejected: $code ($errMsg) [".getClientIP().']', LOGIN_LOG_FILENAME);
             return false;
         }
         $username = $ticket['username'];
@@ -742,8 +747,10 @@ class Authentication
                 $uname = $rec['username'];
                 $displayName = $this->getDisplayName();
                 $uname = $displayName ? "$uname ($displayName)" : $uname;
-                $message = $this->sendOneTimeCode($emailRequest, $rec);
-                writeLog("one time link sent to: $uname", LOGIN_LOG_FILENAME);
+                list($message, $displayName) = $this->sendOneTimeCode($emailRequest, $rec);
+//                $message = $this->sendOneTimeCode($emailRequest, $rec);
+                writeLog("one time link sent to: $displayName", LOGIN_LOG_FILENAME);
+//                writeLog("one time link sent to: $uname", LOGIN_LOG_FILENAME);
 
                 $res = [false, $message, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
             }
