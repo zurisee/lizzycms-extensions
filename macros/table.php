@@ -17,13 +17,18 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 
     $dataSource = $this->getArg($macroName, 'dataSource', '', '');
+    $suppressError = $this->getArg($macroName, 'suppressError', '', false);
     if ($dataSource === 'help') {
         return renderHelp($this, $macroName);
     }
 
     $file = resolvePath($dataSource, true);
     if ($dataSource && !file_exists($file)) {
-        return "<div>Error: Datasource-File '$dataSource' not found for macro 'table()'.</div>\n";
+        if ($suppressError) {
+            return '';
+        } else {
+            return "<div>Error: Datasource-File '$dataSource' not found for macro 'table()'.</div>\n";
+        }
     }
 
     $options = $this->getArgsArray($macroName, false);
