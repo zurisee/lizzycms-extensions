@@ -733,7 +733,8 @@ class Lizzy
             $userName = '';
             $login = <<<EOT
     <span class="lzy-tooltip-arrow" data-lzy-tooltip-from='login-warning' style="border-bottom:none;">
-        <img src="~sys/rsc/error.svg" alt="" />
+<!--        <img src="~sys/rsc/error.svg" alt="" />-->
+        <span class='lzy-icon-error'></span>
     </span>
     <div id="login-warning" style="display:none;">Warning:<br>no users defined - login mechanism is disabled.<br>&rarr; see config/users.yaml</div>
 EOT;

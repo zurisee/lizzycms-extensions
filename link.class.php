@@ -28,7 +28,8 @@ class CreateLink
         $hiddenText = '';
         $arg = '';
         if ((stripos($href, 'mailto:') === 0) || (stripos($type, 'mail') !== false)) {
-            $class = ($class) ?  "$class mail_link" : 'mail_link';
+            $class = ($class) ?  "$class lzy-mail_link mail_link" : 'lzy-mail_link mail_link';
+//            $class = ($class) ?  "$class mail_link" : 'mail_link';
             $title = ($title) ? $title : " title='{{ opens mail app }}'";
             $body = str_replace(' ', '%20', $body);
             $body = str_replace(['\n', "\n"], '%0A', $body);
@@ -49,7 +50,8 @@ class CreateLink
             $href .= $arg;
 
         } elseif ((stripos($href, 'sms:') === 0) || (stripos($type, 'sms') !== false)) {
-            $class = ($class) ?  "$class sms_link" : 'sms_link';
+            $class = ($class) ?  "$class lzy-sms_link sms_link" : 'lzy-sms_link sms_link';
+//            $class = ($class) ?  "$class sms_link" : 'sms_link';
             $title = ($title) ? $title : " title='{{ opens messaging app }}'";
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
@@ -63,7 +65,12 @@ class CreateLink
             }
 
         } elseif ((stripos($href, 'tel:') === 0) || (stripos($type, 'tel') !== false)) {
-            $class = ($class) ?  "$class tel_link" : 'tel_link';
+            if (stripos($type, 'gsm') !== false) {
+                $class = ($class) ? "$class lzy-gsm_link" : 'lzy-gsm_link';
+            } else {
+                $class = ($class) ? "$class lzy-tel_link tel_link" : 'lzy-tel_link tel_link';
+            }
+//            $class = ($class) ?  "$class tel_link" : 'tel_link';
             $title = ($title) ? $title : " title='{{ opens telephone app }}'";
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
@@ -74,7 +81,8 @@ class CreateLink
             }
 
         } elseif ((stripos($href, 'geo:') === 0) || (stripos($type, 'geo') !== false)) {
-            $class = ($class) ?  "$class geo_link" : 'geo_link';
+            $class = ($class) ?  "$class lzy-geo_link geo_link" : 'lzy-geo_link geo_link';
+//            $class = ($class) ?  "$class geo_link" : 'geo_link';
             $title = ($title) ? $title : " title='{{ opens map app }}'";
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
@@ -82,7 +90,8 @@ class CreateLink
             $target = " target='_blank' rel='noopener noreferrer'";
 
         } elseif ((stripos($href, 'slack:') === 0) || (stripos($type, 'slack') !== false)) {
-            $class = ($class) ?  "$class slack_link" : 'slack_link';
+            $class = ($class) ?  "$class lzy-slack_link slack_link" : 'lzy-slack_link slack_link';
+//            $class = ($class) ?  "$class slack_link" : 'slack_link';
             $title = ($title) ? $title : " title='{{ opens slack app }}'";
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
@@ -90,7 +99,8 @@ class CreateLink
             $target = " target='_blank' rel='noopener noreferrer'";
 
         } elseif ((stripos($href, 'pdf:') === 0) || (stripos($href, '.pdf') !== false) || (stripos($type, 'pdf') !== false)) {
-            $class = ($class) ?  "$class pdf_link" : 'pdf_link';
+            $class = ($class) ?  "$class lzy-pdf_link pdf_link" : 'lzy-pdf_link pdf_link';
+//            $class = ($class) ?  "$class pdf_link" : 'pdf_link';
             $title = ($title) ? $title : " title='{{ opens PDF in new window }}'";
             if (!$text) {
                 $text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $href);
@@ -107,8 +117,10 @@ class CreateLink
             if (!preg_match('/: [^\?&]*/x', $href)) {
                 if ((strpos($href, 'http') !== 0) &&
                     (stripos($type, 'intern') === false) &&
+                    ($href[0] !== '~') &&
                     preg_match('/[\w-]+\.[\w-]{2,10}/', $href, $m)) {
-                        $href = 'https://' . $href;
+                    $href = $GLOBALS["globalParams"]["absAppRootUrl"] . $href;
+//                        $href = 'https://' . $href;
                 }
             } else {
                 $href = resolvePath($href, true, true);
@@ -139,14 +151,20 @@ class CreateLink
                 $target = ($target === 'newwin')? '_blank': $target;
                 $target = " target='$target' rel='noopener noreferrer'";
                 // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
+                $class = ($class) ? "$class lzy-newwin_link" : 'lzy-newwin_link';
+                $title = $title ? $title : " title='{{ opens in new win }}'";
 
             } elseif (stripos($type, 'extern') !== false) {
                 $target = " target='_blank' rel='noopener noreferrer'";
-                $class = ($class) ? "$class external_link" : 'external_link';
-                $title = $title ? $title : " title='{{ opens in new win }}'";
+                $class = ($class) ? "$class lzy-external_link external_link" : 'lzy-external_link external_link';
+                $title = $title ? $title : " title='{{ opens external page }}'";
+
             }
         }
-        $class = ($class) ? " class='$class'" : '';
+        if (stripos($type, 'download') !== false) {
+            $target .= ' download';
+        }
+        $class = ($class) ? " class='lzy-link $class'" : '';
         if (preg_match('/^ ([^\?&]*) (.*)/x', $href, $m)) {     // remove blanks from href
             $href = str_replace(' ', '', $m[1]).str_replace(' ', '%20', $m[2]);
         }

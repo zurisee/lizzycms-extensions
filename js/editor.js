@@ -21,7 +21,8 @@ $( document ).ready(function() {
 
 function prepareEditing()
 {
-    $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn">Edit</button>');
+    $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn"><span class=\'lzy-icon-edit\'></span></button>');
+    // $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn">Edit</button>');
     $('body').addClass('lzy-editor-mode');
 } // prepareEditing
 
