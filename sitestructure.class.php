@@ -72,6 +72,7 @@ class SiteStructure
                 'restricted' => false,
                 'parent' => null
             ];
+            http_response_code(404);
             return;
         }
 
