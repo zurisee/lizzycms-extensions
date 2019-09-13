@@ -166,7 +166,7 @@ class HtmlTable
 
         $out = <<<EOT
 
-<table id='$this->id' class='$tableClass'$dataSource{$this->tableDataAttr}>
+<table id='{$this->id}' class='$tableClass'$dataSource{$this->tableDataAttr}>
 {$this->caption}
 $thead	<tbody>
 $tbody	</tbody>
@@ -220,7 +220,7 @@ EOT;
 
         $out = <<<EOT
 
-<div id='$this->id' class='{$this->tableClass}'$dataSource{$this->tableDataAttr}>
+<div id='{$this->id}' class='{$this->tableClass}'$dataSource{$this->tableDataAttr}>
 {$this->caption}
     <div class="$tableClass">
 $body
@@ -818,7 +818,7 @@ EOT;
     private function checkArguments($inx)
     {
         if (!$this->id) {
-            $this->id = 'table' . $inx;
+            $this->id = 'lzy-table' . $inx;
         }
         if ($this->tableDataAttr) {
             list($name, $value) = explode('=', $this->tableDataAttr);
