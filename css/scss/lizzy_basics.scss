@@ -884,7 +884,11 @@ dd {
 		page-break-after: always;
 	}
 }
-
+@media screen {
+	.print-only {
+		display: none!important;
+	}
+}
 
 
 
