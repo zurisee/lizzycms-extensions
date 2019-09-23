@@ -1115,6 +1115,9 @@ EOT;
 			} catch(Exception $e) {
                 fatalError("Error in Yaml-Code: <pre>\n$yaml\n</pre>\n".$e->getMessage(), 'File: '.__FILE__.' Line: '.__LINE__);
 			}
+            if (isset($hdr['screenSizeBreakpoint'])) {  // special case: screenSizeBreakpoint -> propagate immediately
+                $this->config->feature_screenSizeBreakpoint = $hdr['screenSizeBreakpoint'];
+            }
             if (isset($hdr['dataPath'])) {  // special case: dataPath -> propagate immediately
                 $_SESSION['lizzy']['dataPath'] = $hdr['dataPath'];
                 $GLOBALS['globalParams']['dataPath'] = $hdr['dataPath'];
