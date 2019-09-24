@@ -32,7 +32,6 @@ li > p {
 	margin: 0;
 }
 
-
 a {
 	//text-decoration: underline dotted green;
 	text-decoration: none;
@@ -167,6 +166,12 @@ figure a {
 .lzy-img {
 	max-width: 100%;
 	height: auto;
+}
+
+
+/* === lzy-tables ============================== */
+.lzy-table {
+	border-collapse:collapse;
 }
 
 
@@ -471,18 +476,20 @@ footer {
 	a {
 		border-bottom: none;
 	}
-	svg {
-        fill: black;
-        fill: var(--lzy-footer-txt-color);
-		width: 1.2em;
-		height: 1.2em;
-	}
-	#loggedInUser, 
-    .loggedInUser,
-    .loggedInUser div.lzy-login-link,
-    .loggedInUser div.lzy-login-link-menu {
-		float: right;
-	}
+
+//	svg {
+//        fill: black;
+//        fill: var(--lzy-footer-txt-color);
+//		width: 1.2em;
+//		height: 1.2em;
+//	}
+//	#loggedInUser, 
+ //   .loggedInUser,
+ //   .loggedInUser div.lzy-login-link,
+//    .loggedInUser div.lzy-login-link-menu {
+//		float: right;
+//	}
+
 }
 .toggle-edit-mode {
     border-right: 1px solid gray;
@@ -576,7 +583,6 @@ footer {
 	height: 11vh;
 	margin: 30px 0 0 0;
 }
-
 
 .lzy-overlay {
 	position: fixed;
@@ -755,6 +761,54 @@ a.lzy-button {
 }
 
 
+/* === Links =========================================== */
+.lzy-link {
+	position: relative;
+	padding-left: 1.4em;
+}
+.lzy-link:before {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: inline-block;
+	font-family: 'Lzy Icons';
+	font-style: normal;
+	font-weight: normal;
+	font-size: 110%;
+	line-height: 1;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+.lzy-mail_link:before {
+	content:'Z';
+}
+.lzy-sms_link:before {
+	content:'L';
+}
+.lzy-tel_link:before {
+	content:'I';
+}
+.lzy-gsm_link:before {
+	content:'t';
+}
+.lzy-pdf_link:before {
+	content:'r';
+}
+.lzy-geo_link:before {
+	content:'J';
+}
+.lzy-slack_link:before {
+	content:'q';
+	font-size: 90%;
+}
+.lzy-newwin_link:before,
+.lzy-external_link:before {
+	content:'X';
+	font-size: 90%;
+	top: 0.18em;
+}
+
+
 
 /* === Media Queries =================================== */
 @media screen {
@@ -762,46 +816,8 @@ a.lzy-button {
 	.print-only {
 		display: none;
 	}
-	.mail_link {
-		background: url("../rsc/mail.svg") no-repeat;
-		background-size: 0.8em 1em;
-		padding-left: 1.2em;
-	}
-	.mail_link2 {
-		background: url("../rsc/mail2.svg") no-repeat;
-		background-size: 0.9em 1.2em;
-		padding-left: 1.2em;
-	}
-	.sms_link {
-		background: url("../rsc/sms.svg") no-repeat;
-		padding-left: 1.5em;
-	}
-	.tel_link {
-		background: url("../rsc/tel.svg") no-repeat;
-		background-size: 0.9em 1.2em;
-		padding-left: 1.1em;
-	}
-	.pdf_link {
-		background: url("../rsc/pdf.svg") no-repeat;
-		background-size: 0.9em 1.2em;
-		padding-left: 1.4em;
-		padding-top: 0.15em;
-	}
-	.geo_link {
-		background: url("../rsc/geo.svg") no-repeat;
-		background-size: 0.9em 1.2em;
-		padding-left: 1.1em;
-	}
-	.slack_link {
-		background: url("../rsc/slack.svg") no-repeat;
-		background-size: 0.9em 1.2em;
-		padding-left: 1.2em;
-	}
-	.external_link {
-		background: url("../rsc/newwin.svg") no-repeat;
-		background-size: 0.8em 1.3em;
-		padding-left: 1.1em;
-	}
+
+
 	.lzy-img-link {
 		background: none;
 		padding-left: 0;
@@ -868,7 +884,11 @@ dd {
 		page-break-after: always;
 	}
 }
-
+@media screen {
+	.print-only {
+		display: none!important;
+	}
+}
 
 
 
@@ -876,6 +896,7 @@ dd {
 .lzy-login-link-menu {
     position: relative;
     clear: both;
+	display: inline-block;
 }
 .lzy-login-link-menu div {
     display: block;

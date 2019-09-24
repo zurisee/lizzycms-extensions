@@ -1,0 +1,118 @@
+@font-face {
+    font-family: 'Lzy Icons';
+    src: url('../fonts/Lzy-Icons.eot');
+    src: url('../fonts/Lzy-Icons.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/Lzy-Icons.woff') format('woff'),
+         url('../fonts/Lzy-Icons.ttf') format('truetype'),
+         url('../fonts/Lzy-Icons.svg#Lzy-Icons') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Lzy Triangle';
+    src: url('../fonts/Lzy-Triangle.eot');
+    src: url('../fonts/Lzy-Triangle.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/Lzy-Triangle.woff') format('woff'),
+         url('../fonts/Lzy-Triangle.ttf') format('truetype'),
+         url('../fonts/Lzy-Triangle.svg#Lzy-Triangle') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+[class*='lzy-icon-'] {
+  --lzy-icon-factor: 1;
+  width: calc(1em * var(--lzy-icon-factor));
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+[class*='lzy-icon-']:before {
+    position: absolute;
+    display: inline-block;
+    font-family: 'Lzy Icons';
+    font-style: normal;
+    font-weight: normal;
+    font-size: calc(var(--lzy-icon-factor) * 1em);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, calc( -50% - (5% * var(--lzy-icon-factor))) );
+    height: 1em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale
+}
+
+
+.lzy-icon-triangle:before{content:'A';}
+
+.lzy-icon-at:before{        content:'i';}
+.lzy-icon-cancel:before{    content:'e';}
+.lzy-icon-cloud:before{     content:'E';}
+.lzy-icon-config:before{    content:'H';}
+.lzy-icon-copy:before{      content:'O';}
+.lzy-icon-desktop:before{   content:'F';}
+.lzy-icon-doc:before{       content:'N';}
+.lzy-icon-down:before{      content:'p';}
+.lzy-icon-edit:before{      content:'Y';}
+.lzy-icon-enlarge:before{   content:'Q';}
+.lzy-icon-enlarge2:before{  content:'b';}
+.lzy-icon-error:before{     content:'B';}
+.lzy-icon-exit:before{      content:'h';}
+.lzy-icon-geo:before{       content:'J';}
+.lzy-icon-gsm:before{       content:'t';}
+.lzy-icon-hide:before{      content:'l';}
+.lzy-icon-info:before{      content:'M';}
+.lzy-icon-link:before{      content:'V';}
+.lzy-icon-locked:before{    content:'f';}
+.lzy-icon-mail:before{      content:'Z';}
+.lzy-icon-map:before{       content:'K';}
+.lzy-icon-menu:before{      content:'W';}
+.lzy-icon-mobile:before{    content:'G';}
+.lzy-icon-newwin:before{    content:'X';}
+.lzy-icon-nosmile:before{   content:'T';}
+.lzy-icon-ok:before{        content:'d';}
+.lzy-icon-paste:before{     content:'U';}
+.lzy-icon-pdf:before{       content:'s';}
+.lzy-icon-pdf2:before{      content:'r';}
+.lzy-icon-reduce:before{    content:'R';}
+.lzy-icon-reduce2:before{   content:'c';}
+.lzy-icon-search:before{    content:'n';}
+.lzy-icon-send:before{      content:'j';}
+.lzy-icon-settings:before{  content:'D';}
+.lzy-icon-show:before{      content:'k';}
+.lzy-icon-show2:before{     content:'a';}
+.lzy-icon-slack:before{     content:'q';}
+.lzy-icon-smile:before{     content:'S';}
+.lzy-icon-sms:before{       content:'L';}
+.lzy-icon-source:before{    content:'m';}
+.lzy-icon-tel:before{       content:'I';}
+.lzy-icon-trash:before{     content:'P';}
+.lzy-icon-unlocked:before{  content:'g';}
+.lzy-icon-up:before{        content:'o';}
+.lzy-icon-user:before{      content:'C';}
+
+
+
+.lzy-icon-error {
+    display: inline-block;
+    position: relative;
+    width: 1.4em;
+}
+.lzy-icon-error:before{
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 110%;
+    color: red;
+    transform: translate(-50%, calc(-50% - (10% * var(--lzy-icon-factor))));
+}
+
+// === Triangle icon used in nav:
+.lzy-icon-triangle {
+  box-shadow: 0 0 3px magenta;
+}
+.lzy-icon-triangle:before {
+  font-family: 'Lzy Triangle';
+  content:'A';
+  left: 50%;
+  transform: translate(-50%, -66%) scale(0.8);
+}

@@ -5,7 +5,7 @@
 // animation: [dropdown, slidedown, collapsible] Defines the type of animation applied to the rendered tree.
 // options: [top-level, curr-branch, hidden] These are filters that render a subset of items.
 
-define('NAV_ARROW', '&#9657;'); // '&#9013;'; // '&#9657;'; //'&#9656;';
+define('NAV_ARROW', '<span class=\'lzy-icon-triangle\'></span>'); // '&#9657;'); // '&#9013;'; // '&#9657;'; //'&#9656;';
 define('NAV_ARROW_TOP', NAV_ARROW);
 define('NAV_SMALL_TREE_THRESHOLD', 15); // if nav tree small larger, mobile nav will be fully expanded initially
 

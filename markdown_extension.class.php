@@ -126,6 +126,13 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $row = 0;
         $col = -1;
 
+        if (isset($this->mymd->trans->lzy->page->asciitable)) {
+            $this->mymd->trans->lzy->page->asciitable++;
+        } else {
+            $this->mymd->trans->lzy->page->asciitable = 1;
+        }
+        $inx = $this->mymd->trans->lzy->page->asciitable;
+
         for ($i = 0; $i < sizeof($block['content']); $i++) {
             $line = $block['content'][$i];
 
@@ -153,7 +160,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
         // now render the table:
-        $out = "\t<table><!-- asciiTable -->\n";
+        $out = "\t<table id='lzy-table$inx' class='lzy-table'><!-- asciiTable -->\n";
         if ($block['caption']) {
             $out .= "\t  <caption>{$block['caption']}</caption>\n";
         }
