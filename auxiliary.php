@@ -645,16 +645,16 @@ function getDirDeep($path, $onlyDir = false, $assoc = false, $returnAll = false)
 function is_inCommaSeparatedList($keyword, $list)
 {
     $list = ','.str_replace(' ', '', $list).',';
-    $res = (strpos($list, ",$keyword,") !== false);
     return (strpos($list, ",$keyword,") !== false);
 } // is_inCommaSeparatedList
-
 
 
 
 //--------------------------------------------------------------
 function fileExt($file, $reverse = false)
 {
+//    $file = preg_replace('/[#?&].*/', '', $file);
+    $file = preg_replace(['|^\w{1,6}://|', '/[#?&:].*/'], '', $file);
     if ($reverse) {
         $l = strlen(pathinfo($file, PATHINFO_EXTENSION)) + 1;
         return substr($file, 0, -$l);
@@ -795,14 +795,15 @@ function convertFsToHttpPath($path)
 
 
 //------------------------------------------------------------
-function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
+function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $absolutePath = false)
 {
     global $globalParams;
 
     $path = trim($path);
     if (!$path && !$relativeToCurrPage) {
         return '';
-    } elseif (preg_match('/^\w{1,6}:/', $path)) {   // https://, tel:, sms:, etc.
+    } elseif (preg_match('/^https?:/i', $path)) {   // https://
+//    } elseif (preg_match('/^\w{1,6}:/', $path)) {   // https://, tel:, sms:, etc.
         return $path;
     }
     $ch1=$path[0];
@@ -819,8 +820,15 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         }
     }
 
+    $ext = fileExt($path);
+    $isRescource = (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,', ",$ext,") !== false);
+
 	$pathToRoot  = $globalParams["pathToRoot"];
-	$pathToPage  = $globalParams["pathToPage"];
+    if ($isRescource) {
+        $pathToPage = $globalParams["pathToPage"];
+    } else {
+        $pathToPage = $globalParams["pagePath"];
+    }
 
     $from = [
         '|~/|',
@@ -838,8 +846,7 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
             $pathToRoot.EXTENSIONS_PATH,
             '',
         ];
-        $ext = fileExt($path);
-        if ($ext && (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,', ",$ext,") !== false)) {
+        if ($ext && $isRescource) {
             $to[4] = $pathToRoot.$pathToPage;
         }
 
@@ -853,6 +860,23 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
         ];
     }
     $path = preg_replace($from, $to, $path);
+
+    // Absolute path requested:
+    if ($absolutePath) {
+        if ($httpAccess) {
+            if ($relativeToCurrPage) {
+                $path = $GLOBALS["globalParams"]["pageUrl"] . $path;
+            } else {
+                $path = $GLOBALS["globalParams"]["absAppRootUrl"] . $path;
+            }
+        } else {
+            if ($relativeToCurrPage) {
+                $path = $GLOBALS["globalParams"]["absAppRoot"] . $pathToPage . $path;
+            } else {
+                $path = $GLOBALS["globalParams"]["absAppRoot"] . $path;
+            }
+        }
+    }
     $path = normalizePath($path);
     return $path;
 } // resolvePath
@@ -935,13 +959,14 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false)
 function normalizePath($path)
 {
     $hdr = '';
-    if (preg_match('|((\.\./)+) (.*)|x', $path, $m)) {
+    if (preg_match('|^ ((\.\./)+) (.*)|x', $path, $m)) {
         $hdr = $m[1];
         $path = $m[3];
     }
     while ($path && preg_match('|(.*?) ([^/\.]+/\.\./) (.*)|x', $path, $m)) {
         $path = $m[1] . $m[3];
     }
+    $path = str_replace('/./', '/', $path);
     return $hdr.$path;
 } // normalizePath
 
