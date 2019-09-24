@@ -76,6 +76,17 @@ class CreateLink
         }
 
 
+        if ($this->target) {
+            $this->target = ($this->target === 'newwin')? '_blank': $this->target;
+            $this->target = " target='{$this->target}' rel='noopener noreferrer'";
+            // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
+
+        } elseif (stripos($this->type, 'extern') !== false) {
+            $this->target = " target='_blank' rel='noopener noreferrer'";
+            $this->class = ($this->class) ? "{$this->class} external_link" : 'external_link';
+            $this->title = $this->title ? $this->title : " title='{{ opens in new win }}'";
+        }
+
         if (stripos($this->option, 'download') !== false) {
             $this->target .= ' download';
         }
