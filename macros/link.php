@@ -20,18 +20,30 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'target', 'Target attribute to be applied to the &lt;a> Tag.', '');
     $this->getArg($macroName, 'subject', 'In case of "mail" and "sms": subject to be preset.', '');
     $this->getArg($macroName, 'body', 'In case of "mail": mail body to be preset.', '');
+    $option = $this->getArg($macroName, 'option', '[download,abs,src,url] Modifies the output. "download" forces a download action. "abs" renders absolute paths/urls. "src" renders the source code. "url" renders the resulting address (without HTML wrapper)', '');
 
     if ($href == 'help') {
         return 'Supported link-types: mail, pdf, sms, tel, geo, gsm, slack';
     }
 
+    if (!$href) {
+        return "Error: link address missing";
+    }
 
 
-    $args = $this->getArgsArray($macroName, false, ['href','text','type','id','class','title','target','subject','body']);
+    $args = $this->getArgsArray($macroName, false, ['href','text','type','id','class','title','target','subject','body','option']);
 
 
     $cl = new CreateLink( $this->lzy );
     $str = $cl->render($args);
+
+    if (stripos($option, 'url') !== false) {
+        if (preg_match("/href='([^']*)'/ix", $str, $m)) {
+            $str = $m[1];
+        }
+    } elseif (stripos($option, 'src') !== false) {
+        $str = str_replace('<', '&lt;', $str);
+    }
 
     $this->optionAddNoComment = true;
 	return $str;
