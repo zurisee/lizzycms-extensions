@@ -472,28 +472,14 @@ pre {
 .lzy-edit-icon {
     margin-top: 2px;
 }
-footer {
-	a {
-		border-bottom: none;
-	}
 
-//	svg {
-//        fill: black;
-//        fill: var(--lzy-footer-txt-color);
-//		width: 1.2em;
-//		height: 1.2em;
-//	}
-//	#loggedInUser, 
- //   .loggedInUser,
- //   .loggedInUser div.lzy-login-link,
-//    .loggedInUser div.lzy-login-link-menu {
-//		float: right;
-//	}
-}
 .lzy-footer {
     display: flex; 
     justify-content: space-between;
     padding: 0.5em 0;
+	a {
+		border-bottom: none;
+	}
 }
 
 .toggle-edit-mode {
