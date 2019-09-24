@@ -83,12 +83,13 @@ class CreateLink
 
         } elseif (stripos($this->type, 'extern') !== false) {
             $this->target = " target='_blank' rel='noopener noreferrer'";
-            $this->class = ($this->class) ? "{$this->class} external_link" : 'external_link';
+            $this->class = ($this->class) ? "{$this->class} lzy-external_link" : 'lzy-external_link';
             $this->title = $this->title ? $this->title : " title='{{ opens in new win }}'";
         }
 
         if (stripos($this->option, 'download') !== false) {
             $this->target .= ' download';
+            $this->class .= ' lzy-download';
         }
         $this->class = ($this->class) ? " class='lzy-link {$this->class}'" : '';
         if (preg_match('/^ ([^\?&]*) (.*)/x', $this->href, $m)) {     // remove blanks from href
