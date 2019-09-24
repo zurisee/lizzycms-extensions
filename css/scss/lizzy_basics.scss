@@ -489,8 +489,13 @@ footer {
 //    .loggedInUser div.lzy-login-link-menu {
 //		float: right;
 //	}
-
 }
+.lzy-footer {
+    display: flex; 
+    justify-content: space-between;
+    padding: 0.5em 0;
+}
+
 .toggle-edit-mode {
     border-right: 1px solid gray;
     padding-right: 5px;
