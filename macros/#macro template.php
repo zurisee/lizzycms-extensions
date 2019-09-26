@@ -63,7 +63,8 @@ $this->addMacro($macroName, function () {
     // $this->addVariable('myvar', 'value');
 
     //
-    // $this->optionAddNoComment = true;
+    // $this->optionAddNoComment = true; // if you want to suppress comments around the output code
+    // $this->compileMd = true;  // if macro out shall be markdown compiled
 
     $str = "<!-- sample extension -->\n";
 	return $str;
