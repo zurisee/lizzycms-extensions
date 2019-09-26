@@ -80,13 +80,17 @@ class CreateLink
             $this->target = ($this->target === 'newwin')? '_blank': $this->target;
             $this->target = " target='{$this->target}' rel='noopener noreferrer'";
             // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
-            $this->class .= ' lzy-newwin_link';
+            if (!$this->class) {
+                $this->class = 'lzy-newwin_link';
+            }
 
         } elseif (stripos($this->type, 'extern') !== false) {
             $this->target = " target='_blank' rel='noopener noreferrer'";
             $this->class = ($this->class) ? "{$this->class} lzy-external_link" : 'lzy-external_link';
             $this->title = $this->title ? $this->title : " title='{{ opens in new win }}'";
-            $this->class .= ' lzy-external_link';
+            if (!$this->class) {
+                $this->class = 'lzy-external_link';
+            }
         }
 
         if (stripos($this->option, 'download') !== false) {
