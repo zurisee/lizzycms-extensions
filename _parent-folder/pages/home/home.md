@@ -12,8 +12,5 @@ If not, visit {{ link( 'https://getlizzy.net/', type:external ) }}.
 
 {{ if( 
     file:'~/config/users.yaml', 
-    op: '<', 
-    arg: 1, 
-    then: "%include: to-delete/intro.md" 
+    else: "%include: to-delete/intro.md" 
 ) }}
-
