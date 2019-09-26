@@ -20,11 +20,12 @@
 }
 
 [class*='lzy-icon-'] {
-  --lzy-icon-factor: 1;
-  width: calc(1em * var(--lzy-icon-factor));
+  width: calc(1em * var(--lzy-icon-factor, 1) + 2px);
   display: inline-block;
   position: relative;
-  vertical-align: middle;
+  height: 1em;
+  font-size: 0.9em;
+  vertical-align: baseline;
 }
 [class*='lzy-icon-']:before {
     position: absolute;
@@ -32,10 +33,10 @@
     font-family: 'Lzy Icons';
     font-style: normal;
     font-weight: normal;
-    font-size: calc(var(--lzy-icon-factor) * 1em);
+    font-size: calc(var(--lzy-icon-factor, 1) * 1em);
     left: 50%;
     top: 50%;
-    transform: translate(-50%, calc( -50% - (5% * var(--lzy-icon-factor))) );
+    transform: translate(-50%, -50%);
     height: 1em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale
@@ -44,7 +45,7 @@
 
 .lzy-icon-triangle:before{content:'A';}
 
-.lzy-icon-at:before{        content:'i';}
+//.lzy-icon-at:before{        content:'i';}
 .lzy-icon-cancel:before{    content:'e';}
 .lzy-icon-cloud:before{     content:'E';}
 .lzy-icon-config:before{    content:'H';}
@@ -92,24 +93,12 @@
 
 
 
-.lzy-icon-error {
-    display: inline-block;
-    position: relative;
-    width: 1.4em;
-}
 .lzy-icon-error:before{
-    position: absolute;
-    top: 0;
-    right: 0;
-    font-size: 110%;
+    font-size: calc(100% * var(--lzy-icon-factor, 1.1));
     color: red;
-    transform: translate(-50%, calc(-50% - (10% * var(--lzy-icon-factor))));
 }
 
 // === Triangle icon used in nav:
-.lzy-icon-triangle {
-  box-shadow: 0 0 3px magenta;
-}
 .lzy-icon-triangle:before {
   font-family: 'Lzy Triangle';
   content:'A';
