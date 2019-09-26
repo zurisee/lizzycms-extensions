@@ -795,7 +795,7 @@ function convertFsToHttpPath($path)
 
 
 //------------------------------------------------------------
-function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $absolutePath = false)
+function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $absolutePath = false, $isResource = null)
 {
     global $globalParams;
 
@@ -821,10 +821,12 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $a
     }
 
     $ext = fileExt($path);
-    $isRescource = (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,', ",$ext,") !== false);
+    if ($isResource === null) {
+        $isResource = (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,md,', ",$ext,") !== false);
+    }
 
 	$pathToRoot  = $globalParams["pathToRoot"];
-    if ($isRescource) {
+    if ($isResource) {
         $pathToPage = $globalParams["pathToPage"];
     } else {
         $pathToPage = $globalParams["pagePath"];
@@ -846,7 +848,7 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $a
             $pathToRoot.EXTENSIONS_PATH,
             '',
         ];
-        if ($ext && $isRescource) {
+        if ($ext && $isResource) {
             $to[4] = $pathToRoot.$pathToPage;
         }
 
