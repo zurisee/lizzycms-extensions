@@ -93,17 +93,11 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             'asciiTable',
             'content' => [],
             'caption' => false,
-            'header' => false
+            'args' => false
         ];
         $firstLine = $lines[$current];
         if (preg_match('/^\|===*\s+(.+)$/', $firstLine, $m)) {
-            $a = preg_split('/(?<!\\\)\|/', $m[1]);
-            if (sizeof($a) > 1) {
-                $block['caption'] = str_replace('\|','|', array_shift($a));
-                $block['header'] = $a;
-            } else {
-                $block['caption'] = str_replace('\|','|', $m[1]);
-            }
+            $block['args'] = $m[1];
         }
         for($i = $current + 1, $count = count($lines); $i < $count; $i++) {
             $line = $lines[$i];
@@ -159,20 +153,28 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $nRows = $row+1;
 
 
-        // now render the table:
-        $out = "\t<table id='lzy-table$inx' class='lzy-table'><!-- asciiTable -->\n";
-        if ($block['caption']) {
-            $out .= "\t  <caption>{$block['caption']}</caption>\n";
+        $id = $class = $style = $attr = $text = '';
+        if ($block['args']) {
+            $args = parseInlineBlockArguments($block['args'], true);
+            list($tag, $id, $class, $style, $attr, $text) = $args;
+        }
+        if (!$id) {
+            $id = "lzy-table$inx";
+        }
+        if (!$class) {
+            $class = "lzy-table$inx";
+        }
+        if ($style) {
+            $style = " style='$style'";
+        }
+        if ($tag) {
+            $text = $text ? "$tag $text": $tag;
         }
 
-        // render header as defined in opening line, e.g. |=== |H1|H2
-        if ($block['header']) {     // table header
-            $out .= "\t  <thead>\n";
-            for ($col = 0; $col < $nCols; $col++) {
-                $th = isset($block['header'][$col]) ? str_replace('\|','|', $block['header'][$col]) : '';
-                $out .= "\t\t\t<th class='th$col'>$th</th>\n";
-            }
-            $out .= "\t  </thead>\n";
+            // now render the table:
+        $out = "\t<table id='$id' class='lzy-table $class'$style$attr><!-- asciiTable -->\n";
+        if ($text) {
+            $out .= "\t  <caption>$text</caption>\n";
         }
 
         // render header as defined in first row, e.g. |# H1|H2
