@@ -113,8 +113,12 @@ function parseArgumentStr($str, $delim = ',')
 
 function parseInlineBlockArguments($str, $returnElements = false)
 {
-    // Example: article  #my-id  .my-class  color:orange .class2 aria-expanded=false line-height: '1.5em;' !off .class3 aria-hidden= 'true' lang=de-CH literal=true md-compile=false
-    $tag = $id = $class = $style = $attr = $lang = $comment = '';
+    // Example: span  #my-id  .my-class  color:orange .class2 aria-expanded=false line-height: '1.5em;' !off .class3 aria-hidden= 'true' lang=de-CH literal=true md-compile=false "some text"
+    // Usage:
+    //   list($tag, $id, $class, $style, $attr, $text, $comment) = parseInlineBlockArguments($str, true);
+    //   list($tag, $str, $lang, $comment, $literal, $mdCompile, $text) = parseInlineBlockArguments($str);
+
+    $tag = $id = $class = $style = $attr = $lang = $comment = $text = '';
     $literal = false;
     $mdCompile = true;
     $elems = [];
@@ -184,7 +188,7 @@ function parseInlineBlockArguments($str, $returnElements = false)
             } else {
                 $id = $m[2];
             }
-            $comment = "#{$m[2]}"; //??? where used???
+            $comment = "#{$m[2]}"; // -> comment which can be used in end tag, e.g. <!-- /.myclass -->
         }
     }
 
@@ -197,15 +201,20 @@ function parseInlineBlockArguments($str, $returnElements = false)
         $class = ' class="'. trim($class) .'"';
     }
 
+    if (preg_match('/(["\']) ([^\1]*) \1 /x', $str, $m)) {            // text
+        $text = $m[2];
+        $str = str_replace($m[0], '', $str);
+    }
+
     if (preg_match('/\b(\w+)\b/', trim($str), $m)) {            // tag
         $tag = $m[1];
     }
 
     if ($returnElements) {
-        return [$tag, $id, $class, trim($style), $attr];
+        return [$tag, $id, $class, trim($style), $attr, $text, $comment];
     } else {
         $str = "$id$class$style$attr";
-        return [$tag, $str, $lang, $comment, $literal, $mdCompile];
+        return [$tag, $str, $lang, $comment, $literal, $mdCompile, $text];
     }
 } // parseInlineBlockArguments
 
