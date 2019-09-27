@@ -99,10 +99,10 @@ $in-page-indent-step: 1em;
 
 //$slidedownX1: var(--lzy-nav-top-horizontal-first-indent, $nav-top-horizontal-first-indent);
 $slidedownX2: var(--lzy-nav-top-horizontal-first-indent, $nav-top-horizontal-first-indent);
-$slidedownX3: calc(var(--lzy-nav-top-horizontal-first-indent, $nav-top-horizontal-first-indent) + var(--lzy-nav-top-horizontal-indent-step, $nav-top-horizontal-indent-step));
-$slidedownX4: calc(var(--lzy-nav-top-horizontal-first-indent, $nav-top-horizontal-first-indent) + 2 * var(--lzy-nav-top-horizontal-indent-step, $nav-top-horizontal-indent-step));
-$slidedownX5: calc(var(--lzy-nav-top-horizontal-first-indent, $nav-top-horizontal-first-indent) + 3 * var(--lzy-nav-top-horizontal-indent-step, $nav-top-horizontal-indent-step));
-$slidedownX6: calc(var(--lzy-nav-top-horizontal-first-indent, $nav-top-horizontal-first-indent) + 4 * var(--lzy-nav-top-horizontal-indent-step, $nav-top-horizontal-indent-step));
+$slidedownX3: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
+$slidedownX4: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 2 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
+$slidedownX5: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 3 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
+$slidedownX6: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 4 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
 
 $xCorr: 1.55em;
 
@@ -135,8 +135,8 @@ $xCorr: 1.55em;
         line-height: var(--lzy-nav-line-height, $nav-line-height);
         padding-top: 0.5em;
         padding-bottom: 0.5em;
-        padding-top: calc( (var(--lzy-nav-elem-height, $nav-elem-height) - 1.2em) / 2);
-        padding-bottom: calc( (var(--lzy-nav-elem-height, $nav-elem-height) - 1.2em) / 2);
+        padding-top: calc( (var(--lzy-nav-elem-height, #{$nav-elem-height}) - 1.2em) / 2);
+        padding-bottom: calc( (var(--lzy-nav-elem-height, #{$nav-elem-height}) - 1.2em) / 2);
     }
     :focus,
     a:hover {
@@ -198,7 +198,7 @@ $xCorr: 1.55em;
     .lzy-lvl1 {
           > a {
               padding-left: 2em;
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + #{$xCorr});
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + #{$xCorr});
           }
           &.lzy-has-children > a {
               padding-left: 1em;    // for IE
@@ -208,51 +208,51 @@ $xCorr: 1.55em;
     .lzy-lvl2 {
           > a {
               padding-left: 3.5em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + var(--lzy-nav-indent-step, $nav-indent-step) + #{$xCorr});
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + var(--lzy-nav-indent-step, #{$nav-indent-step}) + #{$xCorr});
           }
           &.lzy-has-children > a {
               padding-left: 2em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + var(--lzy-nav-indent-step, $nav-indent-step));
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + var(--lzy-nav-indent-step, #{$nav-indent-step}));
           }
     }
     .lzy-lvl3 {
           > a {
               padding-left: 4.5em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 2 * var(--lzy-nav-indent-step, $nav-indent-step) + #{$xCorr});
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 2 * var(--lzy-nav-indent-step, #{$nav-indent-step}) + #{$xCorr});
           }
           &.lzy-has-children > a {
               padding-left: 3em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 2 * var(--lzy-nav-indent-step, $nav-indent-step));
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 2 * var(--lzy-nav-indent-step, #{$nav-indent-step}));
           }
     }
     .lzy-lvl4 {
           > a {
               padding-left: 5.5em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 3 * var(--lzy-nav-indent-step, $nav-indent-step) + #{$xCorr});
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 3 * var(--lzy-nav-indent-step, #{$nav-indent-step}) + #{$xCorr});
           }
           &.lzy-has-children > a {
               padding-left: 4em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 3 * var(--lzy-nav-indent-step, $nav-indent-step));
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 3 * var(--lzy-nav-indent-step, #{$nav-indent-step}));
           }
     }
     .lzy-lvl5 {
           > a {
               padding-left: 6.5em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 4 * var(--lzy-nav-indent-step, $nav-indent-step) + #{$xCorr});
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 4 * var(--lzy-nav-indent-step, #{$nav-indent-step}) + #{$xCorr});
           }
           &.lzy-has-children > a {
               padding-left: 5em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 4 * var(--lzy-nav-indent-step, $nav-indent-step));
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 4 * var(--lzy-nav-indent-step, #{$nav-indent-step}));
           }
     }
     .lzy-lvl6 {
           > a {
               padding-left: 7.5em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 5 * var(--lzy-nav-indent-step, $nav-indent-step) + #{$xCorr});
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 5 * var(--lzy-nav-indent-step, #{$nav-indent-step}) + #{$xCorr});
           }
           &.lzy-has-children > a {
               padding-left: 6em;    // for IE
-              padding-left: calc(var(--lzy-nav-first-indent, $nav-first-indent) + 5 * var(--lzy-nav-indent-step, $nav-indent-step));
+              padding-left: calc(var(--lzy-nav-first-indent, #{$nav-first-indent}) + 5 * var(--lzy-nav-indent-step, #{$nav-indent-step}));
           }
     }
 } // indentation
@@ -569,23 +569,23 @@ $xCorr: 1.55em;
     }
     .H2 {
         padding-left: 2em;
-        margin-left: calc(var(--lzy-in-page-first-indent, $in-page-first-indent) + var(--lzy-in-page-indent-step, $in-page-indent-step));
+        margin-left: calc(var(--lzy-in-page-first-indent, #{$in-page-first-indent}) + var(--lzy-in-page-indent-step, #{$in-page-indent-step}));
     }
     .H3 {
         padding-left: 3em;
-        margin-left: calc(var(--lzy-in-page-first-indent, $in-page-first-indent) + 2 * var(--lzy-in-page-indent-step, $in-page-indent-step));
+        margin-left: calc(var(--lzy-in-page-first-indent, #{$in-page-first-indent}) + 2 * var(--lzy-in-page-indent-step, #{$in-page-indent-step}));
     }
     .H4 {
         padding-left: 4em;
-        margin-left: calc(var(--lzy-in-page-first-indent, $in-page-first-indent) + 3 * var(--lzy-in-page-indent-step, $in-page-indent-step));
+        margin-left: calc(var(--lzy-in-page-first-indent, #{$in-page-first-indent}) + 3 * var(--lzy-in-page-indent-step, #{$in-page-indent-step}));
     }
     .H5 {
         padding-left: 5em;
-        margin-left: calc(var(--lzy-in-page-first-indent, $in-page-first-indent) + 4 * var(--lzy-in-page-indent-step, $in-page-indent-step));
+        margin-left: calc(var(--lzy-in-page-first-indent, #{$in-page-first-indent}) + 4 * var(--lzy-in-page-indent-step, #{$in-page-indent-step}));
     }
     .H6 {
         padding-left: 6em;
-        margin-left: calc(var(--lzy-in-page-first-indent, $in-page-first-indent) + 5 * var(--lzy-in-page-indent-step, $in-page-indent-step));
+        margin-left: calc(var(--lzy-in-page-first-indent, #{$in-page-first-indent}) + 5 * var(--lzy-in-page-indent-step, #{$in-page-indent-step}));
     }
 } // lzy-in-page-nav
 
@@ -686,7 +686,7 @@ body.lzy-small-screen {
         left: 0;
         width: 60vw;
         box-shadow: inset -4px 0 4px 0px #333;
-        height: calc(100vh - var(--lzy-mobile-header-height, $mobile-header-height) - var(--lzy-mobile-footer-height, $mobile-footer-height) );
+        height: calc(100vh - var(--lzy-mobile-header-height, #{$mobile-header-height}) - var(--lzy-mobile-footer-height, #{$mobile-footer-height}) );
         .lzy-nav.lzy-nav {
             a {
                 padding-top: $yPadding !important;
@@ -706,7 +706,7 @@ body.lzy-small-screen {
     .main {
         left: 0;
         width: 100vw;
-        height: calc(100vh - var(--lzy-mobile-header-height, $mobile-header-height) - var(--lzy-mobile-footer-height, $mobile-footer-height) );
+        height: calc(100vh - var(--lzy-mobile-header-height, #{$mobile-header-height}) - var(--lzy-mobile-footer-height, #{$mobile-footer-height}) );
         background: #fff;
         padding: 1em;
         transition: left 0.3s;
@@ -736,19 +736,19 @@ body.lzy-small-screen {
             display: inline-block;
         }
         .lzy-lvl1 .lzy-nav-label {
-            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, $nav-first-indent)));
+            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, #{$nav-first-indent})));
         }
         .lzy-lvl2 .lzy-nav-label {
-            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, $nav-first-indent) + var(--lzy-nav-indent-step, $nav-indent-step)));
+            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, #{$nav-first-indent}) + var(--lzy-nav-indent-step, #{$nav-indent-step})));
         }
         .lzy-lvl3 .lzy-nav-label {
-            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, $nav-first-indent) + 2 * var(--lzy-nav-indent-step, $nav-indent-step)));
+            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, #{$nav-first-indent}) + 2 * var(--lzy-nav-indent-step, #{$nav-indent-step})));
         }
         .lzy-lvl4 .lzy-nav-label {
-            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, $nav-first-indent) + 3 * var(--lzy-nav-indent-step, $nav-indent-step)));
+            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, #{$nav-first-indent}) + 3 * var(--lzy-nav-indent-step, #{$nav-indent-step})));
         }
         .lzy-lvl5 .lzy-nav-label {
-            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, $nav-first-indent) + 4 * var(--lzy-nav-indent-step, $nav-indent-step)));
+            max-width: calc(60vw - #{$xCorr2} - (var(--lzy-nav-first-indent, #{$nav-first-indent}) + 4 * var(--lzy-nav-indent-step, #{$nav-indent-step})));
         }
         &.lzy-nav-primary a {
             background: #4f4f4f;

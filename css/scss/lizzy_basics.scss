@@ -206,7 +206,7 @@ figure a {
 	}
 	dd {
 		width: 70%;
-		width: calc(100% - var(--lzy-dl-as-table-dt-width, $dl-as-table-dt-width));
+		width: calc(100% - var(--lzy-dl-as-table-dt-width, #{$dl-as-table-dt-width}));
 	}
 }
 
@@ -261,7 +261,7 @@ figure a {
 		overflow: hidden;
 	}
 	dd {
-		flex: 0 0 calc(100% - var(--lzy-dl-as-table-dt-width, $dl-as-table-dt-width));
+		flex: 0 0 calc(100% - var(--lzy-dl-as-table-dt-width, #{$dl-as-table-dt-width}));
 		margin-left: auto;
 		text-align: left;
 		text-overflow: ellipsis;
@@ -361,19 +361,19 @@ div.lzy-editable-hdr {
 	//--lzy-columns-gap: 1rem;
 //}
 .lzy-columns-container {
-	--lzy-columns-min-width: calc(var(--lzy-columns-number, $columns-number) * var(--lzy-column-min-width, $column-min-width) - ((var(--lzy-columns-number, $columns-number) - 1) * var(--lzy-columns-gap, $columns-gap)));
+	--lzy-columns-min-width: calc(var(--lzy-columns-number, #{$columns-number}) * var(--lzy-column-min-width, #{$column-min-width}) - ((var(--lzy-columns-number, #{$columns-number}) - 1) * var(--lzy-columns-gap, #{$columns-gap})));
 }
 .lzy-2-columns-container {
 	--lzy-columns-number: 2;
-	--lzy-columns-min-width: calc(2 * var(--lzy-column-min-width, $column-min-width) - var(--lzy-columns-gap, $columns-gap));
+	--lzy-columns-min-width: calc(2 * var(--lzy-column-min-width, #{$column-min-width}) - var(--lzy-columns-gap, #{$columns-gap}));
 }
 .lzy-3-columns-container {
 	--lzy-columns-number: 3;
-	--lzy-columns-min-width: calc(3 * var(--lzy-column-min-width, $column-min-width) - (2 * var(--lzy-columns-gap, $columns-gap)));
+	--lzy-columns-min-width: calc(3 * var(--lzy-column-min-width, #{$column-min-width}) - (2 * var(--lzy-columns-gap, #{$columns-gap})));
 }
 .lzy-4-columns-container {
 	--lzy-columns-number: 4;
-	--lzy-columns-min-width: calc(4 * var(--lzy-column-min-width, $column-min-width) - (3 * var(--lzy-columns-gap, $columns-gap)));
+	--lzy-columns-min-width: calc(4 * var(--lzy-column-min-width, #{$column-min-width}) - (3 * var(--lzy-columns-gap, #{$columns-gap})));
 }
 .lzy-columns-container,
 .lzy-2-columns-container,
@@ -383,7 +383,7 @@ div.lzy-editable-hdr {
 	flex-wrap: wrap;
 	--lzy-columns-flipper: calc((var(--lzy-columns-min-width) - 100%) * 1000);
 	margin: 5px;
-	margin: calc(var(--lzy-columns-gap, $columns-gap) * -0.5);
+	margin: calc(var(--lzy-columns-gap, #{$columns-gap}) * -0.5);
 }
 .lzy-columns-container > div,
 .lzy-2-columns-container > div,
@@ -391,11 +391,11 @@ div.lzy-editable-hdr {
 .lzy-4-columns-container > div {
 	box-sizing: border-box;
 	max-width: 100%;
-	min-width: calc((100% / var(--lzy-columns-number, $columns-number)) - var(--lzy-columns-gap, $columns-gap));
+	min-width: calc((100% / var(--lzy-columns-number, #{$columns-number})) - var(--lzy-columns-gap, #{$columns-gap}));
 	flex-grow: 1;
 	flex-basis: var(--lzy-columns-flipper);
 	margin: 5px;
-	margin: calc(var(--lzy-columns-gap, $columns-gap) * 0.5);
+	margin: calc(var(--lzy-columns-gap, #{$columns-gap}) * 0.5);
 }
 
 
