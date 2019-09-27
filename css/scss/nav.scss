@@ -104,7 +104,7 @@ $slidedownX4: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizon
 $slidedownX5: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 3 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
 $slidedownX6: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 4 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
 
-$xCorr: 1.55em;
+$xCorr: 1.8em;
 
 
 // === Generic Nav ===================
@@ -268,13 +268,20 @@ $xCorr: 1.55em;
     }
     &:not(.lzy-nav-top-horizontal) {
         .lzy-has-children > * > .lzy-nav-arrow {
+            transform: translate(2px, 4px);
+        }
+        .lzy-has-children > * > .lzy-nav-arrow > .lzy-icon-triangle {
             transition: transform var(--lzy-nav-accordion-trans-speed, $nav-accordion-trans-speed);
             transform: rotate(0deg);
         }
 
-        .lzy-has-children.lzy-open > * > .lzy-nav-arrow {
+//        .lzy-has-children.lzy-open > * > .lzy-nav-arrow {
+        .lzy-has-children.lzy-open > * > .lzy-nav-arrow > .lzy-icon-triangle {
             transition: transform var(--lzy-nav-accordion-trans-speed, $nav-accordion-trans-speed);
             transform: rotate(90deg);
+            &:before {
+                transform: translate(-50%, -50%) scale(0.8);
+            }
         }
     }
 } // animated
