@@ -544,6 +544,7 @@ class AdminTasks
             $userAcc = new UserAccountForm(null);
 
             $message = $userAcc->renderOnetimeLinkEntryForm($user, $validUntilStr, 'lzy-onetime access link');
+            writeLog("one time link sent to: $submittedEmail -> '$hash'", LOGIN_LOG_FILENAME);
 
         } elseif ($mode == 'email-signup') {
             $subject = "[{{ site_title }}] {{ lzy-email-sign-up-subject }} {$globalParams['host']}";
