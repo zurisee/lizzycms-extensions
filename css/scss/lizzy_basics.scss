@@ -184,29 +184,35 @@ figure a {
 
 
 /* === Definition Lists in table layout ======== */
-.dl-floating,
-.dl-flex,
-.dl-as-table {
+.lzy-dl-floating, .dl-floating,
+.lzy-dl-flex, .dl-flex,
+.lzy-dl-as-table, .dl-as-table {
 	//--lzy-dl-as-table-dt-width: 6em;
 	--inline-block: inline-block;
 	--flex: flex;
 }
-.lzy-large-screen .dl-as-table  {
-	dl {
-		margin: 0;
-	}
-	dt, dd {
-		display: var(--inline-block); // hack to get round IE
-		vertical-align: top;
-		margin: 0 0 0.5em 0;
-	}
-	dt {
-		width: 16em;
-		width: var(--lzy-dl-as-table-dt-width, $dl-as-table-dt-width);
-	}
-	dd {
-		width: 70%;
-		width: calc(100% - var(--lzy-dl-as-table-dt-width, #{$dl-as-table-dt-width}));
+.lzy-large-screen {
+	.lzy-dl-as-table,
+	.dl-as-table {
+		dl {
+			margin: 0;
+		}
+
+		dt, dd {
+			display: var(--inline-block); // hack to get round IE
+			vertical-align: top;
+			margin: 0 0 0.5em 0;
+		}
+
+		dt {
+			width: 16em;
+			width: var(--lzy-dl-as-table-dt-width, $dl-as-table-dt-width);
+		}
+
+		dd {
+			width: 70%;
+			width: calc(100% - var(--lzy-dl-as-table-dt-width, #{$dl-as-table-dt-width}));
+		}
 	}
 }
 
@@ -277,8 +283,8 @@ figure a {
 	display: inline-block;
 	width: 2em;
 }
-.h-v-centered,
-.v-h-centered {
+.lzy-h-v-centered, .h-v-centered,
+.lzy-v-h-centered, .v-h-centered {
 	height: 100%;
 	display: flex;
 	align-items: center;
