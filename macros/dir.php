@@ -54,7 +54,7 @@ class DirRenderer
     public function render()
     {
         $this->path0 = fixPath($this->path0);
-        $this->path1 = resolvePath($this->path0, true);
+        $this->path1 = resolvePath($this->path0, false, false, true, true);
         $this->path = $this->path1 . $this->pattern;
         $this->exclPath = $this->path1 . $this->exclude;
 

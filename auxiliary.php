@@ -812,7 +812,6 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $a
     if (!$path && !$relativeToCurrPage) {
         return '';
     } elseif (preg_match('/^https?:/i', $path)) {   // https://
-//    } elseif (preg_match('/^\w{1,6}:/', $path)) {   // https://, tel:, sms:, etc.
         return $path;
     }
     $ch1=$path[0];
