@@ -153,7 +153,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         $nRows = $row+1;
 
 
-        $id = $class = $style = $attr = $text = '';
+        $id = $class = $style = $attr = $text = $tag = '';
         if ($block['args']) {
             $args = parseInlineBlockArguments($block['args'], true);
             list($tag, $id, $class, $style, $attr, $text) = $args;
@@ -412,7 +412,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // ---------------------------------------------------------------
     protected function identifyCheckList($line, $lines, $current)
     {
-        if (preg_match('/^\s*-\s?\[\s?x?\s?\]/', $line)) {
+        if (preg_match('/^ \s* - \s? \[ \s? x? \s? ] /x', $line)) {
             return 'checkList';
         }
         return false;
@@ -435,7 +435,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
                     break;
                 }
                 continue;
-            } elseif ($line && !preg_match('/^\s* -\s? \[ \s?x?\s? \] /x', $line)) {  // no pattern [] or [x]
+            } elseif ($line && !preg_match('/^\s* -\s? \[ \s? x? \s? ] /x', $line)) {  // no pattern [] or [x]
                 $i--;
                 break;
             }
@@ -588,7 +588,6 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
             $html = "\t\t\t".str_replace("\n", "\n\t\t\t", $html);
             $out .= substr($html, 0, -3);
         }
-//        $out .= "\t\t</dd>\n";
         $out = "\t<dl>\n$out\t</dl>\n";
         return $out;
     } // renderDefinitionList
@@ -809,20 +808,20 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     /**
      * @marker ![
      */
-    // ![alt text](img.jpg "Logo Title Text 1")
+    // ![alt text](img.jpg "Caption...")
     protected function parseImage($markdown)
     {
         // check whether the marker really represents a strikethrough (i.e. there is a closing `)
-        if (preg_match('/^\[ ( .+? ) \]\( ( .+? ) \)/x', $markdown, $matches)) {
+        if (preg_match('/^!\[ ( .+? ) ]\( ( .+? ) \)/x', $markdown, $matches)) {
             return [
                 // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
                 // other inline markdown elements inside this tag
-                ['link', $matches[1].']('.$matches[1]],
+                ['image', $matches[1].']('.$matches[2]],
                 // return the offset of the parsed text
                 strlen($matches[0])
             ];
         }
-        // in case we did not find a closing ~~ we just return the marker and skip 2 characters
+        // in case we did not find a closing ) we just return the marker and skip 2 characters
         return [['text', '!['], 2];
     }
 
@@ -830,11 +829,24 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function renderImage($element)
     {
         list($alt, $src) = explode('](', $element[1]);
-        $alt = str_replace('"', '&quot;', $alt);
+        if (preg_match('/^ (["\']) ( .+ ) \1 \s* /x', $alt, $m)) {
+            $alt = $m[2];
+        }
+        if (preg_match('/^ (["\']) ( .+ ) \1 \s* /x', $src, $m)) {
+            $src = $m[2];
+        }
+        $alt = str_replace(['"', "'"], '&quot;', $alt);
         $caption = '';
-        if (preg_match('/^ (.*?) ["\'] (.+?) ["\'] (.*) /x', $src, $m)) {
+        if (preg_match('/^ (.*?) \s+ (.*) /x', $src, $m)) {
             $src = $m[1];
-            $caption = str_replace('"', '&quot;', $m[2]);
+            $caption = $m[2];
+            if (preg_match('/^ (["\']) ( .+ ) \1 \s* /x', $src, $mm)) {
+                $src = $mm[2];
+            }
+            if (preg_match('/^ (["\']) ( .+ ) \1 \s* /x', $caption, $mm)) {
+                $caption = $mm[2];
+            }
+            $caption = str_replace(['"', "'"], '&quot;', $caption);
         }
         $src = trim($src);
         if ($caption) {
@@ -854,11 +866,19 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseLink($markdown)
     {
         // check whether the marker really represents a strikethrough (i.e. there is a closing `)
-        if (preg_match('/^\[ ( .+? ) \]\( ( .+? ) \)/x', $markdown, $matches)) {
+        if (preg_match('/^\[ (["\']) ( .+? ) \1 ]\( ( .+? ) \)/x', $markdown, $matches)) {
             return [
                 // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
                 // other inline markdown elements inside this tag
-                ['link', $matches[1].']('.$matches[1]],
+                ['link', $matches[2].']('.$matches[3]],
+                // return the offset of the parsed text
+                strlen($matches[0])
+            ];
+        } elseif (preg_match('/^\[ ( .+? ) ]\( ( .+? ) \)/x', $markdown, $matches)) {
+            return [
+                // return the parsed tag as an element of the abstract syntax tree and call `parseInline()` to allow
+                // other inline markdown elements inside this tag
+                ['link', $matches[1].']('.$matches[2]],
                 // return the offset of the parsed text
                 strlen($matches[0])
             ];
@@ -878,7 +898,6 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         return "{{ link(\"$url\", \"$text\"$attr) }}";
     }
-
 
 
 
