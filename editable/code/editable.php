@@ -28,7 +28,8 @@ $this->addMacro($macroName, function () {
     $args['showButton'] = $this->getArg($macroName, 'showButton', '[false|true|auto] Defines whether the submit button is displayed (default: true).<br />"auto" means it will be displayed only on touch devices.', true);
     $args['dataSource'] = $this->getArg($macroName, 'dataSource', '<code>path</code> (optional) defines path&filename where to store data (default: page folder)', '');
     $args['dataIndex'] = $this->getArg($macroName, 'dataIndex', '(optional) If dataSource points to a .csv file, this argument defines the coordinates of the data element to be selected', '');
-    $args['protectedCells'] = $this->getArg($macroName, 'protectedCells', '(optional) E.g. ""', '');
+//    $args['protectedCells'] = $this->getArg($macroName, 'protectedCells', '(optional) E.g. ""', '');
+    $args['protectedCells'] = '';
 
     $args['nCols'] = $this->getArg($macroName, 'nCols', '[number] If set, creates a table with N columns <br /><strong>Note</strong>: If using nCols or nRows, any arguments of table() macro may be applied in addition to the list here.', 1);
     $args['nRows'] = $this->getArg($macroName, 'nRows', '[number] If set, creates a table with N rows, rather than just one field', 1);
