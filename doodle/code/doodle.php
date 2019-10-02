@@ -40,7 +40,7 @@ $this->addMacro($macroName, function () {
 	$optionsFile = $this->getArg($macroName, 'optionsFile', "Source file containing list of doodle-options (one per line).", '');
 
 	$multipleAnswers = $this->getArg($macroName, 'multipleAnswers', '[true,false] Defines whether multiple answers are permitted.', true);
-    $multipleAnswers = ($multipleAnswers != 'false');
+	$allowOverwrite = $this->getArg($macroName, 'allowOverwrite', '[true,false] If true, previous entries can be overwritten by anybody.', false);
 
     if ($options === 'help') {
         return '';
@@ -58,6 +58,8 @@ $this->addMacro($macroName, function () {
             $options = array_merge($options, file($optionsFile));
         }
     }
+
+    $allowOverwrite = $allowOverwrite ? ' data-lzy-doodle-ow="true"' : '';
 
     $type =  ($multipleAnswers) ? 'checkbox' : 'radio';
 
@@ -163,7 +165,7 @@ EOT;
 
     $str = <<<EOT
     <form class="lzy-doodle-answer-form" method="post">
-      <div class="lzy-doodle lzy-doodle$inx">
+      <div class="lzy-doodle lzy-doodle$inx"$allowOverwrite>
         
         <div class="lzy-doodle-row lzy-doodle-hdr">
            <div class="lzy-doodle-name-elem"></div>
