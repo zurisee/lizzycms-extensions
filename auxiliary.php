@@ -829,8 +829,12 @@ function resolvePath($path, $relativeToCurrPage = false, $httpAccess = false, $a
     }
 
     $ext = fileExt($path);
-    if ($isResource === null) {
-        $isResource = (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,md,', ",$ext,") !== false);
+    if ($isResource === null) { // not explicitly specified:
+        if ($httpAccess) {      // !$isResource only possible in case of HTTP access, i.e. page request:
+            $isResource = (stripos(',png,gif,jpg,jpeg,svg,pdf,css,txt,js,md,csv,json,yaml,', ",$ext,") !== false);
+        } else {                // in all other cases it's a plain and normal path (including 'pages/')
+            $isResource = true;
+        }
     }
 
 	$pathToRoot  = $globalParams["pathToRoot"];
