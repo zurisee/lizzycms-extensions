@@ -26,6 +26,9 @@ $this->addMacro($macroName, function () {
     if (is_string($state)) {
         $state = strtolower($state);
     }
+    if ($state === 'help') {
+        return '';
+    }
 
     if (($state === true) || ($state === 'true')) {
         $res = true;
