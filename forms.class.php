@@ -130,8 +130,8 @@ class Forms
         } elseif ($type == 'button') {
             $type = 'buttons';
         }
-        if (isset($this->currRec->wrapperclass) && ($this->currRec->wrapperclass)) {
-	        $class = "lzy-form-field-wrapper lzy-form-field-type-$type {$this->currRec->wrapperclass}";
+        if (isset($this->currRec->wrapperClass) && ($this->currRec->wrapperClass)) {
+	        $class = "lzy-form-field-wrapper lzy-form-field-type-$type {$this->currRec->wrapperClass}";
 		} else {
             $elemId = $this->currForm->formId.'_'. $this->currRec->elemId;
             $class = $elemId.' lzy-form-field-wrapper lzy-form-field-type-'.$type;
@@ -512,7 +512,7 @@ EOT;
 		$label = $this->currRec->label;
 		$value = (isset($this->currRec->value) && $this->currRec->value) ? $this->currRec->value : $label;
 		$out = '';
-		$class = $this->classAttr('lzy-form-form-button lzy-button');
+        $class = " class='".trim($this->currRec->class .' lzy-form-button'). "'";
         $types = preg_split('/\s*[,|]\s*/', $value);
 
 		if (!$types) {
@@ -595,7 +595,7 @@ EOT;
 //-------------------------------------------------------------
     private function classAttr($class = '')
     {
-        $out = ($this->currRec->class . $class) ? " class='".trim($this->currRec->class .' '. $class). "'" : '';
+        $out = " class='".trim($class). "'";
         return trim($out);
     } // classAttr
     
@@ -697,7 +697,6 @@ EOT;
         } else {
             $rec->uploadPath = '~/upload/';
         }
-
 
         if ($type == 'form-head') {
 			$this->currForm->formData['labels'][0] = 'Date';
@@ -1116,7 +1115,7 @@ min:
 max:
 : Range element only: max value
 
-wrapperclass:
+wrapperClass:
 : Applied to the element's wrapper div, if supplied - otherwise class will be applied
 
 form-head:
