@@ -48,17 +48,21 @@ $( document ).ready(function() {
     $('.lzy-doodle-answer-submit').click(function(e) {	// submit
         var $thisForm = $( this ).parent().parent();
         var name = $('.lzy-doodle-entry-name', $thisForm).val();
-        // var type = $('.lzy-doodle-type', $thisForm).val();
         if (!name) {
             e.preventDefault();
             $('.lzy-doodle-err-msg').show();
         } else {
             $('.lzy-doodle-name-elem', $thisForm).each(function() {
                 var n = $(this).text();
-                if (name == n) {
-                    if (!confirm('Name exists, overwrite that entry?')) {
-                        e.preventDefault();
-                        $('#lzy-doodle-entry-name', $thisForm).val('');
+                if (name === n) {
+                    var ow = $('[data-lzy-doodle-ow=true]', $thisForm).length;
+                    if (ow) {
+                        if (!confirm('Name exists, overwrite that entry?')) {
+                            e.preventDefault();
+                            $('#lzy-doodle-entry-name', $thisForm).val('');
+                        }
+                    } else {
+                        alert('Name already exists');
                     }
                 }
             });
