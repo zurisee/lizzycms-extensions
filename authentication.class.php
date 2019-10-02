@@ -352,7 +352,11 @@ class Authentication
                     }
                 }
             }
-		}
+		} elseif ($this->config->admin_autoAdminOnLocalhost) {
+		    $res = 'admin';
+            $GLOBALS['globalParams']['isAdmin'] = true;
+            $rec = false;
+        }
 
 		if ($res && $returnRec) {
             $this->userRec = $rec;
