@@ -675,7 +675,7 @@ EOT;
         }
         $tdId = '';
         $ref = '';
-        if (preg_match('/(@@([\w- ]*)@@)/', $cell, $m)) { // extract tdClass
+        if (preg_match('/(@@ ([\w\- ]*) @@)/x', $cell, $m)) { // extract tdClass
             $tdClass = trim($m[2]);
             $cell = trim(str_replace($m[1], '', $cell));
         }
