@@ -901,6 +901,34 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 
 
 
+
+    // ---------------------------------------------------------------
+    /**
+     * @marker :
+     */
+    protected function parseEmoji($markdown)
+    {
+        // check whether the marker really represents a emoji/icon (i.e. there is a closing :)
+        if (preg_match('/^ : ([a-z]{2,10}) : /x', $markdown, $matches)) {
+            return [
+                ['emoji', $matches[1]],
+                strlen($matches[0])
+            ];
+        }
+        // in case we did not find a closing ~~ we just return the marker and skip 1 character
+        return [['text', ':'], 1];
+    }
+
+    // rendering is the same as for block elements, we turn the abstract syntax array into a string.
+    protected function renderEmoji($element)
+    {
+        return "<span class='lzy-icon lzy-icon-{$element[1]}'></span>";
+    }
+
+
+
+
+
     //....................................................
     private function parseInlineStyling($line, $returnElements = false)
     {
