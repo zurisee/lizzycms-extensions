@@ -230,7 +230,6 @@ class CreateLink
             $this->target = " target='{$this->target}' rel='noopener noreferrer'";
             // see: https://developers.google.com/web/tools/lighthouse/audits/noopener
         }
-        $this->option .= ',download';
     }
 
 
