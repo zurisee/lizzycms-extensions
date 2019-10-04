@@ -1,3 +1,10 @@
+---
+css: |
+	.page_home .lzy-link {
+		padding: 3px 1em;
+	}
+---
+
 # New Lizzy-Based Website
 
 Congratulations! It's working.
