@@ -70,8 +70,7 @@ class NavRenderer
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-collapsible lzy-nav-animated lzy-encapsulated');
-//            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-animated lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-indented lzy-nav-collapsible lzy-nav-open-current lzy-nav-animated lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side-accordion') {
