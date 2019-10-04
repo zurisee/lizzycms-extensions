@@ -116,7 +116,7 @@ class Page
                         }
 
                     } else {
-                        $this->$key .= $value;
+                        $this->$key = $this->$key ? "{$this->$key} $value" : $value;
                     }
                 }
             } else {
@@ -144,11 +144,11 @@ class Page
                 continue;
             }
 
-            if ($key == 'modules') {
+            if ($key === 'modules') {
                 $value = ','.$value;
             }
 
-            if (($key == 'wrapperTag') || (strpos($propertiesToReplace, $key) !== false)) {
+            if (($key === 'wrapperTag') || (strpos($propertiesToReplace, $key) !== false)) {
                 $this->appendValue($key, $value, true);
             } else {
                 $this->appendValue($key, $value);
@@ -586,7 +586,7 @@ class Page
             $file = resolvePath(trim($m[1]), true);
             if (file_exists($file)) {
                 $str = getFile($file, true);
-                if (fileExt($file) == 'md') {
+                if (fileExt($file) === 'md') {
                     $str = compileMarkdownStr($str);
                     $str = <<<EOT
 <!DOCTYPE html>
@@ -658,28 +658,28 @@ EOT;
         $class1 = '';
         foreach ($this->config->classBasedModules as $class => $modules) {
             $varname = 'class_'.$class;
-            if (isset($this->config->$varname) && ($class != $this->config->$varname)) {
+            if (isset($this->config->$varname) && ($class !== $this->config->$varname)) {
                 $class1 = $this->config->$varname;
             }
             if (preg_match("/class\=.*['\"\s] $class1 ['\"\s]/x", $content, $m)) {
                 foreach ($modules as $module => $rsc) {
                     $modified = true;
-                    if ($module == 'cssFiles') {
+                    if ($module === 'cssFiles') {
                         $this->addCssFiles($rsc);
 
-                    } elseif ($module == 'css') {
+                    } elseif ($module === 'css') {
                         $this->addCss($rsc);
 
-                    } elseif ($module == 'jqFiles') {
+                    } elseif ($module === 'jqFiles') {
                         $this->addJQFiles($rsc);
 
-                    } elseif ($module == 'jq') {
+                    } elseif ($module === 'jq') {
                         $this->addJq($rsc);
 
-                    } elseif ($module == 'jsFiles') {
+                    } elseif ($module === 'jsFiles') {
                         $this->addJsFiles($rsc);
 
-                    } elseif ($module == 'jq') {
+                    } elseif ($module === 'jq') {
                         $this->addJq($rsc);
                     }
                 }
@@ -834,7 +834,7 @@ EOT;
             $this->prepareModuleLists();
         }
 
-        if ($type == 'css') {
+        if ($type === 'css') {
             foreach ($this->cssModules as $item) {
                 $item = resolvePath($item, true, true);
                 $out .= "\t<link href='$item' rel='stylesheet' />\n";
@@ -860,7 +860,7 @@ EOT;
         $str = ','.$this->modules.','.$this->cssFiles.','.$this->jsFiles.','.$this->jqFiles;
 
         if (preg_match_all('/,(JQUERY\s?),/', $str, $m)) {
-            if (sizeof($m) == 1) {
+            if (sizeof($m) === 1) {
                 $str = str_replace('JQUERY,', '', $str);
             }
 
@@ -888,13 +888,13 @@ EOT;
                 if (strpos($str, ',') !== false) {
                     $mods = preg_split('/\s*,+\s*/', $str);
                     foreach ($mods as $j => $mod) {
-                        if (($mod{0} != '~') && (strpos($mod, '//') === false)) {
+                        if (($mod{0} !== '~') && (strpos($mod, '//') === false)) {
                             $mod = '~sys/'.$mod;
                         }
                         $primaryModules[] = [$mod, $rank];
                     }
                 } else {
-                    if (($str{0} != '~') && (strpos($str, '//') === false)) {
+                    if (($str{0} !== '~') && (strpos($str, '//') === false)) {
                         $str = '~sys/'.$str;
                     }
                     $primaryModules[] = [$str, $rank];
@@ -1049,7 +1049,7 @@ EOT;
             }
         }
 
-        if (($allowOrigin == '*') || ($allowOrigin == 'true') || ($allowOrigin == 'all') || ($allowOrigin == 'any')) {
+        if (($allowOrigin === '*') || ($allowOrigin === 'true') || ($allowOrigin === 'all') || ($allowOrigin === 'any')) {
             header('Access-Control-Allow-Origin: *');
             return;
         }
