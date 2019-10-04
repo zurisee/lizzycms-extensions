@@ -120,7 +120,7 @@ class CalendarBackend {
         $startTime = $post['start-time'];
         $endTime = $post['end-time'];
 
-        $recId = (isset($post['rec-id'])) ? intval($post['rec-id']) : time();
+        $recId = (isset($post['rec-id']) && intval($post['rec-id'])) ? intval($post['rec-id']) : time();
 
         if (preg_match('/\[(.*)\]/', $startTime, $m)) { // array of events:
             $startTimes = explode(',', $m[1]);
