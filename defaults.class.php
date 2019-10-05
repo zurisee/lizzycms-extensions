@@ -10,81 +10,74 @@ class Defaults
 
 // User configurable Settings -> config/config.yaml:
 private $userConfigurableSettingsAndDefaults      = [
-            'admin_activityLogging'             => [true, 'If true, logs activities to file '.LOG_FILE.'.' ],
-            'admin_allowDisplaynameForLogin'    => [false, 'If true, users may log in using their "DisplayName" rather than their "UserName".' ],
-            'admin_autoAdminOnLocalhost'        => [false, 'If true, on local host user automatically has admin privileges without login.' ],
-            'admin_enableAccessLink'            => [true, 'Activates one-time-access-link login mechanism.' ],
-            'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
-            'admin_defaultGuestGroup'           => ['guest', 'Name of default group for self-registration.' ],
-            'admin_defaultLoginValidityPeriod'  => [86400, 'Defines how long a user can access the page since the last login.' ],
-            'admin_enableDailyUserTask'         => [false, 'If true, looks for "code/user-daily-task.php" and executes it.' ],
-            'admin_enableEditing'               => [true, 'Enables online editing' ],
-            'admin_enableSelfSignUp'            => [false, 'If true, visitors can create a guest account on their own.' ],
-//            'admin_hideWhileEditing'            => [false, 'List of CSS-selectors which shall be hidden while online editing is active, e.g. [#menu, .logo]' ],
-//            'admin_logClientAccesses'           => [false, 'Activates logging of user accesses.' ],
-            'admin_useRequestRewrite'           => [true, 'If true, assumes web-server supports request-rewrite (i.e. .htaccess).' ],
-            'admin_userAllowSelfAdmin'          => [false, 'If true, user can modify their account after they logged in' ],
+    'admin_activityLogging'             => [true, 'If true, logs activities to file '.LOG_FILE.'.' ],
+    'admin_allowDisplaynameForLogin'    => [false, 'If true, users may log in using their "DisplayName" rather than their "UserName".' ],
+    'admin_autoAdminOnLocalhost'        => [false, 'If true, on local host user automatically has admin privileges without login.' ],
+    'admin_enableAccessLink'            => [true, 'Activates one-time-access-link login mechanism.' ],
+    'admin_defaultAccessLinkValidyTime' => [900,    'Default Time in seconds during whith an access-link is valid.' ],
+    'admin_defaultGuestGroup'           => ['guest', 'Name of default group for self-registration.' ],
+    'admin_defaultLoginValidityPeriod'  => [86400, 'Defines how long a user can access the page since the last login.' ],
+    'admin_enableDailyUserTask'         => [false, 'If true, looks for "code/user-daily-task.php" and executes it.' ],
+    'admin_enableEditing'               => [true, 'Enables online editing' ],
+    'admin_enableSelfSignUp'            => [false, 'If true, visitors can create a guest account on their own.' ],
+    'admin_useRequestRewrite'           => [true, 'If true, assumes web-server supports request-rewrite (i.e. .htaccess).' ],
+    'admin_userAllowSelfAdmin'          => [false, 'If true, user can modify their account after they logged in' ],
 
-            'custom_permitUserCode'             => [false, "Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],
-            'custom_permitUserInitCode'         => [false, "Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'" ],
-            'custom_permitUserVarDefs'          => [false, 'Only if true, "_code/user-var-defs.php" will be executed.' ],
-            'custom_wrapperTag'                 => [false, 	'The HTML tag in which MD-files are wrapped (default: section)' ],
+    'custom_permitUserCode'             => [false, "Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'" ],
+    'custom_permitUserInitCode'         => [false, "Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'" ],
+    'custom_permitUserVarDefs'          => [false, 'Only if true, "_code/user-var-defs.php" will be executed.' ],
+    'custom_wrapperTag'                 => [false, 	'The HTML tag in which MD-files are wrapped (default: section)' ],
 
-            'debug_allowDebugInfo'              => [false, '[false|true|group] If true, debugging Info can be activated: log in as admin and invoke URL-cmd "?debug"' ],
-//            'debug_autoForceBrowserCache'       => [false, 'If true, the browser is forced to reload css and js resources on every reload.' ],
-            'debug_collectBrowserSignatures'    => [false, 'If true, Lizzy records browser signatures of visitors.' ],
-            'debug_compileScssWithLineNumbers'  => [false, 'If true, original line numbers are added as comments to compiled CSS."' ],
-            'debug_errorLogging'                => [false, 'Enable or disabling logging.' ],
-            'debug_forceBrowserCacheUpdate'     => [false, 'If true, the browser is forced to ignore the cache and reload css and js resources on every time.' ],
-            'debug_logClientAccesses'           => [false, 'If true, Lizzy records visits (IP-addresses and browser/os types).' ],
-            'debug_showDebugInfo'               => [false, '[false|true|group] If true, debugging info is appended to the page (prerequisite: localhost or logged in as editor/admin)' ],
-            'debug_showUndefinedVariables'      => [false, 'If true, all undefined static variables (i.e. obtained from yaml-files) are marked.' ],
-            'debug_showVariablesUnreplaced'     => [false, 'If true, all static variables (i.e. obtained from yaml-files) are render as &#123;&#123; name }}.' ],
-            'debug_suppressInsecureConnectWarning' => [false, 'If true, Lizzy suppresses insecure connection warnings (i.e. HTTP, not HTTPS).' ],
-            'debug_monitorUnusedVariables'      => [false, '[false|true] If true, Lizzy keeps track of variable usage. Initialize tracking with url-arg "?reset"' ],
+    'debug_allowDebugInfo'              => [false, '[false|true|group] If true, debugging Info can be activated: log in as admin and invoke URL-cmd "?debug"' ],
+    'debug_collectBrowserSignatures'    => [false, 'If true, Lizzy records browser signatures of visitors.' ],
+    'debug_compileScssWithLineNumbers'  => [false, 'If true, original line numbers are added as comments to compiled CSS."' ],
+    'debug_errorLogging'                => [false, 'Enable or disabling logging.' ],
+    'debug_forceBrowserCacheUpdate'     => [false, 'If true, the browser is forced to ignore the cache and reload css and js resources on every time.' ],
+    'debug_logClientAccesses'           => [false, 'If true, Lizzy records visits (IP-addresses and browser/os types).' ],
+    'debug_showDebugInfo'               => [false, '[false|true|group] If true, debugging info is appended to the page (prerequisite: localhost or logged in as editor/admin)' ],
+    'debug_showUndefinedVariables'      => [false, 'If true, all undefined static variables (i.e. obtained from yaml-files) are marked.' ],
+    'debug_showVariablesUnreplaced'     => [false, 'If true, all static variables (i.e. obtained from yaml-files) are render as &#123;&#123; name }}.' ],
+    'debug_suppressInsecureConnectWarning' => [false, 'If true, Lizzy suppresses insecure connection warnings (i.e. HTTP, not HTTPS).' ],
+    'debug_monitorUnusedVariables'      => [false, '[false|true] If true, Lizzy keeps track of variable usage. Initialize tracking with url-arg "?reset"' ],
 
-            //'feature_autoAttrFile'              => [false, 'Name of file (in $configPath) which defines the automatic assignment of class-names to HTML-elements. Used to simplify deployment of CSS-Frameworks, such as Bootstrap.' ],
-            'feature_autoConvertLinks'          => [false, 'If true, automatically converts links to HTML-link (i.e. &lt;a> tags).' ],
-            'feature_autoLoadClassBasedModules' => [true, 'If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
-            'feature_autoLoadJQuery'            => [true, 'If true, jQuery will be loaded automatically (even if not initiated explicitly by macros)' ],
-//            'feature_cssFramework'              => ['', 'Name of CSS-Framework to be invoked {PureCSS/w3.css}' ],
-            'feature_enableAllowOrigin'         => [false, 'If true, Lizzy allows to produce a "allow origin" header' ],
-            'feature_enableIFrameResizing'      => [false, 'If true, includes js code required by other pages to iFrame-embed this site' ],
-            'feature_filterRequestString'       => [false, 'If true, permits only regular text in requests. Special characters will be discarded.' ],
-            'feature_frontmatterCssLocalToSection' => [false, 'If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
-            'feature_jQueryModule'              => ['JQUERY', 'Specifies the jQuery Version to be loaded: one of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
-            'feature_loadFontAwesome'           => [false, 'If true, loads Font-Awesome support' ],
-            'feature_pageSwitcher'              => [false, 'If true, code will be added to support page switching (by arrow-keys or swipe gestures)' ],
-            'feature_lateImgLoading'            => [false, 'If true, enables general use of lazy-loading of images' ],
-            'feature_quickview'                 => [true, 'If true, enables automatic Quickview of images' ],
-            'feature_ImgDefaultMaxDim'          => ['1600x1200', 'Defines the max dimensions ("WxH") to which Lizzy automatically converts images which it finds in the pages folders.' ],
-            'feature_SrcsetDefaultStepSize'     => [300, 'Defines the step size when Lizzy creates srcsets for images.' ],
-            'feature_preloadLoginForm'          => [false, 'If true, code for login popup is preloaded and opens without page load.' ],
-            'feature_renderTxtFiles'            => [false, 'If true, all .txt files in the pages folder are rendered (in &lt;pre>-tags, i.e. as is). Otherwise they are ignored.' ],
-            'feature_screenSizeBreakpoint'      => [480, '[px] Determines the point where Lizzy switches from small to large screen mode.' ],
-            'feature_selflinkAvoid'             => [true, 'If true, the nav-link of the current page is replaced with a local page link (to improve accessibility).' ],
-            'feature_sitemapFromFolders'        => [false, 'If true, the sitemap will be derived from the folder structure under pages/, rather than the config/sitemap.yaml file.' ],
-            'feature_supportLegacyBrowsers'     => [false, 'If true, jQuery 1 is loaded in case of legacy browsers.' ],
-            'feature_touchDeviceSupport'        => [true, 'If true, Lizzy supports swipe gestures etc. on touch devices.' ],
+    'feature_autoConvertLinks'          => [false, 'If true, automatically converts links to HTML-link (i.e. &lt;a> tags).' ],
+    'feature_autoLoadClassBasedModules' => [true, 'If true, automatically loads modules that are invoked by applying classes, e.g. .editable' ],
+    'feature_autoLoadJQuery'            => [true, 'If true, jQuery will be loaded automatically (even if not initiated explicitly by macros)' ],
+    'feature_enableAllowOrigin'         => [false, 'If true, Lizzy allows to produce a "allow origin" header' ],
+    'feature_enableIFrameResizing'      => [false, 'If true, includes js code required by other pages to iFrame-embed this site' ],
+    'feature_filterRequestString'       => [false, 'If true, permits only regular text in requests. Special characters will be discarded.' ],
+    'feature_frontmatterCssLocalToSection' => [false, 'If true, all CSS rules in Frontmatter will be modified to apply only to the current section (i.e. md-file content).' ],
+    'feature_jQueryModule'              => ['JQUERY', 'Specifies the jQuery Version to be loaded: one of [ JQUERY | JQUERY1 | JQUERY2 | JQUERY3 ], default is jQuery 3.x.' ],
+    'feature_loadFontAwesome'           => [false, 'If true, loads Font-Awesome support' ],
+    'feature_pageSwitcher'              => [false, 'If true, code will be added to support page switching (by arrow-keys or swipe gestures)' ],
+    'feature_lateImgLoading'            => [false, 'If true, enables general use of lazy-loading of images' ],
+    'feature_quickview'                 => [true, 'If true, enables automatic Quickview of images' ],
+    'feature_ImgDefaultMaxDim'          => ['1600x1200', 'Defines the max dimensions ("WxH") to which Lizzy automatically converts images which it finds in the pages folders.' ],
+    'feature_SrcsetDefaultStepSize'     => [300, 'Defines the step size when Lizzy creates srcsets for images.' ],
+    'feature_preloadLoginForm'          => [false, 'If true, code for login popup is preloaded and opens without page load.' ],
+    'feature_renderTxtFiles'            => [false, 'If true, all .txt files in the pages folder are rendered (in &lt;pre>-tags, i.e. as is). Otherwise they are ignored.' ],
+    'feature_screenSizeBreakpoint'      => [480, '[px] Determines the point where Lizzy switches from small to large screen mode.' ],
+    'feature_selflinkAvoid'             => [true, 'If true, the nav-link of the current page is replaced with a local page link (to improve accessibility).' ],
+    'feature_sitemapFromFolders'        => [false, 'If true, the sitemap will be derived from the folder structure under pages/, rather than the config/sitemap.yaml file.' ],
+    'feature_supportLegacyBrowsers'     => [false, 'If true, jQuery 1 is loaded in case of legacy browsers.' ],
+    'feature_touchDeviceSupport'        => [true, 'If true, Lizzy supports swipe gestures etc. on touch devices.' ],
 
-            'path_logPath'                      => [LOGS_PATH, '[true|Name] Name of folder to which logging output will be sent. Or "false" for disabling logging.' ],
-            'path_pagesPath'                    => ['pages/', 'Name of folder in which all pages reside.' ],
-            'path_stylesPath'                   => ['css/', 'Name of folder in which style sheets reside' ],
-            'path_userCodePath'                 => [USER_CODE_PATH, 'Name of folder in which user-provided PHP-code must reside.' ],
+    'path_logPath'                      => [LOGS_PATH, '[true|Name] Name of folder to which logging output will be sent. Or "false" for disabling logging.' ],
+    'path_pagesPath'                    => ['pages/', 'Name of folder in which all pages reside.' ],
+    'path_stylesPath'                   => ['css/', 'Name of folder in which style sheets reside' ],
+    'path_userCodePath'                 => [USER_CODE_PATH, 'Name of folder in which user-provided PHP-code must reside.' ],
 
-            'site_compiledStylesFilename'       => ['__styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
-            'site_dataPath'                     => [DATA_PATH, 'Path to data/ folder.' ],
-            'site_defaultLanguage'              => ['en', 'Default language as two-character code, e.g. "en"' ],
-            'site_defaultLocale'                => ['en_US', 'Default local, e.g. "en_US" or "de_CH"' ],
-            'site_enableCaching'                => [false, 'If true, Lizzy\'s caching mechanism is activated. (not fully implemented yet)' ],
-            'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
-            'site_enableRelLinks'               => [true, 'If true, injects "rel links" into header, e.g. "&lt;link rel=\'next\' title=\'Next\' href=\'...\'>"' ],
-            'site_multiLanguageSupport'         => [null, 'If true, Lizzy activates multiple languages support.' ],
-            'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".CONFIG_PATH."'"],
-            'site_robots'                       => [false, 'If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],
-            'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
-            'site_timeZone'                     => [false, 'Name of timezone, e.g. "UTC" or "CET". If false, attempts to set it automatically.' ],
-            'site_supportedLanguages'           => ['', 'Defines which languages will be supported: comma-separated list of language-codes. E.g. "en, de, fr"' ],
+    'site_compiledStylesFilename'       => ['__styles.css', 'Name of style sheet containing collection of compiled user style sheets' ],
+    'site_dataPath'                     => [DATA_PATH, 'Path to data/ folder.' ],
+    'site_defaultLocale'                => ['en_US', 'Default local, e.g. "en_US" or "de_CH"' ],
+    'site_enableCaching'                => [false, 'If true, Lizzy\'s caching mechanism is activated. (not fully implemented yet)' ],
+    'site_extractSelector'              => ['body main', '[selector] Lets an external js-app request an extract of the web-page' ],
+    'site_enableRelLinks'               => [true, 'If true, injects "rel links" into header, e.g. "&lt;link rel=\'next\' title=\'Next\' href=\'...\'>"' ],
+    'site_pageTemplateFile'             => ['page_template.html', "Name of file that will be used as the template. Must be located in '".CONFIG_PATH."'"],
+    'site_robots'                       => [false, 'If true, Lizzy will add a meta-tag to inform search engines, not to index this site/page.' ],
+    'site_sitemapFile'                  => ['sitemap.txt', 'Name of file that defines the site structure. Build hierarchy simply by indenting.' ],
+    'site_supportedLanguages'           => ['en', 'Defines which languages will be supported: comma-separated list of language-codes. E.g. "en, de, fr"' ],
+    'site_timeZone'                     => ['auto', 'Name of timezone, e.g. "UTC" or "CET". If auto, attempts to set it automatically.' ],
 
 ];
 
@@ -210,23 +203,29 @@ private $userConfigurableSettingsAndDefaults      = [
         }
 
         // fix some values:
-        $this->lang = $this->site_defaultLanguage;
 
         if ($this->path_logPath == '1/') {
             $this->path_logPath = LOGS_PATH;
         }
 
-//        if (!$this->site_supportedLanguages) {
-        if ($this->site_supportedLanguages) {
-            if ($this->site_multiLanguageSupport !== false) {
-                $this->site_multiLanguageSupport = true;
-            }
-        } else {
-            $this->site_supportedLanguages = $this->site_defaultLanguage;
+        if (!$this->site_supportedLanguages) {
+            fatalError('Error: no value(s) defined for config item "site_supportedLanguages".');
         }
-        if ($this->site_multiLanguageSupport) {
-            $this->site_supportedLanguages = explode(',', str_replace(' ', '',$this->site_supportedLanguages));
+        $this->site_multiLanguageSupport = true;
+        $this->site_supportedLanguages = explode(',', str_replace(' ', '',$this->site_supportedLanguages));
+        $n = ($this->site_supportedLanguages[0]) ? sizeof($this->site_supportedLanguages) : 0;
+        if ($n === 1) {
+            $this->site_multiLanguageSupport = false;
         }
+        $this->site_defaultLanguage = $this->site_supportedLanguages[0];
+        $this->lang = $this->site_defaultLanguage;
+
+
+        if ($this->site_timeZone === 'auto') {
+            $this->site_timeZone = false;
+        }
+
+
         if ($this->site_sitemapFile) {
             $sitemapFile = $this->configPath . $this->site_sitemapFile;
 

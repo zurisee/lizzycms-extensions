@@ -8,7 +8,7 @@
 admin_autoAdminOnLocalhost: true
 debug_compileScssWithLineNumbers: true
 feature_selflinkAvoid: false
-#site_defaultLanguage: 'en'
+#site_supportedLanguages: 'en'                    # e.g. 'en,de'
 
 
 #admin_activityLogging: false                     # default=true
@@ -70,15 +70,13 @@ feature_selflinkAvoid: false
 
 #site_compiledStylesFilename: ''                  # default=__styles.css
 #site_dataPath: ''                                # default=data/
-#site_defaultLanguage: ''                         # default=en
 #site_defaultLocale: ''                           # default=en_US
 #site_enableCaching: true                         # default=false
 #site_enableRelLinks: false                       # default=true
 #site_extractSelector: ''                         # default=body main
-#site_multiLanguageSupport: true                  # default=false
 #site_pageTemplateFile: ''                        # default=page_template.html
 #site_robots: true                                # default=false
 #site_sitemapFile: ''                             # default=sitemap.txt
-#site_supportedLanguages: ''                      # default=
-#site_timeZone: true                              # default=false
+#site_supportedLanguages: 'en'                    # default=
+#site_timeZone: 'auto'                            # default=false
 
