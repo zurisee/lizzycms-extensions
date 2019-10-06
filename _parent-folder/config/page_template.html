@@ -45,7 +45,7 @@
 			<div>
 {{^ footer }}
 			</div>
-            <div id='loggedInUser'>{{  toggle-edit-mode }}{{ Log-in }}</div>
+            <div id='loggedInUser'>{{^ lzy-config--open-button }}{{ lzy-toggle-edit-mode }}{{ lzy-login-button }}</div>
 		</footer>
 
 {{^ nav( small-screen-header ) }}

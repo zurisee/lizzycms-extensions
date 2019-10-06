@@ -765,7 +765,7 @@ EOT;
                 $loggedInUser = '{{ LoginLink }}';
             }
             $logInVar = <<<EOT
-<div class='lzy-login-link'><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">{{ user_icon }}</a></div>
+<div class='lzy-login-link'><a href='$linkToThisPage?login' class='lzy-login-link' title="$loggedInUser">{{ lzy-login-icon }}</a></div>
 
 EOT;
         }
@@ -793,7 +793,7 @@ EOT;
         }
 
         $logInVar = <<<EOT
-<div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $displayName">{{ user_icon }}</a>
+<div class="lzy-login-link-menu"> <a href="#" title="{{ Logged in as }} $displayName">{{ lzy-login-icon }}</a>
     <div class="lzy-login-menu" style="display:none;">
         <div>{{ User account }} <strong>$displayName</strong></div>
         <ol>
@@ -834,10 +834,9 @@ EOT;
     private function checkInsecureConnection()
     {
         global $globalParams;
-        if ($this->config->debug_suppressInsecureConnectWarning) {
-            return true;
-        }
-        if (!$this->config->isLocalhost && !(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on')) {
+        $relaxedHosts = $this->config->site_allowInsecureConnectionsTo;
+
+        if (!$this->config->isLocalhost && !(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] === 'on')) {
             $url = str_replace('http://', 'https://', $globalParams['pageUrl']);
             $this->page->addMessage("{{ Warning insecure connection }}<br />{{ Please switch to }}: <a href='$url'>$url</a>");
             return false;

@@ -20,26 +20,14 @@ body {
     width: auto;
     height: 1.2em;
 }
-/*.lzy-login-link-menu,*/
-/*.lzy-login-link {*/
-/*    margin-left: 5px;*/
-/*}*/
 .lzy-login-link {
     display: inline-block;
     position: relative;
-}
-.lzy-login-link .lzy-icon-user {
-    /*font-size: 150%;*/
-    --lzy-icon-factor: 1.5;
 }
 
 .lzy-login-link-menu a:hover,
 .lzy-login-link a:hover {
     border-bottom: none;
-}
-.lzy-login-link .lzy-icon-user,
-.lzy-login-link-menu .lzy-icon-user {
-    /*font-size: 167%;*/
 }
 .lzy-onetime-code-sent-overlay {
     border: 1px dashed red;
@@ -102,19 +90,6 @@ body {
     margin-top: 5px;
     height: 5em;
 }
-/*
-
-.lzy-form-show-password label,
-.lzy-form-show-password input {
-    display: inline-block;
-}
-.lzy-form-show-password label {
-    width: auto;
-}
-.lzy-form-show-password input {
-    width: 1.5em;
-}
-*/
 
 .lzy-error-message {
 	display: block;
