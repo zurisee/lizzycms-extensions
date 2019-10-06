@@ -561,7 +561,8 @@ class Page
             $text = "<button id='lzy-close-overlay' class='lzy-close-overlay'>✕</button>\n".$text;
             // set ESC to close overlay:
             $jq .="\n$('body').keydown( function (e) { if (e.which == 27) { $('.lzy-overlay').hide(); } });\n".
-                "$('#lzy-close-overlay').click(function() { $('.lzy-overlay').hide(); });\n";
+                "$('#lzy-close-overlay').click(function(e) { lzyReload(); });\n";
+//                "$('#lzy-close-overlay').click(function() { $('.lzy-overlay').hide(); });\n";
         }
         $this->addJq($jq);
         $this->addBody("<div id='lzy-overlay' class='lzy-overlay'>$text</div>\n");
@@ -711,10 +712,6 @@ EOT;
             $description = "\t<meta name='description' content='$description' />\n";
         }
         $headInjections .= $keywords.$description;
-
-        if ($this->config->feature_loadFontAwesome) {   // Font-Awesome support needs to go into head:
-            $this->addJQFiles('FONTAWESOME');
-        }
 
         $headInjections .= $this->getModules('css', $this->cssFiles);
 
