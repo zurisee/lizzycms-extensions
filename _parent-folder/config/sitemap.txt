@@ -4,6 +4,8 @@ Home: { folder: '~/', showThis: 'home/'}
 
 Contact
 
+Test { hide: non-privileged }
+
 Sitemap { hide:true }
 
 __END__
