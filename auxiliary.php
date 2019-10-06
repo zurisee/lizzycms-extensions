@@ -1952,7 +1952,7 @@ function fatalError($msg, $origin = '', $offendingFile = '')
         reloadAgent();
     }
 
-    if (isset($globalParams['localCall']) && $globalParams['localCall']) {
+    if (isLocalCall()) {
         exit($msg);
     } else {
         exit;
