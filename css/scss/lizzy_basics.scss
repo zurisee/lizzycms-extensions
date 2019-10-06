@@ -176,6 +176,33 @@ figure a {
 	height: auto;
 }
 
+/* === Admin Config Overlay ==================== */
+.lzy-config-form .lzy-button {
+	padding: 0.3em 1.5em;
+}
+
+.lzy-config-elem {
+	padding: 0.5em 0;
+	input {
+		display: inline-block;
+		width: 5em;
+		&[type=text]:focus {
+			width: 10em;
+		}
+	}
+	label {
+		font-weight: bold;
+	}
+	.lzy-config-comment {
+		margin-left: 8em;
+		font-style: italic;
+	}
+}
+.lzy-config-select {
+	text-align: right;
+}
+
+
 
 /* === lzy-tables ============================== */
 .lzy-table {
@@ -495,12 +522,19 @@ pre {
 	a {
 		border-bottom: none;
 	}
+	.lzy-icon {
+		--lzy-icon-factor: 1.25;
+		color: #bbb;
+		&:hover {
+			color: black;
+		}
+	}
+	.lzy-config-button,
+	.lzy-toggle-edit-mode {
+		padding-right: 10px;
+	}
 }
 
-.toggle-edit-mode {
-    border-right: 1px solid gray;
-    padding-right: 5px;
-}
 
 .debug-mail {
     border: 1px dashed yellow;
@@ -547,8 +581,7 @@ pre {
 }
 .MsgBox:hover,
 .WarningBox:hover {
-//	animation: none!important;
-//    transform: translateX(-0%);
+	animation: unset;
 }
 @keyframes slide {
 //  0% { transform: translateX(100%); }
