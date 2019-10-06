@@ -733,16 +733,19 @@ class Lizzy
             $userName = '';
             $login = <<<EOT
     <span class="lzy-tooltip-arrow" data-lzy-tooltip-from='login-warning' style="border-bottom:none;">
-<!--        <img src="~sys/rsc/error.svg" alt="" />-->
         <span class='lzy-icon-error'></span>
     </span>
     <div id="login-warning" style="display:none;">Warning:<br>no users defined - login mechanism is disabled.<br>&rarr; see config/users.yaml</div>
 EOT;
             $this->page->addModules('TOOLTIPS');
         }
-        $this->trans->addVariable('Log-in', $login);
+        $this->trans->addVariable('lzy-login-button', $login);
         $this->trans->addVariable('user', $userName, false);
 
+        if ($this->auth->isAdmin()) {
+            $url = $GLOBALS["globalParams"]["pageUrl"];
+            $this->trans->addVariable('lzy-config--open-button', "<a class='lzy-config-button' href='$url?config'>{{ lzy-config-button }}</a>", false);
+        }
 
         $this->trans->addVariable('pageUrl', $this->pageUrl);
         $this->trans->addVariable('appRoot', $this->pathToRoot);			// e.g. '../'
@@ -763,7 +766,7 @@ EOT;
         }
 
 		if ($this->config->site_multiLanguageSupport) {
-            $supportedLanguages = $this->config->site_supportedLanguages;
+            $supportedLanguages = explode(',', str_replace(' ', '', $this->config->site_supportedLanguages ));
             $out = '';
             foreach ($supportedLanguages as $lang) {
                 if ($lang == $this->config->lang) {
@@ -1074,7 +1077,7 @@ EOT;
                 $mdFile = $folder . basename(substr($folder, 0, -1)) . '.md';
                 mkdir($folder, MKDIR_MASK, true);
                 $name = $this->siteStructure->currPageRec['name'];
-                file_put_contents($mdFile, "# $name\n");
+                file_put_contents($mdFile, "---\n// Frontmatter:\ncss: |\n---\n\n# $name\n");
             }
         }
     } // handleMissingFolder
@@ -1407,9 +1410,13 @@ EOT;
 
         //=== beyond this point only localhost or logged in as editor/admin group
         if (!$this->auth->checkGroupMembership('editors')) {
-            $this->trans->addVariable('toggle-edit-mode', "");
-            if (getUrlArg('help')) {                              // help
-                $this->page->addMessage("You need to be logged in as admin to see help");
+            $this->trans->addVariable('lzy-toggle-edit-mode', "");
+            $cmds = ['help','unused','reset-unused','remove-unused','log','info','list','mobile','touch','notouch','auto','config'];
+            foreach ($cmds as $cmd) {
+                if (isset($_GET[$cmd])) {
+                    $this->page->addMessage("Insufficient privilege for option '?$cmd'");
+                    break;
+                }
             }
             return;
         }
@@ -1469,13 +1476,6 @@ EOT;
 
 
 
-        if (getUrlArg('config')) {                              // config
-            $str = $this->renderConfigHelp();
-            $this->page->addOverlay($str);
-        }
-
-
-
         if (getUrlArg('help')) {                              // help
             $overlay = <<<EOT
 <h1>Lizzy Help</h1>
@@ -1523,9 +1523,9 @@ EOT;
 
 
         if (getStaticVariable('editingMode')) {
-            $this->trans->addVariable('toggle-edit-mode', "<a class='toggle-edit-mode' href='?edit=false'>{{ turn edit mode off }}</a>");
+            $this->trans->addVariable('lzy-toggle-edit-mode', "<a class='lzy-toggle-edit-mode' href='?edit=false'>{{ lzy-turn-edit-mode-off }}</a>");
         } else {
-            $this->trans->addVariable('toggle-edit-mode', "<a class='toggle-edit-mode' href='?edit'>{{ turn edit mode on }}</a>");
+            $this->trans->addVariable('lzy-toggle-edit-mode', "<a class='lzy-toggle-edit-mode' href='?edit'>{{ lzy-turn-edit-mode-on }}</a>");
         }
 
 
@@ -1546,6 +1546,18 @@ EOT;
         if ($this->config->isLocalhost && getUrlArgStatic('auto', false)) {   // auto (liveReload)                        // auto reload
             $this->page->addJqFiles("http://localhost:35729/livereload.js?snipver=1");
         }
+
+        if (getUrlArg('config')) {                              // config
+            if (!$this->auth->checkGroupMembership('admins')) {
+                $this->page->addMessage("Insufficient privilege for option '?config'");
+                return;
+            }
+
+            $str = $this->renderConfigOverlay();
+            $this->page->addOverlay($str);
+        }
+
+
     } // handleUrlArgs2
 
 
@@ -1640,7 +1652,8 @@ EOT;
 
         } elseif ($this->config->site_multiLanguageSupport) {    // no preference in sitemap, use default if not overriden by url-arg
             $lang = getUrlArgStatic('lang', true);
-            if (!in_array($lang, $this->config->site_supportedLanguages)) {
+            $supportedLanguages = explode(',', str_replace(' ', '', $this->config->site_supportedLanguages ));
+            if (!in_array($lang, $supportedLanguages)) {
                 $lang = $this->config->site_defaultLanguage;
 
             } elseif (!$lang) {   // no url-arg found
@@ -1662,60 +1675,82 @@ EOT;
 
 
 	//....................................................
-	private function renderConfigHelp()
+	private function renderConfigOverlay()
 	{
+        $level1Class = $level2Class = $level3Class = '';
+        $level = max(1, min(3, intval(getUrlArg('config', true))));
+        switch ($level) {
+            case 1: $level1Class = ' class="lzy-config-viewer-hl"'; break;
+            case 2: $level2Class = ' class="lzy-config-viewer-hl"'; break;
+            case 3: $level3Class = ' class="lzy-config-viewer-hl"'; break;
+        }
+        $url = $GLOBALS["globalParams"]["pageUrl"];
+
+        if (isset($_POST) && $_POST) {
+            $this->config->updateConfigValues( $_POST, $this->configFile );
+        }
+
+
         $configItems = $this->config->getConfigInfo();
         ksort($configItems);
         $out = "<h1>Lizzy Config-Items and their Purpose:</h1>\n";
         $out .= "<p>Settings stored in file <code>{$this->configFile}</code>.<br/>\n";
         $out .= "&rarr; Default values in (), values deviating from defaults are marked <span class='lzy-config-viewer-hl'>red</span>)</p>\n";
-        $out .= "<dl class='lzy-config-viewer'>\n";
-        $out2 = '';
-        $ch = '';
-        foreach ($configItems as $name => $rec) {
-            $value = $this->config->$name;
-            if ($name === 'site_sitemapFile') {
-                $value = base_name($value);
+        $out .= "<p class='lzy-config-select'>Select: <a href='$url?config=1'$level1Class>Essential</a> | <a href='$url?config=2'$level2Class>Common</a> | <a href='$url?config=3'$level3Class>All</a></p>\n";
+        $out .= "  <form class='lzy-config-form' action='$url?config=$level' method='post'>\n";
+
+        $i = 1;
+        foreach ($configItems as $key => $rec) {
+            if ($rec[2] > $level) {     // skip elements with lower priority than requested
+                continue;
             }
-            if (is_bool($value)) {
-                $value = ($value) ? 'true' : 'false';
-            } elseif (is_array($value)) {
-                $value = var_r($value, false, true);
-            } else {
-                $value = (string)$value;
-            }
-            $val = $rec[0];
-            if (is_bool($val)) {
-                $default = ($val) ? 'true' : 'false';
-                if ($val) {
-                    $setVal = str_pad("#$name: false", 50)."# default=$default";
-                } else {
-                    $setVal = str_pad("#$name: true", 50)."# default=$default";
-                }
-            } else {
-                $default = (string)$val;
-                $setVal = str_pad("#$name: ''", 50)."# default=$default";
-            }
-            $text = (string)$rec[1];
+            $currValue = $this->config->$key;
+            $displayValue = $currValue;
+            $defaultValue = $this->config->getDefaultValue($key);
+            $displayDefault = $defaultValue;
+            $inputValue = $defaultValue;
+
             $diff = '';
-            if ($default != $value) {
+            if ($currValue !== $defaultValue) {
                 $diff = ' class="lzy-config-viewer-hl"';
             }
-            $out .= "<dt><strong>$name</strong>: ($default) <code$diff>$value</code></dt><dd>$text</dd>\n";
+            $checked = '';
 
-            if ($ch != substr($name, 0,2)) {
-                $out2 .= "\n";
-                $ch = substr($name, 0,2);
+            if (is_bool($defaultValue)) {
+                $displayValue = $currValue ? 'true' : 'false';
+                $inputValue = 'true';
+                $displayDefault = $defaultValue ? 'true' : 'false';
+                $inputType = 'checkbox';
+                $checked = ($currValue) ? " checked" : '';
+
+            } elseif (is_int($defaultValue)) {
+                $inputValue = $displayValue;
+                $inputType = 'integer';
+
+            } elseif (is_string($defaultValue)) {
+                $inputValue = $displayValue;
+                $inputType = 'text';
+
+            } elseif (is_array($defaultValue)) {
+                $displayValue = implode(',', $currValue);
+                $inputValue = $displayValue;
+                $displayDefault = implode(',', $defaultValue);
+                $inputType = 'text';
             }
-            $out2 .= "$setVal\n";
-        }
-        $out .= "</dl>\n";
 
-        if ($this->localCall) {
-            $out .= "\n<hr />\n<h2>Template for config.yaml:</h2>\n<pre>$out2</pre>\n";
+            $comment = $rec[1];
+
+            $id = translateToIdentifier($key).$i++;
+
+            $inputField = "<input id='$id' name='$key' type='$inputType' value='$inputValue'$checked />";
+            $out .= "<div class='lzy-config-elem'> $inputField <label for='$id'$diff>$key</label>  &nbsp;&nbsp;&nbsp;($displayDefault)<div class='lzy-config-comment'>$comment</div></div>\n";
         }
+
+        $out .= "    <input class='lzy-button' type='submit' value='{{ lzy-config-save }}'>";
+        $out .= "  </form>\n";
+
         return $out;
-    } // renderConfigHelp
+    } // renderConfigOverlay
 
 
 
@@ -1953,8 +1988,10 @@ EOT;
         } else {
             setlocale(LC_ALL, "en_UK.utf-8");
         }
-        if ($this->config->site_timeZone) {
-            $systemTimeZone = $this->config->site_timeZone;
+
+        $timeZone = ($this->config->site_timeZone === 'auto') ? '' : $this->config->site_timeZone;
+        if ($timeZone) {
+            $systemTimeZone = $timeZone;
         } else {
             exec('date +%Z',$systemTimeZone, $res);
             if ($res || !isset($systemTimeZone[0])) {

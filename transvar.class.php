@@ -942,7 +942,8 @@ EOT;
         }
         $undefinedVars = getYamlFile(UNDEFINED_VARS_FILE);
         $rec = [];
-        foreach ($this->config->site_supportedLanguages as $l) {
+        $supportedLanguages = explode(',', str_replace(' ', '', $this->config->site_supportedLanguages ));
+        foreach ($supportedLanguages as $l) {
             $rec[$l] = '';
         }
 
