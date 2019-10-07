@@ -33,6 +33,23 @@ $this->addMacro($macroName, function () {
 
     $args = $this->getArgsArray($macroName, false, ['href','text','type','id','class','title','target','subject','body','option']);
 
+    $text = $args['text'];
+
+    // special case: HTML embedded -> convert '&#39;' to quote:
+    if (preg_match_all("/ (< [^>]* \&\#39; [^>]* >) /x", $text, $m)) {
+        foreach ($m[0] as $key => $elem) {
+            $elem1 = str_replace('&#39;', "'", $elem);
+            $text = str_replace($elem, $elem1, $text);
+        }
+        $args['text'] = $text;
+    }
+    if (preg_match_all("/ (< [^>]* \&\#34; [^>]* >) /x", $text, $m)) {
+        foreach ($m[0] as $key => $elem) {
+            $elem1 = str_replace('&#34;', '"', $elem);
+            $text = str_replace($elem, $elem1, $text);
+        }
+        $args['text'] = $text;
+    }
 
     $cl = new CreateLink( $this->lzy );
     $str = $cl->render($args);
