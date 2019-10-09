@@ -66,7 +66,7 @@ class NavRenderer
 
         // no specific php-file, so render standard output of predefined types:
         if ($type == 'top') {
-            $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-accordion lzy-nav-collapsed lzy-nav-animated lzy-nav-colored lzy-nav-hoveropen lzy-encapsulated');
+            $options['navClass'] = trim($options['navClass'].' lzy-nav-top-horizontal lzy-nav-indented lzy-nav-accordion lzy-nav-collapsed lzy-nav-animated lzy-nav-hoveropen lzy-encapsulated');
             $options['options'] .= " editable $primaryClass";
 
         } elseif ($type == 'side') {
@@ -107,12 +107,6 @@ class NavRenderer
             $options['navClass'] = trim($options['navClass']."$layoutClass$animClass");
         }
 
-        if (strpos($options['options'],'noDefaultColoring') !== false) {
-            $options['navClass'] = str_replace('lzy-nav-colored', '', $options['navClass']);
-        }
-        if (strpos($options['theme'],'dark') !== false) {
-            $options['navClass'] = str_replace('lzy-nav-colored', 'lzy-nav-dark-theme', $options['navClass']);
-        }
 
         if (strpos($options['options'],'showTransition') !== false) {
             $options['navClass'] = trim($options['navClass'].' lzy-nav-animated');
@@ -181,7 +175,7 @@ class NavRenderer
             $navWrapperClass .= ' lzy-primary-nav';
         }
         if ($title && (strpos($title, '<') === false)) {
-            $title = "<h1>$title</h1>";
+            $title = "<h1 class='lzy-nav-title'>$title</h1>";
         }
         if (($this->lzy->getEditingMode()) && (strpos($options['options'], 'editable') !== false)) {
             $dataAttr = " data-lzy-filename='sitemap'";
@@ -311,12 +305,12 @@ EOT;
             $liClassOpen = '';
             $liClass = $this->liClass." lzy-lvl$level";
             if ($elem['isCurrPage']) {
-                $liClass .= ' curr active';
+                $liClass .= ' lzy-curr lzy-active';
                 if ($this->config->feature_selflinkAvoid) {
                     $path = '#main';
                 }
             } elseif ($elem['active']) {
-                $liClass .= ' active';
+                $liClass .= ' lzy-active';
             }
 
             $aria1 = 'aria-expanded="false"';
