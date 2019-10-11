@@ -1,4 +1,5 @@
 <?php
+define('EMOJINAMES_FILE', '_lizzy/rsc/emojis.json');
 
 class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 {
@@ -909,7 +910,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseEmoji($markdown)
     {
         // check whether the marker really represents a emoji/icon (i.e. there is a closing :)
-        if (preg_match('/^ : ([a-z]{2,10}) : /x', $markdown, $matches)) {
+        if (preg_match('/^ : ([a-z_]{2,35}) : /x', $markdown, $matches)) {
             return [
                 ['emoji', $matches[1]],
                 strlen($matches[0])
@@ -922,10 +923,16 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     // rendering is the same as for block elements, we turn the abstract syntax array into a string.
     protected function renderEmoji($element)
     {
-        return "<span class='lzy-icon lzy-icon-{$element[1]}'></span>";
+        if (!isset($this->emojiNames)) {
+            $this->emojiNames = json_decode( file_get_contents(EMOJINAMES_FILE), true);
+        }
+        if (isset($this->emojiNames[$element[1]])) {
+            $out = $this->emojiNames[$element[1]];
+        } else {
+            $out = "<span class='lzy-icon lzy-icon-{$element[1]}'></span>";
+        }
+        return $out;
     }
-
-
 
 
 
