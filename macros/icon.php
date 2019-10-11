@@ -16,7 +16,7 @@ $this->addMacro($macroName, function () {
     if ($name === 'help') {
         $str = str_replace(',', "\n- ", rtrim($supportedIcons, ','));
         $this->compileMd = true;
-        return "## Supported Icon Names:\n\n $str";
+        return "::: .lzy-icon-help-list\n## Supported Icon Names:\n\n $str\n:::\n";
     }
     
     if (strpos($supportedIcons, ",$name,") === false) {
