@@ -1,32 +1,66 @@
 /***************************
-Styles for macro nav()
+**  Styles for macro nav()
+**      Template for custom styling: -> end of file
 ****************************/
+
+//=== Defaults:
+// dimensions:
+$nav-txt-size: 16pt;
+$nav-elem-height: 2em;
+$nav-line-height: 1.2em;	// -> space between wrapped lines
+$nav-sub-width: 10em;
+
+
+// colors general:
+$nav-txt-color: inherit;
+$nav-bg-color: transparent;	// -> bg of nav-block
+$nav-elem-bg-color: #eee;
+
+// sub-elements / dropdown:
+$nav-sub-txt-color: inherit;
+$nav-sub-bg-color: #ddd;
+
+// current:
+$nav-curr-txt-color: #ddd;
+$nav-curr-bg-color:  #444;
+
+// hover:
+$nav-hover-txt-color: #000;
+$nav-hover-bg-color: #ddd;
+
+// focus:
+$nav-focus-border-color: magenta;
+
 
 // mobile header:
 $mobile-header-font-size: 6vw;
 $mobile-header-height: 12vw;
 $mobile-header-txt-color: #ddd;
-$mobile-header-bg-color: #444;
+$mobile-header-bg-color:  #444;
 
-$nav-txt-size: 14pt;
-$nav-elem-bg-color: #eee;
-$nav-elem-bg-hover-color: #e4faff;
-$nav-curr-elem-bg-color: #eee;
-$nav-focus-color: magenta;
-$nav-line-height: 1.2em;
-$nav-elem-height: 2em;
-$nav-sub-width: 15em;
-$nav-sub-bg-color: #fff;
+// mobile nav:
+$mobile-nav-font-size:    5vw;
+$mobile-nav-txt-color:    #ddd;
+$mobile-nav-bg-color:     #333;
+$mobile-nav-title-indent: 20px;
+$mobile-nav-first-indent: 20px;
+$mobile-nav-indent-step:  20px;
+$mobile-nav-title-color:  #333;
+$mobile-nav-title-bg-color: #ddd;
+$mxCorr: 1.8em;
 
 // mobile footer:
-$mobile-footer-height: 3em;
+$mobile-footer-height: 2em;
+$mobile-footer-txt-color: #ddd;
+$mobile-footer-bg-color: #444;
+$mobile-footer-font-size: 5vw;
 
 
 // lzy-nav-top-horizontal:
 $nav-top-horizontal-col-gap: 10px;
 $nav-top-horizontal-padding: 0.5em;
 $nav-top-horizontal-first-indent: 1.25em;
-$nav-top-horizontal-indent-step: 1.5em;
+$nav-top-horizontal-indent-step: 1.25em;
 
 // lzy-nav-accordion:
 $nav-accordion-trans-speed: 0.2s;
@@ -40,60 +74,6 @@ $in-page-first-indent: 0em;
 $in-page-indent-step: 1em;
 
 
-//body {
-    // generic:
-//    --lzy-nav-txt-size: 14pt;
-//    --lzy-nav-txt-color: inherit;
-    //--lzy-nav-bg-color: white;
-    //--lzy-nav-elem-bg-color: #eee;
-    //--lzy-nav-elem-bg-hover-color: red; //#e4faff;
-    //--lzy-nav-curr-elem-bg-color: #eee;
-    //--lzy-nav-curr-elem-border-color: #888;
-    //--lzy-nav-focus-color: magenta;
-    //#--lzy-arrow-size: 2em;
-    //--lzy-nav-line-height: 1.2em;
-    //--lzy-nav-elem-height: 2em;
-    //--lzy-nav-sub-width: 15em;
-    //--lzy-nav-sub-bg-color: #fff;
-
-    // lzy-nav-top-horizontal:
-    //--lzy-nav-top-horizontal-col-gap: 10px;
-    //--lzy-nav-top-horizontal-padding: 0.5em;
-    //#--lzy-nav-top-horizontal-height: var(--lzy-nav-elem-height);
-    //--lzy-nav-top-horizontal-first-indent: 1.25em;
-    //--lzy-nav-top-horizontal-indent-step: 1.5em;
-    //#--lzy-nav-top-horizontal-arrow-offset: -1.4em;
-    //#--lzy-nav-top-horizontal-sub-bg-color: white;
-
-
-    // lzy-nav-accordion:
-    //#--lzy-nav-accordion-first-indent: 24px;
-    //#--lzy-nav-accordion-step: 30px;
-    //#--lzy-nav-accordion-elem-height: var(--lzy-nav-elem-height);
-    //--lzy-nav-accordion-trans-speed: 0.2s;
-    //#--lzy-nav-accordion-arrow-offset: -1.5em;
-
-    // lzy-nav-indented-no-arrow:
-    //--lzy-nav-first-indent: 0em;
-    //--lzy-nav-indent-step: 1.2em;
-
-    // mobile header:
-    //--lzy-mobile-header-font-size: 8vw;
-//    --lzy-mobile-header-height: 16vw; //3em;
-//    --lzy-mobile-header-txt-color: #ddd;
-//    --lzy-mobile-header-bg-color: #444;
-//#    --lzy-mobile-bg-color: #fff;
-
-//#    --lzy-smallscreen-txt-color: #fff;
-//#    --lzy-smallscreen-bg-color: #555;
-    
-    // small screen footer
-//#    --lzy-mobile-footer-txt-color: #fff;
-//#    --lzy-mobile-footer-bg-color: #555;
-
-//#    --lzy-footer-txt-color: #555;
-//    --lzy-mobile-footer-height: 3em;
-//}
 
 
 
@@ -114,7 +94,7 @@ $xCorr: 1.8em;
     }
     a:focus {
         box-shadow: inset 0 0 4px magenta;
-        box-shadow: inset 0 0 4px var(--lzy-nav-focus-color, $nav-focus-color);
+        box-shadow: inset 0 0 4px var(--lzy-nav-focus-border-color, $nav-focus-border-color);
         outline: none;
     }
 }
@@ -128,7 +108,6 @@ $xCorr: 1.8em;
     a {
         overflow: hidden;
         text-overflow: ellipsis;
-        color: var(--lzy-nav-txt-color, inherit);
         font-size: 12pt;
         font-size: var(--lzy-nav-txt-size, $nav-txt-size);
         line-height: 1.2em;
@@ -275,7 +254,6 @@ $xCorr: 1.8em;
             transform: rotate(0deg);
         }
 
-//        .lzy-has-children.lzy-open > * > .lzy-nav-arrow {
         .lzy-has-children.lzy-open > * > .lzy-nav-arrow > .lzy-icon-triangle {
             transition: transform var(--lzy-nav-accordion-trans-speed, $nav-accordion-trans-speed);
             transform: rotate(90deg);
@@ -293,24 +271,41 @@ $xCorr: 1.8em;
     // generic:
     a:visited,
     a {
-        color: var(--lzy-nav-txt-color, inherit);
+        color: var(--lzy-nav-txt-color, $nav-txt-color);
     }
-    &.lzy-nav-colored.lzy-nav.lzy-nav {
-        a:hover,
+
+    // focus and hover:
+    &.lzy-nav-colored.lzy-nav-colored.lzy-nav-colored {
         a:focus {
-            background: var(--lzy-nav-elem-bg-hover-color, $nav-elem-bg-hover-color);
+            color:      var(--lzy-nav-focus-txt-color, var(--lzy-nav-hover-txt-color, $nav-hover-txt-color));
+            background: var(--lzy-nav-focus-bg-color,  var(--lzy-nav-hover-bg-color,  $nav-hover-bg-color));
+        }
+        a:hover {
+            color:      var(--lzy-nav-hover-txt-color, $nav-hover-txt-color);
+            background: var(--lzy-nav-hover-bg-color,  $nav-hover-bg-color);
         }
     }
-    a:focus {
-        box-shadow: inset 0 0 4px var(--lzy-nav-focus-color, $nav-focus-color);
-    }
-    li.curr {
+
+    // lzy-curr:
+    li.lzy-curr.lzy-curr.lzy-curr {
         > a {
-            background: var(--lzy-nav-curr-elem-bg-color, $nav-curr-elem-bg-color);
+            color:      var(--lzy-nav-curr-txt-color, var(--lzy-nav-txt-color, $nav-curr-txt-color));
+            background: var(--lzy-nav-curr-bg-color,  $nav-curr-bg-color);
         }
     }
+
+    // lzy-active:
+    .lzy-active.lzy-active {
+        > a {
+            color:      var(--lzy-nav-active-txt-color, var(--lzy-nav-txt-color, $nav-txt-color));
+            background: var(--lzy-nav-active-bg-color,  $nav-sub-bg-color);
+        }
+    }
+
+
+    // nav block:
     > ol {
-        background: #680604c4;
+        background: white;
         background: var(--lzy-nav-bg-color, white);
     }
 
@@ -319,13 +314,9 @@ $xCorr: 1.8em;
         > a {
             background: var(--lzy-nav-elem-bg-color, $nav-elem-bg-color);
         }
-        &.active.active {
-            > a {
-                background: var(--lzy-nav-curr-elem-bg-color, $nav-curr-elem-bg-color);
-            }
-        }
     }
     .lzy-lvl2 a {
+        color: var(--lzy-nav-sub-txt-color, var(--lzy-nav-txt-color, inherit));
         background: var(--lzy-nav-sub-bg-color, $nav-sub-bg-color);
     }
 
@@ -336,8 +327,8 @@ $xCorr: 1.8em;
         a:hover {
             border-left: 3px solid orange;
         }
-        &.curr > a,
-        .curr > a {
+        &.lzy-curr > a,
+        .lzy-curr > a {
             border-left: 3px solid red;
         }
     }
@@ -345,60 +336,69 @@ $xCorr: 1.8em;
 
 
 
-// --- dark color theme:
-#lzy .lzy-nav-dark-theme {
+// === mobile menu:
+#lzy.lzy-small-screen .lzy-primary-nav {
     a:visited,
     a {
-        background: #3b4c54;
-        color: #edfff2;
+        font-size: var(--lzy-mobile-nav-font-size, $mobile-nav-font-size);
+        color: var(--lzy-mobile-nav-txt-color, $mobile-nav-txt-color);
     }
-
-    // highlighting current elem and its parents and focused:
-    &.lzy-nav-dark-theme {
-        a:hover,
-        a:focus {
-            background: #2b2b2b;
-            color: #eee;
-        }
+    .lzy-nav-title {
+        padding-left: 2em;
+        padding-left: var(--lzy-mobile-nav-title-indent, $mobile-nav-title-indent);
     }
-    a:focus {
-        box-shadow: inset 0 0 4px var(--lzy-nav-focus-color, $nav-focus-color);
-    }
-    &.lzy-nav-top-horizontal .lzy-lvl1.active {
-        > a {
-            color: #ffeb99;
-        }
-    }
-    li.curr {
-        > a {
-            color: #ffeb99;
-        }
-    }
-    > ol {
-        background: var(--lzy-nav-bg-color, white);
-    }
-
-    // level dependent:
     .lzy-lvl1 {
-        > div {
-            margin-top: 1px;
+        > a {
+            padding-left: 2em;
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + #{$mxCorr});
+        }
+        &.lzy-has-children > a {
+            padding-left: 1em;    // for IE
+            padding-left: var(--lzy-mobile-nav-first-indent, $mobile-nav-first-indent);
+        }
+    }
+    .lzy-lvl2 {
+        > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}) + #{$mxCorr});
+        }
+        &.lzy-has-children > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}));
+        }
+    }
+    .lzy-lvl3 {
+        > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 2 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}) + #{$mxCorr});
+        }
+        &.lzy-has-children > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 2 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}));
+        }
+    }
+    .lzy-lvl4 {
+        > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 3 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}) + #{$mxCorr});
+        }
+        &.lzy-has-children > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 3 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}));
+        }
+    }
+    .lzy-lvl5 {
+        > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 4 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}) + #{$mxCorr});
+        }
+        &.lzy-has-children > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 4 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}));
+        }
+    }
+    .lzy-lvl6 {
+        > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 5 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}) + #{$mxCorr});
+        }
+        &.lzy-has-children > a {
+            padding-left: calc(var(--lzy-mobile-nav-first-indent, #{$mobile-nav-first-indent}) + 5 * var(--lzy-mobile-nav-indent-step, #{$mobile-nav-indent-step}));
         }
     }
 
-    &:not(.lzy-nav-top-horizontal) {
-        a {
-            border-left: 3px solid transparent;
-        }
-        a:hover {
-            border-left: 3px solid orange;
-        }
-        &.curr > a,
-        .curr > a {
-            border-left: 3px solid red;
-        }
-    }
-} // lzy-nav-dark-theme
-
+} // mobile menu
 
 
 
@@ -427,8 +427,11 @@ $xCorr: 1.8em;
 
 // while in touch mode, the parent element can't be activated as it is reserved for opening/closing the accordion
 // thus we need to repeat that element in the text sub-menu, but hide it while not in touch mode:
-#lzy.lzy-large-screen .lzy-has-children .lzy-nav-for-touch-only {
-    display: none;
+#lzy.lzy-large-screen {
+    .lzy-nav-top-horizontal .lzy-nav-title,
+    .lzy-has-children .lzy-nav-for-touch-only {
+        display: none;
+    }
 }
 
 // when in touch mode, we show these elements, provided there actually is a page associated
@@ -445,7 +448,6 @@ $xCorr: 1.8em;
 #lzy .lzy-nav:not(.lzy-nav-top-horizontal) .lzy-nav-arrow {
     float: left;
 }
-
 
 // horizontal nav:
 #lzy.lzy-large-screen {
@@ -470,6 +472,9 @@ $xCorr: 1.8em;
             margin: 0;
             padding: 0;
         }
+        > ol {
+            font-size: 0;
+        }
         li {
             vertical-align: top;
             position: relative;
@@ -478,10 +483,8 @@ $xCorr: 1.8em;
 
         .lzy-lvl1 {
             display: inline-block;
-            margin: 0;
-            margin-right: 2em;
+            margin: 0 2em 0 0;
             margin-right: var(--lzy-nav-top-horizontal-col-gap, $nav-top-horizontal-col-gap);
-            font-size: 0;
 
             > a {
                 border-left: none;
@@ -501,6 +504,7 @@ $xCorr: 1.8em;
                     position: absolute;
                     top: 100%; // push below top level elem
                     left: 0;
+                    width: $nav-sub-width;
                     width: var(--lzy-nav-sub-width, $nav-sub-width);
                     z-index: 102;
                     overflow: hidden;
@@ -560,9 +564,6 @@ $xCorr: 1.8em;
 
 //=== in-page nav:
 .lzy-in-page-nav {
-    //--lzy-in-page-first-indent: 0em;
-    //--lzy-in-page-indent-step: 1em;
-
     ol {
         padding: 0;
     }
@@ -623,7 +624,7 @@ $xCorr: 1.8em;
 
 
 
-//=== Mobile Nav & Menu Button
+//=== Mobile Page Header
 .lzy-mobile-page-header {
     text-align: center;
     height: var(--lzy-mobile-header-height, $mobile-header-height);
@@ -653,9 +654,7 @@ $xCorr: 1.8em;
         border: none;
 
         span {
-//            font-size: 8vw;
             font-size: var(--lzy-mobile-header-font-size, $mobile-header-font-size);
-//            text-align: center;
             color: var(--lzy-mobile-header-txt-color, $mobile-header-txt-color);
         }
     }
@@ -664,7 +663,6 @@ $xCorr: 1.8em;
 
 
 // Small / Mobile Screen:
-//$xCorr2: 2.6em; // avoids displacing arrow to next line
 $xCorr2: 3em; // avoids displacing arrow to next line
 $yPadding: 0.4em;
 body.lzy-small-screen {
@@ -698,14 +696,10 @@ body.lzy-small-screen {
             a {
                 padding-top: $yPadding !important;
                 padding-bottom: $yPadding !important;
-                font-size: 5vw !important;
             }
         }
     }
     &#lzy .header .lzy-nav.lzy-nav {
-        a {
-            font-size: 4vw;
-        }
     }
     &#lzy .lzy-nav-wrapper.lzy-primary-nav a {
         background: none;
@@ -719,15 +713,29 @@ body.lzy-small-screen {
         transition: left 0.3s;
     }
 
+    .lzy-nav-title {
+        color: var(--lzy-mobile-nav-title-color, $mobile-nav-title-color);
+        background: var(--lzy-mobile-nav-title-bg-color, $mobile-nav-title-bg-color);
+        line-height: 2.5em;
+        margin: 0;
+    }
+    header {
+        color: var(--lzy-mobile-header-txt-color, $mobile-header-txt-color);
+        background: var(--lzy-mobile-nav-bg-color, $mobile-nav-bg-color);
+    }
     footer {
         bottom: 0;
         height: var(--lzy-mobile-footer-height, $mobile-footer-height);
+        background: var(--lzy-mobile-footer-bg-color, $mobile-footer-bg-color);
+
+        &, a, .lzy-icon {
+            color: var(--lzy-mobile-footer-txt-color, $mobile-footer-txt-color);
+            font-size: var(--lzy-mobile-footer-font-size, $mobile-footer-font-size);
+        }
     }
     header,
     footer {
         position: fixed;
-        background: var(--lzy-mobile-header-bg-color, $mobile-header-bg-color);
-        color: var(--lzy-mobile-header-txt-color, $mobile-header-txt-color);
         left: 0;
         width: 100vw;
     }
@@ -782,3 +790,90 @@ body.lzy-small-screen {
 
 
 
+__END__
+
+// Template for custom styling:
+
+// === Geometry: ==================
+body {
+    // dimensions:
+    --lzy-nav-txt-size: 16pt;
+    --lzy-nav-elem-height: 3em;
+    //--lzy-nav-line-height: ;	// -> space between wrapped lines
+    --lzy-nav-sub-width: 6em;
+
+    // indenting:
+    --lzy-nav-first-indent: 0em;
+    --lzy-nav-indent-step: 1.2em;
+
+    // lzy-nav-top-horizontal:
+    --lzy-nav-top-horizontal-col-gap: 10px;
+    --lzy-nav-top-horizontal-padding: 0.5em;
+    --lzy-nav-top-horizontal-first-indent: 1.25em;
+    --lzy-nav-top-horizontal-indent-step: 1.25em;
+
+
+    // in-page nav:
+    --lzy-in-page-first-indent: 0em;
+    --lzy-in-page-indent-step: 1em;
+
+    // animation:
+    --lzy-nav-accordion-trans-speed: 0.2s;
+
+    // mobile nav:
+    --lzy-mobile-nav-title-indent: 10px;
+    --lzy-mobile-nav-first-indent: 0px;
+    --lzy-mobile-nav-indent-step: 25px;
+    --lzy-mobile-nav-font-size: 5vw;
+
+    // mobile header:
+    --lzy-mobile-header-font-size: 6vw;
+    --lzy-mobile-header-height: 12vw;
+
+    // mobile footer:
+    --lzy-mobile-footer-height: 2em;
+    --lzy-mobile-footer-txt-color: white;
+
+}
+
+// === Coloring: ====================
+body {
+    // colors general:
+    --lzy-nav-txt-color: navy;
+    --lzy-nav-bg-color: gray;	// bg of nav-block
+    --lzy-nav-elem-bg-color: cyan;
+
+    // sub-elements / dropdown:
+    --lzy-nav-sub-txt-color: maroon;
+    --lzy-nav-sub-bg-color: orange;
+
+    // current:
+    --lzy-nav-curr-txt-color: yellow;
+    --lzy-nav-curr-bg-color: magenta;
+
+    // active: (ie parents of current)
+    --lzy-nav-active-txt-color: white;
+    --lzy-nav-active-bg-color: red;
+
+    // hover:
+    --lzy-nav-hover-txt-color: yellow;
+    --lzy-nav-hover-bg-color: navy;
+    // focus:
+    --lzy-nav-focus-txt-color: yellow;
+    --lzy-nav-focus-bg-color: blue;
+
+    // mobile nav:
+    --lzy-mobile-nav-title-color: #ddd;
+    --lzy-mobile-nav-title-bg-color: #333;
+    --lzy-mobile-nav-txt-color: #ddd;
+    --lzy-mobile-nav-bg-color: #333;
+
+    // mobile header:
+    --lzy-mobile-header-txt-color: #ddd;
+    --lzy-mobile-header-bg-color: #444;
+
+    // mobile footer:
+    --lzy-mobile-footer-txt-color: white;
+    --lzy-mobile-footer-bg-color: #444;
+
+}
