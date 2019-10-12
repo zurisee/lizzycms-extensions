@@ -962,3 +962,9 @@ dd {
     width: 24px;
     height: 24px;
 }
+
+/* === Unite Gallery ==================*/
+/* bug workaround */
+.ug-tiles-preloader {
+	display: none !important;
+}
