@@ -417,7 +417,8 @@ function writeToYamlFile($file, $data, $level = 3, $saveToRecycleBin = false)
         $ps = new PageSource;
 	    $ps->copyFileToRecycleBin($file);
     }
-	file_put_contents($file, $yaml);
+	$hdr = getHashCommentedHeader($file);
+	file_put_contents($file, $hdr.$yaml);
 } // writeToYamlFile
 
 

@@ -587,6 +587,8 @@ class Authentication
                 }
                 $this->knownUsers[$key]['username'] = $key;
             }
+        } else {
+            $this->knownUsers = [];
         }
     } // loadKnownUsers
 

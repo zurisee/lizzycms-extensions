@@ -180,14 +180,6 @@ a.lzy-show-signup-info
 .lzy-admin-show-info {
     position: relative;
 }
-.lzy-form-show-password .lzy-icon-show,
-.lzy-form-show-password .lzy-icon-hide,
-.lzy-admin-show-info .lzy-icon-info {
-    position: absolute;
-    font-size: 167%;
-    top: -0.2em;
-    left: 0.2em;
-}
 .lzy-form-show-password {
     height: 18px; /* height of icon */
 }
