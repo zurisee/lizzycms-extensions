@@ -965,6 +965,9 @@ dd {
 
 /* === Unite Gallery ==================*/
 /* bug workaround */
+.lzy-gallery.ug-gallery-wrapper {
+	height: unset !important;
+}
 .ug-tiles-preloader {
 	display: none !important;
 }
