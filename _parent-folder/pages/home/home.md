@@ -1,6 +1,6 @@
 ---
 css: |
-	.page_home .lzy-link {
+	.page_home .mybutton {
 		padding: 3px 1em;
 	}
 ---
