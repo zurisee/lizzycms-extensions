@@ -1,0 +1,35 @@
+# Edit Data
+
+lzy-data-key-date-label: 
+  de: Datum
+  _:  Date
+
+lzy-data-key-time-label: 
+  de: Zeit
+  _:  Time
+
+lzy-data-key-string-label:
+  de: Schlüssel
+  _:  Key
+
+lzy-data-input-add-rec-symbol: '&plus;'
+lzy-data-input-add-rec-tooltip:
+  de: 'Neuen Datensatz davor einfügen.'
+  _:  'Add new data record above.'
+
+lzy-data-input-del-rec-symbol: '&minus;'
+lzy-data-input-del-rec-tooltip: 
+  de: 'Diesen Datensatz löschen.'
+  _:  'Delete this data record.'
+
+lzy-data-input-submit: 
+  de: Speichern
+  _:  Save
+
+lzy-data-input-cancel: 
+  de: Abbrechen
+  _:  Cancel
+
+lzy-discard-all-changes: 
+  de: 'Sollen alle Änderungen rückgängig gemacht werden?'
+  _:  'Ok to revert all changes?'
