@@ -375,11 +375,21 @@ function getYamlFile($filename, $returnStructure = false)
     }
 	if ($returnStructure) {     // return structure of data
 	    if (!$structure) {      // source fild didn't contain a '_structure' record, so derive it from data:
-	        $yaml = trim(removeHashTypeComments($yaml));
-	        if (preg_match('/^ [\'"]? ([\w-]*?) [\'"]? \: .*/x', $yaml, $m)) {
+	        $yaml = removeHashTypeComments($yaml);
+            $yaml = preg_replace("/\n.*/", '', $yaml);
+            $inx0 = '';
+	        if (preg_match('/^ ([\'"]) ([\w\-\s:T]*) \1 : .*/x', $yaml, $m)) {
+                $inx0 = $m[2];
+            } elseif (preg_match('/^ ([\w\-\s:T]*) : .*/x', $yaml, $m)) {
 	            $inx0 = $m[1];
+            }
+	        if ($inx0) {
                 if (strtotime(($inx0))) {
-                    $structure['key'] = 'date';
+                    if (preg_match('/\d\d:\d\d/', $inx0)) {
+                        $structure['key'] = 'datetime';
+                    } else {
+                        $structure['key'] = 'date';
+                    }
                 } elseif (preg_match('/^\d+$/', $inx0)) {
                     $structure['key'] = 'number';
                 } else {
@@ -391,6 +401,9 @@ function getYamlFile($filename, $returnStructure = false)
                 foreach (array_keys($data[ $inxs[0] ]) as $name) {   // extract field names
                     $structure['fields'][$name] = 'string';
                 }
+            }
+	        if (!isset($structure['key'])) {
+                $structure['key'] = 'string';
             }
         }
 	    return [$data, $structure, $structDefined];
@@ -537,10 +550,15 @@ function removeHashTypeComments($str)
         return '';
     }
 	$lines = explode(PHP_EOL, $str);
+    $lead = true;
 	foreach ($lines as $i => $l) {
-		if (isset($l{0}) && ($l{0} == '#')) {
-			unset($lines[$i]);
-		}
+		if (isset($l{0}) && ($l{0} === '#')) {  // # at beginning of line
+			    unset($lines[$i]);
+        } elseif ($lead && !$l) {   // empty line while no data line encountered
+            unset($lines[$i]);
+        } else {
+            $lead = false;
+        }
 	}
 	return implode("\n", $lines);
 } // removeHashTypeComments
