@@ -16,7 +16,7 @@ $this->addMacro($macroName, function () {
     $dataSource = $this->getArg($macroName, 'dataSource', "Path to data-file, e.g. data.yaml (for a file that's in the page folder)", false);
     $id = $this->getArg($macroName, 'id', 'ID that will be applied to the wrapper div.', 'default value');
     $class = $this->getArg($macroName, 'class', 'Class that will be applied to the wrapper div.', 'default value');
-    $keyFormat = $this->getArg($macroName, 'keyFormat', '', false);
+    $keyFormat = $this->getArg($macroName, 'keyFormat', 'Template to format date/time output as accepted by PHP strtotime() function, see. https://www.php.net/manual/en/function.strtotime.php.', false);
     if ($dataSource === 'help') {
         return '';
     }
@@ -50,7 +50,6 @@ class EditData
         $this->keyType = $structure['key'];
         $this->fields = $structure['fields'];
         $this->inx = 1;
-//        $this->renderJq();
 
         $this->handleUserSuppliedData($dataSource, $structure, $structDefined); // exits if data received
     } // __construct
@@ -65,7 +64,6 @@ class EditData
         } elseif ($this->keyType === 'date') {
             $this->keyFormat = 'Y-m-d';
         } elseif ($this->keyType === 'datetime') {
-//            $this->keyFormat = 'c';
             $this->keyFormat = 'Y-m-d\TH:i';
             $this->keyType = 'datetime-local';
         }
@@ -126,8 +124,6 @@ EOT;
         $key = isset($rec['key']) ? $rec['key'] : '';
         if ($key && ($keyType === 'date')) {
             $key = date($this->keyFormat, $key);
-//        } elseif ($key && ($keyType === 'datetime-local')) {
-//            $key = date($this->keyFormat, $key);
         }
         $keyLabel = "{{ lzy-data-key-$keyType-label }}";
 
@@ -182,69 +178,6 @@ $buttons
 EOT;
         return $out;
     } // renderRec
-
-
-
-
-//    private function renderJq()
-//    {
-//        $jq = <<<'EOT'
-//    var nRecs = parseInt($('input[name=lzy-data-input-form]').val());
-//    $('.lzy-data-input-add-rec').click(function() {
-//        console.log('lzy-data-input-add-rec');
-//        var $rec = $( this ).closest('.lzy-data-input-rec');
-//        nRecs = nRecs + 1;
-//        var html = $('.lzy-data-imput-template').html();
-//        html = html.replace(/@/g, nRecs);
-//        $( html ).insertBefore( $rec );
-//
-//        return false;
-//    });
-//    $('.lzy-data-input-del-rec').click(function() {
-//        console.log('lzy-data-input-del-rec');
-//        var $rec = $( this ).closest('.lzy-data-input-rec');
-//        $rec.remove();
-//        return false;
-//    });
-//    $('input[type=reset]').click(function() {
-//        console.log('reload page');
-//        var response = confirm("{{ lzy-discard-all-changes }}");
-//        if (response) {
-//            lzyReload();
-//        }
-//    });
-//    $('form').submit(function() {
-//        var url = window.location.href;
-//        console.log('submit ' + url);
-//        var $form = $( this );
-//        var data = {};
-//        $('.lzy-data-input-rec').each(function() {
-//            var $this = $(this);
-//            var d = $('input[type=date]', $this).val();
-//            data[d] = {};
-//            $('.lzy-data-input-field', $this).each(function() {
-//                var $inp = $( 'input', $(this) );
-//                var name = $inp.attr('name');
-//                var val = $inp.val();
-//                data[d][name] = val;
-//            });
-//        });
-//        console.log(data);
-//        var json = JSON.stringify(data);
-//        $.ajax({
-//            url: url,
-//            type: 'post',
-//            data: {lzy_data_input_form: json},
-//            success: function( response ) {
-//                lzyReload();
-//            }
-//        });
-//        return false;
-//    });
-//EOT;
-//        $this->page->addJq($jq);
-//    }
-
 
 
 
