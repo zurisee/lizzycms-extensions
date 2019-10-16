@@ -388,7 +388,7 @@ EOT;
     } // renderTel
 
 
-/*
+
 //-------------------------------------------------------------
     private function renderFileUpload()
     {
@@ -434,7 +434,7 @@ EOT;
         $out .= <<<EOT
         
             <input type="hidden" name="form-upload-path" value="$targetPath1" />
-            <label class="$id lzy-form-file-upload-label lzy-button" for="$id">$label<input id="$id" class="lzy-form-file-upload" type="file" name="files[]" data-url="$server" multiple /></label>
+            <label class="$id lzy-form-file-upload-label lzy-button" for="$id">$label<input id="$id" class="lzy-form-file-upload-hidden" type="file" name="files[]" data-url="$server" multiple /></label>
 
 			<!--<div class='progress-indicator progress-indicator$inx' style="display: none;">-->
 			<div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
@@ -502,7 +502,7 @@ EOT;
 		
         return $out;
     } // renderFileUpload
-*/
+
 
 
 //-------------------------------------------------------------

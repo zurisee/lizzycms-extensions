@@ -191,6 +191,19 @@ $form-grid-gap: 10px;   // --lzy-form-grid-gap
         }
     }
 
+    /* === Upload ================================= */
+    .lzy-form-file-upload-hidden {
+        position: absolute;
+        right:100vw;
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
+    }
+    .lzy-form-file-upload-label {
+        padding: 0.5em 1em;
+        width: unset;
+        border: 1px solid #bcbcbc;
+    }
 
     /* === choice elements (radio/checkbox) ====== */
     .lzy-form-field-type-choice {
