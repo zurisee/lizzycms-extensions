@@ -1053,8 +1053,8 @@ EOT;
         if (!$allowOrigin) {
             return;
         }
-        if (!isset($_SERVER['HTTP_ORIGIN'])) {
-            mylog("allowOrigin : no \$_SERVER['HTTP_ORIGIN' available, allowing any");
+        if ($this->lzy->localCall && !isset($_SERVER['HTTP_ORIGIN'])) {
+//            mylog("allowOrigin : no \$_SERVER['HTTP_ORIGIN'] available, allowing any");
             header('Access-Control-Allow-Origin: *');
             return;
         }
