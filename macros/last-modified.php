@@ -1,7 +1,6 @@
 <?php
 // @info: From a selection of files determines the last modified and returns the timestamp
 
-
 $macroName = basename(__FILE__, '.php');
 
 $this->addMacro($macroName, function () {
