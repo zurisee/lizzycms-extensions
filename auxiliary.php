@@ -633,38 +633,62 @@ function getDir($pat)
 
 
 
+
 //--------------------------------------------------------------
 function getDirDeep($path, $onlyDir = false, $assoc = false, $returnAll = false)
 {
-    if (($path === false) || ($path === null)) {
-        return null;
-    }
-    $flag = ($onlyDir) ? GLOB_ONLYDIR : 0;
-    $path = rtrim($path, '/').'/';
-    if ($returnAll) {
-        $dir = glob($path . '{,.}[!.,!..]*',GLOB_MARK|GLOB_BRACE|$flag);
-    } else {
-        $dir = glob($path . '*', $flag);
-    }
-    foreach($dir as $inx => $entry) {
-        if (is_dir($entry)) {
-            $dir[$inx] = rtrim($entry, '/').'/';
-            $dir = array_merge($dir, getDirDeep($entry, $flag, $assoc, $returnAll));
+    $files = [];
+    $it = new RecursiveDirectoryIterator($path);
+    foreach(new RecursiveIteratorIterator($it) as $fileRec) {
+        $f = $fileRec->getFilename();
+        $p = $fileRec->getPathname();
+        if ($onlyDir) {
+            if (($f === '.') && !preg_match('|/[_#]|', $p)) {
+                $files[] = rtrim($p, '.');
+            }
+            continue;
+        }
+        if (!$returnAll && preg_match('|/[._#]|', $p)) {
+            continue;
+        }
+        if ($assoc) {
+            $files[$f] = $p;
+        } else {
+            $files[] =$p;
         }
     }
-    if (!$returnAll) {
-        $dir = array_filter($dir, 'isNotShielded');
-    }
-    if ($assoc) {
-        $dd = [];
-        foreach ($dir as $e) {
-            $b = basename($e);
-            $dd[$b] = $e;
-        }
-        $dir = $dd;
-    }
-    return $dir;
+    return $files;
 } // getDirDeep
+
+
+
+
+//--------------------------------------------------------------
+function lastModified($path, $recursive = true, $exclude = null)
+{
+    $newest = 0;
+    $path = resolvePath($path);
+
+    if ($recursive) {
+        $path = './' . rtrim($path, '*');
+
+        $it = new RecursiveDirectoryIterator($path);
+        foreach (new RecursiveIteratorIterator($it) as $fileRec) {
+            $f = $fileRec->getFilename();
+            $p = $fileRec->getPathname();
+            if (preg_match('|/[._#]|', $p)) {
+                continue;
+            }
+            $newest = max($newest, $fileRec->getMTime());
+        }
+    } else {
+        $files = glob($path);
+        foreach ($files as $file) {
+            $newest = max($newest, filemtime($file));
+        }
+    }
+    return $newest;
+} // filesTime
 
 
 
@@ -681,7 +705,6 @@ function is_inCommaSeparatedList($keyword, $list)
 //--------------------------------------------------------------
 function fileExt($file, $reverse = false)
 {
-//    $file = preg_replace('/[#?&].*/', '', $file);
     $file = preg_replace(['|^\w{1,6}://|', '/[#?&:].*/'], '', $file);
     if ($reverse) {
         $l = strlen(pathinfo($file, PATHINFO_EXTENSION)) + 1;
