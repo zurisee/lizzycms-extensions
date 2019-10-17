@@ -397,14 +397,16 @@ EOT;
 		$server = isset($this->args['server']) ? $this->args['server'] : '~sys/file-upload/_upload_server.php';
 
         $targetPath = fixPath($this->currRec->uploadPath);
-        $targetPath1 = resolvePath($targetPath);
-        $pagePath = $GLOBALS['globalParams']['pagePath'];
-        if (!isset($_SESSION['lizzy'][$pagePath]['uploadPath'])) {
-            $_SESSION['lizzy'][$pagePath]['uploadPath'] = '';
-        }
-        if (strpos($_SESSION['lizzy'][$pagePath]['uploadPath'], $targetPath1) === false) {
-            $_SESSION['lizzy'][$pagePath]['uploadPath'] .= ",$targetPath1,";
-        }
+        $targetPath = makePathDefaultToPage($targetPath);
+        $targetPath1 = resolvePath($targetPath, true);
+
+        $rec = [
+            'uploadPath' => $targetPath1,
+            'pagePath' => $GLOBALS['globalParams']['pagePath'],
+            'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
+        ];
+        $tick = new Ticketing();
+        $this->ticket = $tick->createTicket($rec, 99);
 
 
         $list = "\t<div>{{ Uploaded file list }}</div>\n";  // assemble list of existing files
@@ -416,7 +418,7 @@ EOT;
 				if (is_file($file)) {
 					$file = basename($file);
 					if (preg_match("/\.(jpg|gif|png)$/i", $file)) {
-						$list .= "<li><span>$file</span><span><img src='{$targetPath}thumbnail/$file'></span></li>";
+						$list .= "<li><span>$file</span><span><img src='{$targetPath1}thumbnail/$file'></span></li>";
 					} else {
 						$list .= "<li><span>$file</span></li>";
 					}
@@ -433,14 +435,11 @@ EOT;
 		$out = '';
         $out .= <<<EOT
         
-            <input type="hidden" name="form-upload-path" value="$targetPath1" />
+            <input type="hidden" name="lzy-upload" value="{$this->ticket}" />
             <label class="$id lzy-form-file-upload-label lzy-button" for="$id">$label<input id="$id" class="lzy-form-file-upload-hidden" type="file" name="files[]" data-url="$server" multiple /></label>
 
-			<!--<div class='progress-indicator progress-indicator$inx' style="display: none;">-->
 			<div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
-				<!--<progress id="progressBar$inx" class="progressBar" max='100' value='0'>-->
-				<progress id="progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
-					<!-- Fallback -->
+				<progress id="lzy-progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
 					<div id="lzy-form-progressBarFallback1-$inx"><span id="lzy-form-progressBarFallback2-$inx">&#160;</span></div>
 				</progress>
 				<div><span aria-live="polite" id="lzy-form-progressPercent$inx"></span></div>
@@ -449,7 +448,6 @@ EOT;
 			<div id='lzy-form-uploaded$inx' class='lzy-form-uploaded'$dispNo >$list</div>
 
 EOT;
-//??? -> upload with 'lzy-form-'?
 
 		$jq = <<<EOT
 
@@ -460,17 +458,17 @@ EOT;
 		
 		progressall: function (e, data) {
 		    mylog('processing upload');
-		    $('.progress-indicator$inx').show();
+		    $('.lzy-form-progress-indicator$inx').show();
 			var progress = parseInt(data.loaded / data.total * 100, 10);
-			$('#progressBar$inx').val(progress);
+			$('#lzy-progressBar$inx').val(progress);
 			var d = new Date();
 			t1 = d.getTime();
 			if (((t1 - t) > 3000) && (progress < 100)) {
 				t = t1;
-				$('#progressPercent$inx').text( progress + '%' );
+				$('#lzy-form-progressPercent$inx').text( progress + '%' );
 			}
 			if (progress == 100) {
-				$('#progressPercent$inx').text( progress + '%' );
+				$('#lzy-form-progressPercent$inx').text( progress + '%' );
 			}
 		},
 
@@ -478,13 +476,13 @@ EOT;
 		    mylog('upload accomplished');
 			$.each(data.result.files, function (index, file) {
 				if (file.name.match(/\.(jpg|gif|png)$/i)) {
-					var img = '<img src="{$targetPath}thumbnail/' + file.name + '" />';
+					var img = '<img src="{$targetPath1}thumbnail/' + file.name + '" />';
 				} else {
 					var img = '';
 				}
 				var line = '<li><span>' + file.name + '</span><span>' + img + '</span></li>';
-				$('#uploaded$inx').show();
-				$('#uploaded$inx ul').append(line);
+				$('#lzy-form-uploaded$inx').show();
+				$('#lzy-form-uploaded$inx ul').append(line);
 			});
 		}
 	});

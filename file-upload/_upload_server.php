@@ -1,9 +1,14 @@
 <?php
 
+define('SYSTEM_PATH', 		'../');
+define('PATH_TO_APP_ROOT', 	'../../');		                            // root folder of web app
 date_default_timezone_set('CET');
 
 error_reporting(E_ALL | E_STRICT);
 require('UploadHandler.php');
+require_once SYSTEM_PATH.'backend_aux.php';
+require_once SYSTEM_PATH.'datastorage2.class.php';
+require_once SYSTEM_PATH.'ticketing.class.php';
 
 session_start();
 
@@ -14,29 +19,12 @@ if ($activityRestrectedTo && ($loggedInUser != $activityRestrectedTo)) {   // ch
     exit('Error: not logged in');
 }
 
-$pagePath = $_SESSION['lizzy']['pagePath'];
+$tickRec = getUploadParameters();
 
-if (isset($_SESSION['lizzy'][$pagePath]['uploadPath'])) {   // case upload-macro: suggests a path (that needs to be verified)
-    $allowedPaths = $_SESSION['lizzy'][$pagePath]['uploadPath'];
-    if (isset($_POST['form-upload-path'])) {
-        $dataPath = $_POST['form-upload-path'];
-        if (strpos($allowedPaths, $dataPath) === false) {       // illegal path received
-            mylog("Upload-Server: illegal path for upload rejected: 'illegal path received'");
-            exit('illegal path');
-        }
-
-    } elseif (isset($_SESSION['lizzy']['pathToPage'])) {        // case editor/upload -> page path
-        $dataPath = $_SESSION['lizzy']['pathToPage'];
-
-    } else {        // case unknown: use default 'upload/'
-        $dataPath = 'upload/';
-    }
-
-} else {
-    $dataPath = 'upload/';
-}
-$appRootUrl = $_SESSION['lizzy']['appRootUrl']; // e.g. http://localhost/myapp/
-$absAppRoot = $_SESSION['lizzy']['absAppRoot']; // e.g. /Volumes/Data/Localhost/myapp/
+$pagePath = $tickRec["pagePath"];
+$dataPath = $tickRec["uploadPath"];
+$appRootUrl = $tickRec['appRootUrl']; // e.g. http://localhost/myapp/
+$absAppRoot = $appRoot;
 session_abort();
 
 $options = array(
@@ -62,13 +50,17 @@ mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r(
 $upload_handler = new UploadHandler($options);
 
 
-function mylog($text)
-{
-    file_put_contents('../../.#logs/log.txt', date('Y-m-d H:i:s') . "  $text\n", FILE_APPEND);
 
-}
-
-function var_r($var)
+function getUploadParameters()
 {
-    return str_replace("\n", '', var_export($var, true));
+    $ticketRec = [];
+    if (!isset($_POST['lzy-upload'])) {
+        exit;
+    }
+    $dataRef = $_POST['lzy-upload'];
+    if ($dataRef &&preg_match('/^[A-Z0-9]{4,20}$/', $dataRef)) {     // dataRef (=ticket hash) available
+        $ticketing = new Ticketing();
+        $ticketRec = $ticketing->consumeTicket($dataRef);
+    }
+    return $ticketRec;
 }
