@@ -18,13 +18,21 @@ if ($activityRestrectedTo && ($loggedInUser != $activityRestrectedTo)) {   // ch
     mylog("Upload-Server: unauthorized user tried to upload a file.");
     exit('Error: not logged in');
 }
+$files = $_FILES;
 
 $tickRec = getUploadParameters();
 
+$user = $tickRec["user"];
 $pagePath = $tickRec["pagePath"];
 $dataPath = $tickRec["uploadPath"];
 $appRootUrl = $tickRec['appRootUrl']; // e.g. http://localhost/myapp/
 $absAppRoot = $appRoot;
+
+$actualUser = $_SESSION["lizzy"]["user"];
+if ($actualUser !== $user) {
+    mylog("Warning: user '$user' tried to upload picture(s), but is logged in as '$actualUser'.");
+    exit('Error: not correct user');
+}
 session_abort();
 
 $options = array(
@@ -46,7 +54,10 @@ if ($reqMethod == 'DELETE') {
 //    exit;
 }
 
-mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r($options));
+$fname = implode(',', $files["files"]["name"]);
+$user = $user ? $user : 'anonymous';
+mylog("_upload_server.php: file received: '$fname' stored in: '$dataPath' from user '$user'");
+//mylog("_upload_server.php: [$dataPath] file received (".var_r($_POST).")".var_r($options))."  from user '$user'";
 $upload_handler = new UploadHandler($options);
 
 

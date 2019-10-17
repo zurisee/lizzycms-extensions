@@ -156,7 +156,7 @@ class Forms
     {
 		$this->currForm->class = $class = (isset($args['class'])) ? $args['class'] : 'lzy-form';
 		if ($this->currForm->formName) {
-		    $class .= ' '.translateToIdentifier($this->currForm->formName);
+		    $class .= ' '.str_replace('_', '-', translateToIdentifier($this->currForm->formName));
         }
         $this->currForm->class = $class;
         if (!isset($args['encapsulate']) || $args['encapsulate']) {
@@ -393,8 +393,9 @@ EOT;
     private function renderFileUpload()
     {
         $inx = $this->inx;
-		$id = isset($this->args['id']) ? $this->args['id'] : $this->currRec->name.$inx;
+		$id = "lzy-upload-label$inx";
 		$server = isset($this->args['server']) ? $this->args['server'] : '~sys/file-upload/_upload_server.php';
+		$multiple = $this->currRec->multiple ? 'multiple' : '';
 
         $targetPath = fixPath($this->currRec->uploadPath);
         $targetPath = makePathDefaultToPage($targetPath);
@@ -404,20 +405,21 @@ EOT;
             'uploadPath' => $targetPath1,
             'pagePath' => $GLOBALS['globalParams']['pagePath'],
             'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
+            'user'      => $_SESSION["lizzy"]["user"],
         ];
         $tick = new Ticketing();
-        $this->ticket = $tick->createTicket($rec, 99);
+        $this->ticket = $tick->createTicket($rec, 25);
 
 
         $list = "\t<div>{{ Uploaded file list }}</div>\n";  // assemble list of existing files
         $list .= "<ul>";
         $dispNo = ' style="display:none;"';
-		if (isset($this->currRec->showexisting) && $this->currRec->showexisting) {
+		if (isset($this->currRec->showExisting) && $this->currRec->showExisting) {
 			$files = getDir($targetPath1.'*');
 			foreach ($files as $file) {
 				if (is_file($file)) {
 					$file = basename($file);
-					if (preg_match("/\.(jpg|gif|png)$/i", $file)) {
+					if (preg_match("/\.(jpe?g|gif|png)$/i", $file)) {
 						$list .= "<li><span>$file</span><span><img src='{$targetPath1}thumbnail/$file'></span></li>";
 					} else {
 						$list .= "<li><span>$file</span></li>";
@@ -432,11 +434,14 @@ EOT;
         } else {
             $label = '{{ Upload File(s) }}';
         }
+
+		$labelClass = $this->currRec->labelClass;
 		$out = '';
         $out .= <<<EOT
         
             <input type="hidden" name="lzy-upload" value="{$this->ticket}" />
-            <label class="$id lzy-form-file-upload-label lzy-button" for="$id">$label<input id="$id" class="lzy-form-file-upload-hidden" type="file" name="files[]" data-url="$server" multiple /></label>
+            <label class="$id lzy-form-file-upload-label $labelClass" for="$id">$label</label>
+            <input id="$id" class="lzy-form-file-upload-hidden" type="file" name="files[]" data-url="$server" $multiple />
 
 			<div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
 				<progress id="lzy-progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
@@ -463,7 +468,7 @@ EOT;
 			$('#lzy-progressBar$inx').val(progress);
 			var d = new Date();
 			t1 = d.getTime();
-			if (((t1 - t) > 3000) && (progress < 100)) {
+			if (((t1 - t) > 500) && (progress < 100)) {
 				t = t1;
 				$('#lzy-form-progressPercent$inx').text( progress + '%' );
 			}
@@ -475,7 +480,7 @@ EOT;
 		done: function (e, data) {
 		    mylog('upload accomplished');
 			$.each(data.result.files, function (index, file) {
-				if (file.name.match(/\.(jpg|gif|png)$/i)) {
+				if (file.name.match(/\.(jpe?g|gif|png)$/i)) {
 					var img = '<img src="{$targetPath1}thumbnail/' + file.name + '" />';
 				} else {
 					var img = '';
@@ -484,7 +489,11 @@ EOT;
 				$('#lzy-form-uploaded$inx').show();
 				$('#lzy-form-uploaded$inx ul').append(line);
 			});
-		}
+		},
+		
+		error: function (data, textStatus, errorThrown) { 
+		    mylog( data.responseText ); 
+		},
 	});
 
 EOT;
@@ -610,6 +619,7 @@ EOT;
 			}
             $label = (isset($args['label'])) ? $args['label'] : 'Lizzy-Form'.($this->inx + 1);
 	        $formId = (isset($args['class'])) ? $args['class'] : translateToIdentifier($label);
+	        $formId = str_replace('_', '-', $formId);
 
 	        $this->formId = $formId;
 			$this->formDescr[ $formId ] = new FormDescriptor;
