@@ -344,11 +344,13 @@ function convertYaml($str, $stopOnError = true, $origin = '', $convertDates = tr
         return $data;
     }
     $data1 = [];
-    foreach ($data as $key => $value) {
-        if (is_string($key) && ($t = strtotime($key))) {
-            $data1[$t] = $value;
-        } else {
-            $data1[$key] = $value;
+    if (is_array($data)) {
+        foreach ($data as $key => $value) {
+            if (is_string($key) && ($t = strtotime($key))) {
+                $data1[$t] = $value;
+            } else {
+                $data1[$key] = $value;
+            }
         }
     }
     return $data1;
