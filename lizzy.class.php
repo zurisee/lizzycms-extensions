@@ -117,6 +117,7 @@ class Lizzy
 			$globalParams['pagePath'] = $this->pagePath;                    // excludes pages/
 			$this->pathToPage = $this->config->path_pagesPath.$this->pagePath;   //  includes pages/
 			$globalParams['pathToPage'] = $this->pathToPage;
+			$globalParams['filepathToRoot'] = str_repeat('../', substr_count($this->pathToPage, '/'));
             $_SESSION['lizzy']['pagePath'] = $this->pagePath;               // for _ajax_server.php and _upload_server.php
             $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$this->pagePath;
 
