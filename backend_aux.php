@@ -93,14 +93,11 @@ function resolvePath($path)
 //---------------------------------------------------------------------------
 function mylog($str)
 {
-//    $file = $GLOBALS["appRoot"].SERVICE_LOG;
     $path = dirname(SERVICE_LOG);
-//    $path = dirname($file);
     if (!file_exists($path)) {
         mkdir($path, MKDIR_MASK, true);
     }
     file_put_contents(SERVICE_LOG, timestamp()." user:  $str\n", FILE_APPEND);
-//    file_put_contents($file, timestamp()." user:  $str\n", FILE_APPEND);
 } // mylog
 
 
@@ -115,3 +112,10 @@ function timestamp($short = false)
     }
 } // timestamp
 
+
+
+//---------------------------------------------------------------------------
+function var_r($var)
+{
+    return str_replace("\n", '', var_export($var, true));
+}
