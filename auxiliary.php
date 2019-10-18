@@ -640,6 +640,9 @@ function getDir($pat)
 function getDirDeep($path, $onlyDir = false, $assoc = false, $returnAll = false)
 {
     $files = [];
+    if (!$path) {
+        $path = './';
+    }
     $it = new RecursiveDirectoryIterator($path);
     foreach(new RecursiveIteratorIterator($it) as $fileRec) {
         $f = $fileRec->getFilename();
