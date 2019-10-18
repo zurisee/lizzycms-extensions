@@ -398,11 +398,11 @@ EOT;
 		$multiple = $this->currRec->multiple ? 'multiple' : '';
 
         $targetPath = fixPath($this->currRec->uploadPath);
-        $targetPath = makePathDefaultToPage($targetPath);
-        $targetPath1 = resolvePath($targetPath, true);
+        $targetFilePath = resolvePath($targetPath, true);
+        $targetPathHttp = resolvePath($targetPath, true, true, false, true);
 
         $rec = [
-            'uploadPath' => $targetPath1,
+            'uploadPath' => $targetFilePath,
             'pagePath' => $GLOBALS['globalParams']['pagePath'],
             'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
             'user'      => $_SESSION["lizzy"]["user"],
@@ -415,12 +415,12 @@ EOT;
         $list .= "<ul>";
         $dispNo = ' style="display:none;"';
 		if (isset($this->currRec->showExisting) && $this->currRec->showExisting) {
-			$files = getDir($targetPath1.'*');
+			$files = getDir($targetFilePath.'*');
 			foreach ($files as $file) {
 				if (is_file($file)) {
 					$file = basename($file);
 					if (preg_match("/\.(jpe?g|gif|png)$/i", $file)) {
-						$list .= "<li><span>$file</span><span><img src='{$targetPath1}thumbnail/$file'></span></li>";
+						$list .= "<li><span>$file</span><span><img class='lzy-upload-thumbnail' src='{$targetPathHttp}thumbnail/$file'></span></li>";
 					} else {
 						$list .= "<li><span>$file</span></li>";
 					}
@@ -481,7 +481,7 @@ EOT;
 		    mylog('upload accomplished');
 			$.each(data.result.files, function (index, file) {
 				if (file.name.match(/\.(jpe?g|gif|png)$/i)) {
-					var img = '<img src="{$targetPath1}thumbnail/' + file.name + '" />';
+					var img = '<img src="{$targetPathHttp}thumbnail/' + file.name + '" />';
 				} else {
 					var img = '';
 				}

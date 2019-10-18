@@ -205,6 +205,34 @@ $form-grid-gap: 10px;   // --lzy-form-grid-gap
         border: 1px solid #bcbcbc;
     }
 
+    .lzy-upload-label.lzy-upload-label {
+        display: inline-block;
+        padding: 0.5em 1.5em;
+        margin: 0.5em 0;
+    }
+    .lzy-form-uploaded.lzy-form-uploaded {
+        margin: 1em 0;
+        span {
+            display: inline-block;
+            vertial-align: middle;
+            &:first-child {
+                width: 12em;
+            }
+        }
+    }
+    .lzy-form-progress-indicator.lzy-form-progress-indicator {
+        margin: 1em 0;
+    }
+    .lzy-upload-input-hidden.lzy-upload-input-hidden {
+        position:  absolute;
+        right: 100vw;
+    }
+    .lzy-form-progress-indicator.lzy-form-progress-indicator * {
+        display: inline-block;
+        margin-right: 1em;
+    }
+
+
     /* === choice elements (radio/checkbox) ====== */
     .lzy-form-field-type-choice {
         padding-bottom: 0.6em;
