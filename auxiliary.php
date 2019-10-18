@@ -997,6 +997,10 @@ function resolveAllPaths( &$html, $requestRewriteActive = true)
         resolveHrefs($html);
     }
 
+    // Handle resouce accesses first: src='~page/...'
+    $p = $globalParams["appRoot"].$globalParams["pathToPage"];
+    $html = preg_replace(['|(src=[\'"])~page/|', '|(srcset=[\'"])~page/|'], "$1$p", $html);
+
     $from = [
         '|~/|',
         '|~data/|',
@@ -1009,7 +1013,7 @@ function resolveAllPaths( &$html, $requestRewriteActive = true)
         $pathToRoot.$globalParams['dataPath'],
         $pathToRoot.SYSTEM_PATH,
         $pathToRoot.EXTENSIONS_PATH,
-        '',
+        '',   // for pages
     ];
 
     $html = preg_replace($from, $to, $html);
