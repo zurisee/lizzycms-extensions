@@ -4,6 +4,7 @@
 *
 **/
 
+
 // variables and default values:
 $form-width: 30em;      // --lzy-form-width
 $label-width: 6em;      // --lzy-label-width
@@ -229,7 +230,31 @@ $form-grid-gap: 10px;   // --lzy-form-grid-gap
     }
     .lzy-form-progress-indicator.lzy-form-progress-indicator * {
         display: inline-block;
-        margin-right: 1em;
+        //margin-right: 1em;
+    }
+    .lzy-form-progressPercent.lzy-form-progressPercent {
+        padding-left: 0.5em;
+    }
+    .lzy-upload-wrapper,
+    .lzy-form-uploaded {
+        display: inline-block;
+        margin: 0;
+        vertical-align: top;
+        @at-root #lzy#lzy .lzy-form-uploaded {
+            margin-top: 0;
+        }
+    }
+    &.lzy-upload-form {
+        --lzy-form-width: 50em;
+        .lzy-form-uploaded {
+            width: 20em;
+        }
+        .lzy-upload-wrapper {
+            width: 14em;
+        }
+        .lzy-form-uploaded li {
+            padding-bottom: 1px;
+        }
     }
 
 

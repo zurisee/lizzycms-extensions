@@ -60,11 +60,15 @@ Continue_:
     de: Weiter...
     en: Continue...
 
-File to upload:
+lzy-file-upload-label:
+    de: Eine Datei hochladen
+    en: Upload a file
+
+lzy-files-upload-label:
     de: Datei(en) hochladen
     en: Upload file(s)
 
-Uploaded file list:
+lzy-uploaded-files-title:
     de: "Hochgeladene Dateien:"
     en: "Uploaded files:"
 

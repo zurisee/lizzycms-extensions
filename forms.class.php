@@ -398,11 +398,11 @@ EOT;
 		$multiple = $this->currRec->multiple ? 'multiple' : '';
 
         $targetPath = fixPath($this->currRec->uploadPath);
-        $targetFilePath = resolvePath($targetPath, true);
-        $targetPathHttp = resolvePath($targetPath, true, true, false, true);
+        $targetPathHttp = makePathDefaultToPage($targetPath);
+        $targetPath1 = resolvePath($targetPath, true, true);
 
         $rec = [
-            'uploadPath' => $targetFilePath,
+            'uploadPath' => $targetPath1,
             'pagePath' => $GLOBALS['globalParams']['pagePath'],
             'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
             'user'      => $_SESSION["lizzy"]["user"],
@@ -411,45 +411,40 @@ EOT;
         $this->ticket = $tick->createTicket($rec, 25);
 
 
-        $list = "\t<div>{{ Uploaded file list }}</div>\n";  // assemble list of existing files
+        $list = "\t<div class='lzy-uploaded-files-title'>{{ lzy-uploaded-files-title }}</div>\n";  // assemble list of existing files
         $list .= "<ul>";
         $dispNo = ' style="display:none;"';
 		if (isset($this->currRec->showExisting) && $this->currRec->showExisting) {
-			$files = getDir($targetFilePath.'*');
+			$files = getDir($targetPath1.'*');
 			foreach ($files as $file) {
 				if (is_file($file)) {
 					$file = basename($file);
 					if (preg_match("/\.(jpe?g|gif|png)$/i", $file)) {
-						$list .= "<li><span>$file</span><span><img class='lzy-upload-thumbnail' src='{$targetPathHttp}thumbnail/$file'></span></li>";
+						$list .= "<li><span>$file</span><span><img src='{$targetPathHttp}thumbnail/$file'></span></li>";
 					} else {
 						$list .= "<li><span>$file</span></li>";
 					}
 				}
-			}
-            $dispNo = '';
+                $dispNo = '';
+            }
         }
         $list .= "</ul>\n";
-		if ($this->currRec->label) {
-		    $label = $this->currRec->label;
-        } else {
-            $label = '{{ Upload File(s) }}';
-        }
 
 		$labelClass = $this->currRec->labelClass;
 		$out = '';
         $out .= <<<EOT
-        
-            <input type="hidden" name="lzy-upload" value="{$this->ticket}" />
-            <label class="$id lzy-form-file-upload-label $labelClass" for="$id">$label</label>
-            <input id="$id" class="lzy-form-file-upload-hidden" type="file" name="files[]" data-url="$server" $multiple />
-
-			<div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
-				<progress id="lzy-progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
-					<div id="lzy-form-progressBarFallback1-$inx"><span id="lzy-form-progressBarFallback2-$inx">&#160;</span></div>
-				</progress>
-				<div><span aria-live="polite" id="lzy-form-progressPercent$inx"></span></div>
-			</div>
-
+            <div class="lzy-upload-wrapper">
+                <input type="hidden" name="lzy-upload" value="{$this->ticket}" />
+                <label class="$id lzy-form-file-upload-label $labelClass" for="$id">{$this->currRec->label}</label>
+                <input id="$id" class="lzy-form-file-upload-hidden" type="file" name="files[]" data-url="$server" $multiple />
+    
+                <div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
+                    <progress id="lzy-progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
+                        <div id="lzy-form-progressBarFallback1-$inx"><span id="lzy-form-progressBarFallback2-$inx">&#160;</span></div>
+                    </progress>
+                    <div><span aria-live="polite" id="lzy-form-progressPercent$inx" class="lzy-form-progressPercent"></span></div>
+                </div>
+            </div> <!-- /lzy-upload-wrapper-->
 			<div id='lzy-form-uploaded$inx' class='lzy-form-uploaded'$dispNo >$list</div>
 
 EOT;
