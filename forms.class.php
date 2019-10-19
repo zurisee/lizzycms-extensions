@@ -398,11 +398,12 @@ EOT;
 		$multiple = $this->currRec->multiple ? 'multiple' : '';
 
         $targetPath = fixPath($this->currRec->uploadPath);
-        $targetPathHttp = makePathDefaultToPage($targetPath);
-        $targetPath1 = resolvePath($targetPath, true, true);
+        $targetPath = makePathDefaultToPage($targetPath);
+        $targetPathHttp = $targetPath;
+        $targetFilePath = resolvePath($targetPath);
 
         $rec = [
-            'uploadPath' => $targetPath1,
+            'uploadPath' => $targetFilePath,
             'pagePath' => $GLOBALS['globalParams']['pagePath'],
             'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
             'user'      => $_SESSION["lizzy"]["user"],
@@ -415,7 +416,7 @@ EOT;
         $list .= "<ul>";
         $dispNo = ' style="display:none;"';
 		if (isset($this->currRec->showExisting) && $this->currRec->showExisting) {
-			$files = getDir($targetPath1.'*');
+			$files = getDir($targetFilePath.'*');
 			foreach ($files as $file) {
 				if (is_file($file)) {
 					$file = basename($file);
