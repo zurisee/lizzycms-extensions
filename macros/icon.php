@@ -12,7 +12,7 @@ $this->addMacro($macroName, function () {
     $color = $this->getArg($macroName, 'color', '(optional) Color to be applied to the icon.', '');
 
     $name = strtolower($name);
-    $supportedIcons = ',cancel,cloud,config,copy,desktop,doc,down,edit,enlarge,enlarge2,error,exit,geo,gsm,hide,info,link,locked,mail,map,menu,mobile,newwin,nosmile,ok,paste,pdf,pdf2,reduce,reduce2,search,send,settings,show,show2,slack,smile,sms,tel,trash,unlocked,up,user,';
+    $supportedIcons = ',calendar,error,user,settings,cloud,desktop,mobile,config,tel,geo,map,sms,info,doc,docs,trash,enlarge,reduce,smile,nosmile,paste2,link,menu,newwin,edit,mail,show2,enlarge2,reduce2,ok,cancel,locked,unlocked,exit,favorite,send,show,hide,source,search,up,down,slack,pdf2,pdf,gsm,upload,download,globe,key,bubble,stack,attachment,heart,fullscreen,cut,copy,paste,cancel2,clock,danger,wait,speed,crosshairs,picture,pictures,movie,sync,reload,power,insert,wifi,vol-up,volume,vol-down,flag,play,stop,mute,rec,forward,backward,start,print,save,pause,end,';
     if ($name === 'help') {
         $str = str_replace(',', "\n- ", rtrim($supportedIcons, ','));
         $this->compileMd = true;
