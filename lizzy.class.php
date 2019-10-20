@@ -754,13 +754,14 @@ EOT;
         $this->trans->addVariable('lang', $this->config->lang);
 
 
-		if  ($this->localCall || getUrlArgStatic('debug')) {
+		if  (getUrlArgStatic('debug')) {
             if  (!$this->localCall) {   // log only on non-local host
                 writeLog('starting debug mode');
             }
         	$this->page->addBodyClasses('debug');
 		}
 
+		
 		if ($this->config->isLegacyBrowser) {
             $this->trans->addVariable('debug_class', ' legacy');
             $this->page->addBodyClasses('legacy');
