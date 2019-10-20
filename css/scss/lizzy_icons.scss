@@ -1,3 +1,6 @@
+// Lizzy Icons:
+
+// loading dedicated fonts:
 @font-face {
     font-family: 'Lzy Icons';
     src: url('../fonts/Lzy-Icons.eot');
@@ -19,13 +22,13 @@
     font-style: normal;
 }
 
+
+// generic styles:
 [class*='lzy-icon-'] {
-  width: calc(1em * var(--lzy-icon-factor, 1) + 2px);
   display: inline-block;
   position: relative;
-  height: 1em;
-  font-size: 0.9em;
   vertical-align: baseline;
+  padding-left: calc(1.1em * var(--lzy-icon-factor, 1));
 }
 [class*='lzy-icon-']:before {
     position: absolute;
@@ -33,16 +36,27 @@
     font-family: 'Lzy Icons';
     font-style: normal;
     font-weight: normal;
-    font-size: calc(var(--lzy-icon-factor, 1) * 1em);
-    left: 50%;
+    font-size: calc(var(--lzy-icon-factor) * 90%);
+    left: calc(var(--lzy-icon-factor) * 4% + 26%);
     top: 50%;
     transform: translate(-50%, -50%);
-//    height: 1em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale
 }
 
+[class*='lzy-icon-']:empty {
+    height: 1em;
+    margin-right: 0.07em;
+}
+[class*='lzy-icon-']:empty:before {
+    position: absolute;
+    left: 50%;
+    top: 65%;
+    transform: translate(-50%, -50%);
+}
 
+
+// assignment of characters to classes:
 .lzy-icon-triangle:before{content:'A';}
 
 .lzy-icon-calendar:before{content:'\0041';}
@@ -132,6 +146,68 @@
 .lzy-icon-save:before{content:'\007d';}
 .lzy-icon-pause:before{content:'\007e';}
 .lzy-icon-end:before{content:'\003f';}
+
+
+// vertical fine-tuning:
+  &.lzy-icon-newwin:before,
+  &.lzy-icon-save:before,
+  &.lzy-icon-globe:before,
+  &.lzy-icon-sync:before,
+  &.lzy-icon-speed:before,
+  &.lzy-icon-picture:before,
+  &.lzy-icon-pictures:before,
+  &.lzy-icon-movie:before,
+  &.lzy-icon-clock:before,
+  &.lzy-icon-danger:before,
+  &.lzy-icon-calendar:before
+      {
+        top: 56%;
+      }
+
+
+  &.lzy-icon-reduce2:before,
+  &.lzy-icon-map:before,
+  &.lzy-icon-cloud:before,
+  &.lzy-icon-enlarge2:before,
+  &.lzy-icon-wait:before,
+  &.lzy-icon-wifi:before,
+  &.lzy-icon-doc:before,
+  &.lzy-icon-crosshairs:before
+      {
+        top: 60%;
+      }
+
+  &.lzy-icon-cancel:before,
+  &.lzy-icon-hide:before,
+  &.lzy-icon-mail:before,
+  &.lzy-icon-show:before,
+  &.lzy-icon-exit:before,
+  &.lzy-icon-cut:before,
+  &.lzy-icon-copy:before,
+  &.lzy-icon-paste:before,
+  &.lzy-icon-backward:before,
+  &.lzy-icon-forward:before,
+  &.lzy-icon-stop:before,
+  &.lzy-icon-play:before,
+  &.lzy-icon-rec:before,
+  &.lzy-icon-start:before,
+  &.lzy-icon-end:before,
+  &.lzy-icon-download:before,
+  &.lzy-icon-error:before
+      {
+        top: 62%;
+      }
+
+  &.lzy-icon-attachment:before,
+  &.lzy-icon-bubble:before,
+  &.lzy-icon-cancel2:before
+      {
+        top: 65%;
+      }
+
+
+
+// special cases:
 .lzy-icon-error:before{
     font-size: calc(100% * var(--lzy-icon-factor, 1.1));
     color: red;
@@ -144,3 +220,5 @@
   left: 50%;
   transform: translate(-50%, -66%) scale(0.8);
 }
+
+

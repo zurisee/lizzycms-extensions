@@ -8,7 +8,7 @@ $this->addMacro($macroName, function () {
     $name = $this->getArg($macroName, 'name', 'Name of the requested icon', '');
     $class = $this->getArg($macroName, 'class', '(optional) Class to be applied to the icon', '');
     $id = $this->getArg($macroName, 'id', '(optional) Id to be applied to the icon', '');
-    $sizeFactor = $this->getArg($macroName, 'sizeFactor', '(optional) Factor by which the icon will be scaled up. E.g. sizeFactor:1.5', '1');
+    $sizeFactor = $this->getArg($macroName, 'sizeFactor', '(optional) Factor by which the icon will be scaled up. E.g. sizeFactor:1.5', false);
     $color = $this->getArg($macroName, 'color', '(optional) Color to be applied to the icon.', '');
 
     $name = strtolower($name);

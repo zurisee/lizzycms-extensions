@@ -910,7 +910,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
     protected function parseEmoji($markdown)
     {
         // check whether the marker really represents a emoji/icon (i.e. there is a closing :)
-        if (preg_match('/^ : ([a-z_]{2,35}) : /x', $markdown, $matches)) {
+        if (preg_match('/^ : ([a-z0-9_-]{2,35}) : /x', $markdown, $matches)) {
             return [
                 ['emoji', $matches[1]],
                 strlen($matches[0])
