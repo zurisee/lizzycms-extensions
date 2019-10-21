@@ -166,6 +166,23 @@
 .lzy-icon-end:before{content:'\003f';}
 
 
+// special cases:
+.lzy-icon-error:before{
+    font-size: calc(100% * var(--lzy-icon-factor, 1.1));
+    color: red;
+}
+
+// === Triangle icon used in nav:
+.lzy-icon-triangle:before {
+  font-family: 'Lzy Triangle';
+  content:'A';
+  left: 50%;
+  transform: translate(-50%, -66%) scale(0.8);
+}
+
+
+__END__
+
 // vertical fine-tuning:
   &.lzy-icon-newwin:before,
   &.lzy-icon-save:before,
@@ -224,19 +241,5 @@
       }
 
 
-
-// special cases:
-.lzy-icon-error:before{
-    font-size: calc(100% * var(--lzy-icon-factor, 1.1));
-    color: red;
-}
-
-// === Triangle icon used in nav:
-.lzy-icon-triangle:before {
-  font-family: 'Lzy Triangle';
-  content:'A';
-  left: 50%;
-  transform: translate(-50%, -66%) scale(0.8);
-}
 
 
