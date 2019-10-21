@@ -85,7 +85,7 @@ class LizzyMarkdown
 				return $this->page;
 			}
 
-            $this->md = new MyExtendedMarkdown($this, $page);
+            $this->md = new LizzyExtendedMarkdown($this, $page);
             $str = $this->md->parse($str);
 			$str = $this->postprocess($str);
 			
@@ -105,7 +105,7 @@ class LizzyMarkdown
     {
         $str = $this->preprocess($str);
 
-        $this->md = new MyExtendedMarkdown($this, $page);
+        $this->md = new LizzyExtendedMarkdown($this, $page);
         $str = $this->md->parse($str);
         $str = $this->postprocess($str);
 

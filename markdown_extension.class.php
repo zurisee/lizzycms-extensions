@@ -1,7 +1,7 @@
 <?php
 define('EMOJINAMES_FILE', '_lizzy/rsc/emojis.json');
 
-class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
+class LizzyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
 {
     private $cssAttrNames =
         ['align', 'all', 'animation', 'backface', 'background', 'border', 'bottom', 'box',
@@ -928,6 +928,7 @@ class MyExtendedMarkdown extends \cebe\markdown\MarkdownExtra
         }
         if (isset($this->emojiNames[$element[1]])) {
             $out = $this->emojiNames[$element[1]];
+            $out = "<span class='lzy-emoji' data-icon='$out'>&#8203;</span>";
         } else {
             $out = "<span class='lzy-icon lzy-icon-{$element[1]}'></span>";
         }
