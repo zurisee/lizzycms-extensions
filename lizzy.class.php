@@ -248,7 +248,7 @@ class Lizzy
             // enable caching of compiled MD pages:
             if ($this->config->cachingActive && $this->page->readFromCache()) {
                 $html = $this->page->render(true);
-                $this->resolveAllPaths($html);
+                $html = $this->resolveAllPaths($html);
                 if ($this->timer) {
                     $timerMsg = 'Page rendering time: '.readTimer();
                     $html = $this->page->lateApplyMessag($html, $timerMsg);
@@ -292,7 +292,7 @@ class Lizzy
 
         $this->applyForcedBrowserCacheUpdate($html);
 
-        $this->resolveAllPaths($html);
+        $html = $this->resolveAllPaths($html);
 
         if ($this->timer) {
             $timerMsg = 'Page rendering time: '.readTimer();
@@ -336,9 +336,41 @@ class Lizzy
 
 
 
-    private function resolveAllPaths( &$html )
+    private function resolveAllPaths( $html )
     {
-        resolveAllPaths($html, $this->config->admin_useRequestRewrite);	// replace ~/, ~sys/, ~ext/, ~page/ with actual values
+        global $globalParams;
+        $pathToRoot = $globalParams['appRoot'];
+
+        if (!$this->config->admin_useRequestRewrite) {
+            resolveHrefs($html);
+        }
+
+        // Handle resource accesses first: src='~page/...' -> local to page but need full path:
+        $p = $globalParams["appRoot"].$globalParams["pathToPage"];
+        $html = preg_replace(['|(src=[\'"])(?<!\\\\)~page/|', '|(srcset=[\'"])(?<!\\\\)~page/|'], "$1$p", $html);
+
+        // Handle all other special links:
+        $from = [
+            '|(?<!\\\\)~/|',
+            '|(?<!\\\\)~data/|',
+            '|(?<!\\\\)~sys/|',
+            '|(?<!\\\\)~ext/|',
+            '|(?<!\\\\)~page/|',
+        ];
+        $to = [
+            $pathToRoot,
+            $pathToRoot.$globalParams['dataPath'],
+            $pathToRoot.SYSTEM_PATH,
+            $pathToRoot.EXTENSIONS_PATH,
+            '',   // for page accesses
+        ];
+
+        $html = preg_replace($from, $to, $html);
+
+        // remove shields: e.g. \~page
+        $html = preg_replace('|(?<!\\\\)\\\\~|', "~", $html);
+
+        return $html;
     } // resolveAllPaths
 
 

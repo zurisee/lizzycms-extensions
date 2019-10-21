@@ -987,41 +987,6 @@ function makePathRelativeToPage($path)
 
 
 //------------------------------------------------------------
-function resolveAllPaths( &$html, $requestRewriteActive = true)
-{
-    // resolves to HTTP paths only
-	global $globalParams;
-	$pathToRoot = $globalParams['pathToRoot'];
-
-    if (!$requestRewriteActive) {
-        resolveHrefs($html);
-    }
-
-    // Handle resouce accesses first: src='~page/...'
-    $p = $globalParams["appRoot"].$globalParams["pathToPage"];
-    $html = preg_replace(['|(src=[\'"])~page/|', '|(srcset=[\'"])~page/|'], "$1$p", $html);
-
-    $from = [
-        '|~/|',
-        '|~data/|',
-        '|~sys/|',
-        '|~ext/|',
-        '|~page/|',
-    ];
-    $to = [
-        $pathToRoot,
-        $pathToRoot.$globalParams['dataPath'],
-        $pathToRoot.SYSTEM_PATH,
-        $pathToRoot.EXTENSIONS_PATH,
-        '',   // for pages
-    ];
-
-    $html = preg_replace($from, $to, $html);
-} // resolveAllPaths
-
-
-
-//------------------------------------------------------------
 function resolveHrefs( &$html )
 {
     $appRoot = $GLOBALS["globalParams"]["appRoot"];
@@ -1848,7 +1813,7 @@ function rrmdir($src)
 //-----------------------------------------------------------------------------
 function compileMarkdownStr($mdStr, $removeWrappingPTags = false)
 {
-    $md = new MyMarkdown();
+    $md = new LizzyMarkdown();
     $str = $md->parseStr($mdStr);
     if ($removeWrappingPTags) {
         $str = preg_replace('/^\<p>(.*)\<\/p>(\s*)$/ms', "$1$2", $str);
