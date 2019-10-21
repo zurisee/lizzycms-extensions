@@ -11,7 +11,7 @@ use cebe\markdown\MarkdownExtra;
 
 require_once SYSTEM_PATH.'markdown_extension.class.php';
 
-class MyMarkdown
+class LizzyMarkdown
 {
 	private $page = null;
 	private $md = null;
@@ -545,6 +545,7 @@ class MyMarkdown
 	//....................................................
 	public function postprocessInlineStylings($line, $returnElements = false)    // [[ xy ]]
 	{
+	    $id = $class = '';
 	    if (strpos($line, '[[') === false) {
             $line = str_replace('@/@[@\\@', '[[', $line);
             if ($returnElements) {

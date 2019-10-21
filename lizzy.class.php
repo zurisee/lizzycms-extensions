@@ -55,7 +55,7 @@ require_once SYSTEM_PATH.'vendor/autoload.php';
 require_once SYSTEM_PATH.'page.class.php';
 require_once SYSTEM_PATH.'popup.class.php';
 require_once SYSTEM_PATH.'transvar.class.php';
-require_once SYSTEM_PATH.'mymarkdown.class.php';
+require_once SYSTEM_PATH.'lizzy-markdown.class.php';
 require_once SYSTEM_PATH.'scss.class.php';
 require_once SYSTEM_PATH.'defaults.class.php';
 require_once SYSTEM_PATH.'sitestructure.class.php';
@@ -761,7 +761,7 @@ EOT;
         	$this->page->addBodyClasses('debug');
 		}
 
-		
+
 		if ($this->config->isLegacyBrowser) {
             $this->trans->addVariable('debug_class', ' legacy');
             $this->page->addBodyClasses('legacy');
@@ -945,7 +945,7 @@ EOT;
             $handleEditions = true;
         }
 
-        $md = new MyMarkdown($this->trans);
+        $md = new LizzyMarkdown($this->trans);
 		$md->html5 = true;
 		$langPatt = '.'.$this->config->lang.'.';
 
@@ -1570,7 +1570,7 @@ EOT;
         $mdStr = get_post_data('lzy_md', true);
         $mdStr = urldecode($mdStr);
 
-		$md = new MyMarkdown();
+		$md = new LizzyMarkdown();
 		$pg = new Page;
 		$mdStr = $this->extractFrontmatter($mdStr, $pg);
 		$md->parse($mdStr, $pg);
