@@ -498,9 +498,10 @@ EOT;
 		if (!isset($this->fileUploadInitialized)) {
 			$this->fileUploadInitialized = true;
 
-			$this->page->addJqFiles(['~sys/third-party/jquery-upload/js/vendor/jquery.ui.widget.js',
-								'~sys/third-party/jquery-upload/js/jquery.iframe-transport.js',
-								'~sys/third-party/jquery-upload/js/jquery.fileupload.js']);
+			$this->page->addJqFiles([
+			    '~sys/third-party/jquery-upload/js/vendor/jquery.ui.widget.js',
+                '~sys/third-party/jquery-upload/js/jquery.iframe-transport.js',
+                '~sys/third-party/jquery-upload/js/jquery.fileupload.js']);
 		}
 		
         return $out;

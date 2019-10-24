@@ -787,6 +787,8 @@ nav li {
   background: -webkit-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
   background: -ms-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
   background: linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
+	padding: 0.3em 1.5em;
+	cursor: pointer;
 }
 .lzy-button a:visited,
 a.lzy-button:visited,

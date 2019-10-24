@@ -24,7 +24,6 @@ class ContentEditor
             $inx++;
 
             $editorHeader = "\n\t\t\t  <button class='lzy-editor-btn' title='{{ Edit Section }}'><span class='lzy-icon-edit'></span></button>\n\t\t\t  <div id='lzy-editor-wrapper$inx' class='lzy-editor-wrapper'>\n\n";
-//            $editorHeader = "\n\t\t\t  <button class='lzy-editor-btn' title='{{ Edit Section }}'></button>\n\t\t\t  <div id='lzy-editor-wrapper$inx' class='lzy-editor-wrapper'>\n\n";
             $editorFooter = "\n\t\t\t  </div><!-- /lzy-editor-wrapper -->\n";
             $edSelector = PageSource::renderEditionSelector($this->fileName);
             if ($edSelector) {
@@ -147,9 +146,21 @@ EOT;
     {
         require_once SYSTEM_PATH.'file_upload.class.php';
 
-        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->path_pagesPath.$filePath;
-        $uploader = new FileUpload($this->lzy);
-        return $uploader->render($filePath);
+//        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->path_pagesPath.$filePath;
+        $rec = [
+            'uploadPath' => $this->page->config->path_pagesPath.$filePath,
+            'pagePath' => $GLOBALS['globalParams']['pagePath'],
+            'pathToPage' => $GLOBALS['globalParams']['pathToPage'],
+            'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
+            'user'      => $_SESSION["lizzy"]["user"],
+        ];
+        $tick = new Ticketing();
+        $ticket = $tick->createTicket($rec, 25);
+
+        $uploader = new FileUpload($this->lzy, $ticket);
+        $uploaderStr = $uploader->render($filePath);
+        return $uploaderStr;
+//        return $uploader->render($filePath);
     }
 
 

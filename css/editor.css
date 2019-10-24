@@ -74,7 +74,7 @@ main > .lzy-src-wrapper, .lzy-file-uploader {
 	border: none;
 }
 .lzy-file-uploader #lzy-fileupload {
-	display: none;
+	/*display: none;*/
 }
 .lzy-editing div.lzy-edit-btns {
 	position: absolute;
@@ -244,6 +244,29 @@ span.lzy-ed-dropdown select {
 	vertical-align: top;
 	border-top: 1px solid #ddd;
 }
+
+.lzy-file-uploader-wrapper .lzy-button {
+	padding: 0.4em 0.6em;
+}
+
+.fileupload-processing {
+	outline: 1px dashed red;
+	opacity: 0.5;
+}
+
+.lzy-editor-new-file {
+	margin-right: 1em;
+}
+
+.lzy-file-uploader-wrapper1 {
+	margin: 0 20px;
+}
+.lzy-file-uploader-wrapper {
+	margin: 0 20px;
+	padding: 0 20px;
+	border: 1px solid #ddd;
+}
+/*
 .lzy-file-uploader .btn {
 	display: inline-block;
 	padding: 6px 12px;
@@ -283,7 +306,7 @@ span.lzy-ed-dropdown select {
 	background-color: #d9534f;
 	border-color: #d43f3a;
 }
-
+*/
 
 /* --- Content Editor -------------------------- */
 

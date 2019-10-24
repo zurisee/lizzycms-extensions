@@ -445,6 +445,49 @@ lzy-data-delete-record:
 
 
 
+#--- Lizzy Editor
+
+lzy-editor-new-file:
+    de:
+    _:  'Create file'
+
+lzy-editor-new-file-input-button:
+    de:
+    _:  'Create'
+
+lzy-editor-add-files:
+    de:
+    _:  'Select files for upload...'
+
+lzy-editor-start-upload:
+    de:
+    _:  'Start upload'
+
+lzy-editor-cancel-upload:
+    de:
+    _:  'Cancel upload'
+
+lzy-editor-delete-file:
+    de:
+    _:  'Delete'
+
+lzy-editor-rename-file:
+    de:
+    _:  'Rename File:'
+
+lzy-editor-new-filename:
+    de:
+    _:  'New filename:'
+
+lzy-editor-name-of-new-file:
+    de:
+    _:  'Name of new file:'
+
+lzy-editor-ok:
+    de:
+    _:  'Ok'
+
+
 #--- Misc ------------------------------------------
 Page:
     de: Seite
