@@ -3,7 +3,7 @@
 #--------------------------------------------------------------------------
 
 admin_autoAdminOnLocalhost: true
-
+debug_compileScssWithLineNumbers: true
 
 
 __END__
