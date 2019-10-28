@@ -557,12 +557,19 @@ class Page
             }
         }
 
-        if (!isset($overlay['closable']) || $overlay['closable']) {
+        if (!isset($overlay['closable'])) {
+            $overlay['closable'] = true;
+        }
+        if ($overlay['closable'] === 'reload') {
             $text = "<button id='lzy-close-overlay' class='lzy-close-overlay'>✕</button>\n".$text;
             // set ESC to close overlay:
             $jq .="\n$('body').keydown( function (e) { if (e.which == 27) { $('.lzy-overlay').hide(); } });\n".
                 "$('#lzy-close-overlay').click(function(e) { lzyReload(); });\n";
-//                "$('#lzy-close-overlay').click(function() { $('.lzy-overlay').hide(); });\n";
+        } else {
+            $text = "<button id='lzy-close-overlay' class='lzy-close-overlay'>✕</button>\n".$text;
+            // set ESC to close overlay:
+            $jq .="\n$('body').keydown( function (e) { if (e.which == 27) { $('.lzy-overlay').hide(); } });\n".
+                "$('#lzy-close-overlay').click(function() { $('.lzy-overlay').hide(); });\n";
         }
         $this->addJq($jq);
         $this->addBody("<div id='lzy-overlay' class='lzy-overlay'>$text</div>\n");
