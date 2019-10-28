@@ -19,7 +19,7 @@ class DataStorage extends DataStorage2
 
 
 
-    public function read( $arg )
+    public function read( $arg = null )
     {
         if (!$arg || ($arg === '*')) {
             return parent::read();
