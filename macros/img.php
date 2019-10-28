@@ -73,6 +73,9 @@ $this->addMacro($macroName, function () {
 
     $args['origSrc'] = $args['src'];
     $args['src'] = prepareImageWorkingCopy($args['src'], $this->config->feature_ImgDefaultMaxDim);
+    if (!$args['src']) {
+        return "\t<div class='lzy-warning'>&#123;&#123; Error: image file '{$args['origSrc']}' not found. }}</div>\n";
+    }
     $args['srcFile'] = resolvePath($args['src']);
 
     $impTag = new ImageTag($this, $args);
@@ -131,7 +134,6 @@ function prepareImageWorkingCopy($reqImg0, $imgDefaultMaxDim = '1920x1024')
     }
 
     $reqImgFile = resolvePath($reqImg, true);
-    $reqImgFile0 = $reqImgFile;
 
     $path = dir_name($reqImgFile);
     $fileName = base_name($reqImgFile);
@@ -149,7 +151,7 @@ function prepareImageWorkingCopy($reqImg0, $imgDefaultMaxDim = '1920x1024')
             $resizer = new ImageResizer($imgDefaultMaxDim);
             $resizer->resizeImage($reqImgFile, $workSrcFile);
         } else {
-            fatalError("Error: image source file '$reqImgFile0' not found.");
+            return false;
         }
     }
     return $workSrc;
