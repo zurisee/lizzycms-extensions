@@ -444,14 +444,20 @@ class SiteStructure
         
 		$list = $this->list;
 		$found = false;
+		$foundLevel = 0;
 		foreach($list as $key => $elem) {
 			if ($found || ($str === $elem['folder']) || ($str.'/' === $elem['folder'])) {
-//			if ($found || ($str === $elem['name']) || ($str === $elem['folder']) || ($str.'/' === $elem['folder'])) {
 				$folder = $this->config->path_pagesPath.$elem['folder'];
 				if (isset($elem['showthis']) && $elem['showthis']) {	// no 'skip empty folder trick' in case of showthis
                     $found = true;
                     break;
 				}
+
+				// case: falling through empty page-folders and hitting the bottom:
+				if ($found && ($foundLevel >= $elem['level'])) {
+				    $key = max(0, $key - 1);
+				    break;
+                }
 
                 if (!$found && !file_exists($folder)) { // if folder doesen't exist, let it be created later in handleMissingFolder()
                     $found = true;
@@ -467,6 +473,7 @@ class SiteStructure
 				} else {
 					$found = true;
                     $this->noContent = true;
+                    $foundLevel = $elem['level'];
 				}
 
 			} elseif (isset($elem['alias']) && ($str === $elem['alias'])) {
