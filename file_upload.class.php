@@ -75,7 +75,7 @@ class FileUpload
     <h1>{{ lzy-editor-new-file }}</h1>
     <label for="lzy-edit-new-filename">{{ lzy-editor-name-of-new-file }}</label>
     <input type="text" id="lzy-edit-new-filename" />
-    <button id="lzy-edit-new-filename-confirm" class='lzy-popup-confirm lzy-popup-button'>Ok</button>
+    <button id="lzy-edit-new-filename-confirm" class='lzy-button'>Ok</button>
 </div> <!-- /lzy-edit-new-filename-container -->
 
 
@@ -84,7 +84,7 @@ class FileUpload
 <div>
     <label for="lzy-edit-rename-file">{{ lzy-editor-new-filename-label }}</label>
     <input type="text" id="lzy-edit-rename-file" />
-    <div id="lzy-edit-rename-file-confirm" class='lzy-popup-confirm lzy-popup-button'>{{ lzy-editor-ok }}</div>
+    <div id="lzy-edit-rename-file-confirm" class='lzy-button'>{{ lzy-editor-ok }}</div>
   </div>
 </div> <!-- /lzy-edit-new-filename-container -->
 

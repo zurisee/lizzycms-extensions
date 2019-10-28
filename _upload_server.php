@@ -86,6 +86,10 @@ if (isset($_POST['lzy-rename-file'])) {
     $file = $absAppRoot.$dataPath.$filename;
     $dest = $absAppRoot.$dataPath.$newName;
     if (file_exists($file)) {
+        if (file_exists($dest)) {
+            mylog("_upload_server.php: [$dataPath] file '$newName' already exists, cannot rename '$filename'");
+            exit;
+        }
         mylog("_upload_server.php: [$dataPath] file '$filename' renamed to '$newName'");
         rename($file, $dest);
     } else {
