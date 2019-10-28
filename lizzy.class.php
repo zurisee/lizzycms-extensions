@@ -797,9 +797,7 @@ EOT;
             $this->trans->addVariable('lzy-config--open-button', "<a class='lzy-config-button' href='$url?config'>{{ lzy-config-button }}</a>", false);
         }
 
-//        if ($this->auth->isAdmin()) {
         if ($this->auth->checkGroupMembership('fileadmins')) {
-            $url = $GLOBALS["globalParams"]["pageUrl"];
             $this->trans->addVariable('lzy-fileadmin-button', "<button class='lzy-fileadmin-button' title='{{ lzy-fileadmin-button-tooltip }}'><span class='lzy-icon-docs'></span>{{^ lzy-fileadmin-button-text }}</button>", false);
             $uploader = $this->injectUploader($this->pagePath);
             $this->page->addBodyEndInjections($uploader);
@@ -893,7 +891,6 @@ EOT;
     {
         require_once SYSTEM_PATH.'file_upload.class.php';
 
-//        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->path_pagesPath.$filePath;
         $rec = [
             'uploadPath' => $this->page->config->path_pagesPath.$filePath,
             'pagePath' => $GLOBALS['globalParams']['pagePath'],
@@ -907,7 +904,6 @@ EOT;
         $uploader = new FileUpload($this, $ticket);
         $uploaderStr = $uploader->render($filePath);
         return $uploaderStr;
-//        return $uploader->render($filePath);
     }
 
 
@@ -1641,7 +1637,7 @@ EOT;
             }
 
             $str = $this->renderConfigOverlay();
-            $this->page->addOverlay($str);
+            $this->page->addOverlay(['text' => $str, 'closable' => 'reload']); // close shall reload page to remove url-arg
         }
 
 
