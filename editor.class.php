@@ -40,8 +40,6 @@ class ContentEditor
             $this->loadEditorResources();
             $this->loadEditorButtons();
         }
-        $uploader = $this->injectUploader($filePath);
-        $this->page->addBodyEndInjections($uploader);
 
         $this->page->addContent($this->html, true);
         $this->addEditorDock($filePath);
@@ -94,7 +92,7 @@ EOT;
     private function loadEditorResources()
     {
         $this->page->addJqFiles("~sys/js/editor.js");
-        $this->page->addCssFiles(['FONTAWESOME_CSS',"~sys/css/editor.css","~sys/third-party/simplemde/simplemde.min.css"]);
+        $this->page->addCssFiles(['FONTAWESOME_CSS',"~sys/third-party/simplemde/simplemde.min.css"]);
         $this->page->addJsFiles("~sys/third-party/simplemde/simplemde.min.js");
     }
 
@@ -139,31 +137,6 @@ EOT;
         }
         return ($p3 !== false);
     }
-
-
-
-    private function injectUploader($filePath)
-    {
-        require_once SYSTEM_PATH.'file_upload.class.php';
-
-//        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->path_pagesPath.$filePath;
-        $rec = [
-            'uploadPath' => $this->page->config->path_pagesPath.$filePath,
-            'pagePath' => $GLOBALS['globalParams']['pagePath'],
-            'pathToPage' => $GLOBALS['globalParams']['pathToPage'],
-            'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
-            'user'      => $_SESSION["lizzy"]["user"],
-        ];
-        $tick = new Ticketing();
-        $ticket = $tick->createTicket($rec, 25);
-
-        $uploader = new FileUpload($this->lzy, $ticket);
-        $uploaderStr = $uploader->render($filePath);
-        return $uploaderStr;
-//        return $uploader->render($filePath);
-    }
-
-
 
 } // ContentEditor
 

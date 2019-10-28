@@ -73,6 +73,18 @@
     left: 0.66em;
 }
 
+.lzy-negate:after { 
+    content: '\005c';
+    font-size: 1.8em;
+    color: inherit;
+    position: absolute;
+    display: inline-block;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -40%);
+}
+
+
 
 // assignment of characters to classes:
 .lzy-icon-triangle:before{content:'A';}

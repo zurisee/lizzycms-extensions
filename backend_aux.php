@@ -8,7 +8,7 @@ define('ERROR_LOG',         PATH_TO_APP_ROOT.'.#logs/errlog.txt');	//
 define('RECYCLE_BIN',           '.#recycleBin/');
 define('RECYCLE_BIN_PATH',      '~page/'.RECYCLE_BIN);
 
-$appRoot = preg_replace('/_lizzy\/.*$/', '', getcwd());
+$appRoot = preg_replace('/_lizzy\/.*$/', '', getcwd().'/');
 
 //---------------------------------------------------------------------------
 function array2DKey(&$key)

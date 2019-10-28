@@ -315,7 +315,7 @@ EOT;
                     $value = "'$value'";
                 }
 
-                if ($defaultValue != $this->$key) {
+                if ($defaultValue !== $this->$key) {
                     $out .= "$key: $value\n";
                 }
 
@@ -324,6 +324,8 @@ EOT;
                     $out .= "$key: false\n";
                     $this->$key = false;
                 }
+            } elseif ($key === 'admin_autoAdminOnLocalhost') {
+                $out .= "$key: false\n";
             }
             $out2 .= $this->getConfigLine($key, $value, $defaultValue);
         }

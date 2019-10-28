@@ -60,6 +60,16 @@ Continue_:
     de: Weiter...
     en: Continue...
 
+
+#--- File Upload --------------------------
+lzy-fileadmin-button-tooltip:
+    de: 'Dateinverwaltung anzeigen'
+    _:  'Show file manager'
+
+lzy-fileadmin-button-text:  // just in case the button should carry icon and text:
+    de: ''  
+    _:  ''
+
 lzy-file-upload-label:
     de: Eine Datei hochladen
     en: Upload a file
@@ -82,6 +92,8 @@ lzy-error-in-email-addr:
 lzy-please-correct:
     de: "Bitte korrigieren."
     _:  "Please correct."
+
+
 
 #--- Links -------------------------------
 opens mail app: 
@@ -155,12 +167,21 @@ lzy-prev-page-link-title:
 
 
 #--- Language Selection ------------------
-select langauge:
+lzy-select-langauge:
     de: Sprache auswählen 
     en: Select language
 
-select de: "<img src='~sys/rsc/de.png' class='lang-icon' alt='' /><span class='invisible'>Deutsch</span>"
-select en: "<img src='~sys/rsc/en.png' class='lang-icon' alt='' /><span class='invisible'>English</span>"
+lzy-lang-select de: "<img src='~sys/rsc/de.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-de}}' title='{{ lzy-select-langauge }}: {{lzy-lang-de}}' /><span class='invisible'>Deutsch</span>"
+lzy-lang-select en: "<img src='~sys/rsc/en.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-en}}' title='{{ lzy-select-langauge }}: {{lzy-lang-en}}' /><span class='invisible'>English</span>"
+
+lzy-lang-de:
+    de: Deutsch
+    _:  German
+
+lzy-lang-en:
+    de: Englisch
+    _: English
+
 
 
 #--- Config Popup ------------------------
@@ -445,46 +466,46 @@ lzy-data-delete-record:
 
 
 
-#--- Lizzy Editor
+#--- Lizzy File Manager
 
 lzy-editor-new-file:
-    de:
+    de: 'Neue Datei'
     _:  'Create file'
 
 lzy-editor-new-file-input-button:
-    de:
+    de: 'Erzeugen'
     _:  'Create'
 
 lzy-editor-add-files:
-    de:
+    de: 'Dateien hochladen...'
     _:  'Select files for upload...'
 
 lzy-editor-start-upload:
-    de:
+    de: 'Jetzt hochladen'
     _:  'Start upload'
 
 lzy-editor-cancel-upload:
-    de:
+    de: 'Übertragung abbrechen'
     _:  'Cancel upload'
 
 lzy-editor-delete-file:
-    de:
-    _:  'Delete'
+    de: 'Datei löschen'
+    _:  'Delete file'
 
 lzy-editor-rename-file:
-    de:
-    _:  'Rename File:'
+    de: 'Datei umbenennen'
+    _:  'Rename File'
 
-lzy-editor-new-filename:
-    de:
+lzy-editor-new-filename-label:  // usually only for AT visible
+    de: 'Neuer Name:'
     _:  'New filename:'
 
-lzy-editor-name-of-new-file:
-    de:
+lzy-editor-name-of-new-file-label:
+    de: 'Name der neuen Datei'
     _:  'Name of new file:'
 
 lzy-editor-ok:
-    de:
+    de: 'Ok'
     _:  'Ok'
 
 

@@ -132,6 +132,12 @@ figure a {
 .lzy-next-page-link a {
 	right: 0;
 }
+.lzy-large-screen {
+	.lzy-small-screen-footer {
+		display: none;
+	}
+}
+
 .lzy-small-screen {
 	.lzy-page-switcher-links a {
 		font-size: var(--lzy-mobile-header-font-size, 8vw);
@@ -141,6 +147,9 @@ figure a {
 	.lzy-prev-page-link a {
 		right: 1.2em;
 		left: initial;
+	}
+	.lzy-large-screen-footer {
+		display: none;
 	}
 }
 
@@ -175,6 +184,25 @@ figure a {
 	max-width: 100%;
 	height: auto;
 }
+
+/* === Icons ============================== */
+//.lzy-user-logged-in .lzy-footer {
+.lzy-footer {
+	.lzy-icon-edit,
+	.lzy-icon-settings,
+	.lzy-fileadmin-button,
+	.lzy-icon-user {
+		color: var(--lzy-system-buttons, gray);
+	}
+	.lzy-fileadmin-button {
+		border: none;
+		background: none;
+		padding-left: 0;
+		margin-left: -0.1em;
+		margin-right: 0.5em;
+	}
+}
+
 
 /* === Admin Config Overlay ==================== */
 .lzy-config-form .lzy-button {
@@ -484,27 +512,30 @@ pre {
 }
 
 
-.lang-selection > span {
+.lzy-lang-selection {
     display: inline-block;
-    padding:  0 3px;
+    margin-right: 0.33em;
 }
-.lang-selection > span a {
-    border-bottom: none;
-}
-.lang-icon {
+.lzy-lang-elem {
     width: 1.5em;
     height: 1.5em;
-    margin-top: 3px;
+	transform: translateY(0.4em);
+    display: inline-block;
+    margin:  0 3px;
 }
-.layout .menu-link {
-    font-size: 16px;
+.lzy-lang-selection > span a {
+    border-bottom: none;
+}
+.lzy-lang-icon {
+    width: 1.5em;
+    height: 1.5em;
 }
 
 
-.login-form-icon {
-    height: 14pt;
-    /* width: 24px; */
-}
+//.login-form-icon {
+//    height: 14pt;
+//    /* width: 24px; */
+//}
 .lzy-login-form .lzy-form-show-password input {
     display: none;
 }
@@ -524,9 +555,9 @@ pre {
 	}
 	.lzy-icon {
 		--lzy-icon-factor: 1.25;
-		color: #bbb;
+		opacity: 0.6;
 		&:hover {
-			color: black;
+			opacity: 1;
 		}
 	}
 	.lzy-config-button,
@@ -566,7 +597,6 @@ pre {
 	position: fixed!important;
 	top: 5px;
 	right: 0;
-//	right: -80%;
 	max-width: 80%;
 	padding:0.5em 1em;
 	background: #fbfb77;

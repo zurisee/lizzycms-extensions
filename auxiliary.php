@@ -1007,7 +1007,6 @@ function resolveHrefs( &$html )
 
 
 
-
 //-----------------------------------------------------------------------
 function generateNewVersionCode()
 {

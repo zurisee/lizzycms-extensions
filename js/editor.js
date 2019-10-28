@@ -24,6 +24,7 @@ function prepareEditing()
     $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn"><span class=\'lzy-icon-edit\'></span></button>');
     // $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn">Edit</button>');
     $('body').addClass('lzy-editor-mode');
+    $('#lzy-logged-in-user > a.lzy-toggle-edit-mode > span').addClass('lzy-negate');
 } // prepareEditing
 
 
@@ -138,7 +139,7 @@ function startEditor( $editBtn ) {
     var $section = $editBtn.parent();
     var $edWrapper0 = $('#lzy-editor-dock-wrapper');
     $edWrapper0.show();
-    $edWrapper0.draggable({ handle: ".editor-toolbar" }).resizable();    // using jQueryIU
+    $edWrapper0.draggable({ handle: '.editor-toolbar' }).resizable();    // using jQueryIU
 
     $section.addClass('lzy-editing');
     filename = $section.attr('data-lzy-filename');
@@ -190,13 +191,13 @@ function startEditor( $editBtn ) {
                 saveData(this, true );
             });
             // $edWrapper.append($('.lzy-file-uploader-wrapper').html());
-            $('.lzy-file-uploader').appendTo($edWrapper);
-            $('.lzy-files-btn').click(function() {	// button to open file list and upload functions
-                showFiles( this );
-            });
-            $('.lzy-fileupload-buttonbar .btn.new').click(function() {
-                newFile();
-            });
+            // $('.lzy-file-uploader').appendTo($edWrapper);
+            // $('.lzy-files-btn').click(function() {	// button to open file list and upload functions
+            //     showFiles( this );
+            // });
+            // $('.lzy-fileupload-buttonbar .btn.new').click(function() {
+            //     newFile();
+            // });
             // $('.lzy-fileupload-buttonbar .btn.rename').click(function() {
             //     renameFile();
             // });
@@ -207,76 +208,76 @@ function startEditor( $editBtn ) {
 
 
 
-function renameFile(e) {
-    console.log(e);
-    var $elem = $( e.target ).parent().parent();
-    var filename = $('a', $elem).text();
-    $('#lzy-edit-rename-file-container').popup({autoopen: true, closebutton:true});
-    $('#lzy-edit-rename-file').val( filename );
-    $('#lzy-edit-rename-file-confirm').click(function(e) {
-        sendRenameFile(e);
-    });
-    setTimeout(function() { $('#lzy-edit-rename-file').focus(); }, 100);
-    $('#lzy-edit-rename-file').keydown( function (e) {
-        if (e.which == 13) {
-            sendRenameFile(e);
-        }
-    });
-} // renameFile
-
-
-
-function sendRenameFile(e) {
-    e.stopPropagation();
-    // var $popup = $(e.target).closest('.popup_content');
-    var newFilename = $('#lzy-edit-rename-file').val();
-    console.log(filename);
-    $.ajax({
-        type: "POST",
-        url: systemPath + '_ajax_server.php?renamefile',
-        data: { lzy_filename: filename, lzy_newName: newFilename},
-        // data: { lzy_filename: pagePath + filename, lzy_newName: newFilename},
-        success: function( data ) {
-            // console.log('renameFile returned');
-            console.log(data);
-            lzyReload();
-        }
-    });
-} // sendRenameFile
-
-
-
-function newFile() {
-    $('#lzy-edit-new-filename-container').popup({autoopen: true, closebutton:true});
-    $('#lzy-edit-new-filename-confirm').click(function(e) {
-        sendNewFile(e.target);
-    });
-    setTimeout(function() { $('#lzy-edit-new-filename').focus(); }, 100);
-    $('#lzy-edit-new-filename').keydown( function (e) {
-        if (e.which == 13) {
-            sendNewFile(e.target);
-        }
-    });
-} // newFile
-
-
-
-
-function sendNewFile(target) {
-    var $popup = $(target).closest('.popup_content');
-    $popup.attr('aria-hidden', false);
-    var filename = $('#lzy-edit-new-filename').val();
-    console.log(filename);
-    $.ajax({
-        type: "POST",
-        url: systemPath + '_ajax_server.php?newfile',
-        data: { lzy_filename: pagePath + filename },
-        success: function( data ) {
-            lzyReload();
-        }
-    });
-} // sendNewFile
-
+// function renameFile(e) {
+//     console.log(e);
+//     var $elem = $( e.target ).parent().parent();
+//     var filename = $('a', $elem).text();
+//     $('#lzy-edit-rename-file-container').popup({autoopen: true, closebutton:true});
+//     $('#lzy-edit-rename-file').val( filename );
+//     $('#lzy-edit-rename-file-confirm').click(function(e) {
+//         sendRenameFile(e);
+//     });
+//     setTimeout(function() { $('#lzy-edit-rename-file').focus(); }, 100);
+//     $('#lzy-edit-rename-file').keydown( function (e) {
+//         if (e.which == 13) {
+//             sendRenameFile(e);
+//         }
+//     });
+// } // renameFile
+//
+//
+//
+// function sendRenameFile(e) {
+//     e.stopPropagation();
+//     // var $popup = $(e.target).closest('.popup_content');
+//     var newFilename = $('#lzy-edit-rename-file').val();
+//     console.log(filename);
+//     $.ajax({
+//         type: "POST",
+//         url: systemPath + '_ajax_server.php?renamefile',
+//         data: { lzy_filename: filename, lzy_newName: newFilename},
+//         // data: { lzy_filename: pagePath + filename, lzy_newName: newFilename},
+//         success: function( data ) {
+//             // console.log('renameFile returned');
+//             console.log(data);
+//             lzyReload();
+//         }
+//     });
+// } // sendRenameFile
+//
+//
+//
+// function newFile() {
+//     $('#lzy-edit-new-filename-container').popup({autoopen: true, closebutton:true});
+//     $('#lzy-edit-new-filename-confirm').click(function(e) {
+//         sendNewFile(e.target);
+//     });
+//     setTimeout(function() { $('#lzy-edit-new-filename').focus(); }, 100);
+//     $('#lzy-edit-new-filename').keydown( function (e) {
+//         if (e.which == 13) {
+//             sendNewFile(e.target);
+//         }
+//     });
+// } // newFile
+//
+//
+//
+//
+// function sendNewFile(target) {
+//     var $popup = $(target).closest('.popup_content');
+//     $popup.attr('aria-hidden', false);
+//     var filename = $('#lzy-edit-new-filename').val();
+//     console.log(filename);
+//     $.ajax({
+//         type: "POST",
+//         url: systemPath + '_ajax_server.php?newfile',
+//         data: { lzy_filename: pagePath + filename },
+//         success: function( data ) {
+//             lzyReload();
+//         }
+//     });
+// } // sendNewFile
+//
 
 
 
@@ -286,7 +287,7 @@ function startSitemapEditor() {
     // origText = $edWrapper.html();
     var $edWrapper0 = $('#lzy-editor-dock-wrapper');
     $edWrapper0.show();
-    $edWrapper0.draggable({ handle: ".editor-toolbar" }).resizable();    // using jQueryIU
+    $edWrapper0.draggable({ handle: '.editor-toolbar' }).resizable();    // using jQueryIU
 
     $edWrapper = $('#lzy-editor-dock');
     $edWrapper.html('').addClass('lzy-edit-sitemap');

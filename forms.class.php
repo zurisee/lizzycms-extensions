@@ -3,6 +3,7 @@
  *	Lizzy - forms rendering module
 */
 
+define('UPLOAD_SERVER', '~sys/_upload_server.php');
 define('CSV_SEPARATOR', ',');
 define('CSV_QUOTE', 	'"');
 define('DATA_EXPIRATION_TIME', false);
@@ -394,7 +395,7 @@ EOT;
     {
         $inx = $this->inx;
 		$id = "lzy-upload-label$inx";
-		$server = isset($this->args['server']) ? $this->args['server'] : '~sys/file-upload/_upload_server.php';
+		$server = isset($this->args['server']) ? $this->args['server'] : UPLOAD_SERVER;
 		$multiple = $this->currRec->multiple ? 'multiple' : '';
 
         $targetPath = fixPath($this->currRec->uploadPath);

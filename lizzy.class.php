@@ -242,6 +242,7 @@ class Lizzy
 
 		$accessGranted = $this->checkAdmissionToCurrentPage();   // override page with login-form if required
 
+        $this->injectAdminCss();
         $this->setTransvars1();
 
         if ($accessGranted) {
@@ -484,7 +485,7 @@ class Lizzy
             return;
         }
 
-        if ($this->auth->getLoggedInUser()) {   // signal in body tag class whether user is logged in
+        if ($this->auth->getLoggedInUser(true)) {   // signal in body tag class whether user is logged in
             $this->page->addBodyClasses('lzy-user-logged-in');  // if user is logged in, there's no need for login form
             return;
         }
@@ -755,6 +756,21 @@ class Lizzy
 
 
 
+
+    //....................................................
+    private function injectAdminCss()
+    {
+        if ($this->auth->checkGroupMembership('admins') ||
+            $this->auth->checkGroupMembership('editors') ||
+            $this->auth->checkGroupMembership('fileadmins')) {
+                $this->page->addCssFiles('~sys/css/_admin.css');
+        }
+
+    } // injectAdminCss
+
+
+
+
     //....................................................
 	private function setTransvars1()
 	{
@@ -781,6 +797,14 @@ EOT;
             $this->trans->addVariable('lzy-config--open-button', "<a class='lzy-config-button' href='$url?config'>{{ lzy-config-button }}</a>", false);
         }
 
+//        if ($this->auth->isAdmin()) {
+        if ($this->auth->checkGroupMembership('fileadmins')) {
+            $url = $GLOBALS["globalParams"]["pageUrl"];
+            $this->trans->addVariable('lzy-fileadmin-button', "<button class='lzy-fileadmin-button' title='{{ lzy-fileadmin-button-tooltip }}'><span class='lzy-icon-docs'></span>{{^ lzy-fileadmin-button-text }}</button>", false);
+            $uploader = $this->injectUploader($this->pagePath);
+            $this->page->addBodyEndInjections($uploader);
+        }
+
         $this->trans->addVariable('pageUrl', $this->pageUrl);
         $this->trans->addVariable('appRoot', $this->pathToRoot);			// e.g. '../'
         $this->trans->addVariable('systemPath', $this->systemPath);		// -> file access path
@@ -804,16 +828,16 @@ EOT;
             $supportedLanguages = explode(',', str_replace(' ', '', $this->config->site_supportedLanguages ));
             $out = '';
             foreach ($supportedLanguages as $lang) {
-                if ($lang == $this->config->lang) {
-                    $out .= "<span class='active-lang $lang'>{{ select $lang }}</span>";
+                if ($lang === $this->config->lang) {
+                    $out .= "<span class='lzy-lang-elem lzy-active-lang $lang'>{{ lzy-lang-select $lang }}</span>";
                 } else {
-                    $out .= "<span class='$lang'><a href='?lang=$lang'>{{ select $lang }}</a></span>";
+                    $out .= "<span class='lzy-lang-elem $lang'><a href='?lang=$lang'>{{ lzy-lang-select $lang }}</a></span>";
                 }
             }
-            $out = "<div class='lang-selection'>$out</div>";
-            $this->trans->addVariable('lang-selection', $out);
+            $out = "<div class='lzy-lang-selection'>$out</div>";
+            $this->trans->addVariable('lzy-lang-selection', $out);
         } else {
-            $this->trans->addVariable('lang-selection', '');
+            $this->trans->addVariable('lzy-lang-selection', '');
         }
         $this->trans->addVariable('lzy-version', getGitTag());
 
@@ -847,10 +871,16 @@ EOT;
             $this->trans->addVariable('page_path_class', 'path_'.$pagePathClass);   // just for compatibility
             $this->page->addBodyClasses("page_$pageName path_$pagePathClass");
             if ($this->config->isPrivileged) {
-                $this->page->addBodyClasses("privileged");
+                $this->page->addBodyClasses("lzy-privileged");
             }
             if ($this->auth->isAdmin()) {
-                $this->page->addBodyClasses("admin");
+                $this->page->addBodyClasses("lzy-admin");
+            }
+            if ($this->auth->checkGroupMembership('editors')) {
+                $this->page->addBodyClasses("lzy-editor");
+            }
+            if ($this->auth->checkGroupMembership('fileadmins')) {
+                $this->page->addBodyClasses("lzy-fileadmin");
             }
 		}
         setStaticVariable('pageName', $pageName);
@@ -859,8 +889,30 @@ EOT;
 
 
 
+    private function injectUploader($filePath)
+    {
+        require_once SYSTEM_PATH.'file_upload.class.php';
 
-	//....................................................
+//        $_SESSION['lizzy'][$filePath]['uploadPath'] = $this->page->config->path_pagesPath.$filePath;
+        $rec = [
+            'uploadPath' => $this->page->config->path_pagesPath.$filePath,
+            'pagePath' => $GLOBALS['globalParams']['pagePath'],
+            'pathToPage' => $GLOBALS['globalParams']['pathToPage'],
+            'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
+            'user'      => $_SESSION["lizzy"]["user"],
+        ];
+        $tick = new Ticketing();
+        $ticket = $tick->createTicket($rec, 25);
+
+        $uploader = new FileUpload($this, $ticket);
+        $uploaderStr = $uploader->render($filePath);
+        return $uploaderStr;
+//        return $uploader->render($filePath);
+    }
+
+
+
+    //....................................................
 	private function warnOnErrors()
     {
         global $globalParams;
@@ -1506,7 +1558,7 @@ EOT;
         if (getUrlArg('list')) {    // list
             $str = $this->trans->renderAllTranslationObjects();
             $this->page->addOverlay($str, false, false);
-            $this->page->addCssFiles('~sys/css/admin.css');
+//            $this->page->addCssFiles('~sys/css/admin.css');
 		}
 
 
@@ -1733,6 +1785,7 @@ EOT;
         $out .= "&rarr; Default values in (), values deviating from defaults are marked <span class='lzy-config-viewer-hl'>red</span>)</p>\n";
         $out .= "<p class='lzy-config-select'>Select: <a href='$url?config=1'$level1Class>Essential</a> | <a href='$url?config=2'$level2Class>Common</a> | <a href='$url?config=3'$level3Class>All</a></p>\n";
         $out .= "  <form class='lzy-config-form' action='$url?config=$level' method='post'>\n";
+        $out .= "    <input class='lzy-button' type='submit' value='{{ lzy-config-save }}'>";
 
         $i = 1;
         foreach ($configItems as $key => $rec) {
