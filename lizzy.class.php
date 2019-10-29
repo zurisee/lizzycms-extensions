@@ -797,10 +797,12 @@ EOT;
             $this->trans->addVariable('lzy-config--open-button', "<a class='lzy-config-button' href='$url?config'>{{ lzy-config-button }}</a>", false);
         }
 
-        if ($this->auth->checkGroupMembership('fileadmins')) {
+        if ($this->config->admin_enableFileManager && $this->auth->checkGroupMembership('fileadmins')) {
             $this->trans->addVariable('lzy-fileadmin-button', "<button class='lzy-fileadmin-button' title='{{ lzy-fileadmin-button-tooltip }}'><span class='lzy-icon-docs'></span>{{^ lzy-fileadmin-button-text }}</button>", false);
             $uploader = $this->injectUploader($this->pagePath);
             $this->page->addBodyEndInjections($uploader);
+        } else {
+            $this->trans->addVariable('lzy-fileadmin-button', "", false);
         }
 
         $this->trans->addVariable('pageUrl', $this->pageUrl);

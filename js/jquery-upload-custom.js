@@ -177,9 +177,20 @@ $(function () {
     'use strict';
 
     $('.lzy-fileadmin-button').click(function () {
-        initFileManager();
+        if (!$( this ).hasClass('lzy-fileadmin-initialized')) {
+            $( this ).addClass('lzy-fileadmin-initialized');
+            initFileManager();
+        }
 
-        $('.lzy-file-uploader').toggleClass('lzy-open');
+        if ($('.lzy-file-uploader').hasClass('lzy-open')) {
+            $( this ).attr('aria-expanded', 'false')
+            $( 'span', this ).removeClass('lzy-negate');
+            $('.lzy-file-uploader').removeClass('lzy-open');
+        } else {
+            $( this ).attr('aria-expanded', 'true')
+            $( 'span', this ).addClass('lzy-negate');
+            $('.lzy-file-uploader').addClass('lzy-open');
+        }
         setTimeout(function () {
             $([document.documentElement, document.body]).animate({
                 scrollTop: $(".lzy-file-uploader-wrapper").offset().top
@@ -187,4 +198,5 @@ $(function () {
         }, 400);
     });
 });
+
 

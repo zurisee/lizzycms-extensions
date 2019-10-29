@@ -22,6 +22,7 @@ private $userConfigurableSettingsAndDefaults      = [
     'admin_enableSelfSignUp'            => [false, 'If true, visitors can create a guest account on their own.', 3 ],
     'admin_useRequestRewrite'           => [true, 'If true, assumes web-server supports request-rewrite (i.e. .htaccess).', 3 ],
     'admin_userAllowSelfAdmin'          => [false, 'If true, user can modify their account after they logged in', 3 ],
+    'admin_enableFileManager'           => [true, 'If true, the file-manager (upload, rename, delete) is enabled for privileged users.', 2 ],
 
     'custom_permitUserCode'             => [false, "Only if true, user-provided code can be executed. And only if located in '".USER_CODE_PATH."'", 1 ],
     'custom_permitUserInitCode'         => [false, "Only if true, user-provided init-code can be executed. And only if located in '".USER_CODE_PATH."'", 1 ],
