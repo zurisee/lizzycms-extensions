@@ -1508,6 +1508,10 @@ EOT;
 
 
 
+        if ($filename = getUrlArg('reorg-css', true)) {                                    // reorg-css
+            $this->reorganizeCss($filename);
+        }
+
         if (getUrlArg('unused')) {							        // unused
             $str = $this->trans->renderUnusedVariables();
             $str = "<h1>Unused Variables</h1>\n$str";
@@ -1644,6 +1648,18 @@ EOT;
 
 
     } // handleUrlArgs2
+
+
+
+
+    //....................................................
+    private function reorganizeCss($filename)
+    {
+        require_once SYSTEM_PATH.'reorg_css.class.php';
+        $reo = new ReorgCss($filename);
+        $reo->execute();
+    }
+
 
 
 
