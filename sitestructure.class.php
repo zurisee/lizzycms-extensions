@@ -559,7 +559,7 @@ class SiteStructure
 
     public function clearCache()
     {
-        if (file_exists($this->cacheFile)) {
+        if (isset($this->cacheFile) && file_exists($this->cacheFile)) {
             unlink($this->cacheFile);
         }
     } // clearCache
