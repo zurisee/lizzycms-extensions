@@ -23,7 +23,7 @@ class FileUpload
 //        }
         $html = <<<EOT
 
-<div class="lzy-file-uploader-wrapper">
+<div class="lzy-file-uploader-wrapper lzy-encapsulated">
   <div class="lzy-file-uploader file-uploader container$open">
     <form id="lzy-fileupload" action="" method="POST" enctype="multipart/form-data">
         <input id='lzy-upload-id' type="hidden" name="lzy-upload" value="{$this->ticket}" />
