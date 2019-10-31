@@ -143,18 +143,21 @@ class SCssCompiler
         $targetFile = $toPath . "_$fname.css";
         $t0 = filemtime($file);
         $scssStr = $this->getFile($file);
-        $cssStr = "/**** auto-created from '$file' - do not modify! ****/\n\n";
+        $cssStr = '';
         try {
             $cssStr .= $this->scss->compile($scssStr);
         } catch (Exception $e) {
             fatalError("Error in SCSS-File '$file': " . $e->getMessage(), 'File: ' . __FILE__ . ' Line: ' . __LINE__);
         }
+
+        if (!$this->compiledStylesFilename) {
+            $cssStr = removeCStyleComments($cssStr);
+            $cssStr = removeEmptyLines($cssStr);
+        }
+        $cssStr = "/**** auto-created from '$file' - do not modify! ****/\n\n$cssStr";
+
         file_put_contents($targetFile, $cssStr);
         touchFile($targetFile, $t0);
-
-        if (!$this->config->localCall) {    // remove comments, if not on local host:
-            $cssStr = preg_replace("|\s+/\* .* \*/|m", '', $cssStr);
-        }
 
         if ($includeFile) {                 // assemble all generated CSS, unless its filename started with non-alpha char
             file_put_contents($compiledFilename, $cssStr . "\n\n\n", FILE_APPEND);
