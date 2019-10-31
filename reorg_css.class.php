@@ -52,7 +52,7 @@ class ReorgCss
     }
 
 
-    
+
 
     private function cleanup($styles) {
         foreach ($styles as $key => $rec) {
