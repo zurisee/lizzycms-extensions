@@ -246,4 +246,62 @@ span.lzy-ed-dropdown {/*_admin.css:134*/
           margin-top: 10px;
       }
   }
+
+    .lzy-fileupload-buttons {
+        padding: 10px 0 0 10px;
+    }
+    .lzy-file-uploader {
+        a {
+            color: gray;
+            font-family: helvetica, arial, sans-serif;
+            font-size: 10pt;
+        }
+
+        border: 1px solid #ddd;
+        color: gray;
+        font-family: helvetica, arial, sans-serif;
+        font-size: 10pt;
+
+        .lzy-fileupload-table {
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .lzy-fileupload-fade {
+            &.in {
+                opacity: 1;
+            }
+
+            opacity: 0;
+            -webkit-transition: opacity .15s linear;
+            -o-transition: opacity .15s linear;
+            transition: opacity .15s linear;
+        }
+
+        .lzy-fileupload-table-striped > tbody > tr:nth-child(odd) > td {
+            background-color: #f9f9f9;
+        }
+    }
+
+    .lzy-fileupload-table-striped > tbody > tr:nth-child(odd) > th {
+        background-color: #f9f9f9;
+    }
+
+    .lzy-file-uploader .lzy-fileupload-table > thead > tr > th {
+        padding: 8px;
+        line-height: 1.42857143;
+        vertical-align: top;
+        border-top: 1px solid #ddd;
+    }
+
+    .lzy-fileupload-table > {
+        tbody > tr > th, tfoot > tr > th, thead > tr > td, tbody > tr > td, tfoot > tr > td {
+            padding: 8px;
+            line-height: 1.42857143;
+            vertical-align: top;
+            border-top: 1px solid #ddd;
+        }
+    }
+
 }

@@ -2176,6 +2176,9 @@ EOT;
         return $this->lzyDb;
     }
 
+
+
+
     private function renderUrlArgHelp()
     {
         $overlay = <<<EOT
@@ -2211,14 +2214,6 @@ Unset individually as ?xy=false or globally as ?reset
 </pre>
 EOT;
         // TODO: printall -> add above
-        //<a href='?printall'>?printall</a>	    show all pages in on
-        //<a href='?admin'>?admin</a>		    perform admin tasks
-        //<a href='?localcall'>?localcall=false</a>    to test behavior as if on non-local host
-//            <a href='?unused'>?unused</a>		    show unused variables
-//            <a href='?reset-unused'>?reset-unused</a>       restart monitoring of unused variables
-//            <a href='?remove-unused'>?remove-unused</a>	    remove unused variables
-//            <a href='?touch'>?touch</a>		    emulate touch mode  *)
-//<a href='?notouch'>?notouch</a>	    emulate none-touch mode  *)
         $this->page->addOverlay(['text' => $overlay, 'closable' => 'reload']);
     }
 } // class WebPage

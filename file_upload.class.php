@@ -17,10 +17,6 @@ class FileUpload
     public function render($filePath)
     {
         $open = '';
-// TODO: preset if previously opened:
-//        if (isset($_SESSION['lzy-backend']['dataRef'])) {
-//            $open = ' lzy-open ';
-//        }
         $html = <<<EOT
 
 <div class="lzy-file-uploader-wrapper lzy-encapsulated">
@@ -57,14 +53,14 @@ class FileUpload
                 <input type="text" id="lzy-editor-new-file-input" />
                 <button class="lzy-button" id="lzy-editor-new-file-input-button">{{ lzy-editor-new-file-input-button }}</button>
             </div>
-            <div class="lzy-fileupload-progress fileupload-progress fade">
+            <div class="lzy-fileupload-progress fileupload-progress lzy-fileupload-fade">
                 <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-bar progress-bar-success" style="width:0%;"></div>
                 </div>
                 <div class="progress-extended">&nbsp;</div>
             </div>
         </div>
-        <table role="presentation" class="table table-striped"><tbody class="files"></tbody></table>
+        <table role="presentation" class="lzy-fileupload-table lzy-fileupload-table-striped"><tbody class="files"></tbody></table>
     </form>
 
   </div> <!-- /lzy-file-uploader container-->
@@ -104,7 +100,7 @@ class FileUpload
     <!-- The template to display files available for upload -->
     <script id="template-upload" type="text/x-tmpl">
       {% for (var i=0, file; file=o.files[i]; i++) { %}
-          <tr class="template-upload fade">
+          <tr class="template-upload lzy-fileupload-fade">
               <td>
                   <span class="preview"></span>
               </td>
@@ -141,7 +137,7 @@ class FileUpload
     <!-- The template to display files available for download -->
     <script id="template-download" type="text/x-tmpl">
       {% for (var i=0, file; file=o.files[i]; i++) { %}
-          <tr class="template-download fade">
+          <tr class="template-download lzy-fileupload-fade">
               <td>
                   <span class="preview">
                       {% if (file.thumbnailUrl) { %}
