@@ -88,6 +88,9 @@ $xCorr: 1.8em;
 
 
 // === Generic Nav ===================
+.lzy-nav-wrapper {
+    position: relative;
+}
 #lzy .lzy-nav-wrapper {
     .lzy-nav-menu-button {
         display: none;
