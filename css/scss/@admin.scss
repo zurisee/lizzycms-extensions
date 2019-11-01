@@ -184,12 +184,18 @@
       position: relative;
       overflow: hidden;
       margin: 0 20px;
-      padding: 20px;
+      padding: 0;
       background: white;
   }
   .lzy-file-uploader.lzy-file-uploader.lzy-file-uploader {
       margin-top: -50em;
       transition: margin-top 0.4s;
+      padding: 10px;
+      background: #fefff8;
+      border: 1px solid #829220;
+      &, .lzy-button, a {
+        color: #829220;
+      }
 
       &.lzy-open {
           margin-top: 0;
