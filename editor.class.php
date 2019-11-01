@@ -63,10 +63,9 @@ class ContentEditor
     private function loadEditorButtons()
     {
         $buttons = <<<EOT
-                    <button class="lzy-files-btn" title='{{ Save }}'><img src='~sys/rsc/folder.png' alt='{{ Save }}' /></button>
-                    <button class="lzy-save-btn" title='{{ Save }}'><img src='~sys/rsc/save.png' alt='{{ Save }}' /></button>
-                    <button class="lzy-done-btn" title='{{ Done }}'><img src='~sys/rsc/done.png' alt='{{ Done }}' /></button>
-                    <button class="lzy-cancel-btn" title='{{ Cancel }}'><img src='~sys/rsc/cancel.png' alt='{{ Cancel }}' /></button>
+                    <button class="lzy-cancel-btn" title='{{ Cancel }}'><span class="lzy-icon-cancel"></span></button>
+                    <button class="lzy-save-btn" title='{{ Save }}'><span class="lzy-icon-save"></span></button>
+                    <button class="lzy-done-btn" title='{{ Done }}'><span class="lzy-icon-ok"></span></button>
 
 EOT;
 
@@ -77,7 +76,7 @@ EOT;
 $buttons
                 </div>
                 <textarea class="lzy-editor">@data</textarea>
-                <div class="lzy-edit-btns2 lzy-edit-btns2">
+                <div class="lzy-edit-btns lzy-edit-btns2">
 $buttons
                 </div><!-- /lzy-edit-btns -->
             </div><!-- /lzy-editing-html -->
