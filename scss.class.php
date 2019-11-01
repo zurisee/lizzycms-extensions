@@ -18,6 +18,7 @@ class SCssCompiler
     public function __construct( $lzy )
     {
         $this->config = $lzy->config;
+        $this->page = $lzy->page;
         $this->fromFiles = $lzy->config->path_stylesPath;
         $this->sysCssFiles = $lzy->config->systemPath.'css/';
         $this->isPrivileged = $lzy->config->isPrivileged;
@@ -52,6 +53,15 @@ class SCssCompiler
 
         // system styles:
         $compiledFilename = $this->sysCssFiles.$this->compiledSysStylesFilename;
+        if (!is_writable($this->sysCssFiles.'scss/')) {
+            $this->page->addMessage("Warning: unable to update system style files");
+            if ($namesOfCompiledFiles) {
+                writeLog("SCSS files compiled: " . rtrim($namesOfCompiledFiles, ', '));
+            }
+            writeLog("Warning: failed to update css files in ".$this->sysCssFiles.'scss/');
+            return $namesOfCompiledFiles;
+        }
+
         $files = getDir($this->sysCssFiles.'scss/*.scss');
         $mustCompile = $this->checkUpToDate($this->sysCssFiles, $files, $compiledFilename);
         if ($mustCompile) {
