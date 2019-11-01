@@ -53,18 +53,20 @@ class SCssCompiler
 
         // system styles:
         $compiledFilename = $this->sysCssFiles.$this->compiledSysStylesFilename;
-        if (!is_writable($this->sysCssFiles.'scss/')) {
-            $this->page->addMessage("Warning: unable to update system style files");
-            if ($namesOfCompiledFiles) {
-                writeLog("SCSS files compiled: " . rtrim($namesOfCompiledFiles, ', '));
-            }
-            writeLog("Warning: failed to update css files in ".$this->sysCssFiles.'scss/');
-            return $namesOfCompiledFiles;
-        }
 
         $files = getDir($this->sysCssFiles.'scss/*.scss');
         $mustCompile = $this->checkUpToDate($this->sysCssFiles, $files, $compiledFilename);
         if ($mustCompile) {
+            // check whether css/ folder is writable:
+            if (!is_writable($this->sysCssFiles)) {
+                $this->page->addMessage("Warning: unable to update system style files");
+                if ($namesOfCompiledFiles) {
+                    writeLog("SCSS files compiled: " . rtrim($namesOfCompiledFiles, ', '));
+                }
+                writeLog("Warning: failed to update css files in ".$this->sysCssFiles);
+                return $namesOfCompiledFiles;
+            }
+
             file_put_contents($compiledFilename, '');
             foreach ($files as $file) {
                 $namesOfCompiledFiles .= $this->doCompile($this->sysCssFiles, $file, $compiledFilename);
