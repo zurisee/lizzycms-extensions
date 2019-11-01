@@ -355,47 +355,8 @@ div.lzy-editable-hdr {
 	width: 16em;
 }
 
-/* === Module Encapsulation: */
-#lzy .lzy-encapsulated {
-    p,
-    ul,
-    ol,
-    li,
-    div,
-    a,
-    img,
-    input,
-    textarea,
-    select,
-    label,
-    button {
-        margin: 0;
-        padding: 0;
-        width: initial;
-        min-width: initial;
-        max-width: initial;
-        height: initial;
-        min-height: initial;
-        max-height: initial;
-        line-height: initial;
-        border: none;
-        display: block;
-        position: relative;
-        overflow: initial;
-        z-index: initial;
-        list-style: initial;
-        box-sizing: border-box;
-        transform-origin: 50% 50%;
-    }
-    img, 
-    input, 
-    select, 
-    label,
-    a,
-    button {
-    	display: inline-block;
-    }
-}
+// === Module Encapsulation:
+//  "#lzy .lzy-encapsulated" -> definition in file _lizzy/css/scss/@normalize.scss
 
 
 
