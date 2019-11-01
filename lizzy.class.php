@@ -1450,7 +1450,7 @@ EOT;
         $this->page->addCss( $css );
         $this->page->addJq( $jq );
         $this->page->addModules( '~sys/third-party/bcrypt/bcrypt.min.js' );
-        $this->page->addOverlay( $html );
+        $this->page->addOverlay( ['text' => $html, 'closable' => 'reload'] );
         $this->page->setOverlayMdCompile( false );
 
     } // renderPasswordConverter
@@ -1549,7 +1549,7 @@ EOT;
                 $str = "Currently no error log available.";
             }
             $str = "<h1>Error Logs:</h1>\n<pre>$str</pre>";
-            $this->page->addOverlay($str);
+            $this->page->addOverlay(['text' => $str, 'closable' => 'reload']);
         }
 
 
@@ -1557,15 +1557,14 @@ EOT;
         if (getUrlArg('info')) {    // info
             $str = $this->page->renderDebugInfo();
             $str = "<h1>Lizzy System Info</h1>\n".$str;
-            $this->page->addOverlay($str);
+            $this->page->addOverlay(['text' => $str, 'closable' => 'reload']);
 		}
 
 
 
         if (getUrlArg('list')) {    // list
             $str = $this->trans->renderAllTranslationObjects();
-            $this->page->addOverlay($str, false, false);
-//            $this->page->addCssFiles('~sys/css/admin.css');
+            $this->page->addOverlay(['text' => $str, 'closable' => 'reload']);
 		}
 
 
