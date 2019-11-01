@@ -71,7 +71,8 @@ require_once SYSTEM_PATH.'ticketing.class.php';
 
 $globalParams = array(
 	'pathToRoot' => null,			// ../../
-	'pagePath' => null,				// pages/xy/
+	'pageHttpPath' => null,				// pages/xy/
+	'pagePath' => null,				// pages/xy/    -> may differ from pageHttpPath in case 'showThis' is used
     'path_logPath' => null,
 );
 
@@ -84,6 +85,7 @@ class Lizzy
 	private $systemPath = SYSTEM_PATH;
 	private $autoAttrDef = [];
 	public  $pathToRoot;
+	public  $pageHttpPath;
 	public  $pagePath;
 	private $reqPagePath;
 	public  $siteStructure;
@@ -115,10 +117,12 @@ class Lizzy
 			} else {
 				$this->pagePath = $this->siteStructure->currPageRec['folder'];
 			}
-			$globalParams['pagePath'] = $this->pagePath;                    // excludes pages/
 			$this->pathToPage = $this->config->path_pagesPath.$this->pagePath;   //  includes pages/
+			$globalParams['pageHttpPath'] = $this->pageHttpPath;            // excludes pages/, takes showThis into account
+            $globalParams['pagePath'] = $this->pagePath;                    // excludes pages/, takes not showThis into account
 			$globalParams['pathToPage'] = $this->pathToPage;
 			$globalParams['filepathToRoot'] = str_repeat('../', substr_count($this->pathToPage, '/'));
+            $_SESSION['lizzy']['pageHttpPath'] = $this->pageHttpPath;               // for _ajax_server.php and _upload_server.php
             $_SESSION['lizzy']['pagePath'] = $this->pagePath;               // for _ajax_server.php and _upload_server.php
             $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$this->pagePath;
 
@@ -138,6 +142,10 @@ class Lizzy
             $this->pageRelativePath = '';
             $this->pagePath = '';
         }
+
+        $this->handleEditSaveRequests();
+        $this->restoreEdition();  // if user chose to activate a previous edition of a page
+
         $this->trans->addVariable('debug_class', '');   // just for compatibility
         $this->dailyHousekeeping(2);
     } // __construct
@@ -196,20 +204,6 @@ class Lizzy
         }
 
         $this->handleUrlArgs();
-
-        $this->saveEdition();  // if user chose to activate a previous edition of a page
-
-        $cliarg = getCliArg('lzy-compile');
-        if ($cliarg) {
-            $this->savePageFile();
-            $this->renderMD();  // exits
-
-        }
-
-        $cliarg = getCliArg('lzy-save');
-        if ($cliarg) {
-            $this->saveSitemapFile($this->config->site_sitemapFile); // exits
-        }
 
         $this->scss = new SCssCompiler($this);
         $this->scss->compile( $this->config->debug_forceBrowserCacheUpdate );
@@ -532,12 +526,13 @@ class Lizzy
     private function analyzeHttpRequest()
     {
     // appRoot:         path from docRoot to base folder of app, mostly = ''; appRoot == '~/'
+    // pageHttpPath:        forward-path from appRoot to requested folder, e.g. 'contact/ (-> excludes pages/)
     // pagePath:        forward-path from appRoot to requested folder, e.g. 'contact/ (-> excludes pages/)
     // pathToPage:      filesystem forward-path from appRoot to requested folder, e.g. 'pages/contact/ (-> includes pages/)
     // pathToRoot:      upward-path from requested folder to appRoot, e.g. ../
     // redirectedPath:  if requests get redirected by .htaccess, this is the skipped folder(s), e.g. 'now_active/'
 
-    // $globalParams:   -> pagePath, pathToRoot, redirectedPath
+    // $globalParams:   -> pageHttpPath, pagePath, pathToRoot, redirectedPath
     // $_SESSION:       -> userAgent, pageName, currPagePath, lang
 
         global $globalParams, $pathToRoot;
@@ -553,9 +548,9 @@ class Lizzy
         $redirectedPath = ($h = substr($scriptPath, strlen($appRoot))) ? $h : '';
         $requestedPath  = dir_name($requestUri);
         $ru = preg_replace('/\?.*/', '', $requestUri); // remove opt. '?arg'
-        $requestedPagePath = dir_name(substr($ru, strlen($appRoot)));
-        if ($requestedPagePath == '.') {
-            $requestedPagePath = '';
+        $requestedpageHttpPath = dir_name(substr($ru, strlen($appRoot)));
+        if ($requestedpageHttpPath == '.') {
+            $requestedpageHttpPath = '';
         }
 
         // if operating without request-rewrite, we rely on page request being transmitted in url-arg 'lzy':
@@ -563,24 +558,27 @@ class Lizzy
             $requestedPath = $_GET['lzy'];
         }
         if (strpos($requestedPath, $appRoot) === 0) {
-            $pagePath = substr($requestedPath, strlen($appRoot));
+            $pageHttpPath = substr($requestedPath, strlen($appRoot));
         } else {
-            $pagePath = $requestedPath;
+            $pageHttpPath = $requestedPath;
         }
 
-        $pagePath0      = $pagePath;
-        $pagePath       = strtolower($pagePath);
+        $pageHttpPath0      = $pageHttpPath;
+        $pageHttpPath       = strtolower($pageHttpPath);
         if ($this->config->feature_filterRequestString) {
             // Example: abc[2]/
-            $pagePath = preg_replace('/[^a-z_-]+ \w* [^a-z_-]+/ix', '', rtrim($pagePath, '/')).'/';
+            $pageHttpPath = preg_replace('/[^a-z_-]+ \w* [^a-z_-]+/ix', '', rtrim($pageHttpPath, '/')).'/';
         }
-        $pathToRoot = str_repeat('../', sizeof(explode('/', $requestedPagePath)) - 1);
-        $globalParams['pagePath'] = $pagePath;
+        $pathToRoot = str_repeat('../', sizeof(explode('/', $requestedpageHttpPath)) - 1);
+        $globalParams['pagePath'] = null;
+        $globalParams['pageHttpPath'] = $pageHttpPath;
         $globalParams['pagesFolder'] = $this->config->path_pagesPath;
-        $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;
+//        $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;//???
+        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
         $globalParams['dataPath'] = $this->config->site_dataPath;
 
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
+        $this->pageHttpPath = $pageHttpPath;
         $this->pathToRoot = $pathToRoot;
         $this->config->pathToRoot = $pathToRoot;
         $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
@@ -592,10 +590,10 @@ class Lizzy
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
         $globalParams['absAppRootUrl'] = $globalParams["host"] . substr($appRoot, 1);  // path from FS root to base folder of app, e.g. /Volumes/...
 
-        $pagePath = $this->auth->handleAccessCodeInUrl( $pagePath0 );
+        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath0 );
 
-        if (!$pagePath) {
-            $pagePath = './';
+        if (!$pageHttpPath) {
+            $pageHttpPath = './';
         }
 
 
@@ -635,13 +633,16 @@ class Lizzy
         $globalParams['legacyBrowser'] = $this->config->isLegacyBrowser;
 
 
-        $this->reqPagePath = $pagePath;
+        $this->reqPagePath = $pageHttpPath; //???ok
         $globalParams['appRoot'] = $appRoot;  // path from docRoot to base folder of app, e.g. 'on/'
         $globalParams['redirectedPath'] = $redirectedPath;  // the part that is optionally skippped by htaccess
         $globalParams['localCall'] = $this->localCall;
 
-        $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php -> temporaty, corrected later in rendering when sitestruct has been analyzed
-        $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$pagePath;
+//        $_SESSION['lizzy']['pagePath'] = $pagePath;     // for _upload_server.php -> temporaty, corrected later in rendering when sitestruct has been analyzed
+        $_SESSION['lizzy']['pagePath'] = $pageHttpPath;     // for _upload_server.php -> temporaty, corrected later in rendering when sitestruct has been analyzed
+        $_SESSION['lizzy']['pageHttpPath'] = $pageHttpPath;     // for _upload_server.php -> temporaty, corrected later in rendering when sitestruct has been analyzed
+//        $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$pagePath;
+        $_SESSION['lizzy']['pathToPage'] = null; //???
         $_SESSION['lizzy']['pagesFolder'] = $this->config->path_pagesPath;
         $baseUrl = $requestScheme.$_SERVER['SERVER_NAME'];
         $_SESSION['lizzy']['appRootUrl'] = $baseUrl.$appRoot; // https://domain.net/...
@@ -700,7 +701,7 @@ class Lizzy
 
 
 	//....................................................
-	private function saveEdition()
+	private function restoreEdition()
 	{
         $admission = $this->auth->checkGroupMembership('editors');
         if (!$admission) {
@@ -711,8 +712,12 @@ class Lizzy
         if ($edSave !== null) {
             require_once SYSTEM_PATH . 'page-source.class.php';
             PageSource::saveEdition();  // if user chose to activate a previous edition of a page
+
+            // need to compile the restored page:
+            $this->scss = new SCssCompiler($this);
+            $this->scss->compile( $this->config->debug_forceBrowserCacheUpdate );
         }
-    } // saveEdition
+    } // restoreEdition
 
 
 
@@ -2215,6 +2220,24 @@ Unset individually as ?xy=false or globally as ?reset
 EOT;
         // TODO: printall -> add above
         $this->page->addOverlay(['text' => $overlay, 'closable' => 'reload']);
+    }
+
+
+
+
+    private function handleEditSaveRequests()
+    {
+        $cliarg = getCliArg('lzy-compile');
+        if ($cliarg) {
+            $this->savePageFile();
+            $this->renderMD();  // exits
+
+        }
+
+        $cliarg = getCliArg('lzy-save');
+        if ($cliarg) {
+            $this->saveSitemapFile($this->config->site_sitemapFile); // exits
+        }
     }
 } // class WebPage
 
