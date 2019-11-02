@@ -2207,6 +2207,8 @@ Available URL-commands:
 <a href='?logout'>?logout</a>		    logout
 <a href='?mobile'>?mobile</a>,<a href='?touch'>?touch</a>,<a href='?notouch'>?notouch</a>	emulate modes  *)
 <a href='?nc'>?nc</a>		    supress caching (?nc=false to enable caching again)  *)
+<a href='?print'>?print</a>		    starts printing mode and launches the printing dialog
+<a href='?print-preview'>?print-preview</a>      presents the page in print-view mode    
 <a href='?purge'>?purge</a>		    empty and delete all recycle bins (i.e. copies of modified pages)
 <a href='?reorg-css='>?reorg-css={file(s)}</a>take CSS file(s) and convert to SCSS (e.g. "?reorg-css=tmp/*.css")
 <a href='?reset'>?reset</a>		    clear cache, session-variables and error-log
