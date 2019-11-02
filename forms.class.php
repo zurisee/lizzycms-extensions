@@ -401,7 +401,7 @@ EOT;
             return $str;
         }
 
-        
+
         $inx = $this->inx;
 		$id = "lzy-upload-elem$inx";
 		$server = isset($this->args['server']) ? $this->args['server'] : UPLOAD_SERVER;
