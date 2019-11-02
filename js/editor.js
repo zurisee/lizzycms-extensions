@@ -23,7 +23,7 @@ function prepareEditing()
 {
     $('.lzy-edit-sitemap').prepend('<button class="lzy-editor-btn"><span class=\'lzy-icon-edit\'></span></button>');
     $('body').addClass('lzy-editor-mode');
-    $('#lzy-logged-in-user > a.lzy-toggle-edit-mode > span').addClass('lzy-negate');
+    $('.lzy-logged-in-user > a.lzy-toggle-edit-mode > span').addClass('lzy-negate');
 } // prepareEditing
 
 
