@@ -864,7 +864,11 @@ EOT;
 		} else {
 			$title = $this->trans->getVariable('page_title');
 			$pageName = $this->siteStructure->currPageRec['name'];
-			$title = preg_replace('/\$page_name/', $pageName, $title);
+			if ($this->siteStructure->currPageRec["folder"] === '') {   // Homepage: just show site title
+                $title = $this->trans->getVariable('site_title');
+            } else {
+                $title = preg_replace('/\$page_name/', $pageName, $title);
+            }
 			$this->trans->addVariable('page_title', $title, false);
 			$this->trans->addVariable('page_name', $pageName, false);
 		}
