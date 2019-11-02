@@ -16,7 +16,7 @@
 
 /* global $, window */
 
-function createFile(ticket, url)
+function createFile(ticket)
 {
     var fname = $('#lzy-editor-new-file-input').val();
     if (!fname) {
@@ -24,7 +24,7 @@ function createFile(ticket, url)
         return;
     }
     $.ajax({
-        url: url,
+        url: serverUrl,
         method: 'POST',
         data: { 'lzy-upload': ticket, 'lzy-cmd': 'new-file', 'lzy-file-name': fname },
         dataType: 'json',
@@ -33,6 +33,7 @@ function createFile(ticket, url)
         lzyReload();
     });
 }
+
 
 
 function deleteFiles()
@@ -57,12 +58,14 @@ function deleteFiles()
     }
 }
 
+
+
 function deleteFile( file )
 {
     console.log( 'deleting file: ' + file );
     var ticket = $('#lzy-upload-id').val();
     $.ajax({
-        url: $('#lzy-fileupload').fileupload('option', 'url'),
+        url: serverUrl,
         method: 'POST',
         data: { 'lzy-upload': ticket, 'lzy-delete-file': file},
         dataType: 'json',
@@ -72,12 +75,13 @@ function deleteFile( file )
 }
 
 
-function renameFile( ref ) {
+
+function renameFile( ref )
+{
     var file = $(ref).attr('data-url');
     file = file.replace(/^.*file=/, '');
     file = decodeURI(file);
 
-    // $(ref).closest('tr').after('<tr><td><input type="text" /></td><td></td><td></td><td></td><td></td></tr>');
     var $elem = $('td:nth-child(2)', $(ref).closest('tr'));
     var content = $elem.text().trim();
     content = '<p>' + content + '<br><input id="lzy-editor-rename-to" type="text" /> <button id="lzy-editor-rename-submit" class="lzy-button" title="rename now"><span class="lzy-icon-ok"></span></button></p>';
@@ -95,12 +99,14 @@ function renameFile( ref ) {
     });
 }
 
+
+
 function doRenameFile(origName, newName)
 {
-console.log('rename: ' + origName);
+    console.log('rename: ' + origName);
     var ticket = $('#lzy-upload-id').val();
     $.ajax({
-        url: $('#lzy-fileupload').fileupload('option', 'url'),
+        url: serverUrl,
         method: 'POST',
         data: { 'lzy-upload': ticket, 'lzy-rename-file': origName, 'to': newName },
         dataType: 'json',
@@ -116,24 +122,20 @@ function initFileManager()
 {
     'use strict';
 
-    var serverUrl = appRoot+'_lizzy/_upload_server.php';
-
     $('#lzy-fileupload').fileupload({
         url: serverUrl
     });
 
     $('#lzy-fileupload').addClass('fileupload-processing');
 
-    var url = $('#lzy-fileupload').fileupload('option', 'url');
     var ticket = $('#lzy-upload-id').val();
 
     $.ajax({
-        url: $('#lzy-fileupload').fileupload('option', 'url'),
-        // method: 'POST',
-        data: { 'lzy-upload': ticket},
-        dataType: 'json',
-        context: $('#lzy-fileupload')[0]
-    })
+			url: serverUrl,
+			data: { 'lzy-upload': ticket},
+			dataType: 'json',
+			context: $('#lzy-fileupload')[0]
+		})
         .always(function(result) {
             $(this).removeClass('fileupload-processing');
         })
@@ -148,34 +150,42 @@ function initFileManager()
                 $( this ).next().prop( 'checked', true );
                 deleteFiles();
             });
-        });
+    });
 
+	// button 'new file':
     $('.lzy-editor-new-file').click(function (e) {
-        // e.preventDefault();
         $('#lzy-editor-new-file-name-box').show();
     });
+
+	// button 'create file':
     $('#lzy-editor-new-file-input-button').click(function (e) {
         e.preventDefault();
-        createFile(ticket, url);
+        createFile(ticket);
     });
+
+	// input field 'new file' -> trigger on enter-key:
     $('#lzy-editor-new-file-input').keypress(function(event){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode === 13){
             event.preventDefault();
-            createFile(ticket, url);
+            createFile(ticket);
         }
     });
+    
+    // button 'delete files':
     $('.lzy-editor-delete-files').click(function (e) {
         deleteFiles();
     });
+    console.log('file-manager initalized');
 } // initFileManager
 
 
 
-
+//TODO: aria key pressed -> aria-pressed="true"
 $(function () {
     'use strict';
 
+	// button 'open filemanager':
     $('.lzy-fileadmin-button').click(function () {
         if (!$( this ).hasClass('lzy-fileadmin-initialized')) {
             $( this ).addClass('lzy-fileadmin-initialized');

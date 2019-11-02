@@ -7,6 +7,7 @@ define('UPLOAD_SERVER', '~sys/_upload_server.php');
 define('CSV_SEPARATOR', ',');
 define('CSV_QUOTE', 	'"');
 define('DATA_EXPIRATION_TIME', false);
+define('THUMBNAIL_PATH', 	'_/thumbnails/');
 
 mb_internal_encoding("utf-8");
 
@@ -393,8 +394,12 @@ EOT;
 //-------------------------------------------------------------
     private function renderFileUpload()
     {
+        if ($this->transvar->config->admin_enableFileManager) {
+            $str = "<button class='lzy-form-file-upload-label lzy-button'><span class='lzy-icon-error' title='Upload() not working while Lizzy&quot;s file-manager is active.'></span>{{ Upload File(s) }}</button>";
+            return $str;
+        }
         $inx = $this->inx;
-		$id = "lzy-upload-label$inx";
+		$id = "lzy-upload-elem$inx";
 		$server = isset($this->args['server']) ? $this->args['server'] : UPLOAD_SERVER;
 		$multiple = $this->currRec->multiple ? 'multiple' : '';
 
@@ -406,6 +411,7 @@ EOT;
         $rec = [
             'uploadPath' => $targetFilePath,
             'pagePath' => $GLOBALS['globalParams']['pagePath'],
+            'pathToPage' => $GLOBALS['globalParams']['pathToPage'],
             'appRootUrl' => $GLOBALS['globalParams']['absAppRootUrl'],
             'user'      => $_SESSION["lizzy"]["user"],
         ];
@@ -413,16 +419,17 @@ EOT;
         $this->ticket = $tick->createTicket($rec, 25);
 
 
+        $thumbnailPath = THUMBNAIL_PATH;
         $list = "\t<div class='lzy-uploaded-files-title'>{{ lzy-uploaded-files-title }}</div>\n";  // assemble list of existing files
         $list .= "<ul>";
         $dispNo = ' style="display:none;"';
 		if (isset($this->currRec->showExisting) && $this->currRec->showExisting) {
 			$files = getDir($targetFilePath.'*');
 			foreach ($files as $file) {
-				if (is_file($file)) {
+				if (is_file($file) && (fileExt($file) !== 'md')) {
 					$file = basename($file);
 					if (preg_match("/\.(jpe?g|gif|png)$/i", $file)) {
-						$list .= "<li><span>$file</span><span><img src='{$targetPathHttp}thumbnail/$file'></span></li>";
+						$list .= "<li><span>$file</span><span><img src='$targetPathHttp$thumbnailPath$file' alt=''></span></li>";
 					} else {
 						$list .= "<li><span>$file</span></li>";
 					}
@@ -433,8 +440,7 @@ EOT;
         $list .= "</ul>\n";
 
 		$labelClass = $this->currRec->labelClass;
-		$out = '';
-        $out .= <<<EOT
+        $out = <<<EOT
             <div class="lzy-upload-wrapper">
                 <input type="hidden" name="lzy-upload" value="{$this->ticket}" />
                 <label class="$id lzy-form-file-upload-label $labelClass" for="$id">{$this->currRec->label}</label>
@@ -442,7 +448,7 @@ EOT;
     
                 <div class='lzy-form-progress-indicator lzy-form-progress-indicator$inx' style="display: none;">
                     <progress id="lzy-progressBar$inx" class="lzy-form-progressBar" max='100' value='0'>
-                        <div id="lzy-form-progressBarFallback1-$inx"><span id="lzy-form-progressBarFallback2-$inx">&#160;</span></div>
+                        <span id="lzy-form-progressBarFallback1-$inx"><span id="lzy-form-progressBarFallback2-$inx">&#160;</span></span>
                     </progress>
                     <div><span aria-live="polite" id="lzy-form-progressPercent$inx" class="lzy-form-progressPercent"></span></div>
                 </div>
@@ -451,11 +457,19 @@ EOT;
 
 EOT;
 
+        if (!isset($this->uploadInitialized)) {
+            $js = <<<EOT
+var lzyD = new Date();
+var lzyT0 = lzyD.getTime();
+
+EOT;
+            $this->page->addJs($js);
+            $this->uploadInitialized = true;
+        }
 		$jq = <<<EOT
 
-	var d = new Date();
-	var t = d.getTime();
 	$('#$id').fileupload({
+	    url: '$server',
 		dataType: 'json',
 		
 		progressall: function (e, data) {
@@ -463,10 +477,10 @@ EOT;
 		    $('.lzy-form-progress-indicator$inx').show();
 			var progress = parseInt(data.loaded / data.total * 100, 10);
 			$('#lzy-progressBar$inx').val(progress);
-			var d = new Date();
-			t1 = d.getTime();
-			if (((t1 - t) > 500) && (progress < 100)) {
-				t = t1;
+			var lzyD = new Date();
+			var lzyT1 = lzyD.getTime();
+			if (((lzyT1 - lzyT0) > 500) && (progress < 100)) {
+				lzyT0 = lzyT1;
 				$('#lzy-form-progressPercent$inx').text( progress + '%' );
 			}
 			if (progress == 100) {
@@ -478,7 +492,7 @@ EOT;
 		    mylog('upload accomplished');
 			$.each(data.result.files, function (index, file) {
 				if (file.name.match(/\.(jpe?g|gif|png)$/i)) {
-					var img = '<img src="{$targetPathHttp}thumbnail/' + file.name + '" />';
+					var img = '<img src="$targetPathHttp$thumbnailPath' + file.name + '" alt="" />';
 				} else {
 					var img = '';
 				}
@@ -502,7 +516,8 @@ EOT;
 			$this->page->addJqFiles([
 			    '~sys/third-party/jquery-upload/js/vendor/jquery.ui.widget.js',
                 '~sys/third-party/jquery-upload/js/jquery.iframe-transport.js',
-                '~sys/third-party/jquery-upload/js/jquery.fileupload.js']);
+                '~sys/third-party/jquery-upload/js/jquery.fileupload.js',
+                '~sys/third-party/jquery-upload/js/jquery.fileupload-process.js']);
 		}
 		
         return $out;

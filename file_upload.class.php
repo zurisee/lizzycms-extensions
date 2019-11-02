@@ -13,7 +13,9 @@ class FileUpload
         $this->page = $lzy->page;
         $this->ticket = $ticket;
     } // __construct
-    
+
+
+
     public function render($filePath)
     {
         $open = '';
@@ -21,7 +23,7 @@ class FileUpload
 
 <div class="lzy-file-uploader-wrapper lzy-encapsulated">
   <div class="lzy-file-uploader file-uploader container$open">
-    <form id="lzy-fileupload" action="" method="POST" enctype="multipart/form-data">
+    <form id="lzy-fileupload" action="./" method="POST" enctype="multipart/form-data">
         <input id='lzy-upload-id' type="hidden" name="lzy-upload" value="{$this->ticket}" />
         <div class="row lzy-fileupload-buttonbar fileupload-buttonbar">
             <div class="lzy-fileupload-buttons">
@@ -190,6 +192,7 @@ class FileUpload
 
 EOT;
 
+        $this->page->addJs("var serverUrl = appRoot+'_lizzy/_upload_server.php';\n");
 
         $this->page->addCssFiles([
             '~sys/third-party/blueimp/blueimp-gallery.min.css',
@@ -199,19 +202,23 @@ EOT;
 
         $this->page->addJqFiles([
             "~sys/js/jquery-upload-custom.js",
-            "~sys/third-party/jquery-upload/js/vendor/jquery.ui.widget.js",//
-            "~sys/third-party/blueimp/tmpl.min.js",//
-            "~sys/third-party/blueimp/load-image.all.min.js",//
-            "~sys/third-party/blueimp/canvas-to-blob.min.js",//
-            "~sys/third-party/blueimp/jquery.blueimp-gallery.min.js",//
+            "~sys/third-party/jquery-upload/js/vendor/jquery.ui.widget.js",
+
+            "~sys/third-party/blueimp/tmpl.min.js",
+            "~sys/third-party/blueimp/load-image.all.min.js",
+            "~sys/third-party/blueimp/canvas-to-blob.min.js",
+            "~sys/third-party/blueimp/jquery.blueimp-gallery.min.js",
+
             "~sys/third-party/jquery-upload/js/jquery.iframe-transport.js",
             "~sys/third-party/jquery-upload/js/jquery.fileupload.js",
             "~sys/third-party/jquery-upload/js/jquery.fileupload-process.js",
+
             "~sys/third-party/jquery-upload/js/jquery.fileupload-image.js",
             "~sys/third-party/jquery-upload/js/jquery.fileupload-audio.js",
             "~sys/third-party/jquery-upload/js/jquery.fileupload-video.js",
             "~sys/third-party/jquery-upload/js/jquery.fileupload-validate.js",
-            "~sys/third-party/jquery-upload/js/jquery.fileupload-ui.js"]);
+            "~sys/third-party/jquery-upload/js/jquery.fileupload-ui.js"
+            ]);
 
         return $html;
     } // render

@@ -23,16 +23,21 @@ $this->addMacro($macroName, function () {
     }
     $args = $this->getArgsArray($macroName);
 
+//    if ($this->config->admin_enableFileManager) {
+//        $str = "<button class='lzy-form-file-upload-label lzy-button'><span class='lzy-icon-error' title='Upload() not working while Lizzy&quot;s file-manager is active.'></span>{{ Upload File(s) }}</button>";
+//        return $str;
+//    }
+
     if ($inx == 1) {
 		$this->form = new Forms($this->page, $this);
 	}
 	
-	$args1 = ["type" => "form-head",  "label" => "Lzy Upload Form:"];
+	$args1 = ["type" => "form-head",  "label" => "Lzy Upload Form:", "class" => "lzy-form lzy-files-upload-form$inx"];
 
     // set default upload button label: make dependent on 'multiple':
     if (!$args['label']) {
         if ($args['multiple']) {
-            $args['label'] = '{{ lzy-files-upload-label }}';
+            $args['label'] = '{{ lzy-files-upload-label }}'; // plural
         } else {
             $args['label'] = '{{ lzy-file-upload-label }}';
         }

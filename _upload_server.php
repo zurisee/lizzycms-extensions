@@ -2,8 +2,6 @@
 
 define('SYSTEM_PATH', 		'./');
 define('PATH_TO_APP_ROOT', 	'../');		                            // root folder of web app
-//define('SYSTEM_PATH', 		'../');
-//define('PATH_TO_APP_ROOT', 	'../../');		                            // root folder of web app
 date_default_timezone_set('CET');
 
 error_reporting(E_ALL | E_STRICT);
@@ -128,7 +126,7 @@ $user = $user ? $user : 'anonymous';
 //mylog("_upload_server.php: file received: '$fname' stored in: '$dataPath' from user '$user'");
 
 $upload_handler = new UploadHandler($options);
-
+exit;
 
 
 function getUploadParameters()
