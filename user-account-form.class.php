@@ -834,11 +834,14 @@ EOT;
     private function checkInsecureConnection()
     {
         global $globalParams;
-        $relaxedHosts = $this->config->site_allowInsecureConnectionsTo;
+        $relaxedHosts = str_replace('*', '', $this->config->site_allowInsecureConnectionsTo);
 
         if (!$this->config->isLocalhost && !(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] === 'on')) {
-            $url = str_replace('http://', 'https://', $globalParams['pageUrl']);
-            $this->page->addMessage("{{ Warning insecure connection }}<br />{{ Please switch to }}: <a href='$url'>$url</a>");
+            $url = str_ireplace('http://', 'https://', $globalParams['pageUrl']);
+            $url1 = preg_replace('|https?://|i', '', $globalParams['pageUrl']);
+            if (strpos($url1, $relaxedHosts) !== 0) {
+                $this->page->addMessage("{{ Warning insecure connection }}<br />{{ Please switch to }}: <a href='$url'>$url</a>");
+            }
             return false;
         }
         return true;
