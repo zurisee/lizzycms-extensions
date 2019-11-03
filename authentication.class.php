@@ -699,7 +699,7 @@ class Authentication
 
 
 
-    public function findEmailInEmailList(string $submittedEmail)
+    public function findEmailInEmailList($submittedEmail)
     {
         $found = false;
         $submittedEmail = strtolower($submittedEmail);
@@ -748,9 +748,6 @@ class Authentication
                 $displayName = $this->getDisplayName();
                 $uname = $displayName ? "$uname ($displayName)" : $uname;
                 list($message, $displayName) = $this->sendOneTimeCode($emailRequest, $rec);
-//                $message = $this->sendOneTimeCode($emailRequest, $rec);
-//                writeLog("one time link sent to: $displayName", LOGIN_LOG_FILENAME);
-//                writeLog("one time link sent to: $uname", LOGIN_LOG_FILENAME);
 
                 $res = [false, $message, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
             }
@@ -763,10 +760,7 @@ class Authentication
 
 
 
-    /**
-     * @param $res
-     */
-    private function handleLoginUserNotification($res): void
+    private function handleLoginUserNotification($res)
     {
         if (is_array($res) && isset($res[2])) { // [login/false, message, communication-channel]
             if ($res[2] == 'Overlay') {
