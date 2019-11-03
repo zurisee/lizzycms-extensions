@@ -1124,6 +1124,41 @@ function alphaIndexToInt($str, $headers = false, $ignoreCase = true)
 
 
 
+
+//-----------------------------------------------------------------------
+function setNotificationMsg($msg)
+{
+    // notification message is displayed once on next page load
+    $_SESSION['lizzy']['reload-arg'] = $msg;
+} // setNotificationMsg
+
+
+
+//-----------------------------------------------------------------------
+function getNotificationMsg($clearMsg = true)
+{
+    if (isset($_SESSION['lizzy']['reload-arg'])) {
+        $arg = $_SESSION['lizzy']['reload-arg'];
+        if ($clearMsg) {
+            clearNotificationMsg();
+        }
+    } else {
+        $arg = getUrlArg('reload-arg', true);
+    }
+    return $arg;
+} // getNotificationMsg
+
+
+
+
+//-----------------------------------------------------------------------
+function clearNotificationMsg()
+{
+    unset($_SESSION['lizzy']['reload-arg']);
+} // clearNotificationMsg
+
+
+
 //-----------------------------------------------------------------------
 function getCliArg($argname, $stringMode = false)
 {
@@ -1250,11 +1285,7 @@ function reloadAgent($target = false, $getArg = false)
         $target = $globalParams['pageUrl'];
     }
     if ($getArg) {
-        if (strpos($target, '?') === false) {
-            $target .= "?reload-arg=$getArg";
-        } else {
-            $target .= "&reload-arg=$getArg";
-        }
+        setNotificationMsg($getArg);
     }
     header("Location: $target");
     exit;
@@ -1301,7 +1332,9 @@ function preparePath($path)
     }
 	$path = dirname($path.'x');
     if (!file_exists($path)) {
-        if (!mkdir($path, MKDIR_MASK2, true)) {
+        try {
+            mkdir($path, MKDIR_MASK2, true);
+        } catch (Exception $e) {
             fatalError("Error: failed to create folder '$path'", 'File: '.__FILE__.' Line: '.__LINE__);
         }
     }

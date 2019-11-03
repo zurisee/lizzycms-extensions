@@ -562,35 +562,41 @@ class Lizzy
         } else {
             $pageHttpPath = $requestedPath;
         }
+        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
+        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
+        $globalParams['requestedUrl'] = $requestedUrl;
+        $globalParams['pagePath'] = null;
+        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
 
-        $pageHttpPath0      = $pageHttpPath;
+        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath );
+//        $pageHttpPath0      = $pageHttpPath;
         $pageHttpPath       = strtolower($pageHttpPath);
         if ($this->config->feature_filterRequestString) {
             // Example: abc[2]/
             $pageHttpPath = preg_replace('/[^a-z_-]+ \w* [^a-z_-]+/ix', '', rtrim($pageHttpPath, '/')).'/';
         }
         $pathToRoot = str_repeat('../', sizeof(explode('/', $requestedpageHttpPath)) - 1);
-        $globalParams['pagePath'] = null;
+//        $globalParams['pagePath'] = null;
         $globalParams['pageHttpPath'] = $pageHttpPath;
         $globalParams['pagesFolder'] = $this->config->path_pagesPath;
 //        $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;//???
-        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
+//        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
         $globalParams['dataPath'] = $this->config->site_dataPath;
 
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $this->pageHttpPath = $pageHttpPath;
         $this->pathToRoot = $pathToRoot;
         $this->config->pathToRoot = $pathToRoot;
-        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
+//        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
         $globalParams['host'] = $requestScheme.$_SERVER['HTTP_HOST'].'/';
         $this->pageUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestedPath;
         $globalParams['pageUrl'] = $this->pageUrl;
-        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
-        $globalParams['requestedUrl'] = $requestedUrl;
+//        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
+//        $globalParams['requestedUrl'] = $requestedUrl;
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
         $globalParams['absAppRootUrl'] = $globalParams["host"] . substr($appRoot, 1);  // path from FS root to base folder of app, e.g. /Volumes/...
 
-        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath0 );
+//        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath0 );
 
         if (!$pageHttpPath) {
             $pageHttpPath = './';
@@ -1334,8 +1340,12 @@ EOT;
             $this->auth->logout();
             reloadAgent(false, 'logout-successful'); // reload to get rid of url-arg ?logout
 
-		} elseif (($arg = getUrlArg('reload-arg')) && ($arg === 'logout-successful')) {
-		    $this->page->addMessage('{{ lzy-logout-successful }}');
+		} else {
+            $arg = getNotificationMsg(false);
+            if ($arg && ($arg === 'logout-successful')) {
+                $this->page->addMessage('{{ lzy-logout-successful }}');
+                clearNotificationMsg();
+            }
         }
 
 
@@ -1517,6 +1527,11 @@ EOT;
 
 
 
+        if (getUrlArg('access-link')) {                                    // reorg-css
+            $user = getUrlArg('access-link', true);
+            $this->createAccessLink($user);
+        }
+
         if ($filename = getUrlArg('reorg-css', true)) {                                    // reorg-css
             $this->reorganizeCss($filename);
         }
@@ -1616,6 +1631,26 @@ EOT;
 
 
     } // handleUrlArgs2
+
+
+
+
+    //....................................................
+    private function createAccessLink($user)
+    {
+        if (!$user) {
+            $msg = "# Access Link\n\nPlease supply a user-name.\n\nE.g. ?access-code=user1";
+        } else {
+            $userRec = $this->auth->getUserRec($user);
+            if (!$this->auth->getUserRec($user)) {
+                die("Create Access Link: user unknown: '$user");
+            }
+            $tick = new Ticketing();
+            $code = $tick->createTicket($userRec, 100);
+            $msg = "# Access Link\n\n{$GLOBALS["globalParams"]["pageUrl"]}$code";
+        }
+        $this->page->addOverlay(['text' => $msg, 'closable' => 'reload', 'mdCompile' => true]);
+    } // createAccessLink
 
 
 
@@ -2050,7 +2085,7 @@ EOT;
 
 
     //....................................................
-    private function setLocale(): void
+    private function setLocale()
     {
         $locale = $this->config->site_defaultLocale;
         if (preg_match('/^[a-z]{2}_[A-Z]{2}$/', $locale)) {
@@ -2080,7 +2115,7 @@ EOT;
 
 
 
-    private function renderLoginForm($asPopup = true): string
+    private function renderLoginForm($asPopup = true)
     {
         $accForm = new UserAccountForm($this);
         $html = $accForm->renderLoginForm($this->auth->message, false, true);
@@ -2095,7 +2130,7 @@ EOT;
 
 
 
-    private function handleConfigFeatures(): void
+    private function handleConfigFeatures()
     {
         if ($this->config->feature_touchDeviceSupport) {
             $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
