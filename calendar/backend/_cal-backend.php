@@ -78,13 +78,28 @@ class CalendarBackend {
     public function getData()
     {
         $data = $this->ds->read();
+        $tags = (isset($_GET['tags'])) ? $_GET['tags']: '';
+        if ($tags) {
+            $tags = ',' . str_replace(' ', '', $tags) . ',';
+        }
 
-        // Accumulate an output array of event data arrays.
+
+            // Accumulate an output array of event data arrays.
         $output_arrays = array();
         foreach ($data as $i => $rec) {
 
             // Convert the input array into a useful Event object
             $event = new Event($rec, $this->timezone);
+
+            // check for tags:
+            if ($tags && isset($event['tags']) && $event['tags']) {
+                $eventsTags = explode(',', $event['tags']);
+                foreach ($eventsTags as $evTag) {
+                    if (strpos($tags, $evTag) === false) {
+                        continue;
+                    }
+                }
+            }
 
             // If the event is in-bounds, add it to the output
             if ($event->isWithinDayRange($this->range_start, $this->range_end)) {
@@ -139,6 +154,7 @@ class CalendarBackend {
                     'allDay' => $post['allday'],
                     'location' => $post['location'],
                     'comment' => $post['comment'],
+                    'tags' => $post['tags'],
                 ];
                 if (function_exists('customPrepareData')) {
                     $rec = customPrepareData($rec);
@@ -158,6 +174,7 @@ class CalendarBackend {
                 'end' => trim($endDate.' '.$endTime),
                 'location' => $post['location'],
                 'comment' => $post['comment'],
+                'tags' => $post['tags'],
             ];
             if (function_exists('customPrepareData')) {
                 $rec = customPrepareData($rec);

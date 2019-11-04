@@ -34,9 +34,35 @@ lzy-cal-delete-entry-now:
 
 lzy-cal-modif-entry:
     de: Eintrag ändern
-    _: Modify EEvent
+    _: Modify Event
 
 lzy-cal-new-entry:
     de: Neuer Eintrag
     _: New Event
+
+lzy-cal-event-placeholder:
+    de: Titel
+    _:  title
+
+lzy-cal-location-placeholder:
+    de: Ort
+    _:  Location
+
+lzy-cal-legend-from:
+    de: Von
+    _:  From
+
+lzy-cal-legend-till:
+    de: Bis
+    _:  Till
+
+lzy-cal-tags-all:
+    de: Alle
+    _:  all
+
+lzy-cal-tags-label:
+    de: Kategorie
+    _:  Category
+
+
 

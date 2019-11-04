@@ -32,14 +32,14 @@ $( document ).ready(function() {
                 storeViewMode(inx, view.name);
             },
             dayClick: function (e) {
-                if (typeof openCalPopup != 'undefined') {
+                if (typeof openCalPopup !== 'undefined') {
                     openCalPopup(inx, e);
                 } else {
                     defaultOpenCalPopup(inx, e);
                 }
             },
             eventClick: function (e) {
-                if (typeof openCalPopup != 'undefined') {
+                if (typeof openCalPopup !== 'undefined') {
                     openCalPopup(inx, e);
                 } else {
                     defaultOpenCalPopup(inx, e);
@@ -53,17 +53,21 @@ $( document ).ready(function() {
             },
             eventRender: function (event, element) {
                 // console.log(element);
-                if (typeof event.i != 'undefined') {
+                if (typeof event.i !== 'undefined') {
                     $(element).append('<div class="fc-index">' + event.i + '</div>');
                 }
-                if (typeof event.location != 'undefined') {
+                if (typeof event.location !== 'undefined') {
                     $(element).append('<div class="fc-location">' + event.location + '</div>');
                 }
-                if (typeof event.description != 'undefined') {
+                if (typeof event.description !== 'undefined') {
                     $(element).append('<div class="fc-description">' + event.description + '</div>');
                 }
-                if (typeof event.comment != 'undefined') {
+                if (typeof event.comment !== 'undefined') {
                     $(element).append('<div class="fc-comment">' + event.comment + '</div>');
+                }
+                if (typeof event.tags !== 'undefined') {
+                    $(element).append('<div class="fc-tags">' + event.tags + '</div>');
+                    $(element).addClass(event.tags);
                 }
                 // tooltips
             }
@@ -94,6 +98,7 @@ function calEventChanged(inx, e) {
     rec['end-date'] = end.format('YYYY-MM-DD');
     rec['end-time'] = end.format('HH:mm');
     rec['comment'] = e.comment;
+    rec['tags'] = e.tags;
     rec['allday'] = e.allDay;
 
     var json = JSON.stringify(rec);
@@ -199,6 +204,8 @@ function defaultOpenCalPopup(inx, e) {
         $('#lzy_cal_event_name').val(e.title);
         $('#lzy_cal_event_location').val(e.location);
         $('#lzy_cal_comment').text(e.comment);
+
+        $('#lzy_cal_tags option[value=' + e.tags + ']').attr('selected','selected');
         $('#lzy-rec-id').val(e.i);
 
         $('#lzy_cal_delete_entry').show();

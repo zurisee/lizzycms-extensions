@@ -40,6 +40,8 @@ $this->addMacro($macroName, function () {
 
     $tooltips = $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', '');
 
+    $tags = $this->getArg($macroName, 'tags', 'A (comma separated) list of tags.', '');
+
     if ($source == 'help') {
         return '';
     }
@@ -92,7 +94,8 @@ lzyCal[$inx] = {
 EOT;
     $this->page->addJs($js);
 
-    $popupForm = renderDefaultCalPopUpForm($source);
+    $popupForm = renderDefaultCalPopUpForm($source, $tags);
+//    $popupForm = renderDefaultCalPopUpForm($source);
     if (function_exists('loadCustomCalPopup')) {
         loadCustomCalPopup($inx, $this->lzy, $popupForm, $edPermitted);
 
@@ -109,9 +112,27 @@ EOT;
 
 
 
-function renderDefaultCalPopUpForm($source)
+function renderDefaultCalPopUpForm($source, $tags)
 {
     $backend = CALENDAR_BACKEND;
+
+    $tagsCombo = '';
+    if ($tags) {
+        $tags = explode(',', $tags);
+        foreach ($tags as $tag) {
+            $tag = trim($tag);
+            $value = translateToIdentifier($tag);
+            $tagsCombo .= "\t<option value='$value'>$tag</option>\n";
+        }
+        $tagsCombo = <<<EOT
+<label for="lzy_cal_tags">{{ lzy-cal-tags-label }}</label>
+<select id="lzy_cal_tags" name="tags">
+    <option value="">{{ lzy-cal-tags-all }}</option>
+$tagsCombo
+</select>
+
+EOT;
+    }
 
     // render default popup-form:
     $popupForm = <<<EOT
@@ -129,7 +150,7 @@ function renderDefaultCalPopUpForm($source)
                 <label for='lzy_cal_comment' class="lzy-invisible">{{ lzy-cal-comment }}</label>
                 <textarea id='lzy_cal_comment' name='comment' placeholder='{{ lzy-cal-comment-placeholder }}'></textarea>
             </div>
-            
+$tagsCombo
             <div id="lzy_cal_delete_entry" class='field-wrapper lzy_cal_delete_entry' style="display:none">
                 <label for="lzy-cal-delete-entry-checkbox">
                     <input type='checkbox' id="lzy-cal-delete-entry-checkbox" />
@@ -150,16 +171,16 @@ EOT;
     $innerForm = <<<EOT
             <div class='field-wrapper field-type-text lzy-cal-event'>
                 <label for='lzy_cal_event_name' class="lzy-invisible">{{ lzy-cal-event }}</label>
-                <input type='text' id='lzy_cal_event_name' name='title' required aria-required='true'  placeholder='Ereignis' />
+                <input type='text' id='lzy_cal_event_name' name='title' required aria-required='true'  placeholder='{{ lzy-cal-event-placeholder }}' />
             </div><!-- /field-wrapper -->
 
             <div class='field-wrapper field-type-text lzy-cal-location'>
                 <label for='lzy_cal_event_location' class="lzy-invisible">{{ lzy-cal-location }}</label>
-                <input type='text' id='lzy_cal_event_location' name='location'  placeholder='Ort' />
+                <input type='text' id='lzy_cal_event_location' name='location'  placeholder='{{ lzy-cal-location-placeholder }}' />
             </div><!-- /field-wrapper -->
             
             <fieldset>
-                <legend>Von:</legend>
+                <legend>{{ lzy-cal-legend-from }}</legend>
                 <div class='field-wrapper field-type-date lzy-cal-start-date'>
                     <label for='lzy_cal_start_date' class="lzy-invisible">{{ lzy-cal-date }}</label>
                     <input type='date' id='lzy_cal_start_date' name='start-date' placeholder='z.B. 1.1.1970' value='' />
@@ -169,7 +190,7 @@ EOT;
             </fieldset>
 
             <fieldset>
-                <legend>Bis:</legend>
+                <legend>{{ lzy-cal-legend-till }}</legend>
                 <div class='field-wrapper field-type-date lzy-cal-end-date'>
                     <label for='lzy_cal_end_date' class="lzy-invisible">{{ lzy-cal-date }}</label>
                     <input type='date' id='lzy_cal_end_date' name='end-date' placeholder='z.B. 1.1.1970' value='' />

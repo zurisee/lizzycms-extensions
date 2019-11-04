@@ -27,10 +27,11 @@ section {
 .lzy-calendar .fc-index {
   display: none; }
   .lzy-calendar .fc-title {
-    font-weight: bold;
-    color: #fff; }
+    font-weight: bold; }
   .lzy-calendar .fc-comment {
     font-style: italic; }
+  .lzy-calendar .fc-tags {
+    display: none; }
 
 .lzy-cal-editing {
   outline: 1px solid red; }
@@ -41,14 +42,14 @@ section {
 .lzy-cal-popup fieldset {
   border: 1px dotted #ddd;
   margin-bottom: 1.5em; }
-  .lzy-cal-popup .field-type-textarea {
-    margin-bottom: 1.5em; }
+  .lzy-cal-form-buttons {
+    margin-top: 1.2em;}
   .lzy-cal-popup .field-type-textarea textarea {
     width: 100%; }
   .lzy-cal-popup .btn_delete_entry {
     margin-bottom: 1.5em; }
   .lzy-cal-popup .lzy_cal_delete_entry {
-    margin-bottom: 1.5em;
+    margin: 0.5em 0;
     line-height: 1.6em; }
   .lzy-cal-popup .field-wrapper lzy_cal_delete_entry label {
     margin-right: 1em; }
