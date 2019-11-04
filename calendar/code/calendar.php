@@ -14,8 +14,9 @@ $this->page->addJsFiles('MOMENT');
 
 $lang = $this->config->lang;
 $this->page->addJqFiles("~sys/extensions/calendar/third-party/fullcalendar/fullcalendar.min.js,");
-$localeFile = resolvePath("~sys/extensions/calendar/third-party/fullcalendar/locale/$lang.js");
-if (file_exists($localeFile)) {
+$localeFile = "~sys/extensions/calendar/third-party/fullcalendar/locale/$lang.js";
+$localeFile1 = resolvePath($localeFile);
+if (file_exists(resolvePath($localeFile))) {
     $this->page->addJqFiles($localeFile);
 }
 $this->page->addJqFiles("~sys/extensions/calendar/js/calendar.js");
@@ -103,9 +104,15 @@ EOT;
         loadDefaultPopup($inx, $this->lzy, $popupForm, $edPermitted);
     }
 
+    $defaultDate = (isset($_SESSION['lizzy']['defaultDate']) && $_SESSION['lizzy']['defaultDate']) ? $_SESSION['lizzy']['defaultDate']: date('Y-m-d');
+    // fix a peculiarity of fullcalendar: round up 1 week to make sure the same month is displayed as before
+    if ($viewMode == 'month') {
+        $t = strtotime('+1 week', strtotime($defaultDate));
+        $defaultDate = date('Y-m-d', $t);
+    }
 
     $edClass = $edPermitted ? ' class="lzy-calendar lzy-cal-editing"' : ' class="lzy-calendar"';
-    $str = "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx'></div>";
+    $str = "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
     $_SESSION['lizzy']['cal'][$inx] = $source;
 	return $str;
 });

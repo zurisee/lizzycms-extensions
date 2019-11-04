@@ -53,15 +53,17 @@ class CalendarBackend {
     public function __construct($dataSrc)
     {
         if (isset($_GET['start'])) {
-            $this->range_start = parseDateTime($_GET['start']);
+            $rangeStart = $_GET['start'];
+            $_SESSION['lizzy']['defaultDate'] = $rangeStart;
         } else {
-            $this->range_start = parseDateTime(date('Y-m-d', strtotime('+1 week')));
+            $rangeStart = date('Y-m-d', strtotime('+1 week'));
         }
+        $this->rangeStart = parseDateTime($rangeStart);
 
         if (isset($_GET['end'])) {
-            $this->range_end = parseDateTime($_GET['end']);
+            $this->rangeEnd = parseDateTime($_GET['end']);
         } else {
-            $this->range_end = parseDateTime(date('Y-m-d', strtotime('-1 month')));
+            $this->rangeEnd = parseDateTime(date('Y-m-d', strtotime('-1 month')));
         }
 
         $this->timezone = null;
@@ -102,7 +104,7 @@ class CalendarBackend {
             }
 
             // If the event is in-bounds, add it to the output
-            if ($event->isWithinDayRange($this->range_start, $this->range_end)) {
+            if ($event->isWithinDayRange($this->rangeStart, $this->rangeEnd)) {
                 $output_arrays[] = array_merge($event->toArray(), ['i' => $i]);
             }
         }

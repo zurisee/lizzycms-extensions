@@ -4,19 +4,21 @@ $( document ).ready(function() {
 
     $('.lzy-calendar').each(function() {
         var inx = $(this).attr('data-lzy-cal-inx');
+        var defaultDate = $(this).attr('data-lzy-cal-start');
 
         $( this ).fullCalendar({
             header: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'month,agendaWeek,agendaDay,listWeek',
+                right: 'month,agendaWeek,agendaDay,listYear',   // listWeek, listMonth, listYear
             },
             navLinks: true,       // can click day/week names to navigate views
             editable: lzyCal[ inx ].calEditingPermission,
-            eventLimit: true,         // allow "more" link when too many events
+            eventLimit: true,     // allow "more" link when too many events
             firstDay: 1,
             locale: calLang,
             weekNumbers: true,
+            defaultDate: defaultDate,
             defaultView: lzyCal[ inx ].calDefaultView,
 
             events: {
@@ -29,7 +31,8 @@ $( document ).ready(function() {
                 $('#loading').toggle(bool);
             },
             viewRender: function(view, element) {
-                storeViewMode(inx, view.name);
+                storeViewMode(inx, view);
+                // storeViewMode(inx, view.name);
             },
             dayClick: function (e) {
                 if (typeof openCalPopup !== 'undefined') {
@@ -116,7 +119,10 @@ function calEventChanged(inx, e) {
 
 
 
-function storeViewMode(inx, viewName) {
+// function storeViewMode(inx, viewName) {
+function storeViewMode(inx, view) {
+    var viewName = view.name;
+    var intervalStart = view.intervalStart;
     console.log('save view mode: ' + viewName);
     $.ajax({
         url : calBackend + '?inx=' + inx + '&mode=' + viewName,
