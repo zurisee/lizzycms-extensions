@@ -2,6 +2,7 @@
 
 if (!defined('CALENDAR_BACKEND')) { define('CALENDAR_BACKEND', '~sys/extensions/calendar/backend/_cal-backend.php'); }
 
+
 // to do: handle multiple invocations -> load resources only once
 
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
@@ -35,9 +36,10 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'calEditingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
     $this->getArg($macroName, 'publish', 'If set, Lizzy will switch to calendar publishing mode (using given name). Use a calendar app to subscribe to this calendar.', false);
 //    $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', '');
-    $this->getArg($macroName, 'tags', 'A (comma separated) list of supported tags.', '');
-    $this->getArg($macroName, 'showTags', 'A (comma separated) list of tags - only events carrying that tag will be presented.', '');
+    $this->getArg($macroName, 'categories', 'A (comma separated) list of supported categories.', '');
+    $this->getArg($macroName, 'showCategories', 'A (comma separated) list of categories - only events carrying that category will be presented.', '');
     $this->getArg($macroName, 'domain', 'Domain info that will be included in the published calendar.', $this->lzy->pageUrl);
+    $this->getArg($macroName, 'icalPrefix', 'Prefix for iCal events. If a comma-separated list is supplied, elements are interpreted per category.', $this->lzy->pageUrl);
 
     if ($source == 'help') {
         return '';
@@ -64,9 +66,20 @@ class LzyCalendar
         $this->edPermitted = $args['calEditingPermission'];
         $this->publish = $args['publish'];
 //        $this->tooltips = $args['tooltips'];
-        $this->tags = $args['tags'];
-        $this->showTags = $args['showTags'];
+        $this->category = $args['categories'];
+        $categories = array_map('trim', explode(',', $this->category));
+
+        $this->showCategories = $args['showCategories'];
         $this->domain = $args['domain'];
+        $icalPrefix = $args['icalPrefix'];
+        if (strpos($icalPrefix, ',') !== false) {
+            $this->icalPrefix = explode(',', $icalPrefix);
+            $this->icalPrefix = array_combine($categories, explode(',', $icalPrefix));
+        } else {
+            $this->icalPrefix = $icalPrefix;
+        }
+        $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
+
     }
 
 
@@ -113,12 +126,20 @@ EOT;
         $js .= <<<EOT
 
 lzyCal[$inx] = {
-    tooltips: '{$this->tooltips}',
     calDefaultView: '$viewMode',
     calEditingPermission: $edPermStr
 };
 
 EOT;
+//        $js .= <<<EOT
+//
+//lzyCal[$inx] = {
+//    tooltips: '{$this->tooltips}',
+//    calDefaultView: '$viewMode',
+//    calEditingPermission: $edPermStr
+//};
+//
+//EOT;
         $this->page->addJs($js);
 
         if ($this->edPermitted) {
@@ -141,7 +162,7 @@ EOT;
         $edClass = $this->edPermitted ? ' class="lzy-calendar lzy-cal-editing"' : ' class="lzy-calendar"';
         $str = "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
         $_SESSION['lizzy']['cal'][$inx] = $this->source;
-        $_SESSION['lizzy']['calShowTags'][$inx] = $this->showTags;
+        $_SESSION['lizzy']['calShowCategories'][$inx] = $this->showCategories;
         return $str;
     }
 
@@ -150,21 +171,21 @@ EOT;
     {
         $backend = CALENDAR_BACKEND;
         $inx = $this->inx;
-        $tags = $this->tags;
+        $category = $this->category;
 
-        $tagsCombo = '';
-        if ($tags) {
-            $tags = explode(',', $tags);
-            foreach ($tags as $tag) {
+        $categoryCombo = '';
+        if ($category) {
+            $categories = explode(',', $category);
+            foreach ($categories as $tag) {
                 $tag = trim($tag);
                 $value = translateToIdentifier($tag);
-                $tagsCombo .= "\t<option value='$value'>$tag</option>\n";
+                $categoryCombo .= "\t<option value='$value'>$tag</option>\n";
             }
-            $tagsCombo = <<<EOT
-    <label for="lzy_cal_tags">{{ lzy-cal-tags-label }}</label>
-    <select id="lzy_cal_tags" name="tags">
-        <option value="">{{ lzy-cal-tags-all }}</option>
-    $tagsCombo
+            $categoryCombo = <<<EOT
+    <label for="lzy_cal_category">{{ lzy-cal-category-label }}</label>
+    <select id="lzy_cal_category" name="category">
+        <option value="">{{ lzy-cal-category-all }}</option>
+    $categoryCombo
     </select>
 
 EOT;
@@ -185,7 +206,7 @@ EOT;
                     <label for='lzy_cal_comment' class="lzy-invisible">{{ lzy-cal-comment }}</label>
                     <textarea id='lzy_cal_comment' name='comment' placeholder='{{ lzy-cal-comment-placeholder }}'></textarea>
                 </div>
-    $tagsCombo
+    $categoryCombo
                 <div id="lzy_cal_delete_entry" class='field-wrapper lzy_cal_delete_entry' style="display:none">
                     <label for="lzy-cal-delete-entry-checkbox">
                         <input type='checkbox' id="lzy-cal-delete-entry-checkbox" />
@@ -263,30 +284,77 @@ EOT;
 
     private function renderICal()
     {
+        require dirname(__FILE__) . '/utils.php';
+
         $ds = new DataStorage2(['dataFile'=> $this->source]);
         $data = $ds->read();
 
+        $recsToShow = $this->filterCalRecords($data);
 
         $vCalendar = new \Eluceo\iCal\Component\Calendar($this->domain);
 
-        foreach ($data as $key => $rec) {
+        foreach ($recsToShow as $key => $rec) {
+            if (is_array($this->icalPrefix)) {
+                $category = $rec['category'];
+                $prefix = isset($this->icalPrefix[$category]) ? $this->icalPrefix[$category]: '[]';
+            } else {
+                $prefix = $this->icalPrefix;
+            }
             $vEvent = new \Eluceo\iCal\Component\Event();
             $vEvent
                 ->setDtStart(new \DateTime($rec['start']))
                 ->setDtEnd(new \DateTime($rec['end']))
-                ->setSummary($rec['title'])
+                ->setSummary($prefix.$rec['title'])
+//                ->setSummary($rec['title'])
                 ->setLocation($rec['location'])
                 ->setDescription($rec['comment'])
-                ->setUniqueId("{$this->name}$key")
+                ->setUniqueId("{$this->publish}$key")
             ;
             $vCalendar->addComponent($vEvent);
         }
+        $filename = translateToFilename($this->publish, false);
         header('Content-Type: text/calendar; charset=utf-8');
-        header("Content-Disposition: attachment; filename=\"{$this->name}.ics\"");
+        header("Content-Disposition: attachment; filename=\"$filename.ics\"");
         $out = $vCalendar->render();
         return $out;
     } // renderICal
 
+
+
+
+    public function filterCalRecords($data)
+    {
+        if (!$this->showCategories) {
+            return $data;
+        }
+
+        $categoriesToShow = ',' . str_replace(' ', '', $this->showCategories) . ',';
+
+        // Accumulate an output array of event data arrays.
+        $output_arrays = array();
+        foreach ($data as $i => $rec) {
+
+            // Convert the input array into a useful Event object
+            $event = new Event($rec, $this->timezone);
+
+            // check for category:
+            if ($categoriesToShow && isset($event->properties["category"]) && $event->properties["category"]) {
+                $eventsCategory = explode(',', $event->properties["category"]);
+                foreach ($eventsCategory as $evTag) {
+                    if ($evTag && (stripos($categoriesToShow, ",$evTag,") === false)) {
+                        continue 2;
+                    }
+                    $output_arrays[] = array_merge($event->toArray(), ['i' => $i]);
+                }
+            }
+
+//            // If the event is in-bounds, add it to the output
+//            if ($event->isWithinDayRange($this->rangeStart, $this->rangeEnd)) {
+//                $output_arrays[] = array_merge($event->toArray(), ['i' => $i]);
+//            }
+        }
+        return $output_arrays;
+    } // filterCalRecords
 
 
 } // class LzyCalendar

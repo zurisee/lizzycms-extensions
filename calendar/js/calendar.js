@@ -69,9 +69,9 @@ $( document ).ready(function() {
                 if (typeof event.comment !== 'undefined') {
                     $(element).append('<div class="fc-comment">' + event.comment + '</div>');
                 }
-                if (typeof event.tags !== 'undefined') {
-                    $(element).append('<div class="fc-tags">' + event.tags + '</div>');
-                    $(element).addClass(event.tags);
+                if (typeof event.category !== 'undefined') {
+                    $(element).append('<div class="fc-category">' + event.category + '</div>');
+                    $(element).addClass(event.category);
                 }
                 // tooltips
             }
@@ -102,7 +102,7 @@ function calEventChanged(inx, e) {
     rec['end-date'] = end.format('YYYY-MM-DD');
     rec['end-time'] = end.format('HH:mm');
     rec['comment'] = e.comment;
-    rec['tags'] = e.tags;
+    rec['category'] = e.category;
     rec['allday'] = e.allDay;
 
     var json = JSON.stringify(rec);
@@ -212,7 +212,7 @@ function defaultOpenCalPopup(inx, e) {
         $('#lzy_cal_event_location').val(e.location);
         $('#lzy_cal_comment').text(e.comment);
 
-        $('#lzy_cal_tags option[value=' + e.tags + ']').attr('selected','selected');
+        $('#lzy_cal_category option[value=' + e.category + ']').attr('selected','selected');
         $('#lzy-rec-id').val(e.i);
 
         $('#lzy_cal_delete_entry').show();

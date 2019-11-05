@@ -1,4 +1,3 @@
-/**** auto-created from 'css/scss/calendar.scss' - do not modify! ****/
 
 /* Calendar */
 section {
@@ -30,7 +29,7 @@ section {
     font-weight: bold; }
   .lzy-calendar .fc-comment {
     font-style: italic; }
-  .lzy-calendar .fc-tags {
+  .lzy-calendar .fc-category {
     display: none; }
 
 .lzy-cal-editing {

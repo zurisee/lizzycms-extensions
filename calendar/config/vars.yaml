@@ -56,11 +56,11 @@ lzy-cal-legend-till:
     de: Bis
     _:  Till
 
-lzy-cal-tags-all:
-    de: Alle
-    _:  all
+lzy-cal-category-all:
+    de: ''
+    _:  ''
 
-lzy-cal-tags-label:
+lzy-cal-category-label:
     de: Kategorie
     _:  Category
 
