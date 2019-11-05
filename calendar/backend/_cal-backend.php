@@ -10,7 +10,7 @@ use Symfony\Component\Yaml\Yaml;
 
 
 // Require Event class and datetime utilities
-require dirname(__FILE__) . '/utils.php';
+require dirname(__FILE__) . '/../code/utils.php';
 
 // Require Datastorage class:
 require_once SYSTEM_PATH.'datastorage2.class.php';
@@ -66,10 +66,7 @@ class CalendarBackend {
             $this->rangeEnd = parseDateTime(date('Y-m-d', strtotime('-1 month')));
         }
 
-        $this->timezone = null;
-        if (isset($_GET['timezone'])) {
-            $this->timezone = new DateTimeZone($_GET['timezone']);
-        }
+        $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
         $this->ds = new DataStorage2(['dataFile' => $dataSrc]);
     } // __construct
@@ -80,35 +77,13 @@ class CalendarBackend {
     public function getData($inx)
     {
         $data = $this->ds->read();
-//        $tags = (isset($_GET['tags'])) ? $_GET['tags']: '';
-        $tags = $_SESSION['lizzy']['calShowTags'][$inx];
-        if ($tags) {
-            $tags = ',' . str_replace(' ', '', $tags) . ',';
-        }
+        $categoriesToShow = $_SESSION['lizzy']['calShowCategories'][$inx];
+// possible enhancement: chose category from browser:
+//        if ($categoriesToShow2 = (isset($_GET['category'])) ? $_GET['category']: '') {
+//          $categoriesToShow = "$categoriesToShow,$categoriesToShow2";
+//        }
 
-
-        // Accumulate an output array of event data arrays.
-        $output_arrays = array();
-        foreach ($data as $i => $rec) {
-
-            // Convert the input array into a useful Event object
-            $event = new Event($rec, $this->timezone);
-
-            // check for tags:
-            if ($tags && isset($event->properties["tags"]) && $event->properties["tags"]) {
-                $eventsTags = explode(',', $event->properties["tags"]);
-                foreach ($eventsTags as $evTag) {
-                    if (strpos($tags, ",$evTag,") === false) {
-                        continue 2;
-                    }
-                }
-            }
-
-            // If the event is in-bounds, add it to the output
-            if ($event->isWithinDayRange($this->rangeStart, $this->rangeEnd)) {
-                $output_arrays[] = array_merge($event->toArray(), ['i' => $i]);
-            }
-        }
+        $output_arrays = $this->filterCalRecords($categoriesToShow, $data);
 
         // Send JSON to the client.
         $json = json_encode($output_arrays);
@@ -157,7 +132,7 @@ class CalendarBackend {
                     'allDay' => $post['allday'],
                     'location' => $post['location'],
                     'comment' => $post['comment'],
-                    'tags' => $post['tags'],
+                    'category' => $post['category'],
                 ];
                 if (function_exists('customPrepareData')) {
                     $rec = customPrepareData($rec);
@@ -177,7 +152,7 @@ class CalendarBackend {
                 'end' => trim($endDate.' '.$endTime),
                 'location' => $post['location'],
                 'comment' => $post['comment'],
-                'tags' => $post['tags'],
+                'category' => $post['category'],
             ];
             if (function_exists('customPrepareData')) {
                 $rec = customPrepareData($rec);
@@ -208,6 +183,42 @@ class CalendarBackend {
         $_SESSION['lizzy']['calMode'] = $mode;
         return 'ok';
     } // saveMode
+
+
+
+    //--------------------------------------------------------------
+    public function filterCalRecords($categoriesToShow, $data)
+    {
+        if ($categoriesToShow) {
+            $categoriesToShow = ',' . str_replace(' ', '', $categoriesToShow) . ',';
+        }
+
+
+        // Accumulate an output array of event data arrays.
+        $output_arrays = array();
+        foreach ($data as $i => $rec) {
+
+            // Convert the input array into a useful Event object
+            $event = new Event($rec, $this->timezone);
+
+            // check for category:
+            if ($categoriesToShow && isset($event->properties["category"]) && $event->properties["category"]) {
+                $eventsCategory = explode(',', $event->properties["category"]);
+                foreach ($eventsCategory as $evTag) {
+                    if ($evTag && (stripos($categoriesToShow, ",$evTag,") === false)) {
+                        continue 2;
+                    }
+                }
+            }
+
+            // If the event is in-bounds, add it to the output
+            if ($event->isWithinDayRange($this->rangeStart, $this->rangeEnd)) {
+                $output_arrays[] = array_merge($event->toArray(), ['i' => $i]);
+            }
+        }
+        return $output_arrays;
+    } // filterCalRecords
+
 
 
 
