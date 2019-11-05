@@ -10,7 +10,8 @@ $( document ).ready(function() {
             header: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'month,agendaWeek,agendaDay,listYear',   // listWeek, listMonth, listYear
+                right: 'month,agendaWeek,listYear',   // listWeek, listMonth, listYear
+                // right: 'month,agendaWeek,agendaDay,listYear',   // listWeek, listMonth, listYear
             },
             navLinks: true,       // can click day/week names to navigate views
             editable: lzyCal[ inx ].calEditingPermission,

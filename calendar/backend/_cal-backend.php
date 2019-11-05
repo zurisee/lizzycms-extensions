@@ -43,7 +43,7 @@ if (isset($_GET['mode'])) {
     exit( $backend->saveMode($_GET['mode']) );
 }
 
-exit( $backend->getData() );
+exit( $backend->getData($inx) );
 
 
 
@@ -77,16 +77,17 @@ class CalendarBackend {
 
 
     //--------------------------------------------------------------
-    public function getData()
+    public function getData($inx)
     {
         $data = $this->ds->read();
-        $tags = (isset($_GET['tags'])) ? $_GET['tags']: '';
+//        $tags = (isset($_GET['tags'])) ? $_GET['tags']: '';
+        $tags = $_SESSION['lizzy']['calShowTags'][$inx];
         if ($tags) {
             $tags = ',' . str_replace(' ', '', $tags) . ',';
         }
 
 
-            // Accumulate an output array of event data arrays.
+        // Accumulate an output array of event data arrays.
         $output_arrays = array();
         foreach ($data as $i => $rec) {
 
@@ -94,11 +95,11 @@ class CalendarBackend {
             $event = new Event($rec, $this->timezone);
 
             // check for tags:
-            if ($tags && isset($event['tags']) && $event['tags']) {
-                $eventsTags = explode(',', $event['tags']);
+            if ($tags && isset($event->properties["tags"]) && $event->properties["tags"]) {
+                $eventsTags = explode(',', $event->properties["tags"]);
                 foreach ($eventsTags as $evTag) {
-                    if (strpos($tags, $evTag) === false) {
-                        continue;
+                    if (strpos($tags, ",$evTag,") === false) {
+                        continue 2;
                     }
                 }
             }
