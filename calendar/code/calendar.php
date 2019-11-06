@@ -39,6 +39,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'categories', 'A (comma separated) list of supported categories.', '');
     $this->getArg($macroName, 'showCategories', 'A (comma separated) list of categories - only events carrying that category will be presented.', '');
     $this->getArg($macroName, 'domain', 'Domain info that will be included in the published calendar.', $this->lzy->pageUrl);
+    $this->getArg($macroName, 'icalDefaultPrefix', 'Prefix for iCal events. If a comma-separated list is supplied, elements are interpreted per category.', $this->lzy->pageUrl);
     $this->getArg($macroName, 'icalPrefix', 'Prefix for iCal events. If a comma-separated list is supplied, elements are interpreted per category.', $this->lzy->pageUrl);
 
     if ($source == 'help') {
@@ -71,6 +72,7 @@ class LzyCalendar
 
         $this->showCategories = $args['showCategories'];
         $this->domain = $args['domain'];
+        $this->icalDefaultPrefix = $args['icalDefaultPrefix'];
         $icalPrefix = $args['icalPrefix'];
         if (strpos($icalPrefix, ',') !== false) {
             $this->icalPrefix = explode(',', $icalPrefix);
@@ -285,6 +287,8 @@ EOT;
     private function renderICal()
     {
         require dirname(__FILE__) . '/utils.php';
+        $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'UTC';
+        date_default_timezone_set($timezone);
 
         $ds = new DataStorage2(['dataFile'=> $this->source]);
         $data = $ds->read();
@@ -296,7 +300,7 @@ EOT;
         foreach ($recsToShow as $key => $rec) {
             if (is_array($this->icalPrefix)) {
                 $category = $rec['category'];
-                $prefix = isset($this->icalPrefix[$category]) ? $this->icalPrefix[$category]: '[]';
+                $prefix = isset($this->icalPrefix[$category]) ? $this->icalPrefix[$category]: $this->icalDefaultPrefix;
             } else {
                 $prefix = $this->icalPrefix;
             }
@@ -305,17 +309,19 @@ EOT;
                 ->setDtStart(new \DateTime($rec['start']))
                 ->setDtEnd(new \DateTime($rec['end']))
                 ->setSummary($prefix.$rec['title'])
-//                ->setSummary($rec['title'])
                 ->setLocation($rec['location'])
                 ->setDescription($rec['comment'])
+                ->setUseTimezone(true)
                 ->setUniqueId("{$this->publish}$key")
             ;
             $vCalendar->addComponent($vEvent);
         }
         $filename = translateToFilename($this->publish, false);
+
         header('Content-Type: text/calendar; charset=utf-8');
         header("Content-Disposition: attachment; filename=\"$filename.ics\"");
         $out = $vCalendar->render();
+
         return $out;
     } // renderICal
 
