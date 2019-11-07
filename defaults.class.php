@@ -102,7 +102,6 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->class_panels_widget               = 'lzy-panels-widget'; // 'Class-name for Lizzy\'s Panels widget that triggers auto-loading of corresponding modules' ],
         $this->class_editable                    = 'lzy-editable'; // 'Class-name for "Editable Fields" that triggers auto-loading of corresponding modules' ],
         $this->class_zoomTarget                  = 'zoomTarget'; // 'Class-name for "ZoomTarget Elements" that triggers auto-loading of corresponding modules' ],
-        $this->custom_computedVariablesFile      = 'user-var-defs.php'; // 'Filename of PHP-code that will generate ("transvar-)variables.' ],
         $this->custom_variables                  = 'variables*.yaml'; // 	'Filename-pattern to identify files that should be loaded as ("transvar-)variables.' ],
 
 
