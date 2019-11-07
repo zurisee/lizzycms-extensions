@@ -334,7 +334,7 @@ function convertYaml($str, $stopOnError = true, $origin = '', $convertDates = tr
                 if ($stopOnError) {
                     fatalError("Error in Yaml-Code: <pre>\n$str\n</pre>\n" . $e->getMessage(), 'File: '.__FILE__.' Line: '.__LINE__, $origin);
                 } else {
-                    writeLog("Error in Yaml-Code: [$str] -> " . $e->getMessage(), 'errlog');
+                    writeLog("Error in Yaml-Code: [$str] -> " . $e->getMessage(), true);
                     return null;
                 }
             }
@@ -709,12 +709,14 @@ function is_inCommaSeparatedList($keyword, $list)
 
 
 //--------------------------------------------------------------
-function fileExt($file, $reverse = false)
+function fileExt($file0, $reverse = false)
 {
+    $file = basename($file0);
     $file = preg_replace(['|^\w{1,6}://|', '/[#?&:].*/'], '', $file);
     if ($reverse) {
-        $l = strlen(pathinfo($file, PATHINFO_EXTENSION)) + 1;
-        return substr($file, 0, -$l);
+        $path = dirname($file0).'/';
+        $file = pathinfo($file, PATHINFO_FILENAME);
+        return $path.$file;
 
     } else {
         return pathinfo($file, PATHINFO_EXTENSION);
@@ -1502,29 +1504,32 @@ function mylog($str, $destination = false)
 
 
 //------------------------------------------------------------
-function writeLog($str, $destination = false)
+function writeLog($str, $errlog = false)
 {
     global $globalParams;
 
-    if (($path = $globalParams['path_logPath']) && ($destination != 'errlog')) {
-        if (!$globalParams['activityLoggin']) {
+    if (!$errlog) {
+        if (!$globalParams['activityLoggingEnabled']) {
             return;
         }
-        if ($destination) {
-            if (($destination[0] == '~') || ($destination[0] == '/')) {
-                $destination = resolvePath($destination);
-            }
-        } else {
-            $destination = LOG_FILE;
-        }
-        preparePath($destination);
-        file_put_contents($destination, timestamp()."  $str\n", FILE_APPEND);
+        preparePath(LOG_FILE);
+        file_put_contents(LOG_FILE, timestamp()."  $str\n", FILE_APPEND);
 
-    } elseif ($destination == 'errlog') {
-        if (!$globalParams['errorLogging']) {
+    } else {
+        if (!$globalParams['errorLoggingEnabled']) {
             return;
         }
-        $destination = $globalParams['errorLogFile'];
+        if (is_string($errlog)) {
+            // only allow files in LOGS_PATH and only with extension .txt or .log:
+            $errlog = LOGS_PATH . base_name($errlog);
+            $ext = fileExt($errlog);
+            if (($ext !== 'txt') && ($ext !== 'log')) {
+                $errlog = fileExt($errlog, true).'.txt';
+            }
+            $destination = resolvePath($errlog);
+        } else {
+            $destination = $globalParams['errorLogFile'];
+        }
         if ($destination) {
             preparePath($destination);
             file_put_contents($destination, timestamp() . "  $str\n", FILE_APPEND);
@@ -1537,7 +1542,7 @@ function writeLog($str, $destination = false)
 //------------------------------------------------------------
 function logError($str)
 {
-    writeLog($str, 'errlog');
+    writeLog($str, true);
 } // logError
 
 
