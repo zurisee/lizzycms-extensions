@@ -84,7 +84,8 @@ $slidedownX4: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizon
 $slidedownX5: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 3 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
 $slidedownX6: calc(var(--lzy-nav-top-horizontal-first-indent, #{$nav-top-horizontal-first-indent}) + 4 * var(--lzy-nav-top-horizontal-indent-step, #{$nav-top-horizontal-indent-step}));
 
-$xCorr: 1.8em;
+//$xCorr: 1.8em;
+$xCorr: 1em;
 
 
 // === Generic Nav ===================
@@ -126,16 +127,11 @@ $xCorr: 1.8em;
     }
     .lzy-nav-label {
         display: inline-block;
-        max-width: calc(100% - 2em);
     }
     .lzy-nav-arrow {
         display: none;
         user-select: none;
-        padding: 0 0.4em;
-        //padding: 0 0.5em;
         cursor: s-resize;
-        opacity: 0;
-        transform-origin: 50% 50%;
     }
 
     li.lzy-has-children > div {
@@ -249,20 +245,14 @@ $xCorr: 1.8em;
         }
     }
     &:not(.lzy-nav-top-horizontal) {
-        .lzy-has-children > * > .lzy-nav-arrow {
-            transform: translate(2px, 4px);
-        }
         .lzy-has-children > * > .lzy-nav-arrow > .lzy-icon-triangle {
             transition: transform var(--lzy-nav-accordion-trans-speed, $nav-accordion-trans-speed);
-            transform: rotate(0deg);
+            --lzy-triangle-angle: 0deg;
         }
 
         .lzy-has-children.lzy-open > * > .lzy-nav-arrow > .lzy-icon-triangle {
             transition: transform var(--lzy-nav-accordion-trans-speed, $nav-accordion-trans-speed);
-            transform: rotate(90deg);
-            &:before {
-                transform: translate(-50%, -50%) scale(0.8);
-            }
+            --lzy-triangle-angle: 90deg;
         }
     }
 } // animated
@@ -407,9 +397,16 @@ $xCorr: 1.8em;
 
 // === Top Nav
 #lzy .lzy-nav-top-horizontal {
+    .lzy-icon-triangle.lzy-icon-triangle {
+        --lzy-triangle-angle: 90deg;
+        --lzy-icon-factor: 0.8;
+        &:before {
+            left: 60%;
+            top: 36%;
+        }
+    }
     .lzy-nav-arrow {
-        transform: rotate(90deg);
-        opacity: 1;
+        padding: 0 0.4em 0 0.2em;
     }
 
     .lzy-nav-heading {
@@ -450,6 +447,7 @@ $xCorr: 1.8em;
 
 #lzy .lzy-nav:not(.lzy-nav-top-horizontal) .lzy-nav-arrow {
     float: left;
+    margin-right: 0.2em;
 }
 
 // horizontal nav:
@@ -793,90 +791,3 @@ body.lzy-small-screen {
 
 
 
-__END__
-
-// Template for custom styling:
-
-// === Geometry: ==================
-body {
-    // dimensions:
-    --lzy-nav-txt-size: 16pt;
-    --lzy-nav-elem-height: 3em;
-    //--lzy-nav-line-height: ;	// -> space between wrapped lines
-    --lzy-nav-sub-width: 6em;
-
-    // indenting:
-    --lzy-nav-first-indent: 0em;
-    --lzy-nav-indent-step: 1.2em;
-
-    // lzy-nav-top-horizontal:
-    --lzy-nav-top-horizontal-col-gap: 10px;
-    --lzy-nav-top-horizontal-padding: 0.5em;
-    --lzy-nav-top-horizontal-first-indent: 1.25em;
-    --lzy-nav-top-horizontal-indent-step: 1.25em;
-
-
-    // in-page nav:
-    --lzy-in-page-first-indent: 0em;
-    --lzy-in-page-indent-step: 1em;
-
-    // animation:
-    --lzy-nav-accordion-trans-speed: 0.2s;
-
-    // mobile nav:
-    --lzy-mobile-nav-title-indent: 10px;
-    --lzy-mobile-nav-first-indent: 0px;
-    --lzy-mobile-nav-indent-step: 25px;
-    --lzy-mobile-nav-font-size: 5vw;
-
-    // mobile header:
-    --lzy-mobile-header-font-size: 6vw;
-    --lzy-mobile-header-height: 12vw;
-
-    // mobile footer:
-    --lzy-mobile-footer-height: 2em;
-    --lzy-mobile-footer-txt-color: white;
-
-}
-
-// === Coloring: ====================
-body {
-    // colors general:
-    --lzy-nav-txt-color: navy;
-    --lzy-nav-bg-color: gray;	// bg of nav-block
-    --lzy-nav-elem-bg-color: cyan;
-
-    // sub-elements / dropdown:
-    --lzy-nav-sub-txt-color: maroon;
-    --lzy-nav-sub-bg-color: orange;
-
-    // current:
-    --lzy-nav-curr-txt-color: yellow;
-    --lzy-nav-curr-bg-color: magenta;
-
-    // active: (ie parents of current)
-    --lzy-nav-active-txt-color: white;
-    --lzy-nav-active-bg-color: red;
-
-    // hover:
-    --lzy-nav-hover-txt-color: yellow;
-    --lzy-nav-hover-bg-color: navy;
-    // focus:
-    --lzy-nav-focus-txt-color: yellow;
-    --lzy-nav-focus-bg-color: blue;
-
-    // mobile nav:
-    --lzy-mobile-nav-title-color: #ddd;
-    --lzy-mobile-nav-title-bg-color: #333;
-    --lzy-mobile-nav-txt-color: #ddd;
-    --lzy-mobile-nav-bg-color: #333;
-
-    // mobile header:
-    --lzy-mobile-header-txt-color: #ddd;
-    --lzy-mobile-header-bg-color: #444;
-
-    // mobile footer:
-    --lzy-mobile-footer-txt-color: white;
-    --lzy-mobile-footer-bg-color: #444;
-
-}
