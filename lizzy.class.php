@@ -186,8 +186,6 @@ class Lizzy
         $GLOBALS['globalParams']['isAdmin'] = false;
         $GLOBALS['globalParams']['activityLoggingEnabled'] = $this->config->admin_activityLogging;
         $GLOBALS['globalParams']['errorLoggingEnabled'] = $this->config->debug_errorLogging;
-//        $GLOBALS['globalParams']['activityLoggin'] = $this->config->admin_activityLogging;
-//        $GLOBALS['globalParams']['errorLogging'] = $this->config->debug_errorLogging;
 
         $this->trans = new Transvar($this);
         $this->page = new Page($this);
@@ -1338,6 +1336,10 @@ EOT;
     //....................................................
 	private function handleUrlArgs()
 	{
+        if ($arg = getNotificationMsg()) {
+            $this->page->addMessage( $arg );
+        }
+
         if (getUrlArg('reset')) {			            // reset (cache)
             $this->disableCaching();
             $this->clearCaches();
@@ -1348,13 +1350,6 @@ EOT;
             $this->userRec = false;
             $this->auth->logout();
             reloadAgent(false, 'logout-successful'); // reload to get rid of url-arg ?logout
-
-		} else {
-            $arg = getNotificationMsg(false);
-            if ($arg && ($arg === 'logout-successful')) {
-                $this->page->addMessage('{{ lzy-logout-successful }}');
-                clearNotificationMsg();
-            }
         }
 
 
