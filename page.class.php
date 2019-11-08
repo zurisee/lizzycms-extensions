@@ -840,8 +840,13 @@ EOT;
 
         if ($type === 'css') {
             foreach ($this->cssModules as $item) {
+                $mediaType = '';
+                if (preg_match('/^(.*?)\@(\w+)/', $item, $m)) {
+                    $item = $m[1];
+                    $mediaType = " media=\"{$m[2]}\"";
+                }
                 $item = resolvePath($item, true, true);
-                $out .= "\t<link href='$item' rel='stylesheet' />\n";
+                $out .= "\t<link href='$item' rel='stylesheet'$mediaType />\n";
             }
 
         } else {
@@ -914,7 +919,7 @@ EOT;
         $cssModules = [];
         $jsModules = [];
         foreach ($modules as $mod) {
-            if (preg_match('/\.css$/i', $mod)) {    // split between css and js files
+            if (preg_match('/\.css(\@\w+)?$/i', $mod)) {    // split between css and js files
                 if (!in_array($mod, $cssModules)) {         // avoid doublets
                     $cssModules[] = $mod;
                 }
