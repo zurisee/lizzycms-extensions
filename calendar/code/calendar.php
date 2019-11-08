@@ -6,9 +6,8 @@ require_once ( dirname(__FILE__).'/calendar.class.php');
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
 
 
-$this->page->addCssFiles('~sys/extensions/calendar/third-party/fullcalendar/fullcalendar.min.css');
-//$this->page->addCssFiles('~sys/extensions/calendar/third-party/fullcalendar/fullcalendar.min.css,'.
-//                         '~sys/extensions/calendar/third-party/fullcalendar/fullcalendar.print.min.css');
+$this->page->addCssFiles('~sys/extensions/calendar/third-party/fullcalendar/fullcalendar.min.css,'.
+                         '~sys/extensions/calendar/third-party/fullcalendar/fullcalendar.print.min.css@print');
 
 $this->page->addJsFiles('MOMENT');
 
