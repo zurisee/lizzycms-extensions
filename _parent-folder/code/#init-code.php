@@ -10,6 +10,11 @@
  */
 
 
+return;
+
+
+
+// === Examples =================
 $html = <<<EOT
 
 <!DOCTYPE html>

@@ -17,7 +17,11 @@ define('CACHE_PATH',            '.#cache/');
 define('LOGS_PATH',             '.#logs/');
 define('MACROS_PATH',           SYSTEM_PATH.'macros/');
 define('EXTENSIONS_PATH',       SYSTEM_PATH.'extensions/');
-define('USER_INIT_CODE_FILE',   USER_CODE_PATH.'user-init-code.php');
+define('USER_INIT_CODE_FILE',   USER_CODE_PATH.'init-code.php');
+define('USER_VAR_DEF_FILE',     USER_CODE_PATH.'var-definitions.php');
+define('ICS_PATH',              'ics/'); // where .ics files are located
+
+define('USER_DAILY_CODE_FILE',   USER_CODE_PATH.'_daily-task.php');
 define('CACHE_DEPENDENCY_FILE', '.#page-cache.dependency.txt');
 define('CACHE_FILENAME',        '.#page-cache.dat');
 
@@ -74,6 +78,8 @@ $globalParams = array(
 	'pageHttpPath' => null,				// pages/xy/
 	'pagePath' => null,				// pages/xy/    -> may differ from pageHttpPath in case 'showThis' is used
     'path_logPath' => null,
+    'activityLoggingEnabled' => false,
+    'errorLoggingEnabled' => false,
 );
 
 
@@ -97,50 +103,22 @@ class Lizzy
 
 
 	//....................................................
-    public function __construct()
+    public function __construct( $daemonRun = false)
     {
-		global $globalParams;
+        if ($daemonRun || (isset($_GET['service']))) {
+            return;
+        }
 
         $this->checkInstallation0();
         $this->dailyHousekeeping();
 		$this->init();
 		$this->setupErrorHandling();
 
-//        $globalParams['debug_autoForceBrowserCache'] = $this->config->debug_autoForceBrowserCache;
-
         if ($this->config->site_sitemapFile || $this->config->feature_sitemapFromFolders) {
-			$this->siteStructure = new SiteStructure($this, $this->reqPagePath);
-            $this->currPage = $this->reqPagePath = $this->siteStructure->currPage;
+            $this->initializeSiteInfrastructure();
 
-			if (isset($this->siteStructure->currPageRec['showthis'])) {
-				$this->pagePath = $this->siteStructure->currPageRec['showthis'];
-			} else {
-				$this->pagePath = $this->siteStructure->currPageRec['folder'];
-			}
-			$this->pathToPage = $this->config->path_pagesPath.$this->pagePath;   //  includes pages/
-			$globalParams['pageHttpPath'] = $this->pageHttpPath;            // excludes pages/, takes showThis into account
-            $globalParams['pagePath'] = $this->pagePath;                    // excludes pages/, takes not showThis into account
-			$globalParams['pathToPage'] = $this->pathToPage;
-			$globalParams['filepathToRoot'] = str_repeat('../', substr_count($this->pathToPage, '/'));
-            $_SESSION['lizzy']['pageHttpPath'] = $this->pageHttpPath;               // for _ajax_server.php and _upload_server.php
-            $_SESSION['lizzy']['pagePath'] = $this->pagePath;               // for _ajax_server.php and _upload_server.php
-            $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath.$this->pagePath;
-
-
-            $this->pageRelativePath = $this->pathToRoot.$this->pagePath;
-
-            $this->trans->loadStandardVariables($this->siteStructure);
-            $this->trans->addVariable('next_page', "<a href='~/{$this->siteStructure->nextPage}'>{{ nextPageLabel }}</a>");
-			$this->trans->addVariable('prev_page', "<a href='~/{$this->siteStructure->prevPage}'>{{ prevPageLabel }}</a>");
-
-		} else {
-			$this->siteStructure = new SiteStructure($this, ''); //->list = false;
-			$this->currPage = '';
-            $globalParams['pagePath'] = '';
-            $this->pathToPage = $this->config->path_pagesPath;
-            $globalParams['pathToPage'] = $this->pathToPage;
-            $this->pageRelativePath = '';
-            $this->pagePath = '';
+        } else {
+            $this->initializeAsOnePager();
         }
 
         $this->handleEditSaveRequests();
@@ -149,6 +127,35 @@ class Lizzy
         $this->trans->addVariable('debug_class', '');   // just for compatibility
         $this->dailyHousekeeping(2);
     } // __construct
+
+
+
+
+    //....................................................
+    public function serviceRun($codeFile, $useSiteInfrastructure = false)
+    {
+        if (!$this->config->custom_permitServiceCode) {
+            $msg ="Warning: attempt to run service-routine '$codeFile' failed -> not enabled";
+            setNotificationMsg($msg );
+            return $msg;
+        }
+
+        if ($useSiteInfrastructure && ($this->config->site_sitemapFile || $this->config->feature_sitemapFromFolders)) {
+            $this->initializeSiteInfrastructure();
+
+        } else {
+            $this->initializeAsOnePager();
+        }
+
+        $codeFile = USER_CODE_PATH.'@'.base_name($codeFile, false).'.php';
+        if (file_exists($codeFile)) {
+            $msg = require($codeFile);
+        } else {
+            $msg = "Warning: attempt to run service-routine '$codeFile' failed -> file not found";
+            setNotificationMsg($msg );
+        }
+        return $msg;
+    } // serviceRun
 
 
 
@@ -177,8 +184,8 @@ class Lizzy
         $this->config->appBaseName = base_name(rtrim(trunkPath(__FILE__, 1), '/'));
 
         $GLOBALS['globalParams']['isAdmin'] = false;
-        $GLOBALS['globalParams']['activityLoggin'] = $this->config->admin_activityLogging;
-        $GLOBALS['globalParams']['errorLogging'] = $this->config->debug_errorLogging;
+        $GLOBALS['globalParams']['activityLoggingEnabled'] = $this->config->admin_activityLogging;
+        $GLOBALS['globalParams']['errorLoggingEnabled'] = $this->config->debug_errorLogging;
 
         $this->trans = new Transvar($this);
         $this->page = new Page($this);
@@ -562,35 +569,41 @@ class Lizzy
         } else {
             $pageHttpPath = $requestedPath;
         }
+        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
+        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
+        $globalParams['requestedUrl'] = $requestedUrl;
+        $globalParams['pagePath'] = null;
+        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
 
-        $pageHttpPath0      = $pageHttpPath;
+        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath );
+//        $pageHttpPath0      = $pageHttpPath;
         $pageHttpPath       = strtolower($pageHttpPath);
         if ($this->config->feature_filterRequestString) {
             // Example: abc[2]/
             $pageHttpPath = preg_replace('/[^a-z_-]+ \w* [^a-z_-]+/ix', '', rtrim($pageHttpPath, '/')).'/';
         }
         $pathToRoot = str_repeat('../', sizeof(explode('/', $requestedpageHttpPath)) - 1);
-        $globalParams['pagePath'] = null;
+//        $globalParams['pagePath'] = null;
         $globalParams['pageHttpPath'] = $pageHttpPath;
         $globalParams['pagesFolder'] = $this->config->path_pagesPath;
 //        $globalParams['pathToPage'] = $this->config->path_pagesPath.$pagePath;//???
-        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
+//        $globalParams['pathToPage'] = null; // needs to be set after determining actually requested page
         $globalParams['dataPath'] = $this->config->site_dataPath;
 
         $globalParams['pathToRoot'] = $pathToRoot;  // path from requested folder to root (= ~/), e.g. ../
         $this->pageHttpPath = $pageHttpPath;
         $this->pathToRoot = $pathToRoot;
         $this->config->pathToRoot = $pathToRoot;
-        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
+//        $requestScheme = ((isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'].'://' : 'HTTP://';
         $globalParams['host'] = $requestScheme.$_SERVER['HTTP_HOST'].'/';
         $this->pageUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestedPath;
         $globalParams['pageUrl'] = $this->pageUrl;
-        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
-        $globalParams['requestedUrl'] = $requestedUrl;
+//        $requestedUrl = $requestScheme.$_SERVER['HTTP_HOST'].$requestUri;
+//        $globalParams['requestedUrl'] = $requestedUrl;
         $globalParams['absAppRoot'] = $absAppRoot;  // path from FS root to base folder of app, e.g. /Volumes/...
         $globalParams['absAppRootUrl'] = $globalParams["host"] . substr($appRoot, 1);  // path from FS root to base folder of app, e.g. /Volumes/...
 
-        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath0 );
+//        $pageHttpPath = $this->auth->handleAccessCodeInUrl( $pageHttpPath0 );
 
         if (!$pageHttpPath) {
             $pageHttpPath = './';
@@ -1323,6 +1336,10 @@ EOT;
     //....................................................
 	private function handleUrlArgs()
 	{
+        if ($arg = getNotificationMsg()) {
+            $this->page->addMessage( $arg );
+        }
+
         if (getUrlArg('reset')) {			            // reset (cache)
             $this->disableCaching();
             $this->clearCaches();
@@ -1333,9 +1350,6 @@ EOT;
             $this->userRec = false;
             $this->auth->logout();
             reloadAgent(false, 'logout-successful'); // reload to get rid of url-arg ?logout
-
-		} elseif (($arg = getUrlArg('reload-arg')) && ($arg === 'logout-successful')) {
-		    $this->page->addMessage('{{ lzy-logout-successful }}');
         }
 
 
@@ -1517,6 +1531,11 @@ EOT;
 
 
 
+        if (getUrlArg('access-link')) {                                    // reorg-css
+            $user = getUrlArg('access-link', true);
+            $this->createAccessLink($user);
+        }
+
         if ($filename = getUrlArg('reorg-css', true)) {                                    // reorg-css
             $this->reorganizeCss($filename);
         }
@@ -1616,6 +1635,26 @@ EOT;
 
 
     } // handleUrlArgs2
+
+
+
+
+    //....................................................
+    private function createAccessLink($user)
+    {
+        if (!$user) {
+            $msg = "# Access Link\n\nPlease supply a user-name.\n\nE.g. ?access-code=user1";
+        } else {
+            $userRec = $this->auth->getUserRec($user);
+            if (!$this->auth->getUserRec($user)) {
+                die("Create Access Link: user unknown: '$user");
+            }
+            $tick = new Ticketing();
+            $code = $tick->createTicket($userRec, 100);
+            $msg = "# Access Link\n\n{$GLOBALS["globalParams"]["pageUrl"]}$code";
+        }
+        $this->page->addOverlay(['text' => $msg, 'closable' => 'reload', 'mdCompile' => true]);
+    } // createAccessLink
 
 
 
@@ -1902,11 +1941,11 @@ EOT;
     //....................................................
     private function dailyHousekeeping($run = 1)
     {
-        if ($run == 1) {
+        if ($run === 1) {
             if (file_exists(HOUSEKEEPING_FILE)) {
                 $fileTime = intval(filemtime(HOUSEKEEPING_FILE) / 86400);
                 $today = intval(time() / 86400);
-                if (($fileTime) == $today) {    // update once per day
+                if (($fileTime) === $today) {    // update once per day
                     $this->housekeeping = false;
                     return;
                 }
@@ -1917,19 +1956,18 @@ EOT;
             touch(HOUSEKEEPING_FILE);
             chmod(HOUSEKEEPING_FILE, 0770);
 
-            writeLog("Daily housekeeping run.", 'log.txt');
-
             $this->checkInstallation();
 
             $this->housekeeping = true;
             $this->clearCaches();
 
         } elseif ($this->housekeeping) {
+            writeLog("Daily housekeeping run.");
             $this->checkInstallation2();
             $this->clearCaches(true);
             if ($this->config->admin_enableDailyUserTask) {
-                if (file_exists($this->config->path_userCodePath.'user-daily-task.php')) {
-                    require( $this->config->path_userCodePath.'user-daily-task.php' );
+                if (file_exists(USER_DAILY_CODE_FILE)) {
+                    require( USER_DAILY_CODE_FILE );
                 }
             }
             touch(HOUSEKEEPING_FILE);
@@ -2050,7 +2088,7 @@ EOT;
 
 
     //....................................................
-    private function setLocale(): void
+    private function setLocale()
     {
         $locale = $this->config->site_defaultLocale;
         if (preg_match('/^[a-z]{2}_[A-Z]{2}$/', $locale)) {
@@ -2080,7 +2118,7 @@ EOT;
 
 
 
-    private function renderLoginForm($asPopup = true): string
+    private function renderLoginForm($asPopup = true)
     {
         $accForm = new UserAccountForm($this);
         $html = $accForm->renderLoginForm($this->auth->message, false, true);
@@ -2095,7 +2133,7 @@ EOT;
 
 
 
-    private function handleConfigFeatures(): void
+    private function handleConfigFeatures()
     {
         if ($this->config->feature_touchDeviceSupport) {
             $this->page->addJqFiles("TOUCH_DETECTOR,AUXILIARY,MAC_KEYS");
@@ -2244,6 +2282,57 @@ EOT;
             $this->saveSitemapFile($this->config->site_sitemapFile); // exits
         }
     }
+
+
+
+
+    private function initializeSiteInfrastructure()
+    {
+        global $globalParams;
+        $this->siteStructure = new SiteStructure($this, $this->reqPagePath);
+        $this->currPage = $this->reqPagePath = $this->siteStructure->currPage;
+
+        if (isset($this->siteStructure->currPageRec['showthis'])) {
+            $this->pagePath = $this->siteStructure->currPageRec['showthis'];
+        } else {
+            $this->pagePath = $this->siteStructure->currPageRec['folder'];
+        }
+        $this->pathToPage = $this->config->path_pagesPath . $this->pagePath;   //  includes pages/
+        $globalParams['pageHttpPath'] = $this->pageHttpPath;            // excludes pages/, takes showThis into account
+        $globalParams['pagePath'] = $this->pagePath;                    // excludes pages/, takes not showThis into account
+        $globalParams['pathToPage'] = $this->pathToPage;
+        $globalParams['filepathToRoot'] = str_repeat('../', substr_count($this->pathToPage, '/'));
+        $_SESSION['lizzy']['pageHttpPath'] = $this->pageHttpPath;               // for _ajax_server.php and _upload_server.php
+        $_SESSION['lizzy']['pagePath'] = $this->pagePath;               // for _ajax_server.php and _upload_server.php
+        $_SESSION['lizzy']['pathToPage'] = $this->config->path_pagesPath . $this->pagePath;
+
+
+        $this->pageRelativePath = $this->pathToRoot . $this->pagePath;
+
+        $this->trans->loadStandardVariables($this->siteStructure);
+        $this->trans->addVariable('next_page', "<a href='~/{$this->siteStructure->nextPage}'>{{ nextPageLabel }}</a>");
+        $this->trans->addVariable('prev_page', "<a href='~/{$this->siteStructure->prevPage}'>{{ prevPageLabel }}</a>");
+    } // initializeSiteInfrastructure
+
+
+
+
+    private function initializeAsOnePager()
+    {
+        global $globalParams;
+        $this->siteStructure = new SiteStructure($this, ''); //->list = false;
+        $this->currPage = '';
+        $globalParams['pagePath'] = '';
+        $globalParams['pageHttpPath'] = '';            // excludes pages/, takes showThis into account
+        $globalParams['filepathToRoot'] = '';
+
+        $this->pathToPage = $this->config->path_pagesPath;
+        $globalParams['pathToPage'] = $this->pathToPage;
+        $this->pageRelativePath = '';
+        $this->pagePath = '';
+        $this->trans->addVariable('next_page', "");
+        $this->trans->addVariable('prev_page', "");
+    } // initializeAsOnePager
 } // class WebPage
 
 

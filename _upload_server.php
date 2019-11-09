@@ -2,7 +2,8 @@
 
 define('SYSTEM_PATH', 		'./');
 define('PATH_TO_APP_ROOT', 	'../');		                            // root folder of web app
-date_default_timezone_set('CET');
+$timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'UCT';
+date_default_timezone_set($timezone);
 
 error_reporting(E_ALL | E_STRICT);
 require_once SYSTEM_PATH.'/third-party/jquery-upload/server/php/UploadHandler.php';

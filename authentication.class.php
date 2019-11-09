@@ -52,8 +52,8 @@ class Authentication
             }
             $res = true;
 
-            if ($user && isset($_GET['reload-arg'])) {
-                $res = [$user, "<p>{{ lzy-{$_GET['reload-arg']} }}</p>", 'Message'];   //
+            if ($user && ($msg = getNotificationMsg())) {
+                $res = [$user, "<p>{{ lzy-$msg }}</p>", 'Message' ];   //
             }
         }
 
@@ -122,7 +122,7 @@ class Authentication
 
             $this->validateAccessCode($codeCandidate);   // check access code in user records and log in&reload if found
 
-            $pagePath = trunkPath($pagePath,1, false); // remove hash-code from
+            $pagePath = preg_replace('|/[A-Z][A-Z0-9]{4,}/?$|', '', $pagePath);
         }
         return $pagePath;   // access granted
     } // handleAccessCodeInUrl
@@ -144,18 +144,12 @@ class Authentication
         if ($userRec) {
             $user = $userRec['username'];
             $this->setUserAsLoggedIn( $user, null, $oneTimeRec["email"] );
-            $displayName = $this->getDisplayName();
-//            if ($displayName) {
-//                $user .= " ({$displayName})";
-//            }
             $user .= " ({$oneTimeRec['email']})";
             writeLog("one time link accepted: $user [".getClientIP().']', LOGIN_LOG_FILENAME);
 
             // access granted, remove hash-code from url, if there is one:
             $requestedUrl = $GLOBALS['globalParams']['requestedUrl'];
-            if ($requestedUrl && preg_match('|/[A-Z][A-Z0-9]{4,}/?$|', $requestedUrl)) {
-                $requestedUrl = trunkPath($requestedUrl, 1, false); // remove hash-code from
-            }
+            $requestedUrl = preg_replace('|/[A-Z][A-Z0-9]{4,}/?$|', '', $requestedUrl);
             reloadAgent($requestedUrl, 'login-successful'); // access granted, remove hash-code from url
 
         } else {
@@ -177,8 +171,6 @@ class Authentication
     private function readOneTimeAccessCode($code)
     {
         // checks whether there is a pending oneTimeAccessCode, purges old entries
-        require_once SYSTEM_PATH.'ticketing.class.php';
-
         $tick = new Ticketing();
         $code = strtoupper($code);
         $ticket = $tick->consumeTicket($code);
@@ -238,7 +230,9 @@ class Authentication
                         }
                     }
                     $this->setUserAsLoggedIn($user, $rec);
-                    $requestedUrl = trunkPath($GLOBALS['globalParams']['requestedUrl'],1, false); // remove hash-code from
+                    $requestedUrl = $GLOBALS['globalParams']['requestedUrl'];
+                    $requestedUrl = preg_replace('|/[A-Z][A-Z0-9]{4,}/?$|', '', $requestedUrl);
+                    writeLog("*** user '$user' successfully logged in via access link ($codeCandidate).");
                     reloadAgent($requestedUrl, 'login-successful');
                 }
             }
@@ -705,7 +699,7 @@ class Authentication
 
 
 
-    public function findEmailInEmailList(string $submittedEmail)
+    public function findEmailInEmailList($submittedEmail)
     {
         $found = false;
         $submittedEmail = strtolower($submittedEmail);
@@ -754,9 +748,6 @@ class Authentication
                 $displayName = $this->getDisplayName();
                 $uname = $displayName ? "$uname ($displayName)" : $uname;
                 list($message, $displayName) = $this->sendOneTimeCode($emailRequest, $rec);
-//                $message = $this->sendOneTimeCode($emailRequest, $rec);
-//                writeLog("one time link sent to: $displayName", LOGIN_LOG_FILENAME);
-//                writeLog("one time link sent to: $uname", LOGIN_LOG_FILENAME);
 
                 $res = [false, $message, 'Overlay'];   // if successful, a mail with a link has been sent and user will be authenticated on using that link
             }
@@ -769,10 +760,7 @@ class Authentication
 
 
 
-    /**
-     * @param $res
-     */
-    private function handleLoginUserNotification($res): void
+    private function handleLoginUserNotification($res)
     {
         if (is_array($res) && isset($res[2])) { // [login/false, message, communication-channel]
             if ($res[2] == 'Overlay') {

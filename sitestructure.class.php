@@ -205,7 +205,8 @@ class SiteStructure
                     $level = strlen($indent);
                 }
 				if (($level - $lastLevel) > 1) {
-                    writeLog("Error in sitemap.txt: indentation on line $line (level: $level / lastLevel: $lastLevel)", 'errlog');
+                    writeLog("Error in sitemap.txt: indentation on line $line (level: $level / lastLevel: $lastLevel)", true);
+//                    writeLog("Error in sitemap.txt: indentation on line $line (level: $level / lastLevel: $lastLevel)", 'errlog');
                     $level = $lastLevel + 1;
 				}
                 $rec['level'] = $level;
