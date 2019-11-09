@@ -24,7 +24,7 @@ class SCssCompiler
         $this->isPrivileged = $lzy->config->isPrivileged;
         $this->localCall = $lzy->localCall;
         $this->compiledStylesFilename = $lzy->config->site_compiledStylesFilename;
-        $this->compiledSysStylesFilename = '_lizzy.css';
+        $this->compiledSysStylesFilename = '__lizzy.css';
         $this->scss = false;
 
         if (isset($_GET['reset'])) {
