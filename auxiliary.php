@@ -1566,7 +1566,7 @@ function explodeTrim($sep, $str)
     } else {
         return array_map('trim', explode($sep, $str));
     }
-} // trimSplit
+} // explodeTrim
 
 
 
