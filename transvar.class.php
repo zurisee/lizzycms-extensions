@@ -156,7 +156,7 @@ class Transvar
 
 
     //....................................................
-    private function translateVariable($varName)
+    public function translateVariable($varName)
     {
         $val = $this->getVariable($varName);
         if ($val === false) {
