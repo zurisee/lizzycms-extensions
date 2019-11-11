@@ -1557,6 +1557,21 @@ function shield_str($s)
 
 
 //------------------------------------------------------------------------------
+function explodeTrim($sep, $str)
+{
+    if (strlen($sep > 1)) {
+        $sep = preg_quote($sep);
+        $out = array_map('trim', preg_split("/[$sep]/", $str));
+        return $out;
+    } else {
+        return array_map('trim', explode($sep, $str));
+    }
+} // trimSplit
+
+
+
+
+//------------------------------------------------------------------------------
 function revertQuotes($s, $unshield = true)
 {
     // &#39; -> '
