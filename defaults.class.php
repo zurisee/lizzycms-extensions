@@ -143,6 +143,9 @@ private $userConfigurableSettingsAndDefaults      = [
         $this->loadModules['TOOLTIPS']              = array('module' => 'third-party/jquery-popupoverlay/jquery.popupoverlay.js,'.
                                                                         'js/tooltips.js, css/tooltips.css', 'weight' => 84);
 
+        $this->loadModules['QTIP' ]                 = array('module' => 'third-party/qtip/jquery.qtip.min.css,'.
+                                                                        'third-party/qtip/jquery.qtip.min.js', 'weight' => 83);
+
         $this->loadModules['MAC_KEYS']              = array('module' => 'third-party/mac-keys/mac-keys.js', 'weight' => 80);
 
         $this->loadModules['HAMMERJS']              = array('module' => 'third-party/hammerjs/hammer2.0.8.min.js', 'weight' => 70);
