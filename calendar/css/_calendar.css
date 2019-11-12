@@ -1,94 +1,49 @@
 
 /* Calendar */
-section {
-  opacity: 0.999; }
 
-.lzy-popup-wrapper {
-  box-shadow: 0 0 15px #888; }
+.qtip-default {
+  border-radius: 0.6em; }
 
-.lzy-popup-header ~ .lzy-popup-close-button {
-  background: white;
-  border-radius: 50%;
-  width: 1.8em;
-  height: 1.8em;
-  text-align: center;
-  line-height: 1.8em; }
+.qtip-content .fc-field-label {
+  font-weight: bold;
+  display: block;
+  width: 8.5em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden; }
+  .qtip-content .fc-field-value {
+    display: block;
+    margin: 0 0 0.5em 1em; }
+  .qtip-content .fc-time, .qtip-content .fc-title, .qtip-content .fc-custom-field-wrapper > div {
+    margin-bottom: 0.5em; }
 
-.lzy-popup-body {
-  cursor: initial; }
-
-.lzy-popup-background {
-  background: rgba(200, 200, 200, 0.8); }
-
-.lzy-popup-widget .lzy-popup-header {
-  background: #efe; }
-
-.lzy-calendar .fc-index {
+.fc-event .fc-field-label, .fc-event .fc-custom-field-wrapper {
   display: none; }
-  .lzy-calendar .fc-title {
-    font-weight: bold; }
-  .lzy-calendar .fc-comment {
-    font-style: italic; }
-  .lzy-calendar .fc-category {
-    display: none; }
+
+.lzy-cal-link {
+  z-index: 999; }
+
+.fc-event .fc-bg {
+  z-index: -1; }
+
+.fc-category {
+  display: none; }
 
 .lzy-cal-editing {
-  outline: 1px solid red; }
+  border: 1px solid red; }
 
-.lzy-cal-editing .fc-event {
-  cursor: pointer; }
+.lzy-cal-field {
+  width: 100%; }
 
-.lzy-cal-popup fieldset {
-  border: 1px dotted #ddd;
-  margin-bottom: 1.5em; }
-  .lzy-cal-form-buttons {
-    margin-top: 1.2em;}
-  .lzy-cal-popup .field-type-textarea textarea {
-    width: 100%; }
-  .lzy-cal-popup .btn_delete_entry {
-    margin-bottom: 1.5em; }
-  .lzy-cal-popup .lzy_cal_delete_entry {
-    margin: 0.5em 0;
-    line-height: 1.6em; }
-  .lzy-cal-popup .field-wrapper lzy_cal_delete_entry label {
-    margin-right: 1em; }
-  .lzy-cal-popup .lzy-cal-inactive {
-    color: #bbb; }
-  .lzy-cal-popup .fc-event {
-    cursor: initial; }
+.field-type-date .lzy-cal-label {
+  position: absolute;
+  right: -1000vh; }
 
-#lzy-calendar-default-form, #lzy-calendar-default-form input, #lzy-calendar-default-form textarea {
-  font-size: 11pt; }
+.field-wrapper:not(.field-type-date) {
+  margin: 10px 0; }
 
-#lzy-calendar-default-form fieldset {
-  width: calc(100% -1.5em);
-  margin: 0; }
+#lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-speaker, #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-moderator {
+  display: none; }
 
-#lzy-calendar-default-form legend {
-  color: #888; }
-
-#lzy-calendar-default-form .field-type-textarea textarea,
-#lzy-calendar-default-form .field-type-text input {
-  width: 100%;
-  box-sizing: border-box;}
-
-#lzy-calendar-default-form .field-type-date input {
-  display: inline-block;
-  margin: 0; }
-
-#lzy-calendar-default-form .field-type-date input[type=date] {
-  min-width: 9em;
-  width: 60%; }
-
-#lzy-calendar-default-form .field-type-date input[type=time] {
-  min-width: 5em;
-  width: 32%; }
-
-.lzy-cal-popup h1 {
-  font-size: 16pt;
-  margin: 0 0 1em 0;
-}
-
-.lzy-cal-form-buttons {
-  text-align: right;
-}
+.fc-list-view .fc-list-item-title .fc-title-prefix, .fc-list-view .fc-list-item-title .fc-field-label {
+  display: none; }

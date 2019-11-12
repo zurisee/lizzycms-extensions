@@ -1,17 +1,18 @@
 
+var fcStdElems = ['allDay','className','end','i','source','start','title','_id','__proto__'];
+var inx = 0;
 
 $( document ).ready(function() {
 
     $('.lzy-calendar').each(function() {
-        var inx = $(this).attr('data-lzy-cal-inx');
+        inx = $(this).attr('data-lzy-cal-inx');
         var defaultDate = $(this).attr('data-lzy-cal-start');
 
         $( this ).fullCalendar({
             header: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'month,agendaWeek,listYear',   // listWeek, listMonth, listYear
-                // right: 'month,agendaWeek,agendaDay,listYear',   // listWeek, listMonth, listYear
+                right: 'agendaWeek,month,listYear',   // further options: listWeek, listMonth, listYear
             },
             navLinks: true,       // can click day/week names to navigate views
             editable: lzyCal[ inx ].calEditingPermission,
@@ -31,9 +32,11 @@ $( document ).ready(function() {
             loading: function (bool) {
                 $('#loading').toggle(bool);
             },
-            viewRender: function(view, element) {
+            viewRender: function(view) {
                 storeViewMode(inx, view);
-                // storeViewMode(inx, view.name);
+                if (typeof customRenderView === 'function') {
+                    customRenderView(view);
+                }
             },
             dayClick: function (e) {
                 if (typeof openCalPopup !== 'undefined') {
@@ -55,29 +58,116 @@ $( document ).ready(function() {
             eventResize: function (e) {
                 calEventChanged(inx, e);
             },
-            eventRender: function (event, element) {
-                // console.log(element);
-                if (typeof event.i !== 'undefined') {
-                    $(element).append('<div class="fc-index">' + event.i + '</div>');
-                }
-                if (typeof event.location !== 'undefined') {
-                    $(element).append('<div class="fc-location">' + event.location + '</div>');
-                }
-                if (typeof event.description !== 'undefined') {
-                    $(element).append('<div class="fc-description">' + event.description + '</div>');
-                }
-                if (typeof event.comment !== 'undefined') {
-                    $(element).append('<div class="fc-comment">' + event.comment + '</div>');
-                }
-                if (typeof event.category !== 'undefined') {
-                    $(element).append('<div class="fc-category">' + event.category + '</div>');
-                    $(element).addClass(event.category);
-                }
-                // tooltips
-            }
+            eventRender: renderEvent
         });
     });
-});
+}); // ready
+
+
+function renderEvent(event, element)
+{
+    if (typeof customRenderEvent === 'function') {
+        customRenderEvent(event, element);
+    } else {
+        defaultRenderEvent(event, element);
+    }
+}
+
+
+
+function defaultRenderEvent(event, element) {
+
+    var $elem = $(element);
+
+    // if special field category present -> apply it as class to event wrapper:
+    if (typeof event.category !== 'undefined') {
+        $elem.addClass('lzy-event-' + event.category);
+    }
+
+    // create wrapper for custom fields:
+    if ($('.fc-list-view').length) {
+        $elem.append('<td class="fc-custom-field-wrapper"></td>');
+    } else {
+        $('.fc-content', $elem).append('<div class="fc-custom-field-wrapper"></div>');
+
+    }
+    var $wrapper = $('.fc-custom-field-wrapper', $elem);
+
+
+    var flabel = lzyCal[inx].fieldLabels.title;
+    var prefix = lzyCal[inx].catPrefixes[ event.category ];
+    if (typeof prefix === 'undefined') {
+        prefix = lzyCal[inx].catDefaultPrefix;
+    }
+    prefix = '<span class="fc-title-prefix">' + prefix + '</span>';
+
+    // md-compile title:
+    var title = '';
+    if ($('#lzy-calendar' + inx + ' .fc-list-view').length) {
+        title = $('.fc-list-item-title a', $elem).text();
+        title = '<span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + prefix + convertMD(title) + '</span>';
+        $('.fc-list-item-title a', $elem).html(title);
+
+    } else {
+        title = $('.fc-title', $elem).text();
+        title = '<span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + prefix + convertMD(title) + '</span>';
+        $('.fc-title', $elem).html(title);
+    }
+
+    flabel = lzyCal[inx].fieldLabels.time;
+    if (typeof flabel !== 'undefined') {
+        var date = $('.fc-time', $elem).text();
+        date = '<span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + date + '</span>';
+        $('.fc-time', $elem).html(date);
+    }
+
+    // populate custom fields:
+    for (var fld in event) {
+        if (fcStdElems.indexOf(fld) === -1) {
+            flabel = lzyCal[ inx ].fieldLabels[fld];
+            var text = convertMD(event[fld]);
+            $wrapper.append('<div class="fc-event-field fc-' + fld + '"><span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + text + '</span></div>');
+        }
+    }
+    $elem.qtip({
+        content: $('.fc-content', $elem).html(),
+        position: {
+            my: 'bottom center',
+            at: 'top center',
+            target: $elem
+        },
+        hide: {
+            fixed: true,
+            delay: 500
+        }
+        // for debugging:
+        // show: 'click',
+        // hide: 'click',
+    });
+} // defaultRenderEvent
+
+
+
+function convertMD(text)
+{
+    if (!text) {
+        return text;
+    }
+    text = text.replace(/(?<!\\)\\n/, '<br>');  // new-line
+    text = text.replace(/(?<!\\)\*\*(.*?)\*\*/, '<strong>$1</strong>'); // **strong**
+    text = text.replace(/(?<!\\)\*(.*?)\*/, '<em>$1</em>'); // *em**
+    text = text.replace(/\\\\/, '\\'); // \\ -> \
+    var m = text.match(/(.*)\[(.*?)\]\((.*?)\)(.*)/);
+    if ( m ) {
+        var href = m[3];
+        if (!href.match(/^https?/)) {
+            href = 'https://' + href;
+        }
+        text = m[1] + '<a href="'+href+'" class="lzy-cal-link" target="_blank">'+m[2]+'</a>' + m[4];
+    }
+    return text;
+} // convertMD
+
 
 
 
@@ -96,14 +186,17 @@ function calEventChanged(inx, e) {
     rec['data-src'] = '';
     rec['user'] = e.title;
     rec['title'] = e.title;
-    rec['location'] = e.location;
     rec['start-date'] = start.format('YYYY-MM-DD');
     rec['start-time'] = start.format('HH:mm');
     rec['end-date'] = end.format('YYYY-MM-DD');
     rec['end-time'] = end.format('HH:mm');
-    rec['comment'] = e.comment;
-    rec['category'] = e.category;
     rec['allday'] = e.allDay;
+
+    for (var el in e) {
+        if ((fcStdElems.indexOf(el) === -1) && (typeof e[el] !== 'undefined')) {
+            rec[el] = e[el];
+        }
+    }
 
     var json = JSON.stringify(rec);
 
@@ -120,10 +213,9 @@ function calEventChanged(inx, e) {
 
 
 
-// function storeViewMode(inx, viewName) {
+
 function storeViewMode(inx, view) {
     var viewName = view.name;
-    var intervalStart = view.intervalStart;
     console.log('save view mode: ' + viewName);
     $.ajax({
         url : calBackend + '?inx=' + inx + '&mode=' + viewName,
@@ -131,7 +223,6 @@ function storeViewMode(inx, view) {
     }).done(function(response){
         if (isServerErrMsg(response)) { return; }
         if (response && response !== 'ok') { console.log(response); }
-        // if (response && response != 'ok') { console.log(response); }
     });
 } // storeViewMode
 
@@ -143,6 +234,8 @@ function defaultOpenCalPopup(inx, e) {
     }
     var options = {};
     options.anker = false;
+    $('.lzy-cal-popup input[type=text]').val('');
+    $('.lzy-cal-popup textarea').text('');
 
     $('#lzy-inx').val(inx);
     $('#lzy-calendar-default-form').attr('data-cal-inx', inx);
@@ -209,13 +302,29 @@ function defaultOpenCalPopup(inx, e) {
         }
 
         $('#lzy_cal_event_name').val(e.title);
-        $('#lzy_cal_event_location').val(e.location);
         $('#lzy_cal_comment').text(e.comment);
 
-        $('#lzy_cal_category option[value=' + e.category + ']').attr('selected','selected');
+        // populate custom fields:
+        for (var fld in e) {
+            if (fcStdElems.indexOf(fld) === -1) {
+                $('#lzy_cal_event_'+fld).val(e[fld]);
+            }
+        }
+
+        // reset selected options and then select anew:
+        $('#lzy_cal_category option').removeAttr('selected');
+        if (e.category) {
+            $('#lzy_cal_category option[value=' + e.category + ']').attr('selected', 'selected');
+        }
         $('#lzy-rec-id').val(e.i);
 
         $('#lzy_cal_delete_entry').show();
+
+        $('#lzy_cal_category').change(function(e) {
+            var cat = 'lzy-cal-category-' + $( ':selected', $(this) ).val();
+            // var cat = $( 'option[selected]', $(this) ).val();
+            $(this).closest('form').attr('class', '').addClass(cat);
+        });
 
         $('#lzy-cal-delete-entry-checkbox').change(function(e) {
             e.preventDefault();

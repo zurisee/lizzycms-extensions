@@ -33,13 +33,14 @@ $this->addMacro($macroName, function () {
 	$domain = $GLOBALS["_SERVER"]["HTTP_HOST"];
     $source = $this->getArg($macroName, 'file', 'File path where data shall be fetched (and stored if in editing mode).', 'calendar.yaml');
     $this->getArg($macroName, 'calEditingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
+    $this->getArg($macroName, 'fields', 'Comma separated list of fields', false);
     $this->getArg($macroName, 'publish', '[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);
-    //    $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', '');
+    $this->getArg($macroName, 'tooltips', 'Name of event property that shall be showed in a tool-tip.', true);
     $this->getArg($macroName, 'categories', 'A (comma separated) list of supported categories.', '');
     $this->getArg($macroName, 'showCategories', 'A (comma separated) list of categories - only events carrying that category will be presented.', '');
-    $this->getArg($macroName, 'icalDefaultPrefix', 'Default prefix for iCal events - used if icalPrefix is not supplied.', $this->lzy->pageUrl);
-    $this->getArg($macroName, 'icalPrefix', 'Prefix for iCal events. If a comma-separated list is supplied, elements are interpreted per category.', $this->lzy->pageUrl);
+    $this->getArg($macroName, 'categoryPrefixes', '[string|comma-separated-list] (ategory-specific prefixes for events.', '');
+    $this->getArg($macroName, 'defaultPrefix', 'Prefix applied if no category-specific prefix is defined.', '');
 
     if ($source == 'help') {
         return '';

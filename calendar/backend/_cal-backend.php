@@ -98,67 +98,12 @@ class CalendarBackend {
         if (isset($post['json'])) {
             $post = json_decode($post['json'], true);
         }
-        $this->deleteRec($post);
-
-        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $post['start-date'], $m)) {
-            $startDate = $m[1];
-        } else {
-            $startDate = $post['start-date'];
-        }
-        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $post['end-date'], $m)) {
-            $endDate = $m[1];
-        } else {
-            $endDate = $post['end-date'];
-        }
-        $startTime = $post['start-time'];
-        $endTime = $post['end-time'];
 
         $recId = (isset($post['rec-id']) && intval($post['rec-id'])) ? intval($post['rec-id']) : time();
 
-        if (preg_match('/\[(.*)\]/', $startTime, $m)) { // array of events:
-            $startTimes = explode(',', $m[1]);
-            $endTimes = explode(',', str_replace(['[',']'], '', $endTime));
-            foreach ($startTimes as $i => $startTime) {
-                $endTime = $endTimes[$i];
-                if ($post['allday']) {
-                    $startTime = '';
-                    $endTime = '';
-                    $endDate = date("+1 day", strtotime($endDate));
-                }
-                $rec = [
-                    'title' => $post['title'],
-                    'start' => trim($startDate.' '.$startTime),
-                    'end' => trim($endDate.' '.$endTime),
-                    'allDay' => $post['allday'],
-                    'location' => $post['location'],
-                    'comment' => $post['comment'],
-                    'category' => $post['category'],
-                ];
-                if (function_exists('customPrepareData')) {
-                    $rec = customPrepareData($rec);
-                }
-                $this->ds->writeElement($recId++, $rec);
-            }
-
-        } else {        // single event:
-            if (($post['allday'] === 'true') || ($post['allday'] === true)) {
-                $startTime = '';
-                $endTime = '';
-                $endDate = date('Y-m-d', strtotime("+1 day", strtotime($endDate)));
-            }
-            $rec = [
-                'title' => $post['title'],
-                'start' => trim($startDate.' '.$startTime),
-                'end' => trim($endDate.' '.$endTime),
-                'location' => $post['location'],
-                'comment' => $post['comment'],
-                'category' => $post['category'],
-            ];
-            if (function_exists('customPrepareData')) {
-                $rec = customPrepareData($rec);
-            }
-            $this->ds->writeElement($recId, $rec);
-        }
+        $rec = $this->prepareRecord($post);
+        $this->deleteRec($post);
+        $this->ds->writeElement($recId, $rec);
 
         return 'ok';
     } // saveNewData
@@ -166,14 +111,15 @@ class CalendarBackend {
 
 
     //--------------------------------------------------------------
-    public function deleteRec($post)
+    public function deleteRec($rec)
     {
-        if (isset($post['rec-id']) && ($post['rec-id'] !== '')) {
-            $recId = $post['rec-id'];
+        if (isset($rec['rec-id']) && ($rec['rec-id'] !== '')) {
+            $recId = $rec['rec-id'];
             $this->ds->delete($recId);
         }
         return 'ok';
     } // deleteRec
+
 
 
 
@@ -259,6 +205,44 @@ class CalendarBackend {
         }
         return $str;
     }
+
+
+
+
+    private function prepareRecord($rec)
+    {
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $rec['start-date'], $m)) {
+            $startDate = $m[1];
+        } else {
+            $startDate = $rec['start-date'];
+        }
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $rec['end-date'], $m)) {
+            $endDate = $m[1];
+        } else {
+            $endDate = $rec['end-date'];
+        }
+        $startTime = $rec['start-time'];
+        $endTime = $rec['end-time'];
+
+        if (($rec['allday'] === 'true') || ($rec['allday'] === true)) {
+            $startTime = '';
+            $endTime = '';
+            $endDate = date('Y-m-d', strtotime("+1 day", strtotime($endDate)));
+        }
+        unset($rec['inx']);
+        unset($rec['rec-id']);
+        unset($rec['start-time']);
+        unset($rec['start-date']);
+        unset($rec['end-time']);
+        unset($rec['end-date']);
+        unset($rec['allday']);
+        $rec['start'] = trim($startDate . ' ' . $startTime);
+        $rec['end'] = trim($endDate . ' ' . $endTime);
+        if (function_exists('customPrepareData')) {
+            $rec = customPrepareData($rec);
+        }
+        return $rec;
+    } // prepareRecord
 
 } // class
 
