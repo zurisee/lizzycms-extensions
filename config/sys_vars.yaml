@@ -170,17 +170,51 @@ lzy-prev-page-link-title:
 lzy-select-langauge:
     de: Sprache auswählen 
     en: Select language
+    fr: Sélectionnez la langue
+    it: Seleziona la lingua
+    es: Seleccionar idioma
 
 lzy-lang-select de: "<img src='~sys/rsc/de.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-de}}' title='{{ lzy-select-langauge }}: {{lzy-lang-de}}' /><span class='invisible'>Deutsch</span>"
 lzy-lang-select en: "<img src='~sys/rsc/en.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-en}}' title='{{ lzy-select-langauge }}: {{lzy-lang-en}}' /><span class='invisible'>English</span>"
+lzy-lang-select fr: "<img src='~sys/rsc/fr.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-fr}}' title='{{ lzy-select-langauge }}: {{lzy-lang-fr}}' /><span class='invisible'>Français</span>"
+lzy-lang-select it: "<img src='~sys/rsc/it.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-it}}' title='{{ lzy-select-langauge }}: {{lzy-lang-it}}' /><span class='invisible'>Italiano</span>"
+lzy-lang-select es: "<img src='~sys/rsc/es.png' class='lzy-lang-icon' alt='{{ lzy-select-langauge }}: {{lzy-lang-es}}' title='{{ lzy-select-langauge }}: {{lzy-lang-es}}' /><span class='invisible'>Español</span>"
 
 lzy-lang-de:
-    de: Deutsch
     _:  German
+    de: Deutsch
+    fr: Allmende
+    it: Tedesco
+    es: Alemán
 
 lzy-lang-en:
+    _:  English
     de: Englisch
-    _: English
+    fr: Anglais
+    it: Inglese
+    es: Inglés
+
+lzy-lang-fr:
+    _:  French
+    fr: Français
+    de: Französisch
+    it: Francese
+    es: Francés
+
+lzy-lang-it:
+    _:  Italian
+    fr: Italien
+    de: Italienisch
+    it: Italiano
+    es: Italiano
+
+lzy-lang-es:
+    _:  Spanish
+    fr: Espagnol
+    de: Spanisch
+    it: Spagnolo
+    es: Español
+
 
 
 
