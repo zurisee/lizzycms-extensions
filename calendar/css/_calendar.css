@@ -4,16 +4,19 @@
 .qtip-default {
   border-radius: 0.6em; }
 
+.fc-title-prefix:not(:empty) {
+  margin-right: 0.3em;}
 .qtip-content .fc-field-label {
   font-weight: bold;
   display: block;
-  width: 8.5em;
+/*  width: 8.5em;*/
+  margin-right: 0.5em;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden; }
   .qtip-content .fc-field-value {
     display: block;
-    margin: 0 0 0.5em 1em; }
+    margin: 0.3em 0 0.7em 1em; }
   .qtip-content .fc-time, .qtip-content .fc-title, .qtip-content .fc-custom-field-wrapper > div {
     margin-bottom: 0.5em; }
 
