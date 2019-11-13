@@ -132,6 +132,8 @@ figure a {
 .lzy-next-page-link a {
 	right: 0;
 }
+
+// Footer depeding on small/large screen:
 .lzy-large-screen {
 	.lzy-small-screen-footer {
 		display: none;
@@ -150,6 +152,9 @@ figure a {
 	}
 	.lzy-large-screen-footer {
 		display: none;
+	}
+	footer {
+		margin-top: 0;
 	}
 }
 

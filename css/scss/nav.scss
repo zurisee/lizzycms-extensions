@@ -708,7 +708,7 @@ body.lzy-small-screen {
     .main {
         left: 0;
         width: 100vw;
-        height: calc(100vh - var(--lzy-mobile-header-height, #{$mobile-header-height}) - var(--lzy-mobile-footer-height, #{$mobile-footer-height}) );
+        height: calc(97vh - var(--lzy-mobile-header-height, #{$mobile-header-height}) - var(--lzy-mobile-footer-height, #{$mobile-footer-height}) );
         background: #fff;
         padding: 1em;
         transition: left 0.3s;
