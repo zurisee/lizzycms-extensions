@@ -153,11 +153,22 @@ function convertMD(text)
     if (!text) {
         return text;
     }
-    text = text.replace(/(?<!\\)\\n/, '<br>');  // new-line
-    text = text.replace(/(?<!\\)\*\*(.*?)\*\*/, '<strong>$1</strong>'); // **strong**
-    text = text.replace(/(?<!\\)\*(.*?)\*/, '<em>$1</em>'); // *em**
+    // lookbehind -> not working in js pre V8:
+    // text = text.replace(/(?<!\\)\\n/, '<br>');  // new-line
+    // text = text.replace(/(?<!\\)\*\*(.+?)\*\*/, '<strong>$1</strong>'); // **strong**
+    // text = text.replace(/(?<!\\)\*(.+?)\*/, '<em>$1</em>'); // *em**
+    // text = text.replace(/\\\\/, '\\'); // \\ -> \
+
+    // strong and em:
+    text = text.replace(/([^\\])\\n/, '$1<br>');  // new-line
+    text = text.replace(/^\*\*(.+?)\*\*/, '<strong>$1</strong>'); // **strong** at first pos
+    text = text.replace(/([^\\])\*\*(.+?)\*\*/, '$1<strong>$2</strong>'); // **strong**
+    text = text.replace(/^\*(.+?)\*/, '<em>$1</em>'); // *em**
+    text = text.replace(/([^\\*])\*(.+?)\*/, '$1<em>$2</em>'); // *em**
     text = text.replace(/\\\\/, '\\'); // \\ -> \
-    var m = text.match(/(.*)\[(.*?)\]\((.*?)\)(.*)/);
+
+    // links []():
+    var m = text.match(/(.*)\[(.+?)\]\((.+?)\)(.*)/);
     if ( m ) {
         var href = m[3];
         if (!href.match(/^https?/)) {
