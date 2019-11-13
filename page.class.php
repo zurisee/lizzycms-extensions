@@ -1072,8 +1072,8 @@ EOT;
         }
 
         $allowedOrigins = str_replace(' ', '', ",$allowOrigin,");
-        $currRequestOrigin = $_SERVER['HTTP_ORIGIN'];
-        $currRequestOrigin1 = ',' . $currRequestOrigin . ',';
+        $currRequestOrigin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] . ',': '';
+        $currRequestOrigin1 = ',' . $currRequestOrigin;
         if (strpos($allowedOrigins, $currRequestOrigin1) !== false) {
             header('Access-Control-Allow-Origin: ' . $currRequestOrigin);
         }
