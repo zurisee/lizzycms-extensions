@@ -6,7 +6,7 @@ define('CUSTOM_CAL_BACKEND', PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
 
 require_once SYSTEM_PATH.'vendor/autoload.php';
 
-use Symfony\Component\Yaml\Yaml;
+//use Symfony\Component\Yaml\Yaml;
 
 
 // Require Event class and datetime utilities
@@ -52,6 +52,7 @@ class CalendarBackend {
 
     public function __construct($dataSrc)
     {
+        $this->dataSrc = $dataSrc;
         if (isset($_GET['start'])) {
             $rangeStart = $_GET['start'];
             $_SESSION['lizzy']['defaultDate'] = $rangeStart;
@@ -69,6 +70,7 @@ class CalendarBackend {
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
         $this->ds = new DataStorage2(['dataFile' => $dataSrc]);
+
     } // __construct
 
 
@@ -78,10 +80,10 @@ class CalendarBackend {
     {
         $data = $this->ds->read();
         $categoriesToShow = $_SESSION['lizzy']['calShowCategories'][$inx];
-// possible enhancement: chose category from browser:
-//        if ($categoriesToShow2 = (isset($_GET['category'])) ? $_GET['category']: '') {
-//          $categoriesToShow = "$categoriesToShow,$categoriesToShow2";
-//        }
+        // possible enhancement: chose category from browser:
+        //        if ($categoriesToShow2 = (isset($_GET['category'])) ? $_GET['category']: '') {
+        //          $categoriesToShow = "$categoriesToShow,$categoriesToShow2";
+        //        }
 
         $output_arrays = $this->filterCalRecords($categoriesToShow, $data);
 
@@ -96,13 +98,23 @@ class CalendarBackend {
     public function saveNewData($post)
     {
         if (isset($post['json'])) {
-            $post = json_decode($post['json'], true);
+            $rec0 = json_decode($post['json'], true);
+        } else {
+            $rec0 = $post;
         }
 
-        $recId = (isset($post['rec-id']) && intval($post['rec-id'])) ? intval($post['rec-id']) : time();
+        if (isset($rec0['rec-id']) && intval($rec0['rec-id'])) {
+            $recId = intval($rec0['rec-id']);
+            $msg = 'Modified event';
+        } else {
+            $recId = time();
+            $msg = 'Created new event';
+        }
 
-        $rec = $this->prepareRecord($post);
-        $this->deleteRec($post);
+        $rec = $this->prepareRecord($rec0);
+        $this->writeLogEntry($msg, $rec);
+
+        $this->_deleteRec($recId);
         $this->ds->writeElement($recId, $rec);
 
         return 'ok';
@@ -113,10 +125,24 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function deleteRec($rec)
     {
-        if (isset($rec['rec-id']) && ($rec['rec-id'] !== '')) {
-            $recId = $rec['rec-id'];
-            $this->ds->delete($recId);
+        if (!isset($rec['rec-id']) || ($rec['rec-id'] === '')) {
+            return 'not ok';
         }
+        $recId = $rec['rec-id'];
+        $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
+        $rec['_user'] = $user;
+//        mylog("Deleted (in {$this->dataSrc}): $recId", $user);
+        $this->writeLogEntry("Deleted event", $this->prepareRecord($rec));
+        return $this->_deleteRec($recId);
+    } // deleteRec
+
+
+
+
+    //--------------------------------------------------------------
+    private function _deleteRec($recId)
+    {
+        $this->ds->delete($recId);
         return 'ok';
     } // deleteRec
 
@@ -143,7 +169,11 @@ class CalendarBackend {
         // Accumulate an output array of event data arrays.
         $output_arrays = array();
         foreach ($data as $i => $rec) {
-
+            if ((!isset($rec['title']) || !$rec['title']) ||
+                (!isset($rec['start']) || !$rec['start']) ||
+                (!isset($rec['end']) || !$rec['end'])  ) {
+                continue;
+            }
             // Convert the input array into a useful Event object
             $event = new Event($rec, $this->timezone);
 
@@ -167,8 +197,7 @@ class CalendarBackend {
 
 
 
-
-    //--------------------------------------------------------------
+/*
     private function convertYaml($str)
     {
         $data = null;
@@ -198,19 +227,23 @@ class CalendarBackend {
         return $str;
     }
 
-
+    //--------------------------------------------------------------
     private function numPad($str, $len = 2) {
         while (strlen($str) < $len) {
             $str = '0'.$str;
         }
         return $str;
     }
+*/
 
 
 
 
     private function prepareRecord($rec)
     {
+        if (!isset($rec['start-date']) || !isset($rec['end-date'])) {
+            return [];
+        }
         if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $rec['start-date'], $m)) {
             $startDate = $m[1];
         } else {
@@ -221,10 +254,10 @@ class CalendarBackend {
         } else {
             $endDate = $rec['end-date'];
         }
-        $startTime = $rec['start-time'];
-        $endTime = $rec['end-time'];
+        $startTime = isset($rec['start-time'])? $rec['start-time']: '';
+        $endTime = isset($rec['end-time'])? $rec['end-time']: '';
 
-        if (($rec['allday'] === 'true') || ($rec['allday'] === true)) {
+        if (isset($rec['allday']) && (($rec['allday'] === 'true') || ($rec['allday'] === true))) {
             $startTime = '';
             $endTime = '';
             $endDate = date('Y-m-d', strtotime("+1 day", strtotime($endDate)));
@@ -238,11 +271,27 @@ class CalendarBackend {
         unset($rec['allday']);
         $rec['start'] = trim($startDate . ' ' . $startTime);
         $rec['end'] = trim($endDate . ' ' . $endTime);
+
+        $rec['_user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anonymous';
+
         if (function_exists('customPrepareData')) {
             $rec = customPrepareData($rec);
         }
         return $rec;
     } // prepareRecord
+
+
+
+
+    private function writeLogEntry($msg, $rec)
+    {
+        $logEntry = json_encode($rec);
+
+        $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
+        $rec['_user'] = $user;
+        mylog("$msg ({$this->dataSrc}): $logEntry", $user);
+
+    } // writeLogEntry
 
 } // class
 

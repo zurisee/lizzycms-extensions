@@ -233,8 +233,8 @@ EOT;
                 $categoryCombo .= "\t<option value='$value'>$tag</option>\n";
             }
             $categoryCombo = <<<EOT
-    <label for="lzy_cal_category">{{ lzy-cal-category-label }}</label>
-    <select id="lzy_cal_category" name="category">
+    <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>
+    <select id="lzy_cal_category" class="lzy_cal_category" name="category">
         <option value="">{{ lzy-cal-category-all }}</option>
     $categoryCombo
     </select>
