@@ -50,3 +50,34 @@
 
 .fc-list-view .fc-list-item-title .fc-title-prefix, .fc-list-view .fc-list-item-title .fc-field-label {
   display: none; }
+
+// small-screen:
+.lzy-small-screen .fc-list-table {
+  display: block;}
+  .lzy-small-screen .fc-list-table tr {
+    display: block; }
+  .lzy-small-screen .fc-list-table td {
+    display: inline-block;
+    padding: 4px; }
+  .lzy-small-screen .fc-list-table .fc-list-item-time {
+    white-space: nowrap;
+    min-width: 7.5em; }
+  .lzy-small-screen .fc-list-table .fc-list-item-title {
+    min-width: 30%; }
+  .lzy-small-screen .fc-list-table .fc-custom-field-wrapper {
+    width: 100%;
+    padding-top: 0; }
+  .lzy-small-screen .fc-list-table .fc-event-dot {
+    margin: 4px 0 4px -6px; }
+  .lzy-small-screen .fc-scroller {
+    height: 68vh !important;
+    height: calc(88vh - 4rem) !important; }
+  .lzy-small-screen .fc-widget-header {
+    width: 100%; }
+  .lzy-small-screen .fc table {
+    width: calc(100% - 8px); }
+  .lzy-small-screen .fc-list-table td {
+    border-width: 0; }
+  .lzy-small-screen .lzy-calendar .fc-widget-header2:empty {
+      display: none; }
+

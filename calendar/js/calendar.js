@@ -58,7 +58,13 @@ $( document ).ready(function() {
             eventResize: function (e) {
                 calEventChanged(inx, e);
             },
-            eventRender: renderEvent
+            eventRender: renderEvent,
+            eventAfterAllRender: function() {
+                // in list-view: add td in header-row to balance custom fc-custom-field-wrapper
+                if ($('.fc-list-view').length) {
+                    $('.fc-list-heading').append('<td class="fc-widget-header2"></td>');
+                }
+            }
         });
     });
 }); // ready
@@ -85,7 +91,7 @@ function defaultRenderEvent(event, element) {
     }
 
     // create wrapper for custom fields:
-    if ($('.fc-list-view').length) {
+    if ($('.fc-list-view').length) {    // td for list-view:
         $elem.append('<td class="fc-custom-field-wrapper"></td>');
     } else {
         $('.fc-content', $elem).append('<div class="fc-custom-field-wrapper"></div>');
@@ -125,8 +131,12 @@ function defaultRenderEvent(event, element) {
     for (var fld in event) {
         if (fcStdElems.indexOf(fld) === -1) {
             flabel = lzyCal[ inx ].fieldLabels[fld];
-            var text = convertMD(event[fld]);
-            $wrapper.append('<div class="fc-event-field fc-' + fld + '"><span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + text + '</span></div>');
+            var text = event[fld];
+            // exlcude empty fields and system-fields starting with '_':
+            if (text && (text.charAt(0) !== '_')) {
+                text = convertMD(text);
+                $wrapper.append('<div class="fc-event-field fc-' + fld + '"><span class="fc-field-label">' + flabel + ':</span><span class="fc-field-value">' + text + '</span></div>');
+            }
         }
     }
     $elem.qtip({
@@ -140,7 +150,7 @@ function defaultRenderEvent(event, element) {
             fixed: true,
             delay: 500
         }
-        // for debugging:
+        // for debugging/styling tooltips:
         // show: 'click',
         // hide: 'click',
     });
