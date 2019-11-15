@@ -91,13 +91,16 @@ function resolvePath($path)
 
 
 //---------------------------------------------------------------------------
-function mylog($str)
+function mylog($str, $user = false)
 {
+    if (!$user) {
+        $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anonymous';
+    }
     $path = dirname(SERVICE_LOG);
     if (!file_exists($path)) {
         mkdir($path, MKDIR_MASK, true);
     }
-    file_put_contents(SERVICE_LOG, timestamp()." user:  $str\n", FILE_APPEND);
+    file_put_contents(SERVICE_LOG, timestamp()." user $user:  $str\n", FILE_APPEND);
 } // mylog
 
 
