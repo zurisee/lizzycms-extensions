@@ -271,24 +271,25 @@ function defaultOpenCalPopup(inx, event) {
     $('#lzy-inx').val(inx);
     $('#lzy-calendar-default-form').attr('data-cal-inx', inx);
 
+    var dateStr = '';
+    var timeStr = '';
+    var d = null;
     if (typeof event._i != 'undefined') {                          // new entry
         $('#lzy-cal-new-event-header').show();
         $('#lzy-cal-modify-event-header').hide();
         var date = event._i;    // case: new entry
-        var dateStr = '';
-        var timeStr = '';
         if (typeof date !== 'number') {
-            var d = moment(date);
+            d = moment(date);
             d.local();
             dateStr = d.format('YYYY-MM-DD');
-            $('#lzy_cal_start_date').val(dateStr);
+            $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
             timeStr = d.format('HH:mm');
-            $('#lzy-calendar-default-form input[name=start-time]').val(timeStr);
+            $('#lzy_cal_start_time').val(timeStr).attr('data-prev-val', timeStr);
 
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_end_date').val(dateStr);
             timeStr = d.add(1, 'hours').format('HH:mm');
-            $('#lzy-calendar-default-form input[name=end-time]').val(timeStr);
+            $('#lzy_cal_end_time').val(timeStr);
 
             $('#lzy_cal_event_name').val('');
             $('#lzy_cal_event_location').val('');
@@ -296,10 +297,10 @@ function defaultOpenCalPopup(inx, event) {
 
         } else {    // case whole day event:
             dateStr = moment(date).format('YYYY-MM-DD');
-            $('#lzy_cal_start_date').val(dateStr);
+            $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
             $('#lzy_cal_end_date').val(dateStr);
-            $('#lzy_cal_start_time').attr('type', 'hidden').val('');
-            $('#lzy_cal_end_time').attr('type', 'hidden').val('');
+            $('#lzy_cal_start_time').attr('type', 'hidden').val('00:00').attr('data-prev-val', '00:00');
+            $('#lzy_cal_end_time').attr('type', 'hidden').val('23:59');
             $('#lzy-allday').val('true');
             $('#lzy-cal-allday-event-checkbox').prop('checked', true);
         }
@@ -309,13 +310,13 @@ function defaultOpenCalPopup(inx, event) {
     } else {                                                   // existing entry
         $('#lzy-cal-new-event-header').hide();
         $('#lzy-cal-modify-event-header').show();
-        var d = moment( event.start._i );
+        d = moment( event.start._i );
         d.utc();
-        var dateStr = d.format('YYYY-MM-DD');
-        $('#lzy_cal_start_date').val(dateStr);
-        if (event.allDay == false) {    // normal event
-            var timeStr = d.format('HH:mm');
-            $('#lzy_cal_start_time').val(timeStr);
+        dateStr = d.format('YYYY-MM-DD');
+        $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
+        if (event.allDay === false) {    // normal event
+            timeStr = d.format('HH:mm');
+            $('#lzy_cal_start_time').val(timeStr).attr('data-prev-val', timeStr);
             $('#lzy-allday').val('false');
 
             d = moment(event.end._i);
@@ -326,20 +327,25 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy_cal_end_time').val(timeStr);
 
         } else {    // allday event:
-            var d = moment( event.start._i );
+            d = moment( event.start._i );
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_start_date').val(dateStr);
             d = moment(event.end._i);
-            dateStr = d.subtract({ minutes: 1}).format('YYYY-MM-DD');
+            // dateStr = d.subtract({ minutes: 1}).format('YYYY-MM-DD');
+            dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_end_date').val(dateStr);
-            $('#lzy_cal_start_time').attr('type', 'hidden').val('');
-            $('#lzy_cal_end_time').attr('type', 'hidden').val('');
+            $('#lzy_cal_start_time').attr('type', 'hidden').val('00:00');
+            $('#lzy_cal_end_time').attr('type', 'hidden').val('23:59');
             $('#lzy-allday').val('true');
             $('#lzy-cal-allday-event-checkbox').prop('checked', true);
         }
 
         $('#lzy_cal_event_name').val(event.title);
         $('#lzy_cal_comment').text(event.comment);
+
+        var $startTime = $('#lzy_cal_start_time');
+        var startTime = $startTime.val();
+        $startTime.attr('data-prev-val', startTime);
 
         // populate custom fields:
         for (var fld in event) {
@@ -451,5 +457,36 @@ function setupTriggers() {
             }
             lzyReload();
         });
+    });
+
+    // if start date changes, move end date accordingly:
+    $('#lzy_cal_start_date').change(function () {
+        var $this = $( this );
+        var newDateStr = $this.val();
+        var newT = moment( newDateStr + ' ' + $('#lzy_cal_start_time').val() );
+        var prevT = moment( $this.attr('data-prev-val') + ' ' + $('#lzy_cal_start_time').val() );
+        // var dT = moment.duration(newT.diff(prevT));
+        var dT = moment.duration(newT.diff(prevT)).subtract(1, 's');
+        var endT = moment( $('#lzy_cal_end_date').val() + ' ' + $('#lzy_cal_end_time').val() );
+        endT = endT.add( dT );
+        var newEndDateStr = endT.format('YYYY-MM-DD');
+        $('#lzy_cal_end_date').val(newEndDateStr);
+        $this.attr('data-prev-val', newDateStr);
+        // console.log('newTimeStr: ' + newTimeStr + ' newStartStr: ' + newStartStr + ' prevStartStr: ' + prevStartStr + ' newEndTimeStr: ' + newEndTimeStr);
+    });
+
+    // if start time changes, move end time accordingly:
+    $('#lzy_cal_start_time').change(function () {
+        var $this = $( this );
+        var newTimeStr = $this.val();
+        var newT = moment( $('#lzy_cal_start_date').val() + ' ' + newTimeStr );
+        var prevT = moment( $('#lzy_cal_start_date').val() + ' ' + $this.attr('data-prev-val') );
+        var dT = moment.duration(newT.diff(prevT));
+        var endT = moment( $('#lzy_cal_end_date').val() + ' ' + $('#lzy_cal_end_time').val() );
+        endT = endT.add( dT );
+        var newEndTimeStr = endT.format('HH:mm');
+        $('#lzy_cal_end_time').val(newEndTimeStr);
+        $this.attr('data-prev-val', newTimeStr);
+        // console.log('newTimeStr: ' + newTimeStr + ' newStartStr: ' + newStartStr + ' prevStartStr: ' + prevStartStr + ' newEndTimeStr: ' + newEndTimeStr);
     });
 } // setupTriggers

@@ -98,6 +98,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveNewData($post)
     {
+        $creator = '';
         if (isset($post['json'])) {
             $rec0 = json_decode($post['json'], true);
         } else {
