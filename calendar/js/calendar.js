@@ -302,6 +302,8 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy_cal_end_time').attr('type', 'hidden').val('');
             $('#lzy-allday').val('true');
         }
+        // reset selected options:
+        $('#lzy_cal_category option').removeAttr('selected');
 
     } else {                                                   // existing entry
         $('#lzy-cal-new-event-header').hide();
