@@ -85,10 +85,11 @@ class CalendarBackend {
         //          $categoriesToShow = "$categoriesToShow,$categoriesToShow2";
         //        }
 
-        $output_arrays = $this->filterCalRecords($categoriesToShow, $data);
+        $data1 = $this->filterCalRecords($categoriesToShow, $data);
+        $data1 = $this->prepareDataForClient($data1);
 
         // Send JSON to the client.
-        $json = json_encode($output_arrays);
+        $json = json_encode($data1);
         return $json;
     } // getData
 
@@ -103,18 +104,28 @@ class CalendarBackend {
             $rec0 = $post;
         }
 
-        if (isset($rec0['rec-id']) && intval($rec0['rec-id'])) {
+        if (isset($rec0['rec-id']) && intval($rec0['rec-id'])) {    // Modify:
             $recId = intval($rec0['rec-id']);
             $msg = 'Modified event';
-        } else {
+            $oldRec = $this->ds->readElement($recId);
+            if (isset($oldRec['_creator'])) {
+                $creator = $oldRec['_creator'];
+            }
+
+        } else {                // New Entry:
             $recId = time();
             $msg = 'Created new event';
+            $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: false;
+            if ($user) {
+                $creator =  $user;
+            }
         }
 
         $rec = $this->prepareRecord($rec0);
         $this->writeLogEntry($msg, $rec);
 
         $this->_deleteRec($recId);
+        $rec['_creator'] =  $creator;
         $this->ds->writeElement($recId, $rec);
 
         return 'ok';
@@ -131,7 +142,6 @@ class CalendarBackend {
         $recId = $rec['rec-id'];
         $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
         $rec['_user'] = $user;
-//        mylog("Deleted (in {$this->dataSrc}): $recId", $user);
         $this->writeLogEntry("Deleted event", $this->prepareRecord($rec));
         return $this->_deleteRec($recId);
     } // deleteRec
@@ -239,6 +249,18 @@ class CalendarBackend {
 
 
 
+    private function prepareDataForClient($data)
+    {
+        foreach ($data as $key => $rec) {
+            unset($data[$key]['_creator']);
+            unset($data[$key]['_user']);
+        }
+        return $data;
+    }
+
+
+
+
     private function prepareRecord($rec)
     {
         if (!isset($rec['start-date']) || !isset($rec['end-date'])) {
@@ -269,6 +291,7 @@ class CalendarBackend {
         unset($rec['end-time']);
         unset($rec['end-date']);
         unset($rec['allday']);
+        unset($rec['_creator']);
         $rec['start'] = trim($startDate . ' ' . $startTime);
         $rec['end'] = trim($endDate . ' ' . $endTime);
 

@@ -227,12 +227,13 @@ EOT;
         $categoryCombo = '';
         if ($category) {
             $categories = explode(',', $category);
-            foreach ($categories as $tag) {
-                $tag = trim($tag);
-                $value = translateToIdentifier($tag);
-                $categoryCombo .= "\t<option value='$value'>$tag</option>\n";
-            }
-            $categoryCombo = <<<EOT
+            if (sizeof($categories) > 1) {
+                foreach ($categories as $cat) {
+                    $cat = trim($cat);
+                    $value = translateToIdentifier($cat);
+                    $categoryCombo .= "\t<option value='$value'>$cat</option>\n";
+                }
+                $categoryCombo = <<<EOT
     <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>
     <select id="lzy_cal_category" class="lzy_cal_category" name="category">
         <option value="">{{ lzy-cal-category-all }}</option>
@@ -240,6 +241,14 @@ EOT;
     </select>
 
 EOT;
+            } else {
+                $cat = trim($category);
+                $value = translateToIdentifier($cat);
+                $categoryCombo = <<<EOT
+    <div class="lzy_cal_category-field"><span class="lzy-cal-category-label">{{ lzy-cal-category-label }}: </span><span class="lzy-cal-category lzy-cal-category-value">$cat</span></div>
+    <input type="hidden" class="lzy_cal_category" name="category" value="{$categories[0]}" />
+EOT;
+            }
         }
         return $categoryCombo;
     } // prepareCategoryCombo
