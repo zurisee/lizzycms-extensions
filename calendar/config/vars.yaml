@@ -64,5 +64,7 @@ lzy-cal-category-label:
     de: Kategorie
     _:  Category
 
-
+lzy-cal-allday-event:
+    de: Ganztägig
+    _:  Allday
 

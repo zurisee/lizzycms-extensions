@@ -176,6 +176,14 @@ $categoryCombo
                 <input type='text' id='lzy_cal_event_name' class="lzy-cal-field" name='title' required aria-required='true'  placeholder='{{^ lzy-cal-event-placeholder }}' />
             </div><!-- /field-wrapper -->
            
+           
+            <div id="lzy_cal_allday_event" class='field-wrapper lzy_cal_allday_event'>
+                <label for="lzy-cal-allday-event-checkbox">{{ lzy-cal-allday-event }}:
+                    <input type='checkbox' id="lzy-cal-allday-event-checkbox" />
+                </label>
+            </div><!-- /field-wrapper -->
+            
+
             <fieldset>
                 <legend>{{ lzy-cal-legend-from }}</legend>
                 <div class='field-wrapper field-type-date lzy-cal-start-date'>

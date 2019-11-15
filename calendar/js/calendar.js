@@ -301,6 +301,7 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy_cal_start_time').attr('type', 'hidden').val('');
             $('#lzy_cal_end_time').attr('type', 'hidden').val('');
             $('#lzy-allday').val('true');
+            $('#lzy-cal-allday-event-checkbox').prop('checked', true);
         }
         // reset selected options:
         $('#lzy_cal_category option').removeAttr('selected');
@@ -334,6 +335,7 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy_cal_start_time').attr('type', 'hidden').val('');
             $('#lzy_cal_end_time').attr('type', 'hidden').val('');
             $('#lzy-allday').val('true');
+            $('#lzy-cal-allday-event-checkbox').prop('checked', true);
         }
 
         $('#lzy_cal_event_name').val(event.title);
@@ -408,6 +410,21 @@ function setupTriggers() {
         });
     });
 
+    $('#lzy-cal-allday-event-checkbox').change(function (e) {
+        var $this = $( this );
+        var allday = $this.prop('checked');
+        if (allday) {
+            console.log('allday on');
+            $('#lzy-allday').val('true');
+            $('#lzy_cal_start_time').attr('type', 'hidden');
+            $('#lzy_cal_end_time').attr('type', 'hidden');
+        } else {
+            console.log('allday off');
+            $('#lzy-allday').val('false');
+            $('#lzy_cal_start_time').attr('type', 'time');
+            $('#lzy_cal_end_time').attr('type', 'time');
+        }
+    });
 
     $("#lzy-calendar-default-form input[type=reset]").click(function () {
         $(".lzy-cal-popup").popup('hide');  // close popup
