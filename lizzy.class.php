@@ -960,7 +960,7 @@ EOT;
         }
 
 		if (file_exists($this->config->userInitCodeFile)) {
-			require_once($this->config->userInitCodeFile);
+            require_once $this->config->userInitCodeFile;
 		}
 	} // runUserInitCode
 	

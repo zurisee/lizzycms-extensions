@@ -1429,7 +1429,7 @@ function dateFormatted($date = false, $format = false)
         $date = time();
     } if (is_string($date)) {
         $date = strtotime($date);
-}
+    }
     if (!$format) {
         $format = '%x';
     }

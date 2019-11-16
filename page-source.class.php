@@ -197,7 +197,7 @@ class PageSource
 
             $currContent = file_get_contents($filename);
             foreach (PageSource::getRecycledFilenames($filename, $recycleBin) as $f) {
-                if ($currContent == file_get_contents($f)) {
+                if ($currContent === file_get_contents($f)) {
                     return 0; // file already present in recycleBin
                 }
             }
@@ -229,6 +229,8 @@ class PageSource
     {
         if (!$recycleBin) {
             $recycleBin = RECYCLE_BIN_PATH;
+        } else {
+            $recycleBin = fixPath($recycleBin);
         }
         if (strpos($recycleBin, '~page/') === false) {
             $filename = trunkPath($filename, -1, false);
