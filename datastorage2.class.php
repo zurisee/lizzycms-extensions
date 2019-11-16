@@ -48,6 +48,8 @@ class DataStorage2
         $this->parseArguments($args);
         $this->initLizzyDB();
         $this->initDbTable();
+        $this->appPath = getcwd();
+
     } // __construct
 
 
@@ -1044,6 +1046,8 @@ EOT;
     //---------------------------------------------------------------------------
     public function __destruct()
     {
+        chdir($this->appPath); // workaround for include bug
+
         $this->exportToFile(); // saves data if modified
         if ($this->lzyDb) {
             $this->lzyDb->close();
