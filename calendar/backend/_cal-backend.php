@@ -4,10 +4,7 @@ define('SYSTEM_PATH', '../../../');
 define('PATH_TO_APP_ROOT', SYSTEM_PATH.'../');
 define('CUSTOM_CAL_BACKEND', PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
 
-require_once SYSTEM_PATH.'vendor/autoload.php';
-
-//use Symfony\Component\Yaml\Yaml;
-
+//require_once SYSTEM_PATH.'vendor/autoload.php';
 
 // Require Event class and datetime utilities
 require dirname(__FILE__) . '/../code/utils.php';
@@ -99,6 +96,7 @@ class CalendarBackend {
     public function saveNewData($post)
     {
         $creator = '';
+        $uid = '';
         if (isset($post['json'])) {
             $rec0 = json_decode($post['json'], true);
         } else {
@@ -111,6 +109,11 @@ class CalendarBackend {
             $oldRec = $this->ds->readElement($recId);
             if (isset($oldRec['_creator'])) {
                 $creator = $oldRec['_creator'];
+            }
+            if (isset($oldRec['_uid'])) {
+                $uid = $oldRec['_uid'];
+            } else {
+                $uid = time();
             }
 
         } else {                // New Entry:
@@ -127,6 +130,7 @@ class CalendarBackend {
 
         $this->_deleteRec($recId);
         $rec['_creator'] =  $creator;
+        $rec['_uid'] =  $uid;
         $this->ds->writeElement($recId, $rec);
 
         return 'ok';
@@ -211,47 +215,6 @@ class CalendarBackend {
         }
         return $output_arrays;
     } // filterCalRecords
-
-
-
-/*
-    private function convertYaml($str)
-    {
-        $data = null;
-        if ($str) {
-            $str = str_replace("\t", '    ', $str);
-            try {
-                $data = Yaml::parse($str);
-            } catch(Exception $e) {
-                die("Error in Yaml-Code: <pre>\n$str\n</pre>\n".$e->getMessage());
-            }
-        }
-        return $data;
-    } // convertYaml
-
-
-
-
-    //--------------------------------------------------------------
-    private function convertToYaml($data, $level = 3)
-    {
-        return Yaml::dump($data, $level);
-    } // convertToYaml
-
-
-    private function timeArrayToStr($arr) {
-        $str = $arr[0].'-'.$this->numPad($arr[1]+1).'-'.$this->numPad($arr[2]).' '.$this->numPad($arr[3]).':'.$this->numPad($arr[4]);
-        return $str;
-    }
-
-    //--------------------------------------------------------------
-    private function numPad($str, $len = 2) {
-        while (strlen($str) < $len) {
-            $str = '0'.$str;
-        }
-        return $str;
-    }
-*/
 
 
 

@@ -46,11 +46,13 @@ class LzyCalendar
             $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
             $catPrefixes = array_slice($catPrefixes, 0, $n);
             $catPrefixAssoc = array_combine($categories, $catPrefixes);
+            $this->categoryPrefixes = $catPrefixAssoc;
             $this->prefixJson = json_encode($catPrefixAssoc);
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
         } else {
+            $this->categoryPrefixes = [];
             $this->prefixJson = '{}';
-            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes;
+            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
@@ -364,7 +366,7 @@ EOT;
 
     private function prepareICal( $ds )
     {
-        require '_lizzy/extensions/calendar/code/utils.php';
+        require_once '_lizzy/extensions/calendar/code/utils.php';
         $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'UTC';
         date_default_timezone_set($timezone);
 
@@ -376,20 +378,28 @@ EOT;
         $name = base_name($this->publish, false);
 
         foreach ($recsToShow as $key => $rec) {
-            if (is_array($this->icalPrefix)) {
+            if ($this->categoryPrefixes) {
                 $category = $rec['category'];
-                $prefix = isset($this->icalPrefix[$category]) ? $this->icalPrefix[$category]: $this->icalDefaultPrefix;
+                $prefix = isset($this->categoryPrefixes[$category]) ? $this->categoryPrefixes[$category]: $this->defaultCatPrefix;
             } else {
-                $prefix = $this->icalPrefix;
+                $prefix = $this->defaultCatPrefix;
             }
-            $uid = "lzy-$name$key-";
+            // determine UID (unique id that is invariable even if calendar changes):
+            $uid = isset($rec['_uid'])? $rec['_uid'] : strtotime($rec['start']);
+            $uid = "lzy-cal-$name-$uid";
+
+            // prepare comment:
+            $comment = isset($rec['comment'])? $rec['comment']: '';
+            $comment = preg_replace('|<a href=["\'](.*?)["\'].*?>.*?</a>|', "$1", $comment);
+
+            // assemble iCalendar entry:
             $vEvent = new \Eluceo\iCal\Component\Event();
             $vEvent
                 ->setDtStart(new \DateTime($rec['start']))
                 ->setDtEnd(new \DateTime($rec['end']))
                 ->setSummary($prefix.$rec['title'])
-                ->setLocation($rec['location'])
-                ->setDescription($rec['comment'])
+                ->setLocation( isset($rec['location'])? $rec['location']: '' )
+                ->setDescription( $comment )
                 ->setUseTimezone(true)
                 ->setUniqueId("$uid")
             ;
@@ -411,6 +421,10 @@ EOT;
 
         // Accumulate an output array of event data arrays.
         $output_arrays = array();
+        if (!$data) {
+            return [];
+        }
+
         foreach ($data as $i => $rec) {
 
             // Convert the input array into a useful Event object
@@ -423,7 +437,7 @@ EOT;
                     if ($evTag && (stripos($categoriesToShow, ",$evTag,") === false)) {
                         continue 2;
                     }
-                    $output_arrays[] = array_merge($event->toArray(), ['i' => $i]);
+                    $output_arrays[$i] = array_merge($event->toArray(), ['i' => $i]);
                 }
             }
         }
