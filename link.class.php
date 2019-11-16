@@ -14,14 +14,14 @@ class CreateLink
     {
         $this->href = $args['href'];
         $this->text = $args['text'];
-        $this->type = $args['type'];
-        $this->id = $args['id'];
-        $this->class = $args['class'];
-        $this->title = $args['title'];
-        $this->target = $args['target'];
-        $this->subject = $args['subject'];
-        $this->body = $args['body'];
-        $this->option = $args['option'];
+        $this->type = isset($args['type'])? $args['type']: 'href';
+        $this->id = isset($args['id'])? $args['id']: '';
+        $this->class = isset($args['class'])? $args['class']: '';
+        $this->title = isset($args['title'])? $args['title']: '';
+        $this->target = isset($args['target'])? $args['target']: '';
+        $this->subject = isset($args['subject'])? $args['subject']: '';
+        $this->body = isset($args['body'])? $args['body']: '';
+        $this->option = isset($args['option'])? $args['option']: '';
 
         if ($this->title) {
             $this->title = " title='{$this->title}'";
@@ -313,8 +313,12 @@ class CreateLink
                 }
             }
         }
-        $href = resolvePath($this->href, true, true, true);
-        $hiddenText = "<span class='print_only'> [$href]</span>";
+        if (stripos($this->option, 'noprint') === false) {
+            $href = resolvePath($this->href, true, true, true);
+            $hiddenText = "<span class='print_only'> [$href]</span>";
+        } else {
+            $hiddenText = '';
+        }
 
         return $hiddenText;
     } // renderRegularLink
