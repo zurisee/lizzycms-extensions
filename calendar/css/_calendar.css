@@ -65,10 +65,11 @@
 #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-speaker, #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-moderator {
   display: none; }
 
-.fc-list-view .fc-list-item-title .fc-title-prefix, .fc-list-view .fc-list-item-title .fc-field-label {
+/*.fc-list-view .fc-list-item-title .fc-title-prefix, .fc-list-view .fc-list-item-title .fc-field-label {*/
+.fc-list-view .fc-list-item-title .fc-field-label {
   display: none; }
 
-// small-screen:
+ /*small-screen:*/
 .lzy-small-screen .fc-list-table {
   display: block;}
   .lzy-small-screen .fc-list-table tr {

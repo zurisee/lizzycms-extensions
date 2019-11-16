@@ -189,13 +189,19 @@ class CalendarBackend {
             $event = new Event($rec, $this->timezone);
 
             // check for category:
+            $show = true;
             if ($categoriesToShow && isset($event->properties["category"]) && $event->properties["category"]) {
+                $show = false;
                 $eventsCategory = explode(',', $event->properties["category"]);
                 foreach ($eventsCategory as $evTag) {
-                    if ($evTag && (stripos($categoriesToShow, ",$evTag,") === false)) {
-                        continue 2;
+                    if ($evTag && (stripos($categoriesToShow, ",$evTag,") !== false)) {
+                        $show = true;
+                        break;
                     }
                 }
+            }
+            if (!$show) {
+                continue;
             }
 
             // If the event is in-bounds, add it to the output

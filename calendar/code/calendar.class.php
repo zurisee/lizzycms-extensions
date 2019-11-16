@@ -39,16 +39,18 @@ class LzyCalendar
         $this->domain = isset($args['domain']) ? $args['domain']: $_SERVER["HTTP_HOST"];
 
         // Prefixes:
+        $n = sizeof($categories);
         $defaultCatPrefix = isset($args['defaultPrefix']) ? $args['defaultPrefix']: '';
-        $catPrefix = isset($args['categoryPrefixes']) ? $args['categoryPrefixes']: '';
-        if (strpos($catPrefix, ',') !== false) {
-            $catPrefix = explode(',', $catPrefix);
-            $catPrefixAssoc = array_combine($categories, $catPrefix);
+        $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes']: '';
+        if (strpos($catPrefixes, ',') !== false) {
+            $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
+            $catPrefixes = array_slice($catPrefixes, 0, $n);
+            $catPrefixAssoc = array_combine($categories, $catPrefixes);
             $this->prefixJson = json_encode($catPrefixAssoc);
-            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefix[0];
+            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
         } else {
             $this->prefixJson = '{}';
-            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefix;
+            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes;
         }
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
