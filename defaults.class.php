@@ -222,6 +222,12 @@ private $userConfigurableSettingsAndDefaults      = [
             }
         }
 
+        foreach ($configValues as $key => $val) {
+            if (strpos($key, 'my_') === 0) {
+                $this->$key = $val;
+            }
+        }
+
         // fix some values:
 
         if ($this->path_logPath == '1/') {
