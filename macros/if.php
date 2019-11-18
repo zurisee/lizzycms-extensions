@@ -169,7 +169,9 @@ function evalResult($trans, $code, $inx)
                 break;
 
             case 'include' :
-                $filename = resolvePath($arg, true);
+                $filename = html_entity_decode($arg);
+                $filename = str_replace(['"', "'"], '', $filename);
+                $filename = resolvePath($filename, true);
                 $str = getFile($filename);
                 if ($str) {
                     $str = compileMarkdownStr($str);
