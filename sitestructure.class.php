@@ -264,10 +264,10 @@ class SiteStructure
                 }
 
 				if (preg_match('/privileged/i',$hideArg)) {
-                    $hideArg = !$this->config->isPrivileged;
+                    $hideArg = $this->config->isPrivileged;
                 } elseif (preg_match('/loggedin/i',$hideArg)) {
-                    $hideArg = !$_SESSION['lizzy']['user'];
-                } elseif ($hideArg !== 'true') {        // if not 'true', it's interpreted as a group
+                    $hideArg = $_SESSION['lizzy']['user'];
+                } elseif (($hideArg !== 'true') && ($hideArg !== 'false') && !is_bool($hideArg)) {        // if not 'true', it's interpreted as a group
                     $hideArg = $this->lzy->auth->checkGroupMembership( $hideArg );
                 }
                 if ($neg) {
