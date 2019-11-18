@@ -1337,6 +1337,7 @@ EOT;
 	private function handleUrlArgs()
 	{
         if ($arg = getNotificationMsg()) {
+            $arg = $this->trans->translateVariable($arg);
             $this->page->addMessage( $arg );
         }
 
@@ -1349,7 +1350,7 @@ EOT;
 		if (getUrlArg('logout')) {	// logout
             $this->userRec = false;
             $this->auth->logout();
-            reloadAgent(false, 'logout-successful'); // reload to get rid of url-arg ?logout
+            reloadAgent(false, 'lzy-logout-successful'); // reload to get rid of url-arg ?logout
         }
 
 

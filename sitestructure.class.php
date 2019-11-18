@@ -253,25 +253,28 @@ class SiteStructure
                     unset($rec['hide']);    // beyond this point hide is permanently replaced by hide!
                 }
 
-				// case: page only visible to privileged users:
+
+				// case: page only visible to selected users:
                 $hideArg = &$rec['hide!'];
 
-                // detect leading inverter (non or not or !):
-                $neg = false;
-                if (preg_match('/^((non|not|\!)\-?)/i', $hideArg, $m)) {
-                    $neg = true;
-                    $hideArg = substr($hideArg,strlen($m[1]));
-                }
+                if ($hideArg) {
+                    // detect leading inverter (non or not or !):
+                    $neg = false;
+                    if (preg_match('/^((non|not|\!)\-?)/i', $hideArg, $m)) {
+                        $neg = true;
+                        $hideArg = substr($hideArg, strlen($m[1]));
+                    }
 
-				if (preg_match('/privileged/i',$hideArg)) {
-                    $hideArg = $this->config->isPrivileged;
-                } elseif (preg_match('/loggedin/i',$hideArg)) {
-                    $hideArg = $_SESSION['lizzy']['user'];
-                } elseif (($hideArg !== 'true') && ($hideArg !== 'false') && !is_bool($hideArg)) {        // if not 'true', it's interpreted as a group
-                    $hideArg = $this->lzy->auth->checkGroupMembership( $hideArg );
-                }
-                if ($neg) {
-                    $hideArg = !$hideArg;
+                    if (preg_match('/privileged/i', $hideArg)) {
+                        $hideArg = $this->config->isPrivileged;
+                    } elseif (preg_match('/loggedin/i', $hideArg)) {
+                        $hideArg = $_SESSION['lizzy']['user'];
+                    } elseif (($hideArg !== 'true') && !is_bool($hideArg)) {        // if not 'true', it's interpreted as a group
+                        $hideArg = $this->lzy->auth->checkGroupMembership($hideArg);
+                    }
+                    if ($neg) {
+                        $hideArg = !$hideArg;
+                    }
                 }
 
 

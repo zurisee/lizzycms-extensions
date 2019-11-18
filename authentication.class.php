@@ -53,7 +53,7 @@ class Authentication
             $res = true;
 
             if ($user && ($msg = getNotificationMsg())) {
-                $res = [$user, "<p>{{ lzy-$msg }}</p>", 'Message' ];   //
+                $res = [$user, "<p>{{ $msg }}</p>", 'Message' ];   //
             }
         }
 
