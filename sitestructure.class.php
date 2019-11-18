@@ -254,9 +254,26 @@ class SiteStructure
                 }
 
 				// case: page only visible to privileged users:
-				if (preg_match('/non\-?privileged/i',$rec['hide!'])) {
-                    $rec['hide!'] = !$this->config->isPrivileged;
+                $hideArg = &$rec['hide!'];
+
+                // detect leading inverter (non or not or !):
+                $neg = false;
+                if (preg_match('/^((non|not|\!)\-?)/i', $hideArg, $m)) {
+                    $neg = true;
+                    $hideArg = substr($hideArg,strlen($m[1]));
                 }
+
+				if (preg_match('/privileged/i',$hideArg)) {
+                    $hideArg = !$this->config->isPrivileged;
+                } elseif (preg_match('/loggedin/i',$hideArg)) {
+                    $hideArg = !$_SESSION['lizzy']['user'];
+                } elseif ($hideArg !== 'true') {        // if not 'true', it's interpreted as a group
+                    $hideArg = $this->lzy->auth->checkGroupMembership( $hideArg );
+                }
+                if ($neg) {
+                    $hideArg = !$hideArg;
+                }
+
 
                 // check time dependencies:
 				if (isset($rec['availablefrom'])) {
