@@ -53,6 +53,7 @@ class Authentication
             $res = true;
 
             if ($user && ($msg = getNotificationMsg())) {
+                $msg = $this->lzy->trans->translateVariable($msg);
                 $res = [$user, "<p>{{ $msg }}</p>", 'Message' ];   //
             }
         }
@@ -150,7 +151,7 @@ class Authentication
             // access granted, remove hash-code from url, if there is one:
             $requestedUrl = $GLOBALS['globalParams']['requestedUrl'];
             $requestedUrl = preg_replace('|/[A-Z][A-Z0-9]{4,}/?$|', '', $requestedUrl);
-            reloadAgent($requestedUrl, 'login-successful'); // access granted, remove hash-code from url
+            reloadAgent($requestedUrl, 'lzy-login-successful'); // access granted, remove hash-code from url
 
         } else {
             $rep = '';
