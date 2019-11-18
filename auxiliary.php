@@ -125,7 +125,9 @@ function parseInlineBlockArguments($str, $returnElements = false)
 
     if (preg_match('/(.*) !(\S+) (.*)/x', $str, $m)) {      // !arg
         $str = $m[1].$m[3];
-        list($k, $v) = explode('=', strtolower($m[2]));
+        $arr = explode('=', strtolower($m[2]));
+        $k = isset($arr[0])? $arr[0] : '';
+        $v = isset($arr[1])? $arr[1] : '';
         if ($k === 'lang') {
             $attr .= " data-lang='$v'";
             $lang = $v;
@@ -675,14 +677,14 @@ function lastModified($path, $recursive = true, $exclude = null)
     $newest = 0;
     $path = resolvePath($path);
 
-    if ($recursive && !is_file($path)) {
+    if ($recursive) {
         $path = './' . rtrim($path, '*');
 
         $it = new RecursiveDirectoryIterator($path);
         foreach (new RecursiveIteratorIterator($it) as $fileRec) {
             $f = $fileRec->getFilename();
-            $ch = $f ? $f[0] : '';
-            if (strpos('/_#', $ch) === false) { // ingnore files starting with . or _ or #
+            $p = $fileRec->getPathname();
+            if (preg_match('|/[._#]|', $p)) {
                 continue;
             }
             $newest = max($newest, $fileRec->getMTime());
@@ -694,7 +696,7 @@ function lastModified($path, $recursive = true, $exclude = null)
         }
     }
     return $newest;
-} // lastModified
+} // filesTime
 
 
 
@@ -1429,7 +1431,7 @@ function dateFormatted($date = false, $format = false)
         $date = time();
     } if (is_string($date)) {
         $date = strtotime($date);
-    }
+}
     if (!$format) {
         $format = '%x';
     }
