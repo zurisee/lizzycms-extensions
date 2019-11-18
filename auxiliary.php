@@ -675,14 +675,14 @@ function lastModified($path, $recursive = true, $exclude = null)
     $newest = 0;
     $path = resolvePath($path);
 
-    if ($recursive) {
+    if ($recursive && !is_file($path)) {
         $path = './' . rtrim($path, '*');
 
         $it = new RecursiveDirectoryIterator($path);
         foreach (new RecursiveIteratorIterator($it) as $fileRec) {
             $f = $fileRec->getFilename();
-            $p = $fileRec->getPathname();
-            if (preg_match('|/[._#]|', $p)) {
+            $ch = $f ? $f[0] : '';
+            if (strpos('/_#', $ch) === false) { // ingnore files starting with . or _ or #
                 continue;
             }
             $newest = max($newest, $fileRec->getMTime());
@@ -694,7 +694,7 @@ function lastModified($path, $recursive = true, $exclude = null)
         }
     }
     return $newest;
-} // filesTime
+} // lastModified
 
 
 
