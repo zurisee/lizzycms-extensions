@@ -946,7 +946,8 @@ dd {
 	.Warning,
 	.MsgBox,
     #debugInfo,
-    .debugInfo {
+    .debugInfo,
+	.lzy-file-uploader-wrapper {
 		display: none!important;
 	}
 	.lzy-print-page-break,
