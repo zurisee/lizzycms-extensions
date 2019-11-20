@@ -47,6 +47,7 @@ class CreateLink
             $this->proto = 'file';
         }
 
+        $this->proto = ($this->proto === 'mailto') ? 'mail' : $this->proto;
         if ($this->isTypeLink('mail')) {
             $hiddenText = $this->renderMailLink();
 
@@ -112,7 +113,7 @@ class CreateLink
 
     private function isTypeLink($type)
     {
-        $type = ($type === 'mailto') ? 'mail' : $type;
+//        $type = ($type === 'mailto') ? 'mail' : $type;
         return (($this->proto === $type) || (stripos($this->type, $type) !== false));
     }
 
@@ -124,6 +125,7 @@ class CreateLink
         $this->title = ($this->title) ? $this->title : " title='{{ opens mail app }}'";
         $this->body = str_replace(' ', '%20', $this->body);
         $this->body = str_replace(['\n', "\n"], '%0A', $this->body);
+        $arg = '';
         if ($this->subject) {
             $this->subject = str_replace(' ', '%20', $this->subject);
             $arg = "?subject={$this->subject}";
