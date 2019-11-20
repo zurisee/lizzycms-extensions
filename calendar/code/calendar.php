@@ -30,7 +30,7 @@ $this->addMacro($macroName, function () {
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 	$inx = $this->invocationCounter[$macroName] + 1;
 
-	$domain = $GLOBALS["_SERVER"]["HTTP_HOST"];
+//	$domain = $GLOBALS["_SERVER"]["HTTP_HOST"];
     $source = $this->getArg($macroName, 'file', 'File path where data shall be fetched (and stored if in editing mode).', 'calendar.yaml');
     $this->getArg($macroName, 'calEditingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
     $this->getArg($macroName, 'fields', 'Comma separated list of fields', false);
@@ -41,6 +41,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'showCategories', 'A (comma separated) list of categories - only events carrying that category will be presented.', '');
     $this->getArg($macroName, 'categoryPrefixes', '[string|comma-separated-list] (ategory-specific prefixes for events.', '');
     $this->getArg($macroName, 'defaultPrefix', 'Prefix applied if no category-specific prefix is defined.', '');
+    $this->getArg($macroName, 'defaultView', '[week,month,year] Defines the initial view when the widget is presented the very first time', '');
 
     if ($source == 'help') {
         return '';

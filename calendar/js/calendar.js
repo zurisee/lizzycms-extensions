@@ -12,6 +12,7 @@ $( document ).ready(function() {
             header: {
                 left: 'prev,next today',
                 center: 'title',
+//                right: 'month,listYear',   // further options: listWeek, listMonth, listYear
                 right: 'agendaWeek,month,listYear',   // further options: listWeek, listMonth, listYear
             },
             navLinks: true,       // can click day/week names to navigate views

@@ -54,6 +54,19 @@ class LzyCalendar
             $this->prefixJson = '{}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
+
+        // Default View:
+        //  -> agendaWeek,month,listYear, listWeek, listMonth, listYear
+        $defaultView = isset($args['defaultView']) ? $args['defaultView']: 'month';
+        if (strpos($defaultView, 'week') !== false) {
+            $this->defaultView = 'agendaWeek';
+        } elseif (strpos($defaultView, 'year') !== false) {
+            $this->defaultView = 'listYear';
+        } else {
+            $this->defaultView = 'month';
+        }
+
+        // Timezone:
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
     } // __construct
@@ -77,7 +90,7 @@ class LzyCalendar
         }
 
         $backend = CALENDAR_BACKEND;
-        $viewMode = (isset($_SESSION['lizzy']['calMode'])) ? $_SESSION['lizzy']['calMode'] : 'agendaWeek';
+        $viewMode = (isset($_SESSION['lizzy']['calMode'])) ? $_SESSION['lizzy']['calMode'] : $this->defaultView;
 
         if (($this->edPermitted === 'all') || ($this->edPermitted === '*')) {
             $this->edPermitted = true;
@@ -94,7 +107,7 @@ var calBackend = '$backend';
 var calLang = '{$this->lang}';
 var lzyCal = [];
 var calEditingPermission = false;
-var calDefaultView = 'month';
+var calDefaultView = '{$this->defaultView}';
 EOT;
         }
 
