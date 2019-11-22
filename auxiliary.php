@@ -682,9 +682,8 @@ function lastModified($path, $recursive = true, $exclude = null)
 
         $it = new RecursiveDirectoryIterator($path);
         foreach (new RecursiveIteratorIterator($it) as $fileRec) {
-            $f = $fileRec->getFilename();
-            $p = $fileRec->getPathname();
-            if (preg_match('|/[._#]|', $p)) {
+        	// ignore files starting with . or # or _
+            if (preg_match('|^[._#]|', $fileRec->getFilename())) {
                 continue;
             }
             $newest = max($newest, $fileRec->getMTime());
