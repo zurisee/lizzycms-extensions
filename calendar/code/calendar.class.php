@@ -368,7 +368,8 @@ EOT;
         $lastUpdated = intval($ds->lastModified());
 
         // update if outdated:
-        if ($lastUpdated > $lastExported) {
+if (true) {
+//        if ($lastUpdated > $lastExported) {
             $out = $this->prepareICal( $ds );
             file_put_contents($destFile, $out);
             writeLog("calendar exported to '$destFile'");
@@ -413,12 +414,13 @@ EOT;
                 ->setSummary($prefix.$rec['title'])
                 ->setLocation( isset($rec['location'])? $rec['location']: '' )
                 ->setDescription( $comment )
-                ->setUseTimezone(true)
+//                ->setUseTimezone(true)
                 ->setUniqueId("$uid")
             ;
             $vCalendar->addComponent($vEvent);
         }
-        return $vCalendar->render();
+        $ical = $vCalendar->render();
+        return $ical;
     } // prepareICal
 
 
