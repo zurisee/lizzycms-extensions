@@ -12,7 +12,6 @@ $( document ).ready(function() {
             header: {
                 left: 'prev,next today',
                 center: 'title',
-//                right: 'month,listYear',   // further options: listWeek, listMonth, listYear
                 right: 'agendaWeek,month,listYear',   // further options: listWeek, listMonth, listYear
             },
             navLinks: true,       // can click day/week names to navigate views
@@ -300,8 +299,10 @@ function defaultOpenCalPopup(inx, event) {
             dateStr = moment(date).format('YYYY-MM-DD');
             $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
             $('#lzy_cal_end_date').val(dateStr);
-            $('#lzy_cal_start_time').attr('type', 'hidden').val('00:00').attr('data-prev-val', '00:00');
-            $('#lzy_cal_end_time').attr('type', 'hidden').val('23:59');
+            $('#lzy_cal_start_time').attr('type', 'hidden').val('09:00').attr('data-prev-val', '09:00');
+            $('#lzy_cal_end_time').attr('type', 'hidden').val('10:00');
+            // $('#lzy_cal_start_time').attr('type', 'hidden').val('00:00').attr('data-prev-val', '00:00');
+            // $('#lzy_cal_end_time').attr('type', 'hidden').val('23:59');
             $('#lzy-allday').val('true');
             $('#lzy-cal-allday-event-checkbox').prop('checked', true);
         }
