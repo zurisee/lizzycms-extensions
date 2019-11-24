@@ -124,9 +124,12 @@ function defaultRenderEvent(event, element) {
 
     flabel = lzyCal[inx].fieldLabels.time;
     if (typeof flabel !== 'undefined') {
-        var date = $('.fc-time', $elem).text();
-        date = '<span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + date + '</span>';
-        $('.fc-time', $elem).html(date);
+        var timeStr = $('.fc-time', $elem).text();
+        if (!timeStr.match(/:/)) {
+            timeStr = timeStr + ':00';
+        }
+        timeStr = '<span class="fc-field-label">'+flabel+':</span><span class="fc-field-value">' + timeStr + '</span>';
+        $('.fc-time', $elem).html(timeStr);
     }
 
     // populate custom fields:
