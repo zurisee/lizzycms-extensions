@@ -381,8 +381,7 @@ EOT;
         }
 
         // update if outdated:
-if (true) {
-//        if ($lastUpdated > $lastExported) {
+        if ($lastUpdated > $lastExported) {
             $out = $this->prepareICal( $ds );
             file_put_contents($destFile, $out);
             writeLog("calendar exported to '$destFile'");
