@@ -574,22 +574,29 @@ function removeCStyleComments($str)
 {
 	$p = 0;
 	while (($p = strpos($str, '/*', $p)) !== false) {		// /* */ style comments
-		if ($p && ($str{$p-1} == '\\')) {					// avoid shielded /*
-			$str = substr($str, 0, $p-1).substr($str,$p);
-			$p += 2;
-			continue;
-		}
+		if ($p) {
+		    $ch1 = $str{$p-1};
+		    if ($ch1 === '\\') {					// avoid shielded /*
+                $str = substr($str, 0, $p-1).substr($str,$p);
+                $p += 2;
+                continue;
+            }
+		    if ($ch1 === '/') {					    // skip dangerous pattern //*
+                $p += 2;
+                continue;
+            }
+        }
 		$p2 = strpos($str, "*/", $p);
 		$str = substr($str, 0, $p).substr($str, $p2+2);
 	}
 
 	$p = 0;
 	while (($p = strpos($str, '//', $p)) !== false) {		// // style comments
-		if ($p && ($str{$p-1} == ':')) {			// avoid http://
+		if ($p && ($str{$p-1} === ':')) {			// avoid http://
 			$p += 2;
 			continue;
 		}
-		if ($p && ($str{$p-1} == '\\')) {					// avoid shielded //
+		if ($p && ($str{$p-1} === '\\')) {					// avoid shielded //
 			$str = substr($str, 0, $p-1).substr($str,$p);
 			$p += 2;
 			continue;
@@ -598,7 +605,7 @@ function removeCStyleComments($str)
 		if ($p2 === false) {
 			return substr($str, 0, $p);
 		}
-		if ((!$p || ($str{$p-1} == "\n")) && ($str{$p2})) {
+		if ((!$p || ($str{$p-1} === "\n")) && ($str{$p2})) {
 			$p2++;
 		}
 		$str = substr($str, 0, $p).substr($str, $p2);
