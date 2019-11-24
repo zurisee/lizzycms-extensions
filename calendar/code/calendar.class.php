@@ -22,6 +22,7 @@ class LzyCalendar
 
         // Whether to publish the calendar (i.e. save in an .ics file):
         $this->publish = isset($args['publish']) ? $args['publish']: false;
+        $this->publishCallback = isset($args['publishCallback']) ? $args['publishCallback']: false;
 
         // Whether to suppress out generation (e.g. if only used to publish .ics)
         $this->output = isset($args['output']) ? $args['output']: true;
@@ -92,7 +93,7 @@ class LzyCalendar
         $backend = CALENDAR_BACKEND;
         $viewMode = (isset($_SESSION['lizzy']['calMode'])) ? $_SESSION['lizzy']['calMode'] : $this->defaultView;
 
-        if (($this->edPermitted === 'all') || ($this->edPermitted === '*')) {
+        if (($this->edPermitted === 'all') || ($this->edPermitted === '*') || ($this->edPermitted === true)) {
             $this->edPermitted = true;
         } elseif ($this->edPermitted) {
             $this->edPermitted = $this->lzy->auth->checkAdmission($this->edPermitted);
@@ -367,6 +368,18 @@ EOT;
         $ds = new DataStorage2(['dataFile'=> $this->source]);
         $lastUpdated = intval($ds->lastModified());
 
+        // publishCallback:
+        if ($this->publishCallback) {
+            $publishCallback = base_name($this->publishCallback, false);
+            $publishCallback = '-' . ltrim($publishCallback, '-') . '.php';
+            $publishCallbackCode = USER_CODE_PATH . $publishCallback;
+            if (file_exists($publishCallbackCode)) {
+                require_once $publishCallbackCode;  // -> must define function 'iCalDescriptionCallback($rec)'
+            } else {
+                $this->publishCallback = false;
+            }
+        }
+
         // update if outdated:
 if (true) {
 //        if ($lastUpdated > $lastExported) {
@@ -402,9 +415,14 @@ if (true) {
             $uid = isset($rec['_uid'])? $rec['_uid'] : strtotime($rec['start']);
             $uid = "lzy-cal-$name-$uid";
 
-            // prepare comment:
-            $comment = isset($rec['comment'])? $rec['comment']: '';
-            $comment = preg_replace('|<a href=["\'](.*?)["\'].*?>.*?</a>|', "$1", $comment);
+            // prepare description:
+            if ($this->publishCallback && function_exists('iCalDescriptionCallback')) {
+                $description = iCalDescriptionCallback($rec);
+            } else {
+                $description = isset($rec['comment'])? $rec['comment']: '';
+                $description = preg_replace('|<a href=["\'](.*?)["\'].*?>.*?</a>|', "$1", $description);
+            }
+
 
             // assemble iCalendar entry:
             $vEvent = new \Eluceo\iCal\Component\Event();
@@ -413,14 +431,13 @@ if (true) {
                 ->setDtEnd(new \DateTime($rec['end']))
                 ->setSummary($prefix.$rec['title'])
                 ->setLocation( isset($rec['location'])? $rec['location']: '' )
-                ->setDescription( $comment )
+                ->setDescription( $description )
 //                ->setUseTimezone(true)
                 ->setUniqueId("$uid")
             ;
             $vCalendar->addComponent($vEvent);
         }
-        $ical = $vCalendar->render();
-        return $ical;
+        return $vCalendar->render();
     } // prepareICal
 
 
