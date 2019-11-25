@@ -731,13 +731,13 @@ EOT;
             }
 
             $data = $this->getData( true );
-            if ($this->format == 'yaml') {
+            if ($this->format === 'yaml') {
                 $this->writeToYamlFile($filename, $data);
 
-            } elseif ($this->format == 'json') {
+            } elseif ($this->format === 'json') {
                 file_put_contents($filename, json_encode($data));
 
-            } elseif ($this->format == 'csv') {
+            } elseif ($this->format === 'csv') {
                 $this->writeToCsvFile($filename, $data);
             }
         }
@@ -942,7 +942,7 @@ EOT;
                 $data = [$this->jsonEncode($data), $structure];
             }
 
-        } elseif (($format == 'csv') || ($this->format == 'txt')) {
+        } elseif (($format === 'csv') || ($this->format === 'txt')) {
             $data = $this->parseCsv($rawData);
             if ($outputAsJson) {
                 $this->data = $data;
@@ -1028,7 +1028,7 @@ EOT;
             $sessionId = session_id();
             session_abort();
         }
-        return ($sid == $sessionId);
+        return ($sid === $sessionId);
     } // isMySessionID
 
 
