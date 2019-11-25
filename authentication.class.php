@@ -58,7 +58,7 @@ class Authentication
             }
         }
 
-        if (!$res || (isset($res[0]) && ($res[0] == false)) ) { // logout
+        if (!$res || (isset($res[0]) && ($res[0] === false)) ) { // logout
             $this->logout();
 
         } elseif (is_string($res)) {    // string contains username of user to be logged in
@@ -285,7 +285,7 @@ class Authentication
 	    if (isset($rec['inactive']) && $rec['inactive']) {  // account is inactive, no login allowed
 	        return false;
         }
-	    if (($rec == null) && ($key = $this->findUserRecKey($user))) {
+	    if (($rec === null) && ($key = $this->findUserRecKey($user))) {
 	        if (!$rec = $this->knownUsers[$key]) {
 	            return false;
             }
@@ -429,7 +429,7 @@ class Authentication
 
     public function checkAdmission($lockProfile)
 	{
-		if (($lockProfile == false) || ($this->localCall && $this->config->admin_autoAdminOnLocalhost)) {	// no restriction
+		if ((!$lockProfile) || ($this->localCall && $this->config->admin_autoAdminOnLocalhost)) {	// no restriction
 			return true;
 		}
 		
@@ -466,8 +466,7 @@ class Authentication
             return false;
         }
         $usersGroups = str_replace(' ', '', ",$usersGroups,");
-        $groupToCheckAgainst = ",$groupToCheckAgainst,";
-        $res = (strpos($usersGroups, $groupToCheckAgainst) !== false);
+        $res = (strpos($usersGroups, ",$groupToCheckAgainst,") !== false);
         return $res;
     } // isGroupMember
 
@@ -515,7 +514,7 @@ class Authentication
         foreach ($failedLogins as $t => $ip1) {
             if ($t < ($tnow - 60)) {
                 unset($failedLogins[$t]);
-            } elseif ($ip == $ip1) {
+            } elseif ($ip === $ip1) {
                 sleep(3);
                 $repeated = true;
                 unset($failedLogins[$t]);
@@ -532,7 +531,7 @@ class Authentication
     //-------------------------------------------------------------
     public function isValidPassword($password, $password2 = false)
     {
-        if ($password2 && ($password != $password2)) {
+        if ($password2 && ($password !== $password2)) {
             return '{{ lzy-change-password-not-equal-response }}';
         }
         if (strlen($password) < 8) {
@@ -603,13 +602,13 @@ class Authentication
             $res = false;
             $tolerant = $this->config->admin_allowDisplaynameForLogin;
             foreach ($this->knownUsers as $name => $rec) {
-                if ($searchField == '*') {
-                    if ($name == $username) {
+                if ($searchField === '*') {
+                    if ($name === $username) {
                         $res = $name;
                         break;
                     }
                     foreach ($rec as $key => $value) {
-                        if (strtolower($value) == $username) {
+                        if (strtolower($value) === $username) {
                             $res = $name;
                             break 2;
                         }
@@ -617,19 +616,19 @@ class Authentication
                     continue;
                 }
                 if ($searchField) {
-                    if (isset($rec[$searchField]) && (strtolower($rec[$searchField]) == $username)) {
+                    if (isset($rec[$searchField]) && (strtolower($rec[$searchField]) === $username)) {
                         $res = $name;
                         break;
                     }
-                } elseif ($name == $username) {
+                } elseif ($name === $username) {
                     $res = $name;
                     break;
 
-                } elseif (isset($rec['username']) && ($rec['username'] == $username)) {
+                } elseif (isset($rec['username']) && ($rec['username'] === $username)) {
                     $res = $name;
                     break;
 
-                } elseif ($tolerant && isset($rec['displayName']) && (strtolower($rec['displayName']) == $username)) {
+                } elseif ($tolerant && isset($rec['displayName']) && (strtolower($rec['displayName']) === $username)) {
                     $res = $name;
                     break;
                 }
@@ -703,7 +702,7 @@ class Authentication
         $found = false;
         $submittedEmail = strtolower($submittedEmail);
         foreach ($this->knownUsers as $name => $rec) {
-            if (isset($rec['accessCodeEnabled']) && ($rec['accessCodeEnabled'] == false)) {
+            if (isset($rec['accessCodeEnabled']) && (!$rec['accessCodeEnabled'])) {
                 continue;
             }
 
@@ -762,13 +761,13 @@ class Authentication
     private function handleLoginUserNotification($res)
     {
         if (is_array($res) && isset($res[2])) { // [login/false, message, communication-channel]
-            if ($res[2] == 'Overlay') {
+            if ($res[2] === 'Overlay') {
                 $this->lzy->page->addOverlay($res[1], false, false);
 
-            } elseif ($res[2] == 'Override') {
+            } elseif ($res[2] === 'Override') {
                 $this->lzy->page->addOverlay($res[1], false, false);
 
-            } elseif ($res[2] == 'LoginForm') {
+            } elseif ($res[2] === 'LoginForm') {
                 $accForm = new UserAccountForm($this);
                 $form = $accForm->renderLoginForm($this->message, $res[1], true);
                 $this->lzy->page->addOverlay($form, true, false);
