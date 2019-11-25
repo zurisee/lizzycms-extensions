@@ -33,7 +33,7 @@ function parseArgumentStr($str, $delim = ',')
         $val = '';
 
         // grab next value, can be bare or enclosed in ' or "
-        if ($c == '"') {    // -> "
+        if ($c === '"') {    // -> "
             $p = findNextPattern($str, '"', 1);
             if ($p) {
                 $val = substr($str, 1, $p - 1);
@@ -44,7 +44,7 @@ function parseArgumentStr($str, $delim = ',')
                 fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
-        } elseif ($c == "'") {    // -> '
+        } elseif ($c === "'") {    // -> '
             $p = findNextPattern($str, "'", 1);
             if ($p) {
                 $val = substr($str, 1, $p - 1);
@@ -55,7 +55,7 @@ function parseArgumentStr($str, $delim = ',')
                 fatalError("Error in key-value string: '$str0'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 
-        } elseif ($c == '{') {    // -> {
+        } elseif ($c === '{') {    // -> {
             $p = findNextPattern($str, "}", 1);
             if ($p) {
                 $val = substr($str, 1, $p - 1);
@@ -87,12 +87,12 @@ function parseArgumentStr($str, $delim = ',')
         }
 
         // now, check whether it's a single value or a key:value pair
-        if ($str && ($str[0] == ':')) {         // -> key:value pair
+        if ($str && ($str[0] === ':')) {         // -> key:value pair
             $str = substr($str, 1);
             $assoc = true;
             $key = $val;
 
-        } elseif (!$str || ($str[0] == $delim)) {  // -> single value
+        } elseif (!$str || ($str[0] === $delim)) {  // -> single value
             if ($assoc) {
                 $options[$key] = $val;
             } else {
@@ -164,18 +164,18 @@ function parseInlineBlockArguments($str, $returnElements = false)
         list($name, $arg) = explode('=', $elem);
         $arg = trim($arg);
         $ch1 = isset($arg[0]) ? $arg[0]: '';
-        if ($ch1 == '"') {
+        if ($ch1 === '"') {
             $arg = trim($arg, '"');
-        } elseif ($ch1 == "'") {
+        } elseif ($ch1 === "'") {
             $arg = trim($arg, "'");
         }
 
-        if (strtolower($name) == 'lang') {                                  // pseudo-attr: 'lang'
+        if (strtolower($name) === 'lang') {                                  // pseudo-attr: 'lang'
             $lang = $arg;
         }
-        if (strtolower($name) == 'literal') {                               // pseudo-attr: 'literal'
+        if (strtolower($name) === 'literal') {                               // pseudo-attr: 'literal'
             $literal = stripos($arg, 'true') !== false;
-        } elseif (strtolower($name) == 'md-compile') {                      // pseudo-attr: 'md-compile'
+        } elseif (strtolower($name) === 'md-compile') {                      // pseudo-attr: 'md-compile'
             $mdCompile = stripos($arg, 'false') === false;
         } else {
             $attr .= " $name='$arg'";
@@ -616,29 +616,34 @@ function removeCStyleComments($str)
 
 
 //--------------------------------------------------------------
-function getDir($pat)
+function getDir($pat, $supportLinks = false)
 {
 	if (strpos($pat, '{') === false) {
         $files = glob($pat);
     } else {
         $files = glob($pat, GLOB_BRACE);
     }
-	$files = array_filter($files, 'isNotShielded');
-	$path = dirname($pat).'/';
-	$fPat = basename($pat);
-	$linkFiles = array_filter(glob($path.'*.link'), 'isNotShielded');
-	foreach ($linkFiles as $f) {
-		$linkedFiles = explode(PHP_EOL, getFile($f, 'hashTypeComments+emptyLines'));
-		foreach($linkedFiles as $f) {
-			if (strpos($f, '~/') === 0) {
-				$pat1 = substr($f, 2);
-			} else {
-				$pat1 = $path.$f;
-			}
-			$lf = glob($pat1.$fPat);
-			$files = array_merge($files, $lf);
-		}
-	}
+    $files = array_filter($files, function ($str) {
+        return ($str && ($str{0} !== '#') && (strpos($str,'/#') === false));
+    });
+
+    if ($supportLinks) {
+        $path = dirname($pat) . '/';
+        $fPat = basename($pat);
+        $linkFiles = array_filter(glob($path . '*.link'), 'isNotShielded');
+        foreach ($linkFiles as $f) {
+            $linkedFiles = explode(PHP_EOL, getFile($f, 'hashTypeComments+emptyLines'));
+            foreach ($linkedFiles as $f) {
+                if (strpos($f, '~/') === 0) {
+                    $pat1 = substr($f, 2);
+                } else {
+                    $pat1 = $path . $f;
+                }
+                $lf = glob($pat1 . $fPat);
+                $files = array_merge($files, $lf);
+            }
+        }
+    }
 	return $files;
 } // getDir
 
@@ -736,7 +741,7 @@ function fileExt($file0, $reverse = false)
 //--------------------------------------------------------------
 function isNotShielded($str)
 {	// first char of file or dirname must not be '#'
-	return (($str{0} != '#') && (strpos($str,'/#') === false));
+	return (($str{0} !== '#') && (strpos($str,'/#') === false));
 } // isNotShielded
 
 
@@ -753,7 +758,7 @@ function base_name($file, $incl_ext = true, $incl_args = false) {
 	if (!$incl_args && ($pos = strpos($file, '#'))) {
 		$file = substr($file, 0, $pos);
 	}
-	if (substr($file,-1) == '/') {
+	if (substr($file,-1) === '/') {
 		return '';
 	}
 	$file = basename($file);
@@ -772,7 +777,7 @@ function dir_name($path)
     if (!$path) {
         return '';
     }
-    if ($path{strlen($path)-1} == '/') {  // ends in '/'
+    if ($path{strlen($path)-1} === '/') {  // ends in '/'
         return $path;
     }
     $path = preg_replace('/[\#\?].*/', '', $path);
@@ -852,7 +857,7 @@ function makePathDefaultToPage($path)
 function convertFsToHttpPath($path)
 {
     $pagesPath = $GLOBALS['globalParams']['pathToPage'];
-    if (($path{0} != '~') && (strpos($path, $pagesPath) == 0)) {
+    if ($path && ($path{0} != '~') && (strpos($path, $pagesPath) === 0)) {
         $path = '~page/'.substr($path, strlen($pagesPath));
     }
     return $path;
@@ -1003,7 +1008,7 @@ function resolveHrefs( &$html )
     $prefix = $appRoot.'?lzy=';
     $p = strpos($html, '~/');
     while ($p !== false) {
-        if (substr($html, $p-6, 5) == 'href=') {
+        if (substr($html, $p-6, 5) === 'href=') {
             if (preg_match('|^([\w-/\.]*)|', substr($html, $p + 2, 30), $m)) {
                 $s = $m[1];
                 if (!file_exists($s)) {
@@ -1028,7 +1033,7 @@ function generateNewVersionCode()
     }
     do {
         $randCode = rand(0, 9) . rand(0, 9);
-    } while ($prevRandCode && ($prevRandCode == $randCode));
+    } while ($prevRandCode && ($prevRandCode === $randCode));
     file_put_contents(VERSION_CODE_FILE, $randCode);
     return $randCode;
 } // generateNewVersionCode
@@ -1088,7 +1093,7 @@ function parseNumbersetDescriptor($descr, $minValue = 1, $maxValue = 9, $headers
 		        $names[$i] = $m[2];
             }
 			$inx = alphaIndexToInt($elem, $headers);
-			if ($inx == 0) {
+			if ($inx === 0) {
                 fatalError("Error in table()-macro: unknown element '$elem'", 'File: '.__FILE__.' Line: '.__LINE__);
             }
 			$out[] = $inx; //alphaIndexToInt($elem, $headers);
@@ -1319,7 +1324,7 @@ function get_post_data($varName, $permitNL = false)
 //------------------------------------------------------------
 function path_info($file)
 {
-	if (substr($file, -1) == '/') {
+	if (substr($file, -1) === '/') {
 		$pi['dirname'] = $file;
 		$pi['filename'] = '';
 		$pi['extension'] = '';
@@ -1337,7 +1342,7 @@ function path_info($file)
 //------------------------------------------------------------
 function preparePath($path)
 {
-    if ($path[0] == '~') {
+    if ($path && ($path[0] === '~')) {
         $path = resolvePath($path);
     }
 	$path = dirname($path.'x');
@@ -1750,7 +1755,7 @@ function strPosMatching($str, $pat1 = '{{', $pat2 = '}}', $p0 = 0)
         if ($p2 === false) { // no more closing pat
                 return [false, false];
 		}
-		if ($cnt == 0) {	// not in nexted structure
+		if ($cnt === 0) {	// not in nexted structure
 			if ($p3 === false) {	// no more opening pat
 				return [$p0, $p2];
 			}
@@ -1797,7 +1802,7 @@ function checkNesting($str, $pat1, $pat2)
 function findNextPattern($str, $pat, $p1 = 0)
 {
 	while (($p1 = strpos($str, $pat, $p1)) !== false) {
-		if (($p1 == 0) || (substr($str, $p1-1, 1) != '\\')) {
+		if (($p1 === 0) || (substr($str, $p1-1, 1) != '\\')) {
 			break;
 		}
 		$p1 += strlen($pat);
@@ -1827,17 +1832,17 @@ function trunkPath($path, $n = 1, $leaveNotRemove = true)
             return "$path/$file";
             return implode('/', explode('/', $path, -$n)) . '/';
         } else {        // leave from left
-            $path = ($path[0] == '/') ? substr($path, 1) : $path;
+            $path = ($path[0] === '/') ? substr($path, 1) : $path;
             $parray = explode('/', $path);
             return '/'.implode('/', array_splice($parray, 0, -$n)).'/';
         }
 
     } else {
         if ($n > 0) {   // trunk from right
-            $path = ($path[strlen($path) - 1] == '/') ? rtrim($path, '/') : dirname($path);
+            $path = ($path[strlen($path) - 1] === '/') ? rtrim($path, '/') : dirname($path);
             return implode('/', explode('/', $path, -$n)) . '/';
         } else {        // trunk from left
-            $path = ($path[0] == '/') ? substr($path, 1) : $path;
+            $path = ($path[0] === '/') ? substr($path, 1) : $path;
             $parray = explode('/', $path);
             return implode('/', array_splice($parray, -$n));
         }
@@ -1901,7 +1906,7 @@ function isLocalCall()
     if (($state = getStaticVariable('localcall')) !== null) {
         return $state;
     }
-    if (($serverName == 'localhost') || ($remoteAddress == '::1')) {
+    if (($serverName === 'localhost') || ($remoteAddress === '::1')) {
         return true;
     } else {
         return false;
@@ -2003,97 +2008,6 @@ function parseDimString($str)
     }
     return [$w, $h];
 } // parseDimString
-
-
-
-//function parseDimString($str, $imageFile = false, $aspectRatio = false)
-//{
-//    // E.g. 200x150, or 200x  or x150 etc. -> reads size of given image
-//    $h = $w = 0;
-//    if (strpos($str, 'x') === false) {      // no 'x' present
-//        if (!$str) {
-//            $w = $h = $aspectRatio = 0;
-//
-//        } else {
-//            if (!$aspectRatio) {
-//                if (file_exists($imageFile)) {
-//                    list($w0, $h0) = getimagesize($imageFile);
-//                    $aspectRatio = $h0 / $w0;
-//                } else {
-//                    $aspectRatio = DEFAULT_ASPECT_RATIO;
-//                }
-//            } elseif ($aspectRatio < 1) {
-//                $w = intval($str);
-//                $h = (int)round($w * $aspectRatio);
-//            } else {
-//                $h = intval($str);
-//                $w = (int)round($h / $aspectRatio);
-//            }
-//        }
-//
-//    } else {                    // 'x' present
-//        list($w, $h) = explode('x', $str);
-//        $w = intval($w);
-//        $h = intval($h);
-//        if (!$aspectRatio && $imageFile) {
-//            if ($imageFile{0} == '~') {
-//                $imageFile = resolvePath($imageFile, true);
-//            }
-//            if (file_exists($imageFile)) {
-//                list($w0, $h0) = getimagesize($imageFile);
-//                if ($w0 && $h0) {
-//                    $aspectRatio = $h0 / $w0;
-//                } else {
-//                    $aspectRatio = DEFAULT_ASPECT_RATIO;
-//                }
-//            } else {
-//                $aspectRatio = DEFAULT_ASPECT_RATIO;
-//            }
-//        } elseif (!$aspectRatio) {
-//            $aspectRatio = DEFAULT_ASPECT_RATIO;
-//        }
-//
-//        if (!$w) {
-//            $w = (int) round($h / $aspectRatio);
-//        } elseif (!$h) {
-//            $h = (int) round($w * $aspectRatio);
-//        }
-//    }
-//    return [$w, $h];
-//} // parseDimString
-//
-
-
-//....................................................
-//function parseFileName($filename, $aspectRatio)
-//{
-////    $path = dirname($filename).'/';
-//    $fname = base_name($filename);
-//    $dimFound = false;
-//    $w = $h = '';
-//
-//    if (preg_match('/([^\(]*) \( (.*) \) (\.\w+)/x', $fname, $m)) {    // (WxH) size specifier present?
-//        $basename = $m[1];
-//        $dimStr = $m[2];
-//        $ext = $m[3];
-//
-//        $imgFullsizeFile = $path.$basename.$ext;
-//
-//        list($w, $h) = parseDimString($dimStr, $imgFullsizeFile, $aspectRatio);
-//
-//        $filename = $path.$basename."({$w}x$h)".$ext;
-//        $dimFound = true;
-//
-//    } else {
-//        $basename = base_name($fname, false);
-//        $ext = '.'.fileExt($fname);
-//        $f = resolvePath($filename);
-//    }
-//    $filename = convertFsToHttpPath($filename);
-////    $path = convertFsToHttpPath($path);
-////    return [$filename, $path, $basename, $ext, $w, $h, $dimFound];
-//    return [$filename, $basename, $ext, $w, $h, $dimFound];
-//} // parseFileName
 
 
 
