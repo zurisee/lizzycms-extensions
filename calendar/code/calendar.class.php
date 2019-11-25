@@ -411,8 +411,9 @@ EOT;
                 $prefix = $this->defaultCatPrefix;
             }
             // determine UID (unique id that is invariable even if calendar changes):
-            $uid = isset($rec['_uid'])? $rec['_uid'] : strtotime($rec['start']);
-            $uid = "lzy-cal-$name-$uid";
+//            $uid = isset($rec['_uid'])? $rec['_uid'] : strtotime($rec['start']);
+            $uid = strtotime($rec['start']);
+            $uid = "lzy-cal-$name-{$rec['category']}-$uid";
 
             // prepare description:
             if ($this->publishCallback && function_exists('iCalDescriptionCallback')) {
@@ -432,7 +433,7 @@ EOT;
                 ->setLocation( isset($rec['location'])? $rec['location']: '' )
                 ->setDescription( $description )
 //                ->setUseTimezone(true)
-                ->setUniqueId("$uid")
+                ->setUniqueId($uid)
             ;
             $vCalendar->addComponent($vEvent);
         }
