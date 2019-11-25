@@ -195,7 +195,7 @@ class SiteStructure
 				$args = preg_replace('/:?\s*(\{[^\}]*\})/', "$1", $m[3]);;
 
 				$rec['name'] = $transName ? $transName : trim($m[2]);
-				if (strlen($indent) == 0) {
+				if (strlen($indent) === 0) {
                     $level = 0;
                 } else {
 				    // siteIdententation -> 4 blanks count as one tab
@@ -344,7 +344,7 @@ class SiteStructure
 		$j = 0;         // $j -> counter within level
 		$tree = array();
 		$hasVisibleChildren = false;
-		if ($path == './') {
+		if ($path === './') {
 		    $path = '';
         }
 
@@ -359,7 +359,7 @@ class SiteStructure
 				$lastRec['hasChildren'] = $visChildren;
 				$tree[$j-1] = (isset($tree[$j-1])) ? array_merge($tree[$j-1], $subtree) : $subtree;
 
-			} elseif ($level == $lastLevel) {
+			} elseif ($level === $lastLevel) {
 				$rec = &$list[$i];
                 $rec['hasChildren'] = false;
 				if (substr($rec['folder'], 0, 2) != '~/') {
@@ -374,7 +374,7 @@ class SiteStructure
                     $rec['actualFolder'] = (strlen($rec['actualFolder']) > 2) ? substr($rec['actualFolder'], 2) : '';
 				}
                 $mdFiles = getDir("$pagesPath{$rec['actualFolder']}*.md");
-                $rec['noContent'] = (sizeof($mdFiles) == 0);
+                $rec['noContent'] = (sizeof($mdFiles) === 0);
 
 				$list[$i]['parent'] = $parent;
 				if (isset($rec['hide!']) && $rec['hide!']) {
@@ -452,11 +452,11 @@ class SiteStructure
 	//....................................................
 	public function findSiteElem($str, $returnRec = false, $allowNameToSearch = false)
 	{
-	    if (($str == '/') || ($str == './')) {
+	    if (($str === '/') || ($str === './')) {
             $str = '';
-        } elseif ((strlen($str) > 0) && ($str{0} == '/')) {
+        } elseif ((strlen($str) > 0) && ($str{0} === '/')) {
 	        $str = substr($str, 1);
-        } elseif ((strlen($str) > 0) && (substr($str,0,2) == '~/')) {
+        } elseif ((strlen($str) > 0) && (substr($str,0,2) === '~/')) {
             $str = substr($str, 2);
         }
         if (!$this->list) {
@@ -486,7 +486,7 @@ class SiteStructure
                 }
 				$dir = getDir($this->config->path_pagesPath.$elem['folder'].'*');	// check whether folder is empty, if so, move to the next non-empty one
 				$nFiles = sizeof(array_filter($dir, function($f) {
-                    return ((substr($f, -3) == '.md') || (substr($f, -5) == '.link') || (substr($f, -5) == '.html'));
+                    return ((substr($f, -3) === '.md') || (substr($f, -5) === '.link') || (substr($f, -5) === '.html'));
 				}));
 				if ($nFiles > 0) {
 				    $found = true;
