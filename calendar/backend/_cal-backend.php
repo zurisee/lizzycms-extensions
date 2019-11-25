@@ -4,8 +4,6 @@ define('SYSTEM_PATH', '../../../');
 define('PATH_TO_APP_ROOT', SYSTEM_PATH.'../');
 define('CUSTOM_CAL_BACKEND', PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
 
-//require_once SYSTEM_PATH.'vendor/autoload.php';
-
 // Require Event class and datetime utilities
 require dirname(__FILE__) . '/../code/utils.php';
 
@@ -66,7 +64,7 @@ class CalendarBackend {
 
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
-        $this->ds = new DataStorage2(['dataFile' => $dataSrc]);
+        $this->ds = new DataStorage2(['dataFile' => $dataSrc, 'useRecycleBin' => true]);
 
     } // __construct
 

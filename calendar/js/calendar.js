@@ -316,7 +316,7 @@ function defaultOpenCalPopup(inx, event) {
         $('#lzy-cal-new-event-header').hide();
         $('#lzy-cal-modify-event-header').show();
         d = moment( event.start._i );
-        d.utc();
+        // d.utc();
         dateStr = d.format('YYYY-MM-DD');
         $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
         if (event.allDay === false) {    // normal event
@@ -325,7 +325,7 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy-allday').val('false');
 
             d = moment(event.end._i);
-            d.utc();
+            // d.utc();
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_end_date').val(dateStr);
             timeStr = d.format('HH:mm');
@@ -340,7 +340,7 @@ function defaultOpenCalPopup(inx, event) {
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_end_date').val(dateStr);
             $('#lzy_cal_start_time').attr('type', 'hidden').val('00:00');
-            $('#lzy_cal_end_time').attr('type', 'hidden').val('23:59');
+            $('#lzy_cal_end_time').attr('type', 'hidden').val('00:00');
             $('#lzy-allday').val('true');
             $('#lzy-cal-allday-event-checkbox').prop('checked', true);
         }
