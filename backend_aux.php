@@ -7,6 +7,7 @@ define('SERVICE_LOG',       PATH_TO_APP_ROOT.'.#logs/backend-log.txt');	    //
 define('ERROR_LOG',         PATH_TO_APP_ROOT.'.#logs/errlog.txt');	//
 define('RECYCLE_BIN',           '.#recycleBin/');
 define('RECYCLE_BIN_PATH',      '~page/'.RECYCLE_BIN);
+define('MKDIR_MASK',            0700);
 
 $appRoot = preg_replace('/_lizzy\/.*$/', '', getcwd().'/');
 
@@ -76,12 +77,19 @@ function resolvePath($path)
         '|~page/|',
     ];
     $to = [
-        '',
-        $_SESSION["lizzy"]["dataPath"],
+        PATH_TO_APP_ROOT,
+        PATH_TO_APP_ROOT.$_SESSION["lizzy"]["dataPath"],
         SYSTEM_PATH,
-        EXTENSIONS_PATH,
-        $_SESSION["lizzy"]["pathToPage"],
+        PATH_TO_APP_ROOT.EXTENSIONS_PATH,
+        PATH_TO_APP_ROOT.$_SESSION["lizzy"]["pathToPage"],
     ];
+//    $to = [
+//        '',
+//        $_SESSION["lizzy"]["dataPath"],
+//        SYSTEM_PATH,
+//        EXTENSIONS_PATH,
+//        $_SESSION["lizzy"]["pathToPage"],
+//    ];
 
     $path = preg_replace($from, $to, $path);
     return $path;
