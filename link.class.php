@@ -137,6 +137,7 @@ class CreateLink
         }
         if (!$this->text) {
             $this->text = preg_replace('|^.*:/?/? ([^\?\&]*) .*|x', "$1", $this->href);
+            $hiddenText = '';
         } else {
             $hiddenText = "<span class='print_only'> [$this->href]</span>";
         }
