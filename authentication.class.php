@@ -440,18 +440,16 @@ class Authentication
             $rec['username'] = '';
         }
 
-        if ($this->isGroupMember($rec['groups'], 'admins')) { // admins have access by default
+		$usersGroups = $rec['groups'];
+        if ($this->isGroupMember($usersGroups, 'admins')) { // admins have access by default
 		    return true;
         }
 
 		$lockProfiles = explode(',', $lockProfile);
 		foreach ($lockProfiles as $lp) {
-			$lp = trim($lp);
-			if ($lp == $rec['username']) {
-				return true;
-			} elseif ($lp == $rec['groups']) {
-				return true;
-			}
+            if ($this->isGroupMember($usersGroups, trim($lp))) { // admins have access by default
+                return true;
+            }
 		}
 		if ($rec && !$this->message) {
 			$this->message = '{{ Insufficient privileges }}';
