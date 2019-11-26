@@ -67,6 +67,9 @@ class LzyCalendar
             $this->defaultView = 'month';
         }
 
+        // Default Event Duration
+        $this->defaultEventDuration = isset($args['defaultEventDuration']) ? $args['defaultEventDuration']: false;
+
         // Timezone:
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
@@ -100,6 +103,11 @@ class LzyCalendar
         }
         $edPermStr = $this->edPermitted?'true':'false';
 
+        $defaultEventDuration = 'false';
+        if (($d=$this->defaultEventDuration) && (Stripos($d, 'allday') === false)) {
+            $defaultEventDuration = strtotime($this->defaultEventDuration)  - strtotime('TODAY');
+        }
+
         // inject js code into page body:
         $js = '';
         if ($inx == 1) {
@@ -109,6 +117,7 @@ var calLang = '{$this->lang}';
 var lzyCal = [];
 var calEditingPermission = false;
 var calDefaultView = '{$this->defaultView}';
+var defaultEventDuration = $defaultEventDuration;
 EOT;
         }
 

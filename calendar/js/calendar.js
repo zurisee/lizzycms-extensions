@@ -281,8 +281,9 @@ function defaultOpenCalPopup(inx, event) {
         $('#lzy-cal-new-event-header').show();
         $('#lzy-cal-modify-event-header').hide();
         var date = event._i;    // case: new entry
+        d = moment(date);
         if (typeof date !== 'number') {
-            d = moment(date);
+            // d = moment(date);
             d.local();
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
@@ -302,12 +303,20 @@ function defaultOpenCalPopup(inx, event) {
             dateStr = moment(date).format('YYYY-MM-DD');
             $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
             $('#lzy_cal_end_date').val(dateStr);
-            $('#lzy_cal_start_time').attr('type', 'hidden').val('09:00').attr('data-prev-val', '09:00');
-            $('#lzy_cal_end_time').attr('type', 'hidden').val('10:00');
-            // $('#lzy_cal_start_time').attr('type', 'hidden').val('00:00').attr('data-prev-val', '00:00');
-            // $('#lzy_cal_end_time').attr('type', 'hidden').val('23:59');
-            $('#lzy-allday').val('true');
-            $('#lzy-cal-allday-event-checkbox').prop('checked', true);
+            if (defaultEventDuration) {
+                $('#lzy_cal_start_time').attr('type', 'time').val('09:00').attr('data-prev-val', '09:00');
+                $('#lzy-allday').val('false');
+                d = moment(dateStr + 'T09:00');
+                timeStr = d.add(defaultEventDuration, 'seconds').format('HH:mm');
+                $('#lzy-cal-allday-event-checkbox').prop('checked', false);
+                $('#lzy_cal_end_time').attr('type', 'time').val(timeStr);
+            } else {
+                $('#lzy_cal_start_time').attr('type', 'hidden').val('09:00').attr('data-prev-val', '09:00');
+                $('#lzy-allday').val('true');
+                timeStr = d.add(1, 'hours').format('HH:mm');
+                $('#lzy-cal-allday-event-checkbox').prop('checked', true);
+                $('#lzy_cal_end_time').attr('type', 'hidden').val(timeStr);
+            }
         }
         // reset selected options:
         $('#lzy_cal_category option').removeAttr('selected');

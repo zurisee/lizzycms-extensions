@@ -34,6 +34,7 @@ $this->addMacro($macroName, function () {
     $source = $this->getArg($macroName, 'file', 'File path where data shall be fetched (and stored if in editing mode).', 'calendar.yaml');
     $this->getArg($macroName, 'calEditingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
     $this->getArg($macroName, 'fields', 'Comma separated list of fields', false);
+    $this->getArg($macroName, 'defaultEventDuration', '[allday|hh:mm]', false);
     $this->getArg($macroName, 'publish', '[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false);
     $this->getArg($macroName, 'publishCallback', '[string] Provide name of a script in code/ to render output for the \'description\' field of events.', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);
