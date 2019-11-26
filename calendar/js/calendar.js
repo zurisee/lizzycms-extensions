@@ -7,15 +7,35 @@ $( document ).ready(function() {
     $('.lzy-calendar').each(function() {
         inx = $(this).attr('data-lzy-cal-inx');
         var defaultDate = $(this).attr('data-lzy-cal-start');
+        var calEditingPermission = lzyCal[ inx ].calEditingPermission;
+        var addEventButton = '';
+        if (calEditingPermission) {
+            addEventButton = ' addevent';
+        }
+        if (typeof lzyCalHeaderButtons === 'undefined') {
+            lzyCalHeaderButtons = 'agendaWeek,month,listYear';
+        }
+        if (typeof lzyCalButtonLabels === 'undefined') {
+            lzyCalButtonLabels = {};
+        }
 
         $( this ).fullCalendar({
             header: {
-                left: 'prev,next today',
+                left: 'prev,next today' + addEventButton,
                 center: 'title',
-                right: 'agendaWeek,month,listYear',   // further options: listWeek, listMonth, listYear
+                right: lzyCalHeaderButtons,   // further options: listWeek, listMonth, listYear
+            },
+            buttonText: lzyCalButtonLabels,   // { list: '', month:'',week:'',day:'',today:'' }
+            customButtons: {
+                addevent: {
+                    text: '+',
+                    click: function() {
+                        defaultOpenCalPopup(inx, null);
+                    }
+                }
             },
             navLinks: true,       // can click day/week names to navigate views
-            editable: lzyCal[ inx ].calEditingPermission,
+            editable: calEditingPermission,
             eventLimit: true,     // allow "more" link when too many events
             firstDay: 1,
             locale: calLang,
@@ -239,7 +259,7 @@ function calEventChanged(inx, event)
         data : 'json='+json,
     }).done(function(response){
         if (isServerErrMsg(response)) { return; }
-        if (response && response !== 'ok') { console.log(response); }
+        // if (response && response !== 'ok') { console.log(response); }
     });
 } // calEventChanged
 
@@ -248,13 +268,13 @@ function calEventChanged(inx, event)
 
 function storeViewMode(inx, view) {
     var viewName = view.name;
-    console.log('save view mode: ' + viewName);
+    // console.log('save view mode: ' + viewName);
     $.ajax({
         url : calBackend + '?inx=' + inx + '&mode=' + viewName,
         type: 'get',
     }).done(function(response){
         if (isServerErrMsg(response)) { return; }
-        if (response && response !== 'ok') { console.log(response); }
+        // if (response && response !== 'ok') { console.log(response); }
     });
 } // storeViewMode
 
@@ -413,7 +433,7 @@ function setupTriggers() {
         var request_method = $this.attr("method");
         var form_data = $this.serialize();
 
-        console.log( form_data );
+        // console.log( form_data );
         $.ajax({
             url: post_url,
             type: request_method,
@@ -434,12 +454,12 @@ function setupTriggers() {
         var $this = $( this );
         var allday = $this.prop('checked');
         if (allday) {
-            console.log('allday on');
+            // console.log('allday on');
             $('#lzy-allday').val('true');
             $('#lzy_cal_start_time').attr('type', 'hidden');
             $('#lzy_cal_end_time').attr('type', 'hidden');
         } else {
-            console.log('allday off');
+            // console.log('allday off');
             $('#lzy-allday').val('false');
             $('#lzy_cal_start_time').attr('type', 'time');
             $('#lzy_cal_end_time').attr('type', 'time');
@@ -456,7 +476,7 @@ function setupTriggers() {
         var post_url = $form.attr("action") + '?del';
         var request_method = $form.attr("method");
         var form_data = $form.serialize();
-        console.log('delete entry');
+        // console.log('delete entry');
         $.ajax({
             url: post_url,
             type: request_method,

@@ -73,6 +73,10 @@ class LzyCalendar
         // Timezone:
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
+        // UI:
+        $this->headerButtons = isset($args['headerButtons']) ? $args['headerButtons']: false;
+        $this->buttonLabels = isset($args['buttonLabels']) ? $args['buttonLabels']: false;
+
     } // __construct
 
 
@@ -108,6 +112,35 @@ class LzyCalendar
             $defaultEventDuration = strtotime($this->defaultEventDuration)  - strtotime('TODAY');
         }
 
+        // header buttons:
+        $headerButtons = '';
+        if ($this->headerButtons) {
+            $hBs= explodeTrim(',', $this->headerButtons);
+            $hBsAvailable = ['week' => 'agendaWeek','month' => 'month','year' => 'listYear'];
+            foreach ($hBs as $hb) {
+                $hb = isset($hBsAvailable[$hb]) ? $hBsAvailable[$hb] : $hb;
+                $headerButtons .= "$hb,";
+            }
+            $headerButtons = rtrim($headerButtons, ',');
+            $headerButtons = "var lzyCalHeaderButtons = '$headerButtons';\n";
+        }
+
+        // Calendar header button texts:
+        $buttonLabels = '';
+        if ($this->buttonLabels) {
+            $bLs= explodeTrim(',', $this->buttonLabels);
+            foreach (['list','month','week','day','today'] as $i => $bl) {
+                if (isset($bLs[$i])) {
+                    $buttonLabels .= "$bl: '{$bLs[$i]}',";
+                }
+            }
+        }
+        if ($buttonLabels) {
+            $buttonLabels = rtrim($buttonLabels, ',');
+            $buttonLabels = "var  lzyCalButtonLabels = { $buttonLabels };\n";
+        }
+
+
         // inject js code into page body:
         $js = '';
         if ($inx == 1) {
@@ -118,6 +151,7 @@ var lzyCal = [];
 var calEditingPermission = false;
 var calDefaultView = '{$this->defaultView}';
 var defaultEventDuration = $defaultEventDuration;
+$headerButtons$buttonLabels
 EOT;
         }
 
