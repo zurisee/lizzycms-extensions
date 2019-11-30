@@ -1981,8 +1981,8 @@ EOT;
     //....................................................
     private function checkInstallation0()
     {
-        if (version_compare(PHP_VERSION, '7.0.0') < 0) {
-            die("Lizzy requires at PHP version 7 or higher to run.");
+        if (version_compare(PHP_VERSION, '7.1.0') < 0) {
+            die("Lizzy requires at PHP version 7.1 or higher to run.");
         }
 
         if (!file_exists(DEFAULT_CONFIG_FILE)) {
