@@ -200,6 +200,9 @@ EOT;
     private function renderFieldNames()
     {
         $fieldNames = '';
+        if (!isset($this->fields['summary'])) {
+            $this->fields['summary'] = 'title';
+        }
         foreach ($this->fields as $field) {
             if (!($flabel = $this->lzy->trans->translateVariable($field))) {
                 $flabel = ucfirst($field);
@@ -312,7 +315,7 @@ EOT;
 EOT;
             } else {
                 $cat = trim($category);
-                $value = translateToIdentifier($cat);
+//                $value = translateToIdentifier($cat);
                 $categoryCombo = <<<EOT
     <div class="lzy_cal_category-field"><span class="lzy-cal-category-label">{{ lzy-cal-category-label }}: </span><span class="lzy-cal-category lzy-cal-category-value">$cat</span></div>
     <input type="hidden" class="lzy_cal_category" name="category" value="{$categories[0]}" />
