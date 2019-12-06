@@ -315,7 +315,6 @@ EOT;
 EOT;
             } else {
                 $cat = trim($category);
-//                $value = translateToIdentifier($cat);
                 $categoryCombo = <<<EOT
     <div class="lzy_cal_category-field"><span class="lzy-cal-category-label">{{ lzy-cal-category-label }}: </span><span class="lzy-cal-category lzy-cal-category-value">$cat</span></div>
     <input type="hidden" class="lzy_cal_category" name="category" value="{$categories[0]}" />
@@ -457,7 +456,6 @@ EOT;
                 $prefix = $this->defaultCatPrefix;
             }
             // determine UID (unique id that is invariable even if calendar changes):
-//            $uid = isset($rec['_uid'])? $rec['_uid'] : strtotime($rec['start']);
             $uid = strtotime($rec['start']);
             $uid = "lzy-cal-$name-{$rec['category']}-$uid";
 
@@ -478,7 +476,6 @@ EOT;
                 ->setSummary($prefix.$rec['title'])
                 ->setLocation( isset($rec['location'])? $rec['location']: '' )
                 ->setDescription( $description )
-//                ->setUseTimezone(true)
                 ->setUniqueId($uid)
             ;
             $vCalendar->addComponent($vEvent);
