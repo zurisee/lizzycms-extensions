@@ -20,10 +20,13 @@ $this->addMacro($macroName, function () {
 
     $enroll_list_name = $this->getArg($macroName, 'listname', 'Any word identifying the enrollment list', "Enrollment-List$inx");
     $nNeeded = $this->getArg($macroName, 'nNeeded', 'Number of fields in category "needed"', 1);
-    $n_needed = $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
     $nReserve = $this->getArg($macroName, 'nReserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
-    $n_reserve = $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
+    $customFields = $this->getArg($macroName, 'customFields', '[comma separated list] List of additional field labels (optional)', false);
+    $customFieldPlaceholders = $this->getArg($macroName, 'customFieldPlaceholders', '[comma separated list] List of placeholder used in custom-fields (optional)', false);
     $data_path = $this->getArg($macroName, 'data_path', 'Where to store data files, default is folder local to current page', '~page/');
+    $logAgentData = $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
+    $n_needed = $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
+    $n_reserve = $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
 
     if ($enroll_list_name == 'help') {
         return '';
@@ -35,7 +38,7 @@ $this->addMacro($macroName, function () {
         $nReserve = $n_reserve;
     }
 
-    $enroll = new enroll($inx, $data_path, $this);
+    $enroll = new enroll($inx, $data_path, $this, $customFields, $customFieldPlaceholders, $logAgentData);
 	$out = $enroll->enroll($enroll_list_name, $nNeeded, $nReserve);
 	return $out;
 });
@@ -46,7 +49,7 @@ $this->addMacro($macroName, function () {
 //=== class ====================================================================
 class enroll
 {
-	function __construct($inx, $data_path, $trans)
+	public function __construct($inx, $data_path, $trans, $customFields = '', $customFieldPlaceholders = '', $logAgentData = false)
 	{
 	    $this->inx = $inx;
 		$this->admin_mode = false; //???($param['user'] == 'enroll');
@@ -70,19 +73,29 @@ class enroll
 		$this->data_path = fixPath($data_path);
 		$this->dataFile = resolvePath($data_path.ENROLL_DATA_FILE);
 		$this->logFile = resolvePath($data_path.ENROLL_LOG_FILE);
-		
-		$this->enroll_form_created = false;
+		$this->logAgentData = $logAgentData;
+
+        $this->customFields = $customFields;
+        $this->customFieldPlaceholders = $customFieldPlaceholders;
+
+        $this->enroll_form_created = false;
 	
 		preparePath($this->dataFile);
 		if (!file_exists($this->logFile)) {
-			file_put_contents($this->logFile, "Timestamp\tAction\tList\tName\tEmail\tPhone\tClient\tIP\n");
+            $customFields = explodeTrim(',|', $this->customFields);
+            $customFields = "\t".implode("\t", $customFields);
+            if ($logAgentData) {
+                file_put_contents($this->logFile, "Timestamp\tAction\tList\tName\tEmail\tPhone$customFields\tClient\tIP\n");
+            } else {
+                file_put_contents($this->logFile, "Timestamp\tAction\tList\tName\tEmail\tPhone$customFields\n");
+            }
 		}
 		$this->handle_post_data();
 	} // __construct
 
 
 	//----------------------------------------------------------------------
-	function handle_post_data() {
+	private function handle_post_data() {
 		
 		if ($this->admin_mode && getUrlArg('enroll_result')) {
 			$this->show_result = true;
@@ -103,8 +116,26 @@ class enroll
 			}
 			$email = strtolower(get_post_data('lzy-enroll-email'));
 			$phone = get_post_data('lzy-enroll-phone');
-			file_put_contents($this->logFile, timestamp()."\t$admin_mode$action\t{$this->enroll_list_id}\t$name\t$email\t$phone\t{$_SERVER["HTTP_USER_AGENT"]}\t{$_SERVER['REMOTE_ADDR']}\n", FILE_APPEND);
-	
+
+			$out = "\t$admin_mode$action\t{$this->enroll_list_id}\t$name\t$email\t$phone";
+
+			if ($this->customFields) {
+                $customFields = explodeTrim(',|', $this->customFields);
+            }
+			$i = 0;
+			$customFieldValues = [];
+			while (isset($_POST["lzy-enroll-custom-$i"])) {
+			    $out .= "\t".$_POST["lzy-enroll-custom-$i"];
+                $customFieldValues[$i] = $_POST["lzy-enroll-custom-$i"];
+			    $i++;
+            }
+
+            if ($this->logAgentData) {
+                file_put_contents($this->logFile, timestamp()."$out\t{$_SERVER["HTTP_USER_AGENT"]}\t{$_SERVER['REMOTE_ADDR']}\n", FILE_APPEND);
+            } else {
+                file_put_contents($this->logFile, timestamp()."$out\n", FILE_APPEND);
+            }
+
 			if (!is_legal_email_address($email) && !$this->admin_mode) {
 				writeLog("\tError: illegal email address [$name] [$email]");
 				$this->err_msg = '{{ illegal email address }}';
@@ -122,11 +153,11 @@ class enroll
 				$enrollData[$id] = array();
 			}
 			$entry = &$enrollData[$id];
-			if ($action == 'add') {
+			if ($action === 'add') {
 				$this->action = 'add';
 				if (!$this->err_msg) {
 					foreach ($entry as $n => $rec) {
-						if ($rec['Name'] == $name){ // name already exists
+						if ($rec['Name'] === $name){ // name already exists
 							writeLog("\tError: enrolling twice [$name] [$email]");
 							$this->err_msg = '{{ enroll entry already exists }}';
 							$this->name = $name;
@@ -141,9 +172,12 @@ class enroll
 					$entry[$n]['EMail'] = $email;
 					$entry[$n]['Phone'] = $phone;
 					$entry[$n]['time'] = time();
+                    foreach ($customFields as $i => $field) {
+                        $entry[$n][$field] = $customFieldValues[$i];
+                    }
 				}
 	
-			} elseif ($action == 'delete') {
+			} elseif ($action === 'delete') {
 				$this->action = 'delete';
 				$found = false;
 				$name = trim($name);
@@ -201,9 +235,9 @@ class enroll
 
 
 	//-----------------------------------------------------------------------------------------------
-	function enroll($enroll_list_name, $n_needed, $n_reserve = 0) {
+	public function enroll($enroll_list_name, $n_needed, $n_reserve = 0) {
 		global $enroll_form_created, $page;
-	
+
 		$this->enroll_list_id = base_name(translateToFilename($enroll_list_name), false);
 		$this->enroll_list_name = $enroll_list_name = str_replace("'", '&prime;', $enroll_list_name);
 	
@@ -232,12 +266,6 @@ class enroll
 		$new_field_done = false;
 		for ($n=0; $n < $nn; $n++) {			// loop over list
 			$res = ($n >= $n_needed) ? ' lzy-enroll-reserve-field': '';
-			$name =  '';
-			$email = '';
-			$phone = '';
-			$time =  '';
-			$a = '&nbsp;';
-			$icon = '';
 			$num = "<span class='lzy-num'>".($n+1).":</span>";
 			$tooltip = '{{ lzy-enroll-delete-entry }}';
             $class = '';
@@ -246,7 +274,6 @@ class enroll
 				$name =  $entry[$n]['Name'];
 				$email = $entry[$n]['EMail'];
 				$phone = $entry[$n]['Phone'];
-				$time =  $entry[$n]['time'];
 				if ($this->admin_mode) {
 					$name .= " &lt;$email>";
 					if ($phone) {$name .= " $phone"; }
@@ -270,7 +297,6 @@ class enroll
 					$class = 'lzy-enroll-add-field';
 	
 				} else {		// free cell
-					$name = '&nbsp;';
 					$class = 'lzy-enroll-empty-field';
 	
 					$a = "&nbsp;";
@@ -285,38 +311,11 @@ class enroll
 		return $out;
 	} // m_enroll
 
-	//----------------------------------------
-	function do_show_result() {
-		return "[ not implmented yet ]";
-	
-		$out = '<!DOCTYPE html>
-<html lang="de">
-<head>
-	<meta charset="utf-8" />
-	<title></title>
-	<style>
-		table { border-collapse: collapse;}
-		td { padding: 4px; border: 1px solid gray; min-width: 10em;}
-		td:last-child { display: none;}
-	</style>
-</head>
-<body>
-';
-		foreach ($files as $f) {
-			if (strpos($f, ENROLL_LOG_FILE) !== false) {
-				continue;
-			}
-			$title = '<strong>'.base_name($f, false)."</strong>:";
-			$title = str_replace('_', ' ', $title);
-			$tab = '';
-			$out .= "<p>$title</p>\n$tab\n";
-		}
-		$out .= "</body>\n</html>\n";
-		return "[ not implmented yet ]";
-	} // do_show_result
+
+
 
 	//------------------------------------
-	function create_jq_scripts() {
+	private function create_jq_scripts() {
 		$dest = $_SERVER['REQUEST_URI'];
 		$out = <<<EOT
 
@@ -325,7 +324,7 @@ class enroll
 		if (\$err_msg.text()) {						// ErrMsg dialog
 			\$form = \$err_msg.parent();
 			var dialog_id = '#' + \$form.parent().attr('id');
-			if (dialog_id == '#addDialog') {
+			if (dialog_id === '#addDialog') {
 				$('#lzy-add-name', \$form).val('{$this->name}');
 				$('#lzy-add-email', \$form).val('{$this->email}');
 				$('#lzy-add-phone', \$form).val('{$this->phone}');
@@ -333,11 +332,11 @@ class enroll
 				$('#lzy-enroll-add-type', \$form).val('{$this->action}');
 				var dialog_title = '{$this->enroll_list_name}';
 				$('#addDialog').removeClass("lzy-enroll-hide-dialog");
-				if ('{$this->focus}' != '') {
+				if ('{$this->focus}' !== '') {
 					$('#addDialog #a_{$this->focus}').focus();
 				}
 				
-			} else if (dialog_id == '#delDialog') {
+			} else if (dialog_id === '#delDialog') {
 				$('#lzy-del-name', \$form).val('{$this->name}');
 				$('#lzy-del-email', \$form).val('{$this->email}');
 				$('#d_phone', \$form).val('{$this->phone}');
@@ -345,7 +344,7 @@ class enroll
 				$('#lzy-enroll-del-type', \$form).val('{$this->action}');
 				var dialog_title = '{$this->enroll_list_name}';
 				$('#delDialog').removeClass("lzy-enroll-hide-dialog");
-				if ('{$this->focus}' != '') {
+				if ('{$this->focus}' !== '') {
 					$('#delDialog #d_{$this->focus}').focus();
 				}
 			}
@@ -464,9 +463,14 @@ EOT;
 		return $out;
 	} // create_jq_scripts
 
+
+
+
 	//------------------------------------
-	function create_add_dialog() {
+	private function create_add_dialog() {
 		$err_msg = '';
+        $customFields = $this->renderCustomFields();
+
 		if (($this->action == 'add') && $this->err_msg) {
 			$err_msg = "\n\t<div class='lzy-err-msg'>$this->err_msg</div>";
 		}
@@ -489,7 +493,7 @@ EOT;
 
             <label for="lzy-phone" class="ui-hidden-accessible">Handy:</label>
             <input type="text" name="lzy-enroll-phone" id="lzy-phone" value="" placeholder="{{ placeholder mobile number }}" data-theme="a" />
-
+$customFields
             <button type="submit" id="a_submit" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Enroll now }}</button>
             <button type="cancel" id="a_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">{{ Cancel }}</button>
         </div>
@@ -505,9 +509,33 @@ EOT;
 
 
 
+    private function renderCustomFields()
+    {
+        if (!$this->customFields) {
+            return '';
+        }
+
+        $out = '';
+        $customFields = explodeTrim(',|', $this->customFields);
+        $customFieldPlaceholders = explodeTrim(',|', $this->customFieldPlaceholders);
+        foreach ($customFields as $i => $field) {
+            $id = translateToIdentifier($field);
+            $placeholder = isset($customFieldPlaceholders[$i]) ? $customFieldPlaceholders[$i] : $i;
+            $out .= <<<EOT
+
+            <label for="lzy-enroll-field-$id" class="ui-hidden-accessible">$field:</label>
+            <input type="text" class='lzy-enroll-customfield' name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id" value="" placeholder="$placeholder" data-theme="a" />
+
+EOT;
+        }
+
+        return $out;
+    } // renderCustomFields
+
+
 
 	//------------------------------------
-	function create_delete_dialog() {
+	private function create_delete_dialog() {
 		$err_msg = '';
 		if (($this->action == 'delete') && $this->err_msg) {
 			$err_msg = "\n\t<div class='lzy-err-msg'>$this->err_msg</div>";

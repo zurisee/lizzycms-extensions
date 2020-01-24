@@ -45,7 +45,7 @@
 
 'Enroll add comment': 
     de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
-    en: '<p><strong>Comment</strong>:</p><p>You can delete this entry within the next 24 houtd.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
+    en: '<p><strong>Comment</strong>:</p><p>You can delete this entry within the next 24 hours.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
 
 'Enroll delete comment': 
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
