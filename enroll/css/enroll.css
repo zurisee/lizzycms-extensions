@@ -7,6 +7,9 @@
     padding: 10px 20px 10px 20px;
     position: fixed;
 }
+.lzy-enrollment-dialog select  {
+	width: 18em;
+}
 .lzy-enroll-dialog-close {
 	position: absolute;
 	top: 5px;

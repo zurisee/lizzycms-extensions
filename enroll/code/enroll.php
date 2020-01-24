@@ -22,7 +22,7 @@ $this->addMacro($macroName, function () {
     $nNeeded = $this->getArg($macroName, 'nNeeded', 'Number of fields in category "needed"', 1);
     $nReserve = $this->getArg($macroName, 'nReserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
     $customFields = $this->getArg($macroName, 'customFields', '[comma separated list] List of additional field labels (optional)', false);
-    $customFieldPlaceholders = $this->getArg($macroName, 'customFieldPlaceholders', '[comma separated list] List of placeholder used in custom-fields (optional)', false);
+    $customFieldPlaceholders = $this->getArg($macroName, 'customFieldPlaceholders', "[comma separated list] List of placeholder used in custom-fields (optional).<br>Special case: \"[val1|val2|...]\" creates dropdown selection.", false);
     $data_path = $this->getArg($macroName, 'data_path', 'Where to store data files, default is folder local to current page', '~page/');
     $logAgentData = $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
     $n_needed = $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
@@ -517,16 +517,35 @@ EOT;
 
         $out = '';
         $customFields = explodeTrim(',|', $this->customFields);
-        $customFieldPlaceholders = explodeTrim(',|', $this->customFieldPlaceholders);
+        $customFieldPlaceholders = explodeTrim(',', $this->customFieldPlaceholders);
         foreach ($customFields as $i => $field) {
             $id = translateToIdentifier($field);
             $placeholder = isset($customFieldPlaceholders[$i]) ? $customFieldPlaceholders[$i] : $i;
-            $out .= <<<EOT
+
+            // special case: placeholder of pattern '[x,y...]' -> render select tag:
+            if (preg_match('/\s*^\[(.*)\]\s*$/', $placeholder, $m)) {
+                $options = explodeTrim('|', $m[1]);
+                $s = '';
+                foreach ($options as $option ) {
+                    $val = translateToIdentifier($option);
+                    $s .= "\t\t\t<option value='$val'>$option</option>\n";
+                }
+                $out .= <<<EOT
+
+            <label for="lzy-enroll-field-$id" class="ui-hidden-accessible">$field:</label>
+            <select name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id">
+$s
+            </select>
+EOT;
+
+            } else {
+                $out .= <<<EOT
 
             <label for="lzy-enroll-field-$id" class="ui-hidden-accessible">$field:</label>
             <input type="text" class='lzy-enroll-customfield' name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id" value="" placeholder="$placeholder" data-theme="a" />
 
 EOT;
+            }
         }
 
         return $out;
