@@ -3,6 +3,9 @@
 // initialize MadelineProto:
 $pwd = getcwd();
 $cwd = __DIR__;
+if (!is_writable($cwd)) {
+    die("Error: macro 'telegram()' requires write access-rights in folder '$cwd/'");
+}
 chdir($cwd);
 include 'madeline.php';
 chdir($pwd);
