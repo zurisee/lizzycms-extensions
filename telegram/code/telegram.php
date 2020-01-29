@@ -23,12 +23,7 @@ $this->addMacro($macroName, function () {
         return '';
     }
     if ($to && $msg) {
-        if ($from) {
-            $sessionFile = "data/telegram/$from.session.madeline";
-        } else {
-            $sessionFile = 'data/telegram/session.madeline';
-        }
-        $str = SendTelegram($sessionFile, $to, $msg);
+        $str = SendTelegram($to, $msg, $from);
     }
 
     return $str;
@@ -38,8 +33,18 @@ $this->addMacro($macroName, function () {
 
 
 
-function SendTelegram($sessionFile, $to, $msg)
+function SendTelegram($to, $msg, $from = '')
 {
+    if ($from) {
+        if (file_exists($from)) {
+            $sessionFile = $from;
+        } else {
+            $sessionFile = "data/telegram/$from.session.madeline";
+        }
+    } else {
+        $sessionFile = 'data/telegram/session.madeline';
+    }
+
     $MadelineProto = new \danog\MadelineProto\API($sessionFile);
     $MadelineProto->async(true);
     $MadelineProto->loop(function () use ($MadelineProto, $to, $msg) {
