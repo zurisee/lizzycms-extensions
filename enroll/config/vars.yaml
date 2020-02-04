@@ -39,9 +39,17 @@
     de: 'Kein passender Eintrag vorhanden'
     en: No entry found that fits
 
-'Enroll add': 
-    de: 'Eintragen:'
-    en: 'Make new entry:'
+'lzy-enroll-add-title': 
+    de: 'Neuer Eintrag:'
+    en: 'Make entry:'
+
+lzy-enroll-delete-or-modify-title:
+    de: 'Eintrag löschen oder ändern:'
+    _:  'Delete or Modify Entry:'
+
+lzy-enroll-or:
+    de: oder
+    _:  or
 
 'Enroll add comment': 
     de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
@@ -51,9 +59,33 @@
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
 
-'Enroll delete too late comment': 
-    de: '<p>Es ist zu viel Zeit verstrichen, um Ihren Eintrag selbstständig zu löschen.</p><p>Sie können sich für eine Änderung direkt an uns wenden.</p>'
-    en: "<p>Too much time past since you made this entry, therefore you can no longer delete it on your own.</p><p>Please contact us, so we can make that modification for you.</p>"
+'Enroll modify comment': 
+    de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag bearbeiten oder löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+    en: '<p><strong>Comment</strong>:</p><p>Do you want to modify or delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
+
+# 'Enroll delete too late comment': 
+#     de: '<p>Es ist zu viel Zeit verstrichen, um Ihren Eintrag selbstständig zu löschen.</p><p>Sie können sich für eine Änderung direkt an uns wenden.</p>'
+#     en: "<p>Too much time past since you made this entry, therefore you can no longer delete it on your own.</p><p>Please contact us, so we can make that modification for you.</p>"
+
+'lzy-enroll-new-name':
+    de: 'Neuer Eintrag'
+    _:  'New entry'
+
+'lzy-enroll-del-entry':
+    de: 'Eintrag löschen'
+    _:  'Delete entry'
+
+'lzy-enroll-modify-entry':
+    de: 'Eintrag bearbeiten'
+    _:  'Modify entry'
+
+'lzy-enroll-delete-btn':
+    de: 'Diesen Eintrag löschen'
+    _:  'Delete this entry'
+
+'Enroll modify save':
+    de: 'Änderungen speichern'
+    _:  'Save modified data'
 
 'Enroll delete for': 
     de: 'Name'
@@ -78,3 +110,10 @@ lzy-enroll-email-required:
 lzy-enroll-email-invalid:
     de: Bitte geben Sie eine gültige E-Mail Adresse eine
     en: Please enter a valid e-mail address
+
+lzy-enroll-hdr-name:
+    de: Name
+    _:  Name
+
+
+
