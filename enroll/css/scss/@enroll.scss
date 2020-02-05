@@ -54,6 +54,7 @@ body {
 
 // Fields:
 .lzy-enroll-field {
+    font-family: helvetica, arial, sans-serif; // invisible with some other fonts... bug?
     width: var(--lzy-enroll-width-main, 18em);
     * {
         display: inline-block;

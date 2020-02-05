@@ -1,4 +1,4 @@
-/* Enroll() */
+/* enroll() */
 
 .lzy-enroll-row {
   font-size: 0; }
@@ -22,6 +22,7 @@
     padding: 0 8px; }
 
 .lzy-enroll-field {
+  font-family: helvetica, arial, sans-serif;
   width: var(--lzy-enroll-width-main, 18em);
   color: var(--lzy-enroll-color, #000); }
   .lzy-enroll-field * {
