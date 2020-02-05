@@ -23,7 +23,7 @@
 
 .lzy-enroll-field {
   font-family: helvetica, arial, sans-serif;
-  width: var(--lzy-enroll-width-main, 18em);
+  width: var(--lzy-enroll-list-field1-width, 18em);
   color: var(--lzy-enroll-color, #000); }
   .lzy-enroll-field * {
     display: inline-block;
@@ -35,7 +35,7 @@
     text-align: right;
     margin-right: 2px; }
   .lzy-enroll-field .lzy-name {
-    width: calc(var(--lzy-enroll-width-main, 18em) - 3em); }
+    width: calc(var(--lzy-enroll-list-field1-width, 18em) - 3em); }
   .lzy-enroll-field a, .lzy-enroll-field a .lzy-name {
     color: var(--lzy-enroll-color, #000); }
   .lzy-enroll-field.lzy-enroll-add-field a, .lzy-enroll-field.lzy-enroll-add-field a .lzy-name {
@@ -102,9 +102,9 @@
   border-radius: 5px;
   box-shadow: 0 0 15px 5px #aaa;
   background: #eef7ff;
-  background: var(--lzy-enroll-popup-bg, #eef7ff);
+  background: var(--lzy-enroll-dialog-bg, #eef7ff);
   border: 1px solid #9be8f5;
-  border: 1px solid var(--lzy-enroll-popup-border, #9be8f5);
+  border: 1px solid var(--lzy-enroll-dialog-border, #9be8f5);
   max-width: 98vw;
   overflow: auto;
   max-height: 98vh; }
@@ -121,13 +121,13 @@
     display: inline-block;
     padding: 4px 0; }
   .lzy-enrollment-dialog .lzy-modify-name-text, .lzy-enrollment-dialog input {
-    width: calc(100% - var(--lzy-enroll-dialog-width-label, 4em) - 4px); }
+    width: calc(100% - var(--lzy-enroll-dialog-label-width, 4em) - 4px); }
   .lzy-enrollment-dialog .lzy-name, .lzy-enrollment-dialog label {
     width: 4em;
-    width: var(--lzy-enroll-dialog-width-label, 4em); }
+    width: var(--lzy-enroll-dialog-label-width, 4em); }
   .lzy-enrollment-dialog select {
     width: 4em;
-    width: var(--lzy-enroll-dialog-width-select, 10em); }
+    width: var(--lzy-enroll-dialog-select-width, 10em); }
   .lzy-enrollment-dialog button {
     color: #666;
     font-family: helvetica, arial, sans-serif;
