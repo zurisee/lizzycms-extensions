@@ -25,8 +25,10 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'customFieldPlaceholders', "[comma separated list] List of placeholder used in custom-fields (optional).<br>Special case: \"[val1|val2|...]\" creates dropdown selection.", '');
     $this->getArg($macroName, 'dataPath', 'Where to store data files, default is folder local to current page', '~page/');
     $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
-    $this->getArg($macroName, 'editableTime', '[false, -n, time-string] Defines how long, resp. until when a user can delete/modify his/her entry. Duration is specified as a negative number of seconds (default: -86400 = 1 day)', -86400);
-    $this->getArg($macroName, 'editable', '[true|false] If true, users can modify their entries', false);
+    $this->getArg($macroName, 'freezeTime', "[false, 0, -n, time-string] Defines how long, resp. until when a user can delete/modify his/her entry. 'false' means forever, '0' means not modifiable at all. Duration is specified as a negative number of seconds (default: -86400 = 1 day)", -86400);
+    $this->getArg($macroName, 'editable', '[true|false] If true, users can modify their (custom field-) entries', false);
+    $this->getArg($macroName, 'hideNames', "[true|false|initials] If true, names are not revealed, i.e. presented as '****'.", false);
+    $this->getArg($macroName, 'unhideNamesForGroup', '[group] If set, names are shown to users of given group(s), to others they remain hidden.', false);
     $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
     $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
     $this->getArg($macroName, 'data_path', 'Synonyme for dataPath', false);
@@ -67,15 +69,17 @@ class enroll
             $this->data_path = $args['data_path'];
         }
         $this->logAgentData = $args['logAgentData'];
-        $this->editableTime = $args['editableTime'];
+        $this->freezeTime = $args['freezeTime'];
         $this->editable = $args['editable'];
+        $this->hideNames = $args['hideNames'];
+        $this->unhideNamesForGroup = $args['unhideNamesForGroup'];
 
 		$this->admin_mode = false;
 		$this->trans = $trans;
 
-        // editable time: false=forever; pos int=specfic date; neg int=duration after rec stored/modified:
-        if ($this->editableTime && !preg_match('/^-?\d+$/', $this->editableTime)) {
-            $this->editableTime = strtotime('+1 day', strtotime($this->editableTime)); // -> include given date
+        // editable time: false=forever; 0=never; pos int=specfic date; neg int=duration after rec stored/modified:
+        if ($this->freezeTime && !preg_match('/^-?\d+$/', $this->freezeTime)) {
+            $this->freezeTime = strtotime('+1 day', strtotime($this->freezeTime)); // -> include given date
         }
 
         if ($this->admin_mode) {
@@ -160,10 +164,9 @@ class enroll
                 return;
 			}
 			$_POST = [];
-			$file = $this->dataFile;
-			if (!($enrollData = getYamlFile($file))) {
-				$enrollData[$id] = array();
-			}
+
+            $ds = new DataStorage2(['dataFile' => $this->dataFile, 'lockDB' => true]);
+            $enrollData = $ds->read();
 			if (!isset($enrollData[$id])) {
 				$enrollData[$id] = array();
 			}
@@ -255,8 +258,7 @@ class enroll
 			}
 
             $this->enrollLog($log);
-            $yaml = convertToYaml($enrollData);
-			file_put_contents($this->dataFile, $yaml);
+			$ds->write($enrollData);
 		}
 	} // handle $_POST
 
@@ -268,7 +270,10 @@ class enroll
     {
         $this->createDialogs();
 
-        if (!($enrollData = getYamlFile($this->dataFile))) {
+        $ds = new DataStorage2($this->dataFile);
+        $enrollData = $ds->read();
+
+        if (!($enrollData)) {
 			$enrollData[$this->enroll_list_id] = array();
 		}
         $existingData = [];
@@ -290,6 +295,8 @@ class enroll
 				if ($this->admin_mode) {
 					$name .= " &lt;$email>";
 				}
+				$name = $this->hideName( $name );
+
 				if ($this->customFields && $this->editable) {
                     $targId = "#modifyDialog{$this->hash}";
                     $title = '{{ lzy-enroll-modify-entry }}';
@@ -447,7 +454,7 @@ EOT;
     <div id="addDialog{$this->hash}" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
         <div class='lzy-enroll-dialog-close'>⊗</div>
         <form id="lzy-enroll-add-form{$this->hash}" method='post' action='$url'>
-            <input type="hidden" name='lzy-enroll-list-id' value='{$this->enroll_list_id}' />
+            <input type="hidden" name='lzy-enroll-list-id' class='lzy-enroll-list-id' value='' />
             <input type="hidden" class='lzy-enroll-type' name='lzy-enroll-type' value='add' />
             <div>
                 <h3>{{ lzy-enroll-add-title }}</h3>
@@ -468,7 +475,7 @@ $customFields
                 </div>
             </div>
         <div class='lzy-enroll-comment'>
-            {{ Enroll add comment }}
+            {{ Enroll add comment }}{{^ lzy-enroll-add-comment-{$this->inx} }}
         </div>
        </form>
     </div><!-- /Custom Add Dialog -->
@@ -476,7 +483,7 @@ $customFields
 EOT;
 
 		return $form;
-	} // createStdAddDialog
+	} // createCustomAddDialog
 
 
 
@@ -490,7 +497,7 @@ EOT;
     <div id="delDialog" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
         <div class='lzy-enroll-dialog-close'>⊗</div>
         <form id="lzy-enroll-del-form" action='$url' method='post' >
-            <input type="hidden" class='lzy-enroll-del-list-id' name='lzy-enroll-list-id' value='{$this->enroll_list_id}'' />
+            <input type="hidden" class='lzy-enroll-list-id' name='lzy-enroll-list-id' value=''' />
             <input type="hidden" class='lzy-enroll-type' name='lzy-enroll-type' value='delete' />
             <div>
                 <h3>{{ Enroll delete }}</h3>
@@ -533,7 +540,7 @@ EOT;
     <div id="delDialog{$this->hash}" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
         <div class='lzy-enroll-dialog-close'>⊗</div>
         <form id="lzy-enroll-del-form{$this->hash}" action='$url' method='post' >
-            <input type="hidden" class='lzy-enroll-del-list-id' name='lzy-enroll-list-id' value='{$this->enroll_list_id}' />
+            <input type="hidden" class='lzy-enroll-list-id' name='lzy-enroll-list-id' value='' />
             <input type="hidden" class='lzy-enroll-type' name='lzy-enroll-type' value='delete' />
             <div>
                 <h3>{{ Enroll delete }}</h3>
@@ -554,7 +561,7 @@ EOT;
                 </div>
             </div>
             <div class='lzy-enroll-comment'>
-                {{ Enroll delete comment }}
+                {{ Enroll delete comment }}{{^ lzy-enroll-delete-comment-{$this->inx} }}
             </div>
         </form>
     </div><!-- /delDialog  -->
@@ -578,7 +585,7 @@ EOT;
     <div id="modifyDialog{$this->hash}" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
         <div class='lzy-enroll-dialog-close'>⊗</div>
         <form id="lzy-enroll-modify-form{$this->hash}" action='$url' method='post' >
-            <input type="hidden" class='lzy-enroll-modify-list-id' name='lzy-enroll-list-id' value='{$this->enroll_list_id}' />
+            <input type="hidden" class='lzy-enroll-list-id' name='lzy-enroll-list-id' value='' />
             <input type="hidden" class='lzy-enroll-type' name='lzy-enroll-type' value='add' />
             <div>
                 <h3>{{ lzy-enroll-delete-or-modify-title }}</h3>
@@ -604,7 +611,7 @@ $customFields
                 </div>
             </div>
             <div class='lzy-enroll-comment'>
-                {{ Enroll modify comment }}
+                {{ Enroll modify comment }}{{^ lzy-enroll-modify-comment-{$this->inx} }}
             </div>
         </form>
     </div><!-- /createModifyDialog  -->
@@ -722,15 +729,52 @@ EOT;
 
 
 
+    private function hideName($name)
+    {
+        $hide = false;
+        if ($this->hideNames && !$this->trans->lzy->auth->isAdmin()) {
+            if ($this->unhideNamesForGroup) {
+                if ($this->trans->lzy->auth->checkGroupMembership($this->unhideNamesForGroup)) {
+                    $hide = false;
+                } else {
+                    $hide = true;
+                }
+            } else {
+                $hide = true;
+            }
+        }
+        if ($hide) {
+            if (strpos($this->hideNames, 'init') === 0) {
+                $parts = explode(' ', $name);
+                $name = strtoupper($parts[0][0]);
+                if (sizeof($parts) > 1) {
+                    $name .= strtoupper($parts[sizeof($parts)-1][0]);
+                }
+            } else {
+                $name = '****';
+            }
+            $this->freezeTime = 0;
+        } elseif ($this->hideNames && $this->trans->lzy->auth->isAdmin()) {
+            $name = "<span class='lzy-enroll-admin-only' title='Visible to admins only'>$name</span>";
+        }
+
+        return $name;
+    } // hideName
+
+
+
 
     private function isInTime($lastModified)
     {
-        if (!$this->editableTime || $this->admin_mode) {
+        if (($this->freezeTime === false) || $this->admin_mode) {
             $inTime = true;
-        } elseif ($this->editableTime < 0) {
-            $inTime = (intval($lastModified) > time() + $this->editableTime);
         } else {
-            $inTime = (time() < $this->editableTime);
+            $this->freezeTime = intval($this->freezeTime);
+            if ($this->freezeTime < 0) {
+                $inTime = (intval($lastModified) > time() + $this->freezeTime);
+            } else {
+                $inTime = (time() < $this->freezeTime);
+            }
         }
         return $inTime;
     }

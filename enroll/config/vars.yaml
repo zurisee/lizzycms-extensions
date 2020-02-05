@@ -36,7 +36,7 @@
     en: An entry can only be deleted within the first 24 hours
 
 'no enroll entry found': 
-    de: 'Kein passender Eintrag vorhanden'
+    de: 'Keinen entsprechenden Eintrag gefunden'
     en: No entry found that fits
 
 'lzy-enroll-add-title': 
