@@ -497,7 +497,7 @@ EOT;
     <div id="delDialog" data-role="popup" data-theme="a" class="lzy-enrollment-dialog lzy-enroll-hide-dialog">
         <div class='lzy-enroll-dialog-close'>⊗</div>
         <form id="lzy-enroll-del-form" action='$url' method='post' >
-            <input type="hidden" class='lzy-enroll-list-id' name='lzy-enroll-list-id' value=''' />
+            <input type="hidden" class='lzy-enroll-list-id' name='lzy-enroll-list-id' value='' />
             <input type="hidden" class='lzy-enroll-type' name='lzy-enroll-type' value='delete' />
             <div>
                 <h3>{{ Enroll delete }}</h3>
