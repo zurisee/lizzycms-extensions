@@ -3,27 +3,34 @@
 .lzy-enroll-row {
   font-size: 0; }
   .lzy-enroll-row * {
+    font-size: 12pt;
     font-size: var(--lzy-enroll-font-size, 12pt); }
   .lzy-enroll-row > div {
     display: inline-block;
     height: 1.6em;
     line-height: 1.6em;
+    height: 1.6em;
     height: var(--lzy-enroll-height-field, 1.6em);
+    line-height: 1.6em;
     line-height: var(--lzy-enroll-height-field, 1.6em);
     vertical-align: top;
-    padding: 0 4px; }
+    padding: 0; }
 
 .lzy-enroll-hdr div {
   line-height: 2em;
   height: 2em;
+  height: 2em;
   height: var(--lzy-enroll-height-hdr-field, 2em);
+  line-height: 2em;
   line-height: var(--lzy-enroll-height-hdr-field, 2em); }
   .lzy-enroll-hdr .lzy-enroll-field {
     padding: 0 8px; }
 
 .lzy-enroll-field {
   font-family: helvetica, arial, sans-serif;
+  width: 18em;
   width: var(--lzy-enroll-list-field1-width, 18em);
+  color: #000;
   color: var(--lzy-enroll-color, #000); }
   .lzy-enroll-field * {
     display: inline-block;
@@ -31,16 +38,20 @@
   .lzy-enroll-field .lzy-num {
     opacity: 0.4;
     font-size: 75%;
-    width: 1.1em;
+    width: 1.4em;
     text-align: right;
     margin-right: 2px; }
   .lzy-enroll-field .lzy-name {
-    width: calc(var(--lzy-enroll-list-field1-width, 18em) - 3em); }
+    width: 14em;
+    width: calc(var(--lzy-enroll-list-field1-width, 18em) - 2.8em); }
   .lzy-enroll-field a, .lzy-enroll-field a .lzy-name {
+    color: #000;
     color: var(--lzy-enroll-color, #000); }
   .lzy-enroll-field.lzy-enroll-add-field a, .lzy-enroll-field.lzy-enroll-add-field a .lzy-name {
+    color: #999;
     color: var(--lzy-enroll-color, #999); }
     .lzy-enroll-field.lzy-enroll-add-field:hover a, .lzy-enroll-field.lzy-enroll-add-field:hover a .lzy-name {
+      color: #000;
       color: var(--lzy-enroll-color, #000); }
 
 .lzy-enroll-add {
@@ -53,9 +64,13 @@
   color: #b70000;
   font-style: normal; }
 
+.lzy-enroll-add, .lzy-enroll-del, .lzy-enroll-modify {
+  width: 0.8em;
+  text-align: center; }
+
 .lzy-enroll-modify {
   color: blue;
-  transform: scale(-1, 1);
+  transform: scale(-0.8, 1);
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-style: normal; }
 
@@ -66,29 +81,42 @@
     color: #aaa; }
 
 .lzy-enroll-aux-field {
-  width: var(--lzy-enroll-width-aux, 8em);
-  padding: 0 4px; }
+  width: 8em;
+  width: var(--lzy-enroll-width-aux, 8em); }
+  .lzy-enroll-aux-field.lzy-enroll-aux-field {
+    padding: 0 4px 0 6px; }
 
 .lzy-enroll-field, .lzy-enroll-aux-field {
+  background: #eff;
   background: var(--lzy-enroll-bg, #eff);
+  color: #000;
   color: var(--lzy-enroll-color, #000);
+  border-top: 1px dotted #ccc;
   border-top: var(--lzy-enroll-border, 1px dotted #ccc);
+  border-left: 1px dotted #ccc;
   border-left: var(--lzy-enroll-border, 1px dotted #ccc); }
 
 .lzy-enroll-field:last-child, .lzy-enroll-aux-field:last-child {
+  border-right: 1px dotted #ccc;
   border-right: var(--lzy-enroll-border, 1px dotted #ccc); }
 
 .lzy-enroll-row:last-child .lzy-enroll-field, .lzy-enroll-row:last-child .lzy-enroll-aux-field {
+  border-bottom: 1px dotted #ccc;
   border-bottom: var(--lzy-enroll-border, 1px dotted #ccc); }
 
 .lzy-enroll-row.lzy-enroll-hdr .lzy-enroll-field, .lzy-enroll-row.lzy-enroll-hdr .lzy-enroll-aux-field {
+  color: #ffe;
   color: var(--lzy-enroll-color-hdr, #ffe);
+  background: #184552;
   background: var(--lzy-enroll-bg-hdr, #184552); }
 
 .lzy-enroll-reserve-field .lzy-enroll-field, .lzy-enroll-reserve-field .lzy-enroll-aux-field {
+  background: #ffe;
   background: var(--lzy-enroll-bg-reserve, #ffe);
+  color: black;
   color: var(--lzy-enroll-color-reserve, black); }
   .lzy-enroll-reserve-field .lzy-enroll-field a, .lzy-enroll-reserve-field .lzy-enroll-aux-field a, .lzy-enroll-reserve-field .lzy-enroll-field a .lzy-name, .lzy-enroll-reserve-field .lzy-enroll-aux-field a .lzy-name {
+    color: black;
     color: var(--lzy-enroll-color-reserve, black); }
 
 .lzy-enroll-admin-only {
@@ -114,6 +142,7 @@
     margin-bottom: 4px;
     clear: both; }
     .lzy-enrollment-dialog .lzy-enroll-dialog-row * {
+      font-size: 12pt;
       font-size: var(--lzy-enroll-font-size, 12pt); }
   .lzy-enrollment-dialog * {
     vertical-align: top; }
@@ -121,6 +150,7 @@
     display: inline-block;
     padding: 4px 0; }
   .lzy-enrollment-dialog .lzy-modify-name-text, .lzy-enrollment-dialog input {
+    width: 14em;
     width: calc(100% - var(--lzy-enroll-dialog-label-width, 4em) - 4px); }
   .lzy-enrollment-dialog .lzy-name, .lzy-enrollment-dialog label {
     width: 4em;

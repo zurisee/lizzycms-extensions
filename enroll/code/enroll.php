@@ -339,7 +339,7 @@ class enroll
                     continue;
                 }
                 $val = isset($existingData[$n][$custField]) && $existingData[$n][$custField] ? $existingData[$n][$custField] : '&nbsp;';
-                $aux .= "\n\t\t\t<div class='lzy-enroll-aux-field lzy-enroll-aux-field$i'>\n\t\t\t\t$val\n\t\t\t</div>";
+                $aux .= "\n\t\t\t<div class='lzy-enroll-aux-field' data-class='lzy-enroll-aux-field$i'>\n\t\t\t\t$val\n\t\t\t</div>";
                 $hdr .= "\n\t\t\t<div class='lzy-enroll-aux-field'>$custField</div>";
             }
             $out .= "\t\t<div class='lzy-enroll-row$res'>\n$rowContent$aux\n\t\t</div><!-- /lzy-enroll-row -->\n\n";
@@ -370,7 +370,7 @@ class enroll
             if (isset($GLOBALS['enroll_form_created'][$this->hash])) {
                 return;
             }
-            $dialogs = "\n\n<!-- Enrollment Custom Dialogs ------------------------------->\n";
+            $dialogs = "\n\n<!-- === Enrollment Custom Dialogs ===================== -->\n";
             $dialogs .= "<div id='lzy-enroll-popup-bg-{$this->inx}' class='lzy-enroll-popup-bg lzy-enroll-hide-dialog'>\n";
             $dialogs .= $this->createCustomAddDialog();
             $dialogs .= $this->createCustomDelDialog();
@@ -385,7 +385,7 @@ class enroll
             $GLOBALS['enroll_form_created'][$this->hash] = true;
 
         } elseif (!$GLOBALS['enroll_form_created']['std']) {
-            $dialogs = "\n\n<!-- Enrollment Standard Dialogs ----------------------->\n";
+            $dialogs = "\n\n<!-- === Enrollment Standard Dialogs ====================== -->\n";
             $dialogs .= "<div id='lzy-enroll-popup-bg' class='lzy-enroll-popup-bg lzy-enroll-hide-dialog'>\n";
             $dialogs .= $this->createStdAddDialog();
             $dialogs .= $this->createStdDelDialog();
@@ -633,10 +633,14 @@ EOT;
         $customFields = explodeTrim(',|', $this->customFields);
         $customFieldPlaceholders = explodeTrim(',', $this->customFieldPlaceholders);
         foreach ($customFields as $i => $field) {
+            if (!$this->customFieldsDisplayList[$i]) {
+                continue;
+            }
             if (preg_match('/^\s* \( (.*) \) \s*$/x', $field, $m)) {
                 $field = $m[1];
             }
             $id = translateToIdentifier($field).$mod.$this->hash;
+            $class = "lzy-enroll-aux-field$i";
             $placeholder = isset($customFieldPlaceholders[$i]) ? $customFieldPlaceholders[$i] : '';
 
             // special case: placeholder of pattern '[x,y...]' -> render select tag:
@@ -652,7 +656,7 @@ EOT;
 
                 <div class="lzy-enroll-dialog-row">
                     <label for="lzy-enroll-field-$id" class="ui-hidden-accessible">$field:</label>
-                    <select name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id">
+                    <select name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id" class="lzy-enroll-customfield $class">
 $s                    </select>
                 </div>
 EOT;
@@ -662,7 +666,7 @@ EOT;
 
                 <div class="lzy-enroll-dialog-row">
                     <label for="lzy-enroll-field-$id" class="ui-hidden-accessible">$field:</label>
-                    <input type="text" class='lzy-enroll-customfield' name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id" value="" placeholder="$placeholder" data-theme="a" />
+                    <input type="text" class='lzy-enroll-customfield $class' name="lzy-enroll-custom-$i" id="lzy-enroll-field-$id" value="" placeholder="$placeholder" data-theme="a" />
                 </div>
 EOT;
             }

@@ -26,16 +26,20 @@ body {
 .lzy-enroll-row {
     font-size: 0;
     * {
+        font-size: 12pt;
         font-size: var(--lzy-enroll-font-size, 12pt);
     }
     > div {
         display: inline-block;
         height: 1.6em;
         line-height: 1.6em;
+        height: 1.6em;
         height: var(--lzy-enroll-height-field, 1.6em);
+        line-height: 1.6em;
         line-height: var(--lzy-enroll-height-field, 1.6em);
         vertical-align: top;
-        padding: 0 4px;
+        padding: 0;
+        //padding: 0 4px;
     }
 }
 
@@ -44,7 +48,9 @@ body {
     div {
         line-height: 2em;
         height: 2em;
+        height: 2em;
         height: var(--lzy-enroll-height-hdr-field, 2em);
+        line-height: 2em;
         line-height: var(--lzy-enroll-height-hdr-field, 2em);
     }
     .lzy-enroll-field {
@@ -55,6 +61,7 @@ body {
 // Fields:
 .lzy-enroll-field {
     font-family: helvetica, arial, sans-serif; // invisible with some other fonts... bug?
+    width: 18em;
     width: var(--lzy-enroll-list-field1-width, 18em);
     * {
         display: inline-block;
@@ -63,28 +70,33 @@ body {
     .lzy-num {
         opacity: 0.4;
         font-size: 75%;
-        width: 1.1em;
+        width: 1.4em;
         text-align: right;
         margin-right: 2px;
     }
     .lzy-name {
-        width: calc(var(--lzy-enroll-list-field1-width, 18em) - 3em);
+        width: 14em;
+        width: calc(var(--lzy-enroll-list-field1-width, 18em) - 2.8em);
     }
+    color: #000;
     color: var(--lzy-enroll-color, #000);
     a,
     a .lzy-name {
+        color: #000;
         color: var(--lzy-enroll-color, #000);
     }
     &.lzy-enroll-add-field {
         a,
         a .lzy-name {
+            color: #999;
             color: var(--lzy-enroll-color, #999);
         }
         &:hover {
             a,
             a .lzy-name {
+                color: #000;
                 color: var(--lzy-enroll-color, #000);
-            }        
+            }
         }
     }
 }
@@ -99,9 +111,15 @@ body {
     font-style: normal;
 }
 
+.lzy-enroll-add,
+.lzy-enroll-del,
+.lzy-enroll-modify {
+    width: 0.8em;
+    text-align: center;
+}
 .lzy-enroll-modify {
     color: blue;
-    transform: scale(-1, 1);
+    transform: scale(-0.8, 1);
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-style: normal;
 }
@@ -115,36 +133,50 @@ body {
 
 
 .lzy-enroll-aux-field {
+    width: 8em;
     width: var(--lzy-enroll-width-aux, 8em);
-    padding: 0 4px;
+    &.lzy-enroll-aux-field {
+        padding: 0 4px 0 6px;
+    }
 }
 .lzy-enroll-field,
 .lzy-enroll-aux-field {
+    background: #eff;
     background: var(--lzy-enroll-bg, #eff);
+    color: #000;
     color: var(--lzy-enroll-color, #000);
+    border-top: 1px dotted #ccc;
     border-top: var(--lzy-enroll-border, 1px dotted #ccc);
+    border-left: 1px dotted #ccc;
     border-left: var(--lzy-enroll-border, 1px dotted #ccc);
 }
 .lzy-enroll-field:last-child,
 .lzy-enroll-aux-field:last-child {
+    border-right: 1px dotted #ccc;
     border-right: var(--lzy-enroll-border, 1px dotted #ccc);
 }
 .lzy-enroll-row:last-child .lzy-enroll-field,
 .lzy-enroll-row:last-child .lzy-enroll-aux-field {
+    border-bottom: 1px dotted #ccc;
     border-bottom: var(--lzy-enroll-border, 1px dotted #ccc);
 }
 
 .lzy-enroll-row.lzy-enroll-hdr .lzy-enroll-field,
 .lzy-enroll-row.lzy-enroll-hdr .lzy-enroll-aux-field {
+    color: #ffe;
     color: var(--lzy-enroll-color-hdr, #ffe);
+    background: #184552;
     background: var(--lzy-enroll-bg-hdr, #184552);
 }
 .lzy-enroll-reserve-field .lzy-enroll-field,
 .lzy-enroll-reserve-field .lzy-enroll-aux-field {
+    background: #ffffee;
     background: var(--lzy-enroll-bg-reserve, #ffffee);
+    color: black;
     color: var(--lzy-enroll-color-reserve, black);
     a,
     a .lzy-name {
+        color: black;
         color: var(--lzy-enroll-color-reserve, black);
     }
 }
@@ -176,6 +208,7 @@ body {
         margin-bottom: 4px;
         clear:both;
         * {
+            font-size: 12pt;
             font-size: var(--lzy-enroll-font-size, 12pt);
         }
     }
@@ -189,6 +222,7 @@ body {
     }
     .lzy-modify-name-text,
     input {
+        width: 14em;
         width: calc(100% - var(--lzy-enroll-dialog-label-width, 4em) - 4px);
     }
     .lzy-name,

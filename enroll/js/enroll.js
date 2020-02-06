@@ -55,6 +55,14 @@ $('.lzy-enrollment-list a').click(function(e) {
         $('.lzy-enroll-name-text', $id).text(name);
         $('.lzy-enroll-name', $id).val(name);
     }
+
+    // preset custom fields in dialog:
+    $('.lzy-enroll-aux-field', $this.closest('.lzy-enroll-row')).each(function () {
+        var $this = $( this );
+        var value = $this.text().trim();
+        var dialogField = $this.attr('data-class');
+        $('.' + dialogField, $id).val( value );
+    });
 });
 
 
