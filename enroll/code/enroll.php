@@ -633,7 +633,8 @@ EOT;
         $customFields = explodeTrim(',|', $this->customFields);
         $customFieldPlaceholders = explodeTrim(',', $this->customFieldPlaceholders);
         foreach ($customFields as $i => $field) {
-            if (!$this->customFieldsDisplayList[$i]) {
+            // omit hidden fields in modify dialog:
+            if ($mod && !$this->customFieldsDisplayList[$i]) {
                 continue;
             }
             if (preg_match('/^\s* \( (.*) \) \s*$/x', $field, $m)) {
