@@ -12,6 +12,7 @@ $GLOBALS['enroll_form_created']['std'] = false;
 
 $page->addModules('~ext/enroll/js/enroll.js, ~ext/enroll/css/enroll.css');
 
+resetScheduleFile();
 
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
@@ -21,6 +22,7 @@ $this->addMacro($macroName, function () {
     $h = $this->getArg($macroName, 'nNeeded', 'Number of fields in category "needed"', 1);
     $this->getArg($macroName, 'nReserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
     $this->getArg($macroName, 'listname', 'Any word identifying the enrollment list', "Enrollment-List$inx");
+    $this->getArg($macroName, 'header', 'Optional header describing the enrollment list', false);
     $this->getArg($macroName, 'customFields', '[comma separated list] List of additional field labels (optional)', false);
     $this->getArg($macroName, 'customFieldPlaceholders', "[comma separated list] List of placeholder used in custom-fields (optional).<br>Special case: \"[val1|val2|...]\" creates dropdown selection.", '');
     $this->getArg($macroName, 'dataPath', 'Where to store data files, default is folder local to current page', '~page/');
@@ -29,12 +31,21 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'editable', '[true|false] If true, users can modify their (custom field-) entries', false);
     $this->getArg($macroName, 'hideNames', "[true|false|initials] If true, names are not revealed, i.e. presented as '****'.", false);
     $this->getArg($macroName, 'unhideNamesForGroup', '[group] If set, names are shown to users of given group(s), to others they remain hidden.', false);
+    $this->getArg($macroName, 'notify', 'See documentation... ', false);
+    $this->getArg($macroName, 'notifyFrom', 'See documentation', '');
+    $this->getArg($macroName, 'scheduleAgent', 'See documentation', 'scheduleAgent.php');
+
     $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
     $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
-    $this->getArg($macroName, 'data_path', 'Synonyme for dataPath', false);
+    $this->getArg($macroName, 'data_path', 'Synonym for dataPath', false);
 
     if ($h === 'help') {
         return '';
+    }
+    if ($h === 'info') {
+        $out = $this->translateVariable('lzy-enroll-info');
+        $this->compileMd = true;
+        return $out;
     }
 
     $args = $this->getArgsArray($macroName);
@@ -54,6 +65,7 @@ class enroll
 	{
 	    $this->inx = $inx;
         $this->listname = $args['listname'];
+        $this->header = $args['header'];
         $this->nNeeded = $args['nNeeded'];
         if ($args['n_needed'] !== false) {
             $this->nNeeded = $args['n_needed'];
@@ -73,6 +85,10 @@ class enroll
         $this->editable = $args['editable'];
         $this->hideNames = $args['hideNames'];
         $this->unhideNamesForGroup = $args['unhideNamesForGroup'];
+
+        $this->notify = $args['notify'];
+        $this->notifyFrom = str_replace(['&#39;', '&#34;'], ["'", '"'], $args['notifyFrom']);
+        $this->scheduleAgent = $args['scheduleAgent'];
 
 		$this->admin_mode = false;
 		$this->trans = $trans;
@@ -117,12 +133,15 @@ class enroll
 
 		preparePath($this->dataFile);
         $this->prepareLog();
-        $this->handlePostData();
+        $this->handleClientData();
+        $this->setupScheduler();
 	} // __construct
 
 
+
+
 	//----------------------------------------------------------------------
-	private function handlePostData() {
+	private function handleClientData() {
 		
 		if ($this->admin_mode && getUrlArg('enroll_result')) {
 			$this->show_result = true;
@@ -170,11 +189,14 @@ class enroll
 			if (!isset($enrollData[$id])) {
 				$enrollData[$id] = array();
 			}
-			$existingData = &$enrollData[$id];
+			$existingData = $enrollData[$id];
 			if ($action === 'add') {
 				$this->action = 'add';
                 // check whether nane already entered:
                 foreach ($existingData as $n => $rec) {
+                    if ($n === '_') {
+                        continue;
+                    }
                     if ($rec['Name'] === $name) { // name already exists:
                         if ($existingData[$n]['EMail'] === $email) {   // with same email, so we let it pass:
                             $rec = &$existingData[$n];
@@ -198,7 +220,7 @@ class enroll
                     }
                 }
                 if (!isset($found)) {   // new entry:
-                    $i = sizeof($existingData);
+                    $i = sizeof($existingData) - 1; // -1 -> to take system field '_' into account
                     if ($i >= ($this->nNeeded + $this->nReserve)) {
                         return; // request probably tampered: attempt to add more records than allowed
                     }
@@ -207,7 +229,7 @@ class enroll
                     $rec['EMail'] = $email;
                     $rec['time'] = time();
                     foreach ($this->customFieldsList as $i => $field) {
-                        $rec[$field] = $customFieldValues[$i];
+                        $rec[$field] = $customFieldValues[ $i ];
                     }
                 }
 
@@ -215,10 +237,11 @@ class enroll
 				$this->action = 'delete';
 				$found = false;
 				$name = trim($name);
-				$entry1 = array();
-				$i = 0;
 				foreach ($existingData as $n => $rec) {
-					if ($rec['Name'] === $name) {
+                    if ($n === '_') {
+                        continue;
+                    }
+                    if ($rec['Name'] === $name) {
 						if ($this->admin_mode) {       	// admin-mode needs no email and has no timeout
 							$found = true;
 							unset($existingData[$n]);
@@ -232,6 +255,7 @@ class enroll
 								$this->email = $email;
 								$this->focus = 'email';
 							} else {
+                                unset($existingData[$n]);
 								$found = true;
 								continue;
 							}
@@ -243,10 +267,7 @@ class enroll
 						}
 						$found = true;
 					}
-					$entry1[$i] = $rec;
-					$i++;
 				}
-				$enrollData[$id] = $entry1;
 				if (!$found) {
 					writeLog("\tError: no enroll entry found [$name] [$email]");
 					$this->err_msg = '{{ no enroll entry found }}';
@@ -257,8 +278,18 @@ class enroll
 				return; // nothing to do
 			}
 
+			// update data:
+			$nRequired = $existingData['_'];
+			unset($existingData['_']);
+			$enrollData[$id] = array_values($existingData);
+			$enrollData[$id]['_'] = $nRequired;
+
+			if ($this->notify) {
+			    $this->sendNotification($enrollData);
+            }
+
+            $ds->write($enrollData);
             $this->enrollLog($log);
-			$ds->write($enrollData);
 		}
 	} // handle $_POST
 
@@ -276,10 +307,17 @@ class enroll
         if (!($enrollData)) {
 			$enrollData[$this->enroll_list_id] = array();
 		}
+        $title = $this->header ? $this->header : $this->listname;
+        if (!isset($enrollData[$this->enroll_list_id]['_'])) {
+			$enrollData[$this->enroll_list_id]['_'] = "{$this->nNeeded} => $title";
+            $ds->write($enrollData);
+		}
+        unset($enrollData[$this->enroll_list_id]['_']);
         $existingData = [];
         if (isset($enrollData[$this->enroll_list_id])) {
             $existingData = $enrollData[$this->enroll_list_id];
         }
+
 
         $out = '';
 
@@ -299,16 +337,16 @@ class enroll
 
 				if ($this->customFields && $this->editable) {
                     $targId = "#modifyDialog{$this->hash}";
-                    $title = '{{ lzy-enroll-modify-entry }}';
+                    $tooltip = '{{ lzy-enroll-modify-entry }}';
                     $icon = "<span class='lzy-enroll-modify'>&#9998;</span>";
                 } else {
                     $targId = "#delDialog{$this->hash}";
-                    $title = '{{ lzy-enroll-delete-entry }}';
+                    $tooltip = '{{ lzy-enroll-delete-entry }}';
                     $icon = "<span class='lzy-enroll-del'>−</span>";
                 }
 
 				if ($this->isInTime($existingData[$n]['time'])) {
-					$a = "<a href='$targId' title='$title'>\n\t\t\t\t  <span class='lzy-name'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
+					$a = "<a href='$targId' title='$tooltip'>\n\t\t\t\t  <span class='lzy-name'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
                     $class = 'lzy-enroll-del_field';
 				} else {
 					$a = "<span class='lzy-name'>$name</span>";
@@ -345,7 +383,12 @@ class enroll
             $out .= "\t\t<div class='lzy-enroll-row$res'>\n$rowContent$aux\n\t\t</div><!-- /lzy-enroll-row -->\n\n";
 		}
 
+
+		// assemble output:
         $out0 = "\n\t<div class='{$this->enroll_list_id} lzy-enrollment-list' data-dialog-title='$this->enroll_list_name' data-dialog-id='{$this->enroll_list_id}' data-dialog-inx='{$this->inx}'>\n";
+		if ($this->header) {
+            $out0 .= "\n\t  <div class='lzy-enroll-field lzy-enroll-header'>{$this->header}</div>\n";
+        }
         if ($hdr) {
             $hdr = "\n\t\t<div class='lzy-enroll-row lzy-enroll-hdr'>\n\t\t\t<div class='lzy-enroll-field'>{{ lzy-enroll-hdr-name }}</div>$hdr\n\t\t</div><!-- /lzy-enroll-row -->\n\n";
             $out0 .= $hdr;
@@ -678,6 +721,120 @@ EOT;
 
 
 
+
+    //------------------------------------
+    private function sendNotification($enrollData)
+    {
+        $notifies = explodeTrim(',', $this->notify);
+        foreach ($notifies as $notify) {
+            if (preg_match('/\( (.*) \) (.*)/x', $notify, $m)) {
+                $time = trim($m[1]);
+                $to = trim($m[2]);
+                if (preg_match('/(.*) :: (.*)/x', $time, $mm)) {
+                    $time = $mm[1];
+                    $freq = $mm[2];
+                    $this->setupScheduler($time, $freq, $to);
+                    continue;
+                }
+                list($from, $till) = $this->deriveFromTill($time);
+                $now = time();
+                if (($now > $from) && ($now < $till)) {
+                    $this->_sendNotification($enrollData, $to);
+                }
+            } else {
+                $this->_sendNotification($enrollData, $notify);
+            }
+        }
+    } // sendNotification
+
+
+
+    //------------------------------------
+    private function _sendNotification($enrollData, $to)
+    {
+        $msg = "{{ lzy-enroll-notify-text-1 }}\n";
+
+        foreach ($enrollData as $listName => $list) {
+            $n = sizeof($list) - 1;
+            list($nRequired, $title) = isset($list['_']) ? explode('=>', $list['_']) : ['?', ''];
+            $listName = $title ? $title : $listName;
+            $listName = str_pad("$listName: ", 24, '.');
+            $msg .= "$listName $n {{ of }} $nRequired\n";
+        }
+        $msg .= "{{ lzy-enroll-notify-text-2 }}\n";
+        $msg = $this->trans->translate($msg);
+        $msg = str_replace('\\n', "\n", $msg);
+        $subject = $this->trans->translate('{{ lzy-enroll-notify-subject }}');
+
+        require_once SYSTEM_PATH.'messenger.class.php';
+
+        $mess = new Messenger($this->notifyFrom, $this->trans->lzy);
+        $mess->send($to, $msg, $subject);
+    } // _sendNotification
+
+
+
+
+    //------------------------------------
+    private function setupScheduler()
+    {
+        if (!$this->notify) {
+            return;
+        }
+
+        $newSchedule = [];
+        $notifies = explode(',', $this->notify);
+        foreach ($notifies as $notify) {
+            if (preg_match('/\( (.*) \) (.*)/x', $notify, $m)) {
+                $time = trim($m[1]);
+                $to = trim($m[2]);
+                if (preg_match('/(.*) :: (.*)/x', $time, $mm)) {
+                    list($from, $till) = $this->deriveFromTill(trim($mm[1]));
+                    $freq = trim(strtolower($mm[2]));
+                    if ($freq === 'daily') {
+                        $time = '****-**-** 08:00';
+                    } elseif ($freq === 'weekly') {
+                        $time = 'Mo 08:00';
+                    } else {
+                        die("Error: enroll() -> time pattern not recognized: '$freq'");
+                    }
+                    $newSchedule[] = [
+                        'src' => $GLOBALS["globalParams"]["pathToPage"],
+                        'time' => $time,
+                        'from' => date('Y-m-d H:i', $from),
+                        'till' => date('Y-m-d H:i', $till),
+                        'loadLizzy' => true,
+                        'do' => $this->scheduleAgent,
+                        'args' => [
+                            'to' => $to,
+                            'from' => $this->notifyFrom,
+                            'dataFile' => $this->dataFile,
+                        ]
+                    ];
+                }
+            }
+        }
+
+        $file = SCHEDULE_FILE;
+        $schedule = getYamlFile($file);
+
+        // clean up existing schedule entries:
+        $now = time();
+        foreach ($schedule as $i => $rec) {
+            $from = strtotime($rec['from']);
+            $till = strtotime($rec['till']);
+            if (($now < $from) || ($now > $till)) {
+                unset($schedule[$i]);
+            }
+        }
+
+        $schedule = array_merge($schedule, $newSchedule);
+        writeToYamlFile($file, $schedule);
+    } // setupScheduler
+
+
+
+
     //------------------------------------
     private function createErrorMsgs()
     {
@@ -713,6 +870,7 @@ EOT;
 
 
 
+    //------------------------------------
     private function prepareLog()
     {
         if (!file_exists($this->logFile)) {
@@ -784,5 +942,43 @@ EOT;
         return $inTime;
     }
 
+
+
+    private function deriveFromTill($time)
+    {
+        $from = 0;
+        $till = time() + 1000;
+
+        if (preg_match('/^ (\d\d\d\d-\d\d-\d\d) (.*) /x', $time, $m)) {
+            $from = strtotime(trim($m[1]));
+            $time = $m[2];
+        }
+        if (preg_match('/- \s*(\d\d\d\d-\d\d-\d\d) /x', $time, $m)) {
+            $till = strtotime('+1 day', strtotime(trim($m[1])));
+        }
+        return array($from, $till);
+    } // deriveFromTill
+
 } // class enroll
 
+
+
+
+function resetScheduleFile()
+{
+    $thisSrc = $GLOBALS["globalParams"]["pathToPage"];
+    $file = SCHEDULE_FILE;
+    $schedule = getYamlFile($file);
+    $modified = false;
+    foreach ($schedule as $i => $rec) {
+        $src = $rec['src'];
+        if ($src === $thisSrc) {
+            unset($schedule[$i]);
+            $modified = true;
+        }
+    }
+    if ($modified) {
+        $schedule = array_values($schedule);
+        writeToYamlFile($file, $schedule);
+    }
+}

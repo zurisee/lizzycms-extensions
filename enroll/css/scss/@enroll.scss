@@ -48,7 +48,6 @@ body {
     div {
         line-height: 2em;
         height: 2em;
-        height: 2em;
         height: var(--lzy-enroll-height-hdr-field, 2em);
         line-height: 2em;
         line-height: var(--lzy-enroll-height-hdr-field, 2em);
@@ -99,6 +98,13 @@ body {
             }
         }
     }
+    &.lzy-enroll-header {
+        padding: 4px 6px;
+        border: 1px dotted #ddd;
+        background: #eee;
+        margin-top: 1em;
+    }
+
 }
 .lzy-enroll-add {
     font-weight: bold;

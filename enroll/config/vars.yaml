@@ -116,4 +116,35 @@ lzy-enroll-hdr-name:
     _:  Name
 
 
+lzy-enroll-info:
+    de: |
+        ## Erklärungen
+
+        - Um sich einzutragen, klicken Sie auf eine Zeile mit grünem Kreuz <span class='lzy-enroll-add'>+</span>.
+        - Geben Sie im Popup Ihren Namen und Ihre E-Mail Adresse ein und klicken Sie auf [[ "Jetzt eintragen", .lzy-button ]].
+        - "Reserve-Felder" sind mit gelblichem Hintergrund gekennzeichnet: sie kommen nur kommen nur zum Zug, wenn sich andere abmelden.
+        - Klicken Sie auf <span class='lzy-enroll-del'>&ndash;</span>, um Ihren Eintrag zu löschen (innerhalb der nächsten 24 Stunden; für spätere Änderungen kontaktieren Sie den {{ webmaster_link }}).
+
+
+    _:  |
+        ## Explanations
+
+        - To enroll, click on a line showing the green plus sign <span class='lzy-enroll-add'>+</span>.
+        - In the popup enter your name and e-mail address, then click on  [[ "Sign up now", .lzy-button ]].
+        - "Spare fields" are marked by a yellowish background:  they move up when others cancel their enrollment.
+        - Click on <span class='lzy-enroll-del'>&ndash;</span> to cancel your enrollment (during the next 24 hours, for later cancellations contact the {{ webmaster_link }}).
+
+
+
+# lzy-enroll-notify-subject:
+#     de: 'Benachrichtigung zur Einschreibeliste'
+#     _:  'Enrollment Notification'
+
+# lzy-enroll-notify-text-1:
+#     de: 'Benachrichtigung zur Einschreibeliste:\n'
+#     _:  'Enrollment Notification\n'
+
+# lzy-enroll-notify-text-2:
+#     de: '\n'
+#     _:  '\n'
 
