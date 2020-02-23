@@ -45,7 +45,7 @@ define('PATH_TO_APP_ROOT', 	SYSTEM_PATH.'../');		                // root folder 
 
 define('LOCK_TIMEOUT', 		120);	                                // max time till field is automatically unlocked
 define('MAX_URL_ARG_SIZE',  255);
-define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
+//define('MKDIR_MASK',        0700);                                  // remember to modify _lizzy/_install/install.sh as well
 
 require_once SYSTEM_PATH.'backend_aux.php';
 require_once SYSTEM_PATH.'datastorage2.class.php';
