@@ -31,9 +31,9 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'editable', '[true|false] If true, users can modify their (custom field-) entries', false);
     $this->getArg($macroName, 'hideNames', "[true|false|initials] If true, names are not revealed, i.e. presented as '****'.", false);
     $this->getArg($macroName, 'unhideNamesForGroup', '[group] If set, names are shown to users of given group(s), to others they remain hidden.', false);
-    $this->getArg($macroName, 'notify', 'See documentation... ', false);
-    $this->getArg($macroName, 'notifyFrom', 'See documentation', '');
-    $this->getArg($macroName, 'scheduleAgent', 'See documentation', 'scheduleAgent.php');
+    $this->getArg($macroName, 'notify', 'Activates notification of designated persons, either upon user interactions or in regular intervals. See <a href="https://getlizzy.net/macros/extensions/enroll/">documentation</a> for details.', false);
+    $this->getArg($macroName, 'notifyFrom', 'See <a href="https://getlizzy.net/macros/extensions/enroll/">documentation</a> for details.', '');
+    $this->getArg($macroName, 'scheduleAgent', 'Specifies user code to assemble and send notfications. See <a href="https://getlizzy.net/macros/extensions/enroll/">documentation</a> for details.', 'scheduleAgent.php');
 
     $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
     $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
