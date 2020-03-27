@@ -12,6 +12,8 @@ class MapSearch
         $this->page = $lzy->page;
     }
 
+
+
     public function render($args)
     {
         $this->inx = $GLOBALS["mapSearchInx"]++;
@@ -56,8 +58,9 @@ class MapSearch
             $from = $this->getLocation($from);
             $to = $this->getLocation($to);
             $route = <<<EOT
-    from: $from,
-    to: $to,
+        from: $from,
+        to: $to,
+
 EOT;
         }
 
@@ -71,13 +74,19 @@ EOT;
             $poigroups = "\tpoigroups: '$poigroups',\n";
         }
 
+        $this->customPOIIcon = isset($args['customPOIIcon']) ? $args['customPOIIcon'] : '';
+        $customPOIs = isset($args['customPOIs']) ? $args['customPOIs'] : '';
+        if ($customPOIs) {
+            $customPOIs = $this->handleCustomPOIs($customPOIs);
+        }
+
         $drawing = isset($args['drawing']) ? $args['drawing'] : '';
         if ($drawing) {
             $drawing = "\tdrawing: '$drawing',\n";
         }
 
         $marker = isset($args['marker']) ? ($args['marker']?'true': 'false') : 'true';
-        $marker = "\tmarker: $marker,\n";
+        $marker = "marker: $marker,\n";
 
         $gestureHandling = isset($args['gestureHandling']) ? $args['gestureHandling'] : '';
         if ($gestureHandling) {
@@ -102,14 +111,17 @@ EOT;
         }
         $this->page->addCss("#$id { $cssRules }");
 
+        $map = "map{$this->inx}";
+
         $jq = <<<EOT
 
-  var map{$this->inx} = new SearchChMap({
-    container: '$id',
-    center: $location,
-    zoom: $zoom,
-$mapType$route$controls$poigroups$drawing$marker$gestureHandling
-  });
+    $map = new SearchChMap({
+        container: '$id',
+        center: $location,
+        zoom: $zoom,
+        $marker$mapType$route$controls$poigroups$drawing$gestureHandling
+    });$customPOIs
+
 EOT;
 
         $this->page->addJq($jq);
@@ -135,4 +147,44 @@ EOT;
         return $str;
     } // getLocation
 
+
+
+    private function handleCustomPOIs($customPOIs)
+    {
+        $jq = '';
+        $map = "map{$this->inx}";
+
+        if (preg_match('/^(\w+):(.*)/', $customPOIs, $m)) {
+            if ($m[1] === 'file') {
+                $file = resolvePath($m[2], true);
+                if (file_exists($file)) {
+                    $db = new DataStorage2(['dataFile' => $file]);
+                    $recs = $db->read();
+                    $structure = $db->getRecStructure();
+                    foreach ($recs as $rec) {
+                        if ($structure["labels"][0] === $rec[0]) {
+                            continue;
+                        }
+                        $location = trim($this->getLocation($rec[0]),'"\'');
+                        $title = trim($rec[1],'"\'');
+                        $description = trim($rec[2],'"\'');
+                        $poiIcon = isset($rec[3]) ? trim($rec[3],'"\''): $this->customPOIIcon;
+                        $jq .= <<<EOT
+
+    $map.addPOI(new SearchChPOI({ 
+        center:'$location', 
+        title:'$title', 
+        html:'$description', 
+        icon:'$poiIcon' 
+    }));
+
+EOT;
+                    }
+                }
+            }
+        }
+
+        return $jq;
+
+    } // handleCustomPOIs
 }

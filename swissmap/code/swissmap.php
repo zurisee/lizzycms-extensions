@@ -17,6 +17,8 @@ $this->addMacro($macroName, function () {
         $mapType = $this->getArg($macroName, 'mapType', "[street|satellite] Specifies in what way the map shall be displayed initially", '');
         $controls = $this->getArg($macroName, 'controls', "[zoom,type,ruler,all] Specifies which controls are active", '');
         $poigroups = $this->getArg($macroName, 'poigroups', "Specifies which points-of-interests are displayed, see https://map.search.ch/api/classref#poigroups", '');
+        $customPOIs = $this->getArg($macroName, 'customPOIs', "[comma seperated list on locations|'file:'] Defines points-of-interest to be displayed. A single POI may be supplied as a comma-separated-list; multiple POIs via a .csv file. Structure: 'location,title,description,icon'", '');
+        $customPOIIcon = $this->getArg($macroName, 'customPOIIcon', "Defines the default icon to represent custom locations.", '');
         $drawing = $this->getArg($macroName, 'drawing', "Let's you add an overlay containing a drawing that has been defined beforehand. The drawing is identified by an ID that you get from https://map.search.ch", '');
         $marker = $this->getArg($macroName, 'marker', "[true,false] Specifies whether a marker is visible at the center of the map", '');
         $gestureHandling = $this->getArg($macroName, 'gestureHandling', "[cooperative|greedy|auto] Spedifies how scroll-events are being treated, see https://map.search.ch/api/classref#gestureHandling'", '');
