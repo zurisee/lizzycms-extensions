@@ -115,12 +115,13 @@ EOT;
 
         $jq = <<<EOT
 
-    $map = new SearchChMap({
-        container: '$id',
-        center: $location,
-        zoom: $zoom,
-        $marker$mapType$route$controls$poigroups$drawing$gestureHandling
-    });$customPOIs
+$map = new SearchChMap({
+    container: '$id',
+    center: $location,
+    zoom: $zoom,
+    $marker$mapType$route$controls$poigroups$drawing$gestureHandling
+});$customPOIs
+
 
 EOT;
 
