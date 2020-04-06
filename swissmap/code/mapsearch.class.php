@@ -69,7 +69,7 @@ EOT;
             $controls = "\tcontrols: '$controls',\n";
         }
 
-        $poigroups = isset($args['poiGroups']) ? $args['poiGroups'] : '';
+        $poigroups = isset($args['poigroups']) ? $args['poigroups'] : '';
         if ($poigroups) {
             $poigroups = "\tpoigroups: '$poigroups',\n";
         }
