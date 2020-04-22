@@ -1,5 +1,11 @@
 <?php
-// @info: -> one line description of macro <-
+
+require_once SYSTEM_PATH.'forms.class.php';
+
+// To open editing overlay be script:
+//    var recId = parseInt($('#recId').text());
+//    editDataLoadData( recId );
+
 
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
 
@@ -11,18 +17,29 @@ $this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/$macroName.yaml
 $this->addMacro($macroName, function () {
 
 	$macroName = basename(__FILE__, '.php');
-	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
+	$inx = $this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
 
     $dataSource = $this->getArg($macroName, 'dataSource', "Path to data-file, e.g. data.yaml (for a file that's in the page folder)", false);
-    $id = $this->getArg($macroName, 'id', 'ID that will be applied to the wrapper div.', 'default value');
-    $class = $this->getArg($macroName, 'class', 'Class that will be applied to the wrapper div.', 'default value');
-    $keyFormat = $this->getArg($macroName, 'keyFormat', 'Template to format date/time output as accepted by PHP strtotime() function, see. https://www.php.net/manual/en/function.strtotime.php.', false);
+    $this->getArg($macroName, 'structureDef', "File containing specifying the structure of the data to be edited", false);
+    $this->getArg($macroName, 'preserveIndex', "If true, rec-level indices will be added to each record.", false);
+//    $this->getArg($macroName, 'mode', "[in-place|popup]", false); // not implemented yet
+    $this->getArg($macroName, 'id', 'ID that will be applied to the wrapper div.', '');
+    $this->getArg($macroName, 'class', 'Class that will be applied to the form (default: lzy-form).', '');
+    $this->getArg($macroName, 'formName', '(optional) Name of form', '');
+    $this->getArg($macroName, 'buttons', '(optional) Name of buttons', '');
+    $this->getArg($macroName, 'buttonValues', '(submit,cancel,reset) Roles of these buttons', '');
+    $this->getArg($macroName, 'renderTable', 'If true, entire data set will be rendered in a table', '');
+    $this->getArg($macroName, 'preloadRec', '[false|integer|string] Defines how form fields will be prefilled: false=hour-glass, string=literal, integer=recID (default: false)', false);
+//    $this->getArg($macroName, 'checkDataCallback', 'Name of a php script that will be invoked upon storing data received from the client', ''); // not implemented yet
+
     if ($dataSource === 'help') {
         return '';
     }
+    $args = $this->getArgsArray($macroName);
 
-    $ed = new EditData($this->page, $dataSource);
-    $str = $ed->render($id, $class, $keyFormat);
+    $ed = new EditData($this->lzy, $inx, $args);
+    $str = $ed->render();
+
 	return $str;
 });
 
@@ -34,69 +51,204 @@ class EditData
     private $inx;
     private $keyFormat = '';
 
-    public function __construct($page, $dataSource)
+    public function __construct($lzy, $inx, $args)
     {
-        $this->page = $page;
+        $this->lzy = $lzy;
+        $this->inx = $inx;
+        $this->db = null;
+        $this->args = $args;
 
-        $dataSource = resolvePath($dataSource, true);
-        if (!file_exists($dataSource)) {
-            fatalError("Error: data file missing: '$dataSource'");
-        }
-        list($this->data, $structure, $structDefined) = getYamlFile($dataSource, true);
-
-        if (!isset($structure['key'])) {
-            fatalError("Error in data file: structure def missing");
-        }
-        $this->keyType = $structure['key'];
-        $this->fields = $structure['fields'];
-        $this->inx = 1;
-
-        $this->handleUserSuppliedData($dataSource, $structure, $structDefined); // exits if data received
+        $this->dataSource = isset($args['dataSource']) ? $args['dataSource'] :  false;
+        $this->structureDef = isset($args['structureDef']) ? $args['structureDef'] :  false;
+        $this->preserveIndex = isset($args['preserveIndex']) ? $args['preserveIndex'] :  false;
+        $this->mode = isset($args['mode']) ? $args['mode'] :  'popup';
+        $this->id = isset($args['id']) ? $args['id'] :  "lzy-edit-data-$inx";
+        $this->class = isset($args['class']) ? $args['class'] :  'lzy-edit-data-wrapper';
+        $this->formName = isset($args['formName']) ? $args['formName'] :  '{{ lzy-edit-data-form }}';
+        $this->buttons = isset($args['buttons']) ? $args['buttons'] :  '{{ Save }},{{ Cancel }},{{ Reset }}';
+        $this->buttonValues = isset($args['buttonValues']) ? $args['buttonValues'] :  'submit,cancel,reset';
+        $this->renderTable = isset($args['renderTable']) ? $args['renderTable'] :  false;
+        $this->preloadRec = isset($args['preloadRec']) ? $args['preloadRec'] :  false;
+        $this->checkDataCallback = isset($args['checkDataCallback']) ? $args['checkDataCallback'] :  false;
     } // __construct
 
 
 
 
-    public function render($id, $class, $keyFormat = false)
+    public function render()
     {
-        if ($keyFormat) {
-            $this->keyFormat = $keyFormat;
-        } elseif ($this->keyType === 'date') {
-            $this->keyFormat = 'Y-m-d';
-        } elseif ($this->keyType === 'datetime') {
-            $this->keyFormat = 'Y-m-d\TH:i';
-            $this->keyType = 'datetime-local';
+        $this->openDataSource();
+        if ($this->renderTable) {
+            $this->getData();
+            return $this->renderEntireTable();
+        } else {
+            $this->getDataRec();
+            return $this->renderRecForm();
+        }
+    } // render
+
+
+
+    public function renderRecForm()
+    {
+        $tickRec['recDef'] = $this->formElems;
+        $tickRec['checkDataCallback'] = $this->checkDataCallback;
+        $tickRec['pagePath'] = $GLOBALS["globalParams"]["pagePath"];
+        $tickRec['dataPath'] = $GLOBALS["globalParams"]["dataPath"];
+        $tickRec['dataSrc'] = $this->dataSource;
+
+        $ticket = $this->createOrUpdateTicket($tickRec);
+
+        $this->form = new Forms($this->lzy);
+
+
+        $options = [
+            'type' => 'form-head',
+            'label' => $this->formName,
+            'mailto' => '',
+            'mailfrp,' => '',
+            'id' => $this->id,
+        ];
+        if ($this->class) {
+            $options['class'] = $this->class;
+        }
+        // create form head:
+        $out = $this->form->render( $options );
+
+        $out .= $this->form->render([
+            'type' => 'hidden',
+            'name' => 'data-ref',
+            'value' => $ticket,
+        ]);
+
+        $recId = '';
+        if (is_int($this->preloadRec)) {
+            $recId = $this->preloadRec;
+        }
+        $out .= $this->form->render([
+            'type' => 'hidden',
+            'name' => 'rec-id',
+            'id' => 'recId',
+            'value' => $recId,
+        ]);
+
+        foreach ($this->formElems as $elemName => $rec) {
+            if (is_string($this->preloadRec)) {
+                $val = $this->preloadRec;
+            } else {
+                $val = isset($this->recData[$elemName]) ? $this->recData[$elemName] : '&#8987;';
+            }
+            $out .= $this->form->render([
+                'label' => "$elemName:",
+                'type' => $rec[1],
+                'name' => $rec[0],
+                'value' => $val,
+            ]);
         }
 
-        $id = $id ? "id='$id'" : '';
-        $class = $class ? "class='$class'" : '';
-        $formButtons = <<<EOT
+        $buttons = [ 'label' => $this->buttons, 'type' => 'button', 'value' => $this->buttonValues, 'wrapperClass' => 'lzy-form-buttons' ];
+        $out .= $this->form->render($buttons);
 
-        <div class="lzy-data-input-form-buttons">
-            <input type='submit' class='lzy-button' value='{{ lzy-data-input-submit }}'>
-            <input type='reset' class='lzy-button' value='{{ lzy-data-input-cancel }}'>
-        </div>
-
-EOT;
-        $nRecs = sizeof($this->data);
-        $out = "\t<form $id $class method='post'>\n\t\t<input type='hidden' name='lzy-data-input-form' value='$nRecs'>\n";
-        $out .= $formButtons;
-        foreach ($this->data as $key => $rec) {
-            $rec['key'] = $key;
-            $out .= $this->renderRec($rec);
-        }
-        $out .= $this->renderRec();
-
-        $templateRec = $this->renderRec('lzy-data-new-rec');
-        $out .= <<<EOT
-$formButtons    </form>
-    <div class="lzy-data-imput-template" style="display: none;">
-$templateRec
-    </div>
-EOT;
+        $out .= $this->form->render([ 'type' => 'form-tail' ]);
 
         return $out;
-    } // render
+    } // renderRecForm
+
+
+
+    private function renderEntireTable()
+    {
+        require_once SYSTEM_PATH.'htmltable.class.php';
+
+        $args = $this->args;
+        $args['dataSource'] = $this->data;
+        $tbl = new HtmlTable($this->lzy, $this->inx, $args );
+        $out = $tbl->render();
+        return $out;
+    } // renderEntireTable
+
+
+
+
+    private function openDataSource()
+    {
+        $this->dataSource = resolvePath($this->dataSource, true);
+        $structureDef = resolvePath($this->structureDef, true);
+        if ($structureDef && file_exists($structureDef)) {
+            $structure = getYamlFile($structureDef);
+            if (isset($structure[0])) {
+                $structure = $structure[0];
+            }
+
+        } else {
+            $this->db = new DataStorage2($this->dataSource);
+            $structure = $this->db->readRecord('_structure');
+            if ($structure) {
+                $structure = $this->db->getDbRecStructure();
+            }
+        }
+        $this->recStructure = $structure;
+
+        $availableTypes = ',text,password,tel,email,number,range,date,time,datetime,radio,checkbox,dropdown,textarea,hidden,bypassed,';
+        $formElems = [];
+        foreach ($structure as $elemName => $type) {
+            if ($type !== 'ignore') {
+                $formFieldName = translateToIdentifier($elemName);
+                $elemType = (strpos($availableTypes, ",$type,") !== false) ? $type : 'text';
+                $formElems[$elemName] = [$formFieldName, $elemType];
+            }
+        }
+        $this->formElems = $formElems;
+    } // openDataSource
+
+
+
+    private function getData()
+    {
+        if (!$this->db) {
+            $this->db = new DataStorage2($this->dataSource);
+        }
+        $data = $this->db->read();
+        $data1 = $data;
+        $data = [];
+        foreach ($data1 as $inx => $rec) {
+            if ($this->preserveIndex) {
+                $rec['index'] = $inx;
+            }
+            $data[] = $rec;
+        }
+        unset($data1);
+
+        $availableTypes = ',text,password,tel,email,number,range,date,time,radio,checkbox,dropdown,textarea,hidden,bypassed,';
+        $outData = [];
+        foreach ($data as $i => $rec) {
+            $j = 0;
+            foreach ($this->recStructure as $elemName => $type) {
+                if ($type !== 'ignore') {
+                    $outData[$i][$j++] = $rec[$elemName];
+//                    $outData[$i][$elemName] = $rec[$elemName];
+                }
+            }
+        }
+        $this->data = $outData;
+    } // getData
+
+
+
+    private function getDataRec()
+    {
+        if (!preg_match('/\D/', $this->preloadRec)) {
+            $this->preloadRec = intval($this->preloadRec);
+            if (!$this->db) {
+                $this->db = new DataStorage2($this->dataSource);
+            }
+            $this->recData = $this->db->readRecord($this->preloadRec);
+        } else {
+            $this->recData = null;
+        }
+    } // getDataRec
+
+
 
 
 
@@ -181,12 +333,6 @@ EOT;
 
 
 
-    /**
-     * @param $dataSource
-     * @param $structure
-     * @param $structDefined
-     * @return void
-     */
     private function handleUserSuppliedData($dataSource, $structure, $structDefined)
     {
         if (!isset($_POST['lzy_data_input_form'])) {
@@ -221,6 +367,29 @@ EOT;
 
         exit('ok');
     } // handleUserSuppliedData
+
+
+
+    private function createOrUpdateTicket(array $tickRec)
+    {
+        $tick = new Ticketing();
+        if (isset($_SESSION['lizzy']['liveDataTicket'])) {
+            $ticket = $_SESSION['lizzy']['liveDataTicket'];
+            $res = $tick->findTicket($ticket);
+            if ($res) {     // yes, ticket found
+                if (!isset($res[$this->inx - 1])) {
+                    $tick->updateTicket($ticket, $tickRec);
+                }
+            } else {    // it was some stray ticket
+                $ticket = $tick->createTicket($tickRec, 99, 86400);
+                $_SESSION['lizzy']['liveDataTicket'] = $ticket;
+            }
+        } else {
+            $ticket = $tick->createTicket($tickRec, 99, 86400);
+            $_SESSION['lizzy']['liveDataTicket'] = $ticket;
+        }
+        return $ticket;
+    } // createOrUpdateTicket
 
 } // EditData
 
