@@ -78,11 +78,10 @@ $('input[type=reset]').click(function() {
 });
 
 
-// === Submit Form ================
-$('form').submit(function() {
+function editDataSubmitForm( $form, onSuccess )
+{
     var url = appRoot + '_lizzy/_ajax_server.php?save-rec';
     console.log('submit ' + url);
-    var $form = $( this );
 
     var dataRef = $('[name=data-ref]', $form).val();
     var data = {};
@@ -101,22 +100,6 @@ $('form').submit(function() {
             data[name] = val;
         }
     });
-    // $('.lzy-data-input-rec').each(function() {
-    //     var $this = $(this);
-    //     var d = $('.lzy-data-key[type=date]', $this).val();
-    //     var t = $('.lzy-data-key[type=time]', $this).val();
-    //     if (d && (typeof t !== 'undefined')) {
-    //         d = d + 'T' + t;
-    //     }
-    //     // var d = $('input[type=date]', $this).val();
-    //     data[d] = {};
-    //     $('.lzy-data-input-field', $this).each(function() {
-    //         var $inp = $( 'input', $(this) );
-    //         var name = $inp.attr('name');
-    //         var val = $inp.val();
-    //         data[d][name] = val;
-    //     });
-    // });
     console.log(data);
     var json = JSON.stringify(data);
     $.ajax({
@@ -124,7 +107,68 @@ $('form').submit(function() {
         type: 'post',
         data: {ds: dataRef, lzy_data_input_form: json},
     }).done(function( json ) {
-        console.log( json );
+        console.log( 'editDataSubmitForm -> host-response: ' + json );
+        if (typeof onSuccess === 'function') {
+            goOn = onSuccess( json );
+        }
+        // if (typeof window[onSuccess] === 'function') {
+        //     goOn = window[onSuccess]( json );
+        // }
     });
+} // editDataSubmitForm
+
+
+
+
+// === Submit Form ================
+$('form').submit(function() {
+    var $form = $( this );
+    editDataSubmitForm( $form );
+    // var url = appRoot + '_lizzy/_ajax_server.php?save-rec';
+    // console.log('submit ' + url);
+    // var $form = $( this );
+    //
+    // var dataRef = $('[name=data-ref]', $form).val();
+    // var data = {};
+    //
+    // $('input', $form).each(function () {
+    //     var name = $( this ).attr('name');
+    //     var val = $( this ).val();
+    //     if (typeof name !== 'undefined') {
+    //         data[name] = val;
+    //     }
+    // });
+    // $('textarea', $form).each(function () {
+    //     var name = $( this ).attr('name');
+    //     var val = $( this ).val();
+    //     if (typeof name !== 'undefined') {
+    //         data[name] = val;
+    //     }
+    // });
+    // // $('.lzy-data-input-rec').each(function() {
+    // //     var $this = $(this);
+    // //     var d = $('.lzy-data-key[type=date]', $this).val();
+    // //     var t = $('.lzy-data-key[type=time]', $this).val();
+    // //     if (d && (typeof t !== 'undefined')) {
+    // //         d = d + 'T' + t;
+    // //     }
+    // //     // var d = $('input[type=date]', $this).val();
+    // //     data[d] = {};
+    // //     $('.lzy-data-input-field', $this).each(function() {
+    // //         var $inp = $( 'input', $(this) );
+    // //         var name = $inp.attr('name');
+    // //         var val = $inp.val();
+    // //         data[d][name] = val;
+    // //     });
+    // // });
+    // console.log(data);
+    // var json = JSON.stringify(data);
+    // $.ajax({
+    //     url: url,
+    //     type: 'post',
+    //     data: {ds: dataRef, lzy_data_input_form: json},
+    // }).done(function( json ) {
+    //     console.log( json );
+    // });
     return false;
 });
