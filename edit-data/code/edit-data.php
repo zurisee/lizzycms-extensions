@@ -373,8 +373,8 @@ EOT;
     private function createOrUpdateTicket(array $tickRec)
     {
         $tick = new Ticketing();
-        if (isset($_SESSION['lizzy']['liveDataTicket'])) {
-            $ticket = $_SESSION['lizzy']['liveDataTicket'];
+        if (isset($_SESSION['lizzy']['editDataTicket'])) {
+            $ticket = $_SESSION['lizzy']['editDataTicket'];
             $res = $tick->findTicket($ticket);
             if ($res) {     // yes, ticket found
                 if (!isset($res[$this->inx - 1])) {
@@ -382,11 +382,11 @@ EOT;
                 }
             } else {    // it was some stray ticket
                 $ticket = $tick->createTicket($tickRec, 99, 86400);
-                $_SESSION['lizzy']['liveDataTicket'] = $ticket;
+                $_SESSION['lizzy']['editDataTicket'] = $ticket;
             }
         } else {
             $ticket = $tick->createTicket($tickRec, 99, 86400);
-            $_SESSION['lizzy']['liveDataTicket'] = $ticket;
+            $_SESSION['lizzy']['editDataTicket'] = $ticket;
         }
         return $ticket;
     } // createOrUpdateTicket
