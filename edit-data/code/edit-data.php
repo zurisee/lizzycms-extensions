@@ -58,17 +58,17 @@ class EditData
         $this->db = null;
         $this->args = $args;
 
-        $this->dataSource = isset($args['dataSource']) ? $args['dataSource'] :  false;
-        $this->structureDef = isset($args['structureDef']) ? $args['structureDef'] :  false;
-        $this->preserveIndex = isset($args['preserveIndex']) ? $args['preserveIndex'] :  false;
-        $this->mode = isset($args['mode']) ? $args['mode'] :  'popup';
-        $this->id = isset($args['id']) ? $args['id'] :  "lzy-edit-data-$inx";
-        $this->class = isset($args['class']) ? $args['class'] :  'lzy-edit-data-wrapper';
-        $this->formName = isset($args['formName']) ? $args['formName'] :  '{{ lzy-edit-data-form }}';
-        $this->buttons = isset($args['buttons']) ? $args['buttons'] :  '{{ Save }},{{ Cancel }},{{ Reset }}';
-        $this->buttonValues = isset($args['buttonValues']) ? $args['buttonValues'] :  'submit,cancel,reset';
-        $this->renderTable = isset($args['renderTable']) ? $args['renderTable'] :  false;
-        $this->preloadRec = isset($args['preloadRec']) ? $args['preloadRec'] :  false;
+        $this->dataSource       = isset($args['dataSource']) ? $args['dataSource'] :  false;
+        $this->structureDef     = isset($args['structureDef']) ? $args['structureDef'] :  false;
+        $this->preserveIndex    = isset($args['preserveIndex']) ? $args['preserveIndex'] :  false;
+        $this->mode             = (isset($args['mode']) && $args['mode']) ? $args['mode'] :  'popup';
+        $this->id               = (isset($args['id']) && $args['id']) ? $args['id'] :  "lzy-edit-data-$inx";
+        $this->class            = (isset($args['class']) && $args['class']) ? $args['class'] :  'lzy-form lzy-edit-data-wrapper';
+        $this->formName         = (isset($args['formName']) && $args['formName']) ? $args['formName'] :  '{{ lzy-edit-data-form }}';
+        $this->buttons          = (isset($args['buttons']) && $args['buttons']) ? $args['buttons'] :  '{{ Save }},{{ Cancel }},{{ Reset }}';
+        $this->buttonValues     = (isset($args['buttonValues']) && $args['buttonValues']) ? $args['buttonValues'] :  'submit,cancel,reset';
+        $this->renderTable      = isset($args['renderTable']) ? $args['renderTable'] :  false;
+        $this->preloadRec       = isset($args['preloadRec']) ? $args['preloadRec'] :  false;
         $this->checkDataCallback = isset($args['checkDataCallback']) ? $args['checkDataCallback'] :  false;
     } // __construct
 
@@ -226,7 +226,6 @@ class EditData
             foreach ($this->recStructure as $elemName => $type) {
                 if ($type !== 'ignore') {
                     $outData[$i][$j++] = $rec[$elemName];
-//                    $outData[$i][$elemName] = $rec[$elemName];
                 }
             }
         }
