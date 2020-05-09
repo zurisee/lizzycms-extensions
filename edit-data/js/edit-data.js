@@ -3,8 +3,13 @@
 debugOutput = ($('.debug').length !== 0);
 
 //=== edit-data ===
-function editDataLoadData( recKey ) {
-    var dataRef = $('form [data-value]').attr('data-value');
+function editDataLoadData( recKey, $form ) {
+    var dataRef = '';
+    if (typeof $form !== 'undefined') {
+        dataRef = $('input[name=data-ref]', $form).attr('value');
+    } else {
+        dataRef = $('.lzy-edit-data-form input[name=data-ref]').attr('value');
+    }
     execAjax({ds: dataRef, recKey: recKey }, 'get-rec', updateFormData);
 }
 
