@@ -3,9 +3,9 @@
 debugOutput = ($('.debug').length !== 0);
 
 //=== edit-data ===
-function editDataLoadData( recId ) {
+function editDataLoadData( recKey ) {
     var dataRef = $('form [data-value]').attr('data-value');
-    execAjax({ds: dataRef, recId: recId }, 'get-rec', updateFormData);
+    execAjax({ds: dataRef, recKey: recKey }, 'get-rec', updateFormData);
 }
 
 
@@ -111,9 +111,6 @@ function editDataSubmitForm( $form, onSuccess )
         if (typeof onSuccess === 'function') {
             goOn = onSuccess( json );
         }
-        // if (typeof window[onSuccess] === 'function') {
-        //     goOn = window[onSuccess]( json );
-        // }
     });
 } // editDataSubmitForm
 
@@ -121,54 +118,10 @@ function editDataSubmitForm( $form, onSuccess )
 
 
 // === Submit Form ================
-$('form').submit(function() {
+$('.lzy-edit-data-form').submit(function() {
+    pgLeaveWarnings = false;
     var $form = $( this );
     editDataSubmitForm( $form );
-    // var url = appRoot + '_lizzy/_ajax_server.php?save-rec';
-    // console.log('submit ' + url);
-    // var $form = $( this );
-    //
-    // var dataRef = $('[name=data-ref]', $form).val();
-    // var data = {};
-    //
-    // $('input', $form).each(function () {
-    //     var name = $( this ).attr('name');
-    //     var val = $( this ).val();
-    //     if (typeof name !== 'undefined') {
-    //         data[name] = val;
-    //     }
-    // });
-    // $('textarea', $form).each(function () {
-    //     var name = $( this ).attr('name');
-    //     var val = $( this ).val();
-    //     if (typeof name !== 'undefined') {
-    //         data[name] = val;
-    //     }
-    // });
-    // // $('.lzy-data-input-rec').each(function() {
-    // //     var $this = $(this);
-    // //     var d = $('.lzy-data-key[type=date]', $this).val();
-    // //     var t = $('.lzy-data-key[type=time]', $this).val();
-    // //     if (d && (typeof t !== 'undefined')) {
-    // //         d = d + 'T' + t;
-    // //     }
-    // //     // var d = $('input[type=date]', $this).val();
-    // //     data[d] = {};
-    // //     $('.lzy-data-input-field', $this).each(function() {
-    // //         var $inp = $( 'input', $(this) );
-    // //         var name = $inp.attr('name');
-    // //         var val = $inp.val();
-    // //         data[d][name] = val;
-    // //     });
-    // // });
-    // console.log(data);
-    // var json = JSON.stringify(data);
-    // $.ajax({
-    //     url: url,
-    //     type: 'post',
-    //     data: {ds: dataRef, lzy_data_input_form: json},
-    // }).done(function( json ) {
-    //     console.log( json );
-    // });
+
     return false;
 });

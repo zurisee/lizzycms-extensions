@@ -2,9 +2,9 @@
 
 require_once SYSTEM_PATH.'forms.class.php';
 
-// To open editing overlay be script:
-//    var recId = parseInt($('#recId').text());
-//    editDataLoadData( recId );
+// To open editing overlay, use:
+//    var recKey = parseInt($('#recKey').text());
+//    editDataLoadData( recKey );
 
 
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
@@ -22,15 +22,15 @@ $this->addMacro($macroName, function () {
     $dataSource = $this->getArg($macroName, 'dataSource', "Path to data-file, e.g. data.yaml (for a file that's in the page folder)", false);
     $this->getArg($macroName, 'structureDef', "File containing specifying the structure of the data to be edited", false);
     $this->getArg($macroName, 'preserveIndex', "If true, rec-level indices will be added to each record.", false);
-//    $this->getArg($macroName, 'mode', "[in-place|popup]", false); // not implemented yet
+    //    $this->getArg($macroName, 'mode', "[in-place|popup]", false); // not implemented yet
     $this->getArg($macroName, 'id', 'ID that will be applied to the wrapper div.', '');
     $this->getArg($macroName, 'class', 'Class that will be applied to the form (default: lzy-form).', '');
     $this->getArg($macroName, 'formName', '(optional) Name of form', '');
     $this->getArg($macroName, 'buttons', '(optional) Name of buttons', '');
     $this->getArg($macroName, 'buttonValues', '(submit,cancel,reset) Roles of these buttons', '');
     $this->getArg($macroName, 'renderTable', 'If true, entire data set will be rendered in a table', '');
-    $this->getArg($macroName, 'preloadRec', '[false|integer|string] Defines how form fields will be prefilled: false=hour-glass, string=literal, integer=recID (default: false)', false);
-//    $this->getArg($macroName, 'checkDataCallback', 'Name of a php script that will be invoked upon storing data received from the client', ''); // not implemented yet
+    $this->getArg($macroName, 'preloadRec', '[false|integer|string] Defines how form fields will be prefilled: false=hour-glass, string=literal, integer=recKey (default: false)', false);
+    //    $this->getArg($macroName, 'checkDataCallback', 'Name of a php script that will be invoked upon storing data received from the client', ''); // not implemented yet
 
     if ($dataSource === 'help') {
         return '';
@@ -101,7 +101,6 @@ class EditData
 
         $this->form = new Forms($this->lzy);
 
-
         $options = [
             'type' => 'form-head',
             'label' => $this->formName,
@@ -121,22 +120,22 @@ class EditData
             'value' => $ticket,
         ]);
 
-        $recId = '';
+        $recKey = '';
         if (is_int($this->preloadRec)) {
-            $recId = $this->preloadRec;
+            $recKey = $this->preloadRec;
         }
         $out .= $this->form->render([
             'type' => 'hidden',
-            'name' => 'rec-id',
-            'id' => 'recId',
-            'value' => $recId,
+            'name' => 'rec-key',
+            'id' => 'recKey',
+            'value' => $recKey,
         ]);
 
         foreach ($this->formElems as $elemName => $rec) {
             if (is_string($this->preloadRec)) {
                 $val = $this->preloadRec;
             } else {
-                $val = isset($this->recData[$elemName]) ? $this->recData[$elemName] : '&#8987;';
+                $val = isset($this->recData[$elemName]) ? $this->recData[$elemName] : '⌛';
             }
             $out .= $this->form->render([
                 'label' => "$elemName:",
@@ -219,7 +218,7 @@ class EditData
         }
         unset($data1);
 
-        $availableTypes = ',text,password,tel,email,number,range,date,time,radio,checkbox,dropdown,textarea,hidden,bypassed,';
+//        $availableTypes = ',text,password,tel,email,number,range,date,time,radio,checkbox,dropdown,textarea,hidden,bypassed,';
         $outData = [];
         foreach ($data as $i => $rec) {
             $j = 0;
@@ -236,8 +235,7 @@ class EditData
 
     private function getDataRec()
     {
-        if (!preg_match('/\D/', $this->preloadRec)) {
-            $this->preloadRec = intval($this->preloadRec);
+        if (($this->preloadRec !== false) && (!preg_match('/\D/', $this->preloadRec))) {
             if (!$this->db) {
                 $this->db = new DataStorage2($this->dataSource);
             }
