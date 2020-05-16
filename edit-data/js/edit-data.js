@@ -3,7 +3,22 @@
 debugOutput = ($('.debug').length !== 0);
 
 //=== edit-data ===
+// call this function to dynamically load data from host before opening the edit-data form:
+//  Note: recKey: either integer key into DB (starting at 0)
+//                or string selector identifying recID (starting at 1)
 function editDataLoadData( recKey, $form ) {
+    if (typeof recKey !== 'number') {
+        if ( $( recKey ).length ) {
+            var $recId = $( recKey );
+            if ( $recId[0].nodeName === 'INPUT') {
+                recKey = $recId.val();
+            } else {
+                recKey = $recId.text();
+            }
+            recKey = parseInt( recKey ) - 1;
+        }
+    }
+
     var dataRef = '';
     if (typeof $form !== 'undefined') {
         dataRef = $('input[name=data-ref]', $form).attr('value');
@@ -11,7 +26,7 @@ function editDataLoadData( recKey, $form ) {
         dataRef = $('.lzy-edit-data-form input[name=data-ref]').attr('value');
     }
     execAjax({ds: dataRef, recKey: recKey }, 'get-rec', updateFormData);
-}
+} // editDataLoadData
 
 
 

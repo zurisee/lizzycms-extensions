@@ -70,6 +70,7 @@ class EditData
         $this->renderTable      = isset($args['renderTable']) ? $args['renderTable'] :  false;
         $this->preloadRec       = isset($args['preloadRec']) ? $args['preloadRec'] :  false;
         $this->checkDataCallback = isset($args['checkDataCallback']) ? $args['checkDataCallback'] :  false;
+        $this->next = isset($args['next']) ? $args['next'] :  false;
     } // __construct
 
 
@@ -82,7 +83,9 @@ class EditData
             $this->getData();
             return $this->renderEntireTable();
         } else {
-            $this->getDataRec();
+            if ($this->preloadRec !== false) {
+                $this->getDataRec();
+            }
             return $this->renderRecForm();
         }
     } // render
@@ -110,6 +113,9 @@ class EditData
         ];
         if ($this->class) {
             $options['class'] = $this->class;
+        }
+        if ($this->next) {
+            $options['next'] = $this->next;
         }
         // create form head:
         $out = $this->form->render( $options );
