@@ -30,6 +30,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'buttonValues', '(submit,cancel,reset) Roles of these buttons', '');
     $this->getArg($macroName, 'renderTable', 'If true, entire data set will be rendered in a table', '');
     $this->getArg($macroName, 'preloadRec', '[false|integer|string] Defines how form fields will be prefilled: false=hour-glass, string=literal, integer=recKey (default: false)', false);
+    $this->getArg($macroName, 'elemPrefix', '(optional) Prefix applied to input field IDs (default: \'fld_\')', false);
     //    $this->getArg($macroName, 'checkDataCallback', 'Name of a php script that will be invoked upon storing data received from the client', ''); // not implemented yet
 
     if ($dataSource === 'help') {
@@ -69,6 +70,7 @@ class EditData
         $this->buttonValues     = (isset($args['buttonValues']) && $args['buttonValues']) ? $args['buttonValues'] :  'submit,cancel,reset';
         $this->renderTable      = isset($args['renderTable']) ? $args['renderTable'] :  false;
         $this->preloadRec       = isset($args['preloadRec']) ? $args['preloadRec'] :  false;
+        $this->elemPrefix       = isset($args['elemPrefix']) ? $args['elemPrefix'] :  false;
         $this->checkDataCallback = isset($args['checkDataCallback']) ? $args['checkDataCallback'] :  false;
         $this->next = isset($args['next']) ? $args['next'] :  false;
     } // __construct
@@ -124,6 +126,7 @@ class EditData
             'type' => 'hidden',
             'name' => 'data-ref',
             'value' => $ticket,
+            'elemPrefix' => $this->elemPrefix,
         ]);
 
         $recKey = '';
@@ -135,6 +138,7 @@ class EditData
             'name' => 'rec-key',
             'id' => 'recKey',
             'value' => $recKey,
+            'elemPrefix' => $this->elemPrefix,
         ]);
 
         foreach ($this->formElems as $elemName => $rec) {
@@ -148,6 +152,7 @@ class EditData
                 'type' => $rec[1],
                 'name' => $rec[0],
                 'value' => $val,
+                'elemPrefix' => $this->elemPrefix,
             ]);
         }
 
