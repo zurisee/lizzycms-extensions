@@ -56,11 +56,11 @@ function updateFormData( json ) {
             }
             if (goOn) {
                 var tag = $targ.prop('tagName');
-                var valTags = 'INPUT,SELECT,TEXTAREA';
+                var valTags = 'INPUT,SELECT';
                 if (valTags.includes(tag)) {
-                    $targ.val(val);
+                    $targ.val(val).attr('value', val).attr('data-value', val);
                 } else {
-                    $targ.text(val);
+                    $targ.text(val).attr('value', val).attr('data-value', val);
                 }
             }
         });
