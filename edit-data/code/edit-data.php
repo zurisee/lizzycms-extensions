@@ -142,9 +142,9 @@ class EditData
         ]);
 
         foreach ($this->formElems as $elemName => $rec) {
-            if (is_string($this->preloadRec)) {
+            if (is_string($this->preloadRec)) { // if it's a string, apply to all fields:
                 $val = $this->preloadRec;
-            } else {
+            } else {    // if it's a record, try to apply corresponding values:
                 $val = isset($this->recData[$elemName]) ? $this->recData[$elemName] : '⌛';
             }
             $out .= $this->form->render([
