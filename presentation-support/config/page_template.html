@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+	<meta charset="utf-8" />
+	<title>{{ page_title }}</title>
+	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
+    <meta name="generator" content="Lizzy {{ lzy-version }}" />
+	<link href="~sys/css/normalize.min.css" rel="stylesheet" />
+	<link href="~sys/css/_lizzy.css" rel="stylesheet" />
+	<link href="~/css/__styles.css" rel="stylesheet" />
+{{ head_injections }}
+</head>
+
+<body id='lzy'{{  body_tag_injections }}>
+{{ body_top_injections }}
+
+  <div class="skiplinks">
+	  <a href="#main">{{ Skip to Main }}</a>
+	  <a href="#lzy-primary-nav">{{ Skip to Navigation }}</a>
+	  <a href="~/sitemap">{{ Skip to Sitemap }}</a>
+  </div>
+
+{{ presentation-support() }}
+
+<!--  <div class='page lzy-slide-show-speaker-notes'>-->
+  <div class='page'>
+
+    <header class='header'>
+{{^ header }}
+{{^ nav( top, options:noDefaultColoring ) }}
+    </header>
+
+
+<!-- === page content =============== -->
+    <main id='main' class='main slideshow-support lzy-slide-hide-initially'>
+{{ content }}
+<!--
+      <aside class="notes lzy-speaker-notes">
+          Lörem üpsüm dolor sit ämet, consectetur adipisici elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+      </aside>
+-->
+
+    </main>
+<!-- === /page content =============== -->
+
+{{^ presentation-preview }}
+      
+    <footer class='footer'>
+      <div class="course">
+    MAS HCID: Accessibility
+      </div>
+      <div class='pagenumber'>
+{{ pagenumber(0,true) }}
+      </div>
+
+      <div id='loggedInUser'>{{  toggle-edit-mode }}{{ Log-in }}</div>
+    </footer>
+
+{{^ nav( small-screen-header ) }}
+  </div><!-- /.page -->
+
+
+{{ body_end_injections }}
+</body>
+</html>
+
