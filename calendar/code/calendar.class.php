@@ -411,7 +411,7 @@ EOT;
 
         // check db:
         $ds = new DataStorage2(['dataFile'=> $this->source]);
-        $lastUpdated = intval($ds->lastModified());
+        $lastUpdated = intval($ds->lastDbModified());
 
         // publishCallback:
         if ($this->publishCallback) {

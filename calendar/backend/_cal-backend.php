@@ -155,7 +155,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     private function _deleteRec($recId)
     {
-        $this->ds->delete($recId);
+        $this->ds->deleteRecord($recId);
         return 'ok';
     } // deleteRec
 
