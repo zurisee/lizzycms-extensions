@@ -40,6 +40,7 @@ $( document ).ready(function() {
             firstDay: 1,
             locale: calLang,
             weekNumbers: true,
+           timezone: false,
             defaultDate: defaultDate,
             defaultView: lzyCal[ inx ].calDefaultView,
 
@@ -92,8 +93,8 @@ $( document ).ready(function() {
 }); // ready
 
 
-function renderEvent(event, element)
-{
+
+function renderEvent(event, element) {
     if (typeof customRenderEvent === 'function') {
         customRenderEvent(event, element);
     } else {
@@ -104,7 +105,6 @@ function renderEvent(event, element)
 
 
 function defaultRenderEvent(event, element) {
-
     var $elem = $(element);
 
     // if special field category present -> apply it as class to event wrapper:
@@ -190,8 +190,7 @@ function defaultRenderEvent(event, element) {
 
 
 
-function convertMD(text)
-{
+function convertMD(text) {
     if (!text) {
         return text;
     }
@@ -224,8 +223,7 @@ function convertMD(text)
 
 
 
-function calEventChanged(inx, event)
-{
+function calEventChanged(inx, event) {
     if (!lzyCal[ inx ].calEditingPermission) {
         return;
     }
@@ -344,8 +342,9 @@ function defaultOpenCalPopup(inx, event) {
     } else {                                                   // existing entry
         $('#lzy-cal-new-event-header').hide();
         $('#lzy-cal-modify-event-header').show();
-        d = moment( event.start._i );
-        // d.utc();
+//        d = moment( event.start._i );
+       d = moment( event.start._i.replace(/\+.*/, '') );
+
         dateStr = d.format('YYYY-MM-DD');
         $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
         if (event.allDay === false) {    // normal event
@@ -353,7 +352,8 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy_cal_start_time').val(timeStr).attr('data-prev-val', timeStr);
             $('#lzy-allday').val('false');
 
-            d = moment(event.end._i);
+//            d = moment(event.end._i);
+            d = moment( event.end._i.replace(/\+.*/, '') );
             // d.utc();
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_end_date').val(dateStr);
@@ -361,10 +361,12 @@ function defaultOpenCalPopup(inx, event) {
             $('#lzy_cal_end_time').val(timeStr);
 
         } else {    // allday event:
-            d = moment( event.start._i );
+//            d = moment( event.start._i );
+            d = moment( event.start._i.replace(/\+.*/, '') );
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_start_date').val(dateStr);
-            d = moment(event.end._i);
+//            d = moment(event.end._i);
+            d = moment( event.end._i.replace(/\+.*/, '') );
             // dateStr = d.subtract({ minutes: 1}).format('YYYY-MM-DD');
             dateStr = d.format('YYYY-MM-DD');
             $('#lzy_cal_end_date').val(dateStr);
