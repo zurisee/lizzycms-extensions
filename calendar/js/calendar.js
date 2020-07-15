@@ -16,28 +16,29 @@ $( document ).ready(function() {
         }
 
         // === initialize FullCalendar ============================================
+        var calDev = lzyCal[ inx ];
         var calendarEl = $( this );
         calendarEl = calendarEl[0];
         var calendar = new FullCalendar.Calendar(calendarEl, {
             headerToolbar: {
-                left: lzyCal[ inx ].headerLeftButtons,
+                left: calDev.headerLeftButtons,
                 center: 'title',
-                right: lzyCal[ inx ].headerRightButtons
+                right: calDev.headerRightButtons
             },
             locale: calLang,
             timeZone: false,
 
-            buttonText: lzyCal[ inx ].buttonLabels,
-            weekText: lzyCal[ inx ].calLabels['weekText'], //'KW',
-            allDayText: lzyCal[ inx ].calLabels['allDayText'], // 'Ganztag',
-            moreLinkText: lzyCal[ inx ].calLabels['moreLinkText'], // 'mehr',
-            noEventsText: lzyCal[ inx ].calLabels['noEventsText'], // 'Leer',
+            buttonText: calDev.buttonLabels,
+            weekText: calDev.calLabels['weekText'], //'KW',
+            allDayText: calDev.calLabels['allDayText'], // 'Ganztag',
+            moreLinkText: calDev.calLabels['moreLinkText'], // 'mehr',
+            noEventsText: calDev.calLabels['noEventsText'], // 'Leer',
 
-            initialDate: lzyCal[ inx ].initialDate,
-            initialView: lzyCal[ inx ].initialView,
+            initialDate: calDev.initialDate,
+            initialView: calDev.initialView,
             navLinks: true, // can click day/week names to navigate views
             height: 'auto',
-            editable: lzyCal[ inx ].editingPermission,
+            editable: calDev.editingPermission,
             dayMaxEvents: true, // allow "more" link when too many events
             businessHours: true, // display business hours
             selectable: true,

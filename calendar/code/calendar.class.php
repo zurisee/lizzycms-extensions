@@ -132,7 +132,11 @@ class LzyCalendar
         }
 
         // header buttons:
-        $headerLeftButtons = $this->headerLeftButtons . ($this->edPermitted? ' addEventButton': '');
+        $headerLeftButtons = $this->headerLeftButtons;
+        if ($this->edPermitted && strpos($this->headerLeftButtons, 'add') !== false) {
+            $headerLeftButtons = preg_replace('/\w*add\w*/', '', $headerLeftButtons);
+            $headerLeftButtons .= 'addEventButton';
+        }
         $headerRightButtons = '';
         if ($this->headerRightButtons) {
             $hBs = explodeTrim(',', $this->headerRightButtons);
