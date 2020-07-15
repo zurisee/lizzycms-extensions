@@ -1,6 +1,7 @@
 <?php
 
 if (!defined('CALENDAR_BACKEND')) { define('CALENDAR_BACKEND', '~sys/extensions/calendar/backend/_cal-backend.php'); }
+define('DEFAULT_EVENT_DURATION', 120); // in minutes
 
 
 class LzyCalendar
@@ -12,7 +13,7 @@ class LzyCalendar
         $this->inx = $inx;
         $this->lang = $this->lzy->config->lang;
         $this->source = $args['file'];
-        $this->edPermitted = isset($args['calEditingPermission']) ? $args['calEditingPermission'] : false;
+        $this->edPermitted = isset($args['editingPermission']) ? $args['editingPermission'] : false;
         $this->fields = isset($args['fields']) ? $args['fields']: false;
         if ($this->fields) {
             $this->fields = explodeTrim(',', $this->fields);
@@ -28,7 +29,8 @@ class LzyCalendar
         $this->output = isset($args['output']) ? $args['output']: true;
 
         // Tooltips:
-        $tooltips = isset($args['tooltips']) ? $args['tooltips']: true;
+        $tooltips = isset($args['tooltips']) ? $args['tooltips']: false;
+        $this->tooltips = $tooltips? 'true': 'false';
         if ($tooltips) {
             $lzy->page->addModules('QTIP');
         }
@@ -38,6 +40,7 @@ class LzyCalendar
         $categories = explodeTrim(',', $this->category);
         $this->showCategories = isset($args['showCategories']) ? $args['showCategories']: '';
         $this->domain = isset($args['domain']) ? $args['domain']: $_SERVER["HTTP_HOST"];
+        $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired']: true;
 
         // Prefixes:
         $n = sizeof($categories);
@@ -56,15 +59,18 @@ class LzyCalendar
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
 
+        if (!isset($_SESSION['lizzy']['cal'][$inx])) {
+            $_SESSION['lizzy']['cal'][$inx] = [];
+        }
+
         // Default View:
-        //  -> agendaWeek,month,listYear, listWeek, listMonth, listYear
         $defaultView = isset($args['defaultView']) ? $args['defaultView']: 'month';
         if (strpos($defaultView, 'week') !== false) {
-            $this->defaultView = 'agendaWeek';
+            $this->defaultView = 'timeGridWeek';
         } elseif (strpos($defaultView, 'year') !== false) {
             $this->defaultView = 'listYear';
         } else {
-            $this->defaultView = 'month';
+            $this->defaultView = 'dayGridMonth';
         }
 
         // Default Event Duration
@@ -74,7 +80,8 @@ class LzyCalendar
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
         // UI:
-        $this->headerButtons = isset($args['headerButtons']) ? $args['headerButtons']: false;
+        $this->headerLeftButtons = isset($args['headerLeftButtons']) ? $args['headerLeftButtons']: false;
+        $this->headerRightButtons = isset($args['headerRightButtons']) ? $args['headerRightButtons']: false;
         $this->buttonLabels = isset($args['buttonLabels']) ? $args['buttonLabels']: false;
 
     } // __construct
@@ -86,6 +93,8 @@ class LzyCalendar
     {
         $inx = $this->inx;
         $this->source = resolvePath($this->source, true);
+        $calSession = &$_SESSION['lizzy']['cal'][$inx];
+        $calSession['calShowCategories'] = '';
 
         // export ics file if requested:
         if ($this->publish) {
@@ -98,7 +107,13 @@ class LzyCalendar
         }
 
         $backend = CALENDAR_BACKEND;
-        $viewMode = (isset($_SESSION['lizzy']['calMode'])) ? $_SESSION['lizzy']['calMode'] : $this->defaultView;
+        if (isset($calSession['initialDate'])) {
+            $this->initialDate = $calSession['initialDate'];
+        } else {
+            $this->initialDate = date('Y-m-d');
+            $calSession['initialDate'] = $this->initialDate;
+        }
+        $viewMode = (isset($calSession['calMode'])) ? $calSession['calMode'] : $this->defaultView;
 
         if (($this->edPermitted === 'all') || ($this->edPermitted === '*') || ($this->edPermitted === true)) {
             $this->edPermitted = true;
@@ -107,39 +122,32 @@ class LzyCalendar
         }
         $edPermStr = $this->edPermitted?'true':'false';
 
-        $defaultEventDuration = 'false';
-        if (($d=$this->defaultEventDuration) && (Stripos($d, 'allday') === false)) {
-            $defaultEventDuration = strtotime($this->defaultEventDuration)  - strtotime('TODAY');
+        $defaultEventDuration = DEFAULT_EVENT_DURATION;
+        if ($this->defaultEventDuration) {
+            if (stripos($this->defaultEventDuration, 'allday') !== false) {
+                $defaultEventDuration = "'allday'";
+            } else {
+                $defaultEventDuration = intval($this->defaultEventDuration);
+            }
         }
 
         // header buttons:
-        $headerButtons = '';
-        if ($this->headerButtons) {
-            $hBs= explodeTrim(',', $this->headerButtons);
-            $hBsAvailable = ['week' => 'agendaWeek','month' => 'month','year' => 'listYear'];
-            foreach ($hBs as $hb) {
-                $hb = isset($hBsAvailable[$hb]) ? $hBsAvailable[$hb] : $hb;
-                $headerButtons .= "$hb,";
-            }
-            $headerButtons = rtrim($headerButtons, ',');
-            $headerButtons = "var lzyCalHeaderButtons = '$headerButtons';\n";
-        }
-
-        // Calendar header button texts:
-        $buttonLabels = '';
-        if ($this->buttonLabels) {
-            $bLs= explodeTrim(',', $this->buttonLabels);
-            foreach (['list','month','week','day','today'] as $i => $bl) {
-                if (isset($bLs[$i])) {
-                    $buttonLabels .= "$bl: '{$bLs[$i]}',";
+        $headerLeftButtons = $this->headerLeftButtons . ($this->edPermitted? ' addEventButton': '');
+        $headerRightButtons = '';
+        if ($this->headerRightButtons) {
+            $hBs = explodeTrim(',', $this->headerRightButtons);
+            $hBsAvailable = ['day' => 'timeGridDay', 'week' => 'timeGridWeek','month' => 'dayGridMonth','year' => 'listYear'];
+            foreach ($hBs as $key => $hb) {
+                if (isset($hBsAvailable[$hb])) {
+                    $headerRightButtons .= "{$hBsAvailable[$hb]},";
+                } else {
+                    $headerRightButtons .= "$hb,";
                 }
             }
+            $headerRightButtons = rtrim($headerRightButtons, ',');
+        } else {
+            $headerRightButtons = 'timeGridWeek,dayGridMonth,listYear';
         }
-        if ($buttonLabels) {
-            $buttonLabels = rtrim($buttonLabels, ',');
-            $buttonLabels = "var  lzyCalButtonLabels = { $buttonLabels };\n";
-        }
-
 
         // inject js code into page body:
         $js = '';
@@ -148,20 +156,39 @@ class LzyCalendar
 var calBackend = '$backend';
 var calLang = '{$this->lang}';
 var lzyCal = [];
-var calEditingPermission = false;
-var calDefaultView = '{$this->defaultView}';
-var defaultEventDuration = $defaultEventDuration;
-$headerButtons$buttonLabels
 EOT;
         }
 
         $js .= <<<EOT
 
 lzyCal[$inx] = {
-    calDefaultView: '$viewMode',
-    calEditingPermission: $edPermStr,
+    initialView: '$viewMode',
+    initialDate: '{$this->initialDate}',
+    editingPermission: $edPermStr,
     catPrefixes: {$this->prefixJson},
     catDefaultPrefix: '{$this->defaultCatPrefix}',
+    tooltips: {$this->tooltips},
+    defaultEventDuration: $defaultEventDuration,
+    headerLeftButtons: '$headerLeftButtons',
+    headerRightButtons: '$headerRightButtons',
+    buttonLabels: {
+        prev: '{{ lzy-cal-label-prev }}',
+        next: '{{ lzy-cal-label-next }}',
+        prevYear: '{{ lzy-cal-label-prev-year }}',
+        nextYear: '{{ lzy-cal-label-next-year }}',
+        year: '{{ lzy-cal-label-year }}',
+        month: '{{ lzy-cal-label-month }}',
+        week: '{{ lzy-cal-label-week }}',
+        day: '{{ lzy-cal-label-day }}',
+        today: '{{ lzy-cal-label-today }}',
+        list: '{{ lzy-cal-label-list }}',
+    },
+    calLabels: {
+        weekText: '{{ lzy-cal-label-week-nr }}',
+        allDayText: '{{ lzy-cal-label-allday }}',
+        moreLinkText: '{{ lzy-cal-label-more-link }}',
+        noEventsText: '{{ lzy-cal-label-empty-list }}',
+    },
 };
 
 EOT;
@@ -186,9 +213,7 @@ EOT;
 
         $edClass = $this->edPermitted ? ' class="lzy-calendar lzy-cal-editing"' : ' class="lzy-calendar"';
         $str = "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
-        $_SESSION['lizzy']['cal'][$inx] = $this->source;
-        $_SESSION['lizzy']['calShowCategories'][$inx] = $this->showCategories;
-
+        $calSession['page'] = $this->source;
         $this->renderFieldNames();
 
         return $str;
@@ -223,6 +248,7 @@ EOT;
         $inx = $this->inx;
         $categoryCombo = $this->prepareCategoryCombo();
         $customFields = $this->prepareCustomFields();
+        $required = $this->eventTitleRequired? ' required': '';
 
         // render default popup-form:
         $popupForm = <<<EOT
@@ -236,8 +262,8 @@ EOT;
 $categoryCombo
 
             <div class='field-wrapper field-type-text lzy-cal-event'>
-                <label for='lzy_cal_event_name' class="lzy-cal-label">{{ title }}:</label>
-                <input type='text' id='lzy_cal_event_name' class="lzy-cal-field" name='title' required aria-required='true'  placeholder='{{^ lzy-cal-event-placeholder }}' />
+                <label for='lzy_cal_event_name' class="lzy-cal-label">{{ lzy-cal-event-title }}:</label>
+                <input type='text' id='lzy_cal_event_name' class="lzy-cal-field" name='title'$required placeholder='{{^ lzy-cal-event-placeholder }}' />
             </div><!-- /field-wrapper -->
            
            
@@ -251,9 +277,9 @@ $categoryCombo
             <fieldset>
                 <legend>{{ lzy-cal-legend-from }}</legend>
                 <div class='field-wrapper field-type-date lzy-cal-start-date'>
-                    <label for='lzy_cal_start_date' class="lzy-cal-label">{{ lzy-cal-start-date }}</label>
+                    <label for='lzy_cal_start_date' class="lzy-cal-label">{{ lzy-cal-start-date-label }}</label>
                     <input type='date' id='lzy_cal_start_date' name='start-date' placeholder='{{^ lzy-cal-start-date-placeholder }}' value='' />
-                    <label for='lzy_cal_start_time' class="lzy-cal-label">{{ lzy-cal-start-time }}</label>
+                    <label for='lzy_cal_start_time' class="lzy-cal-label">{{ lzy-cal-start-time-label }}</label>
                     <input type='time' id='lzy_cal_start_time' name='start-time' placeholder='{{^ lzy-cal-start-time-placeholder }}' value='' />
                 </div><!-- /field-wrapper -->
             </fieldset>
@@ -302,8 +328,7 @@ EOT;
             if (sizeof($categories) > 1) {
                 foreach ($categories as $cat) {
                     $cat = trim($cat);
-                    $value = translateToIdentifier($cat);
-                    $categoryCombo .= "\t<option value='$value'>$cat</option>\n";
+                    $categoryCombo .= "\t<option value='$cat'>$cat</option>\n";
                 }
                 $categoryCombo = <<<EOT
     <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>
@@ -437,7 +462,7 @@ EOT;
 
     private function prepareICal( $ds )
     {
-        require_once '_lizzy/extensions/calendar/code/utils.php';
+        require_once '_lizzy/extensions/calendar/third-party/fullcalendar/php/utils.php';
         $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'UTC';
         date_default_timezone_set($timezone);
 
@@ -456,7 +481,7 @@ EOT;
                 $prefix = $this->defaultCatPrefix;
             }
             // determine UID (unique id that is invariable even if calendar changes):
-            $uid = strtotime($rec['start']);
+            $uid = (isset($rec['_uid']) && $rec['_uid'])? $rec['_uid']: strtotime($rec['start']);
             $uid = "lzy-cal-$name-{$rec['category']}-$uid";
 
             // prepare description:

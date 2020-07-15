@@ -11,7 +11,19 @@ lzy-cal-location:
 lzy-cal-date:
     de: 'Datum:'
     _: 'Date:'
+lzy-cal-start-date-label:
+    de: 'Datum:'
+    _: 'Date:'
+lzy-cal-end-date-label:
+    de: 'Datum:'
+    _: 'Date:'
 
+lzy-cal-start-time-label:
+    de: Zeit
+    _: Time
+lzy-cal-end-time-label:
+    de: Zeit
+    _: Time
 lzy-cal-time:
     de: Zeit
     _: Time
@@ -64,7 +76,51 @@ lzy-cal-category-label:
     de: Kategorie
     _:  Category
 
+lzy-cal-event-title:
+    de: Bezeichnung
+    _:  Event name
+
 lzy-cal-allday-event:
     de: Ganztägig
     _:  Allday
 
+# labels:
+lzy-cal-label-prev:
+    _:  '〈 '
+lzy-cal-label-next:
+    _:  ' 〉'
+lzy-cal-label-prev-year:
+    _:  '《'
+lzy-cal-label-next-year:
+    _:  '》'
+lzy-cal-label-year:
+    de: 'Jahr'
+    _:  'Year'
+lzy-cal-label-month:
+    de: 'Monat'
+    _:  'Month'
+lzy-cal-label-week:
+    de: 'Woche'
+    _:  'Week'
+lzy-cal-label-day:
+    de: 'Tag'
+    _:  'Day'
+lzy-cal-label-today:
+    de: 'Heute'
+    _:  'Today'
+lzy-cal-label-list:
+    de: 'Listenansicht'
+    _:  'List view'
+
+lzy-cal-label-week-nr:
+    de: 'KW'
+    _:  'W'
+lzy-cal-label-allday:
+    de: 'Ganztag'
+    _:  'all day'
+lzy-cal-label-more-link:
+    de: 'mehr'
+    _:  'more'
+lzy-cal-label-empty-list:
+    de: 'leer'
+    _:  'empty'

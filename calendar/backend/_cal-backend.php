@@ -5,7 +5,7 @@ define('PATH_TO_APP_ROOT', SYSTEM_PATH.'../');
 define('CUSTOM_CAL_BACKEND', PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
 
 // Require Event class and datetime utilities
-require dirname(__FILE__) . '/../code/utils.php';
+require dirname(__FILE__) . '/../third-party/fullcalendar/php/utils.php';
 
 // Require Datastorage class:
 require_once SYSTEM_PATH.'datastorage2.class.php';
@@ -24,18 +24,22 @@ if (!isset($_REQUEST['inx'])) {
 session_start();
 
 $inx = $_REQUEST['inx'];
-$dataSrc = PATH_TO_APP_ROOT.$_SESSION['lizzy']['cal'][$inx];
+$calSession = &$_SESSION['lizzy']['cal'][$inx];
+$dataSrc = PATH_TO_APP_ROOT.$calSession['page'];
 
 $backend = new CalendarBackend($dataSrc);
 
 if (isset($_GET['save'])) {
-    exit( $backend->saveNewData($_POST) );
+    exit( $backend->saveData($_POST) );
 }
 if (isset($_GET['del'])) {
     exit( $backend->deleteRec($_POST) );
 }
 if (isset($_GET['mode'])) {
     exit( $backend->saveMode($_GET['mode']) );
+}
+if (isset($_GET['date'])) {
+    exit( $backend->saveCurrDate($_GET['date']) );
 }
 
 exit( $backend->getData($inx) );
@@ -74,7 +78,7 @@ class CalendarBackend {
     public function getData($inx)
     {
         $data = $this->ds->read();
-        $categoriesToShow = $_SESSION['lizzy']['calShowCategories'][$inx];
+        $categoriesToShow = $_SESSION['lizzy']['cal'][$inx]['calShowCategories'];
         // possible enhancement: chose category from browser:
         //        if ($categoriesToShow2 = (isset($_GET['category'])) ? $_GET['category']: '') {
         //          $categoriesToShow = "$categoriesToShow,$categoriesToShow2";
@@ -91,20 +95,28 @@ class CalendarBackend {
 
 
     //--------------------------------------------------------------
-    public function saveNewData($post)
+    public function saveData($post)
     {
         $creator = '';
-        $uid = '';
         if (isset($post['json'])) {
             $rec0 = json_decode($post['json'], true);
         } else {
             $rec0 = $post;
         }
+        mylog( var_r($rec0) );
 
-        if (isset($rec0['rec-id']) && intval($rec0['rec-id'])) {    // Modify:
+        $data = $this->ds->read();
+
+        if (isset($rec0['rec-id']) && ($rec0['rec-id'] !== '')) {    // Modify:
             $recId = intval($rec0['rec-id']);
             $msg = 'Modified event';
-            $oldRec = $this->ds->readElement($recId);
+            if (isset($data[$recId])) {
+                $oldRec = $data[$recId];
+                unset($data[$recId]);
+            } else {
+                $oldRec = false;
+            }
+
             if (isset($oldRec['_creator'])) {
                 $creator = $oldRec['_creator'];
             }
@@ -115,7 +127,7 @@ class CalendarBackend {
             }
 
         } else {                // New Entry:
-            $recId = time();
+            $uid = time();
             $msg = 'Created new event';
             $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: false;
             if ($user) {
@@ -126,13 +138,14 @@ class CalendarBackend {
         $rec = $this->prepareRecord($rec0);
         $this->writeLogEntry($msg, $rec);
 
-        $this->_deleteRec($recId);
         $rec['_creator'] =  $creator;
         $rec['_uid'] =  $uid;
-        $this->ds->writeElement($recId, $rec);
+        $data[] = $rec;
+        $data = array_values($data);
+        $this->ds->write( $data );
 
         return 'ok';
-    } // saveNewData
+    } // saveData
 
 
 
@@ -165,9 +178,20 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveMode($mode)
     {
-        $_SESSION['lizzy']['calMode'] = $mode;
-        return 'ok';
+        $inx = $_GET['inx'];
+        $_SESSION['lizzy']['cal'][$inx]['calMode'] = $mode;
+        return '';
     } // saveMode
+
+
+
+    //--------------------------------------------------------------
+    public function saveCurrDate($date)
+    {
+        $inx = $_GET['inx'];
+        $_SESSION['lizzy']['cal'][$inx]['initialDate'] = $date;
+        return '';
+    } // saveCurrDate
 
 
 
@@ -182,8 +206,7 @@ class CalendarBackend {
         // Accumulate an output array of event data arrays.
         $output_arrays = array();
         foreach ($data as $i => $rec) {
-            if ((!isset($rec['title']) || !$rec['title']) ||
-                (!isset($rec['start']) || !$rec['start']) ||
+            if ((!isset($rec['start']) || !$rec['start']) ||
                 (!isset($rec['end']) || !$rec['end'])  ) {
                 continue;
             }
@@ -217,6 +240,7 @@ class CalendarBackend {
 
 
 
+    //--------------------------------------------------------------
     private function prepareDataForClient($data)
     {
         foreach ($data as $key => $rec) {
@@ -224,11 +248,12 @@ class CalendarBackend {
             unset($data[$key]['_user']);
         }
         return $data;
-    }
+    } // prepareDataForClient
 
 
 
 
+    //--------------------------------------------------------------
     private function prepareRecord($rec)
     {
         if (!isset($rec['start-date']) || !isset($rec['end-date'])) {
@@ -274,6 +299,7 @@ class CalendarBackend {
 
 
 
+    //--------------------------------------------------------------
     private function writeLogEntry($msg, $rec)
     {
         $logEntry = json_encode($rec);

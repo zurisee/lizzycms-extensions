@@ -1,6 +1,17 @@
 
 /* Calendar */
 
+.lzy-cal-title-label,
+.lzy-cal-custom-category {
+  display: none;
+}
+.lzy-calendar a {
+  border-bottom: none;
+}
+.fc-event-main {
+  overflow: auto;
+}
+
 .qtip-default {
   border-radius: 0.6em; }
 
