@@ -321,12 +321,6 @@ function defaultOpenCalPopup(inx, event0) {
     $('#lzy_cal_category option').removeAttr('selected');
 
     var event = event0.event;
-    if (typeof customOpenCalPopup === 'function') {
-        var res = customOpenCalPopup( event0 );
-        if (res) {
-            return res;
-        }
-    }
 
     var options = {};
     options.anker = false;
@@ -343,6 +337,12 @@ function defaultOpenCalPopup(inx, event0) {
     var defaultEventDuration = lzyCal[ inx ].defaultEventDuration;
 
     if (typeof event === 'undefined') {                          // new entry
+        if (typeof customOpenNewCalPopup === 'function') {
+            var res = customOpenNewCalPopup( event0 );
+            if (res) {
+                return res;
+            }
+        }
         $('#lzy-cal-new-event-header').show();
         $('#lzy-cal-modify-event-header').hide();
 
@@ -374,6 +374,12 @@ function defaultOpenCalPopup(inx, event0) {
         }
 
     } else {                                                   // existing entry
+        if (typeof customOpenCalPopup === 'function') {
+            var res = customOpenCalPopup( event0 );
+            if (res) {
+                return res;
+            }
+        }
         $('#lzy-cal-new-event-header').hide();
         $('#lzy-cal-modify-event-header').show();
 
