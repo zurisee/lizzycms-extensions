@@ -14,6 +14,7 @@ class LzyCalendar
         $this->lang = $this->lzy->config->lang;
         $this->source = $args['file'];
         $this->edPermitted = isset($args['editingPermission']) ? $args['editingPermission'] : false;
+
         $this->fields = isset($args['fields']) ? $args['fields']: false;
         if ($this->fields) {
             $this->fields = explodeTrim(',', $this->fields);
@@ -34,6 +35,10 @@ class LzyCalendar
         if ($tooltips) {
             $lzy->page->addModules('QTIP');
         }
+
+        // Event overlap:
+        $this->eventOverlap = isset($args['eventOverlap']) ? $args['eventOverlap']: true;
+        $this->eventOverlap = $this->eventOverlap? 'true': 'false';
 
         // Categories:
         $this->category = isset($args['categories']) ? $args['categories']: '';
@@ -115,12 +120,43 @@ class LzyCalendar
         }
         $viewMode = (isset($calSession['calMode'])) ? $calSession['calMode'] : $this->defaultView;
 
-        if (($this->edPermitted === 'all') || ($this->edPermitted === '*') || ($this->edPermitted === true)) {
-            $this->edPermitted = true;
-        } elseif ($this->edPermitted) {
-            $this->edPermitted = $this->lzy->auth->checkAdmission($this->edPermitted);
+
+        // handle editing permissions:
+        $edPermitted = $this->edPermitted;
+        $creatorOnlyPermission = 'false';
+        $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = false;
+
+        if (($edPermitted === 'all') || ($edPermitted === '*') || ($edPermitted === true)) {
+            $edPermitted = true;
+            $this->createPermission = true;
+
+        } elseif ($edPermitted) {
+            $edPermitted0 = $edPermitted;
+            if (strpos($edPermitted0, 'user:') !== false) {
+                $groups = explodeTrim(',', $edPermitted0);
+                foreach ($groups as $group) {
+                    if (strpos($group, 'user:') !== false) {
+                        $group = str_replace('user:', '', $group);
+                        if ($this->lzy->auth->checkAdmission($group)) {
+                            $creatorOnlyPermission = "'{$_SESSION["lizzy"]["user"]}'";
+                            $edPermitted = true;
+                            $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = $_SESSION["lizzy"]["user"];
+                        }
+                    } else {
+                        if ($this->lzy->auth->checkAdmission($group)) {
+                            $creatorOnlyPermission = 'false';
+                            $edPermitted = true;
+                            $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = false;
+                            break;
+                        }
+                    }
+                }
+
+            } else {
+                $edPermitted = $this->lzy->auth->checkAdmission($edPermitted);
+            }
         }
-        $edPermStr = $this->edPermitted?'true':'false';
+        $edPermStr = $edPermitted?'true':'false';
 
         $defaultEventDuration = DEFAULT_EVENT_DURATION;
         if ($this->defaultEventDuration) {
@@ -156,9 +192,14 @@ class LzyCalendar
         // inject js code into page body:
         $js = '';
         if ($inx == 1) {
+            $userRec = $this->lzy->auth->getUserRec();
+            $calCatPermission = isset($userRec['calCatetoryPermission'])? $userRec['calCatetoryPermission']: '';
+            $_SESSION['_lizzy']['cal']['calCatPermission'] = $calCatPermission;
+
             $js = <<<EOT
 var calBackend = '$backend';
 var calLang = '{$this->lang}';
+var calCatPermission = '$calCatPermission';
 var lzyCal = [];
 EOT;
         }
@@ -169,9 +210,11 @@ lzyCal[$inx] = {
     initialView: '$viewMode',
     initialDate: '{$this->initialDate}',
     editingPermission: $edPermStr,
+    creatorOnlyPermission: $creatorOnlyPermission,
     catPrefixes: {$this->prefixJson},
     catDefaultPrefix: '{$this->defaultCatPrefix}',
     tooltips: {$this->tooltips},
+    eventOverlap: {$this->eventOverlap},
     defaultEventDuration: $defaultEventDuration,
     headerLeftButtons: '$headerLeftButtons',
     headerRightButtons: '$headerRightButtons',

@@ -22,7 +22,6 @@ $this->page->addCssFiles("~sys/extensions/calendar/css/_calendar.css");
 $this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"), true, true);
 
 
-
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
@@ -36,6 +35,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'publishCallback', '[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);
     $this->getArg($macroName, 'tooltips', 'Name of event property that shall be shown in a tool-tip. If "true", all will be shown.', false);
+    $this->getArg($macroName, 'eventOverlap', '[true|false] Determines whether events are allowed to overlap (default: true).', true);
     $this->getArg($macroName, 'categories', 'A (comma separated) list of supported categories.', '');
     $this->getArg($macroName, 'showCategories', '[comma-separated-list] A comma separated list of categories - only events carrying that category will be presented.', '');
     $this->getArg($macroName, 'defaultPrefix', 'Prefix applied to event titles (if no category-specific prefix is defined). E.g. "[XY] ".', '');

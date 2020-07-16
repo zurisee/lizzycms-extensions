@@ -6,11 +6,7 @@ $( document ).ready(function() {
 
     $('.lzy-calendar').each(function() {
         inx = $(this).attr('data-lzy-cal-inx');
-        // var editingPermission = lzyCal[ inx ].editingPermission;
-        // var addEventButton = '';
-        // if (editingPermission) {
-        //     addEventButton = ' addevent';
-        // }
+
         if (typeof headerRightButtons === 'undefined') {
             headerRightButtons = 'timeGridWeek,dayGridMonth,listYear';
         }
@@ -42,6 +38,7 @@ $( document ).ready(function() {
             dayMaxEvents: true, // allow "more" link when too many events
             businessHours: true, // display business hours
             selectable: true,
+            eventOverlap: calDev.eventOverlap,
             nowIndicator: true,
             weekNumbers: true,
             weekNumberCalculation: 'ISO',
@@ -185,9 +182,6 @@ function defaultRenderEvent( arg ) {
     if (typeof calDef.fieldLabels.event !== 'undefined') {
         lbl = calDef.fieldLabels.event;
     }
-    // if (typeof lzyCal[ inx ].fieldLabels.event !== 'undefined') {
-    //     lbl = lzyCal[inx].fieldLabels.event;
-    // }
 
     // apply  category:
     var category = '';
@@ -230,8 +224,8 @@ function defaultRenderEvent( arg ) {
             let cls = cust.toLowerCase().replace(/\W/, '-');
             el1.classList.add('lzy-cal-custom');
             el1.classList.add('lzy-cal-custom-' + cls);
-            if (typeof lzyCal[ inx ].fieldLabels[cust] !== 'undefined') {
-                cust = lzyCal[ inx ].fieldLabels[cust];
+            if (typeof calDef.fieldLabels[cust] !== 'undefined') {
+                cust = calDef.fieldLabels[cust];
             } else {
                 cust = cust[0].toUpperCase() + cust.substring(1);
             }
@@ -245,31 +239,36 @@ function defaultRenderEvent( arg ) {
 
 
 
-function calEventChanged(inx, event) {
+function calEventChanged(inx, event0) {
     if (!lzyCal[ inx ].editingPermission) {
         return false;
     }
-    var ev = event.event;
-    if (ev.allDay) { // TODO: moving allDay events (possible it's not working due to a bug in fullcalendar)
+    var event = event0.event;
+    if (!checkCreatorOnly( event )) {
+        event0.revert();
+        return false;
+    }
+
+    if (event.allDay) { // TODO: moving allDay events (possible it's not working due to a bug in fullcalendar)
         lzyReload();
         return;
     }
-    var start = moment( ev._instance.range.start ).utc();
-    var end = moment( ev._instance.range.end ).utc();
+    var start = moment( event._instance.range.start ).utc();
+    var end = moment( event._instance.range.end ).utc();
     var rec = {};
-    rec['rec-id'] = ev._def.extendedProps.i;
-    rec['title'] = ev._def.title;
+    rec['rec-id'] = event._def.extendedProps.i;
+    rec['title'] = event._def.title;
     rec['start-date'] = start.format('YYYY-MM-DD');
     rec['start-time'] = start.format('HH:mm');
     rec['end-date'] = end.format('YYYY-MM-DD');
     rec['end-time'] = end.format('HH:mm');
-    rec['allday'] = ev.allDay;
+    rec['allday'] = event.allDay;
 
-    for (var e in ev._def.extendedProps) {
+    for (var e in event._def.extendedProps) {
         if (e === 'i') {
             continue;
         }
-        rec[e] = ev._def.extendedProps[e];
+        rec[e] = event._def.extendedProps[e];
     }
 
     var json = JSON.stringify(rec);
@@ -311,16 +310,18 @@ function saveCurrDate( arg ) {
 
 
 
-
-
 function defaultOpenCalPopup(inx, event0) {
     if (!lzyCal[ inx ].editingPermission) {
         return;
     }
+    var event = event0.event;
+    if (!checkCreatorOnly( event )) {
+        return;
+    }
+
     // reset selected options:
     $('#lzy_cal_category option').removeAttr('selected');
 
-    var event = event0.event;
 
     var options = {};
     options.anker = false;
@@ -433,14 +434,14 @@ function defaultOpenCalPopup(inx, event0) {
 
         $('#lzy_cal_delete_entry').show();
 
-        $('#lzy_cal_category').change(function(ev) {
+        $('#lzy_cal_category').change(function(event) {
             var cat = 'lzy-cal-category-' + $( ':selected', $(this) ).val();
             // var cat = $( 'option[selected]', $(this) ).val();
             $(this).closest('form').attr('class', '').addClass(cat);
         });
 
-        $('#lzy-cal-delete-entry-checkbox').change(function(ev) {
-            ev.preventDefault();
+        $('#lzy-cal-delete-entry-checkbox').change(function(event) {
+            event.preventDefault();
             if (!$('#lzy-cal-delete-entry-checkbox').prop('checked')) {
                 $('#lzy_btn_delete_entry').hide();
                 $('#lzy-calendar-default-submit').prop('disabled', false).removeClass('lzy-cal-inactive');
@@ -591,3 +592,22 @@ function setupTriggers() {
         $this.attr('data-prev-val', newTimeStr);
     });
 } // setupTriggers
+
+
+
+
+function checkCreatorOnly(event) {
+    var creatorOnlyPermission = lzyCal[ inx ].creatorOnlyPermission;
+    if (creatorOnlyPermission) {
+        try {
+            var creator = event._def.extendedProps._creator;
+            if (creatorOnlyPermission !== creator) {
+                console.log(`Attempt to modify event created by other user ${creator} -> blocked.`);
+                return false;
+            }
+        } catch(e){
+        }
+    }
+    return true;
+} // checkCreatorOnly
+

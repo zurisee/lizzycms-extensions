@@ -69,6 +69,7 @@ class CalendarBackend {
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
         $this->ds = new DataStorage2(['dataFile' => $dataSrc, 'useRecycleBin' => true]);
+        $this->calCatPermission = $_SESSION['_lizzy']['cal']['calCatPermission'];
 
     } // __construct
 
@@ -97,6 +98,8 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveData($post)
     {
+        global $inx;
+
         $creator = '';
         if (isset($post['json'])) {
             $rec0 = json_decode($post['json'], true);
@@ -117,8 +120,16 @@ class CalendarBackend {
                 $oldRec = false;
             }
 
+            $creatorOnlyPermission = $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'];
             if (isset($oldRec['_creator'])) {
                 $creator = $oldRec['_creator'];
+
+                // enforce creator-only rule:
+                if ($creatorOnlyPermission && ($creatorOnlyPermission !== $creator)) {
+                    // Note: this case is already taken care of in the client,
+                    // so we probably have a hacking attempt here:
+                    exit("Error: user {$creatorOnlyPermission} attempted to modify event created by $creator");
+                }
             }
             if (isset($oldRec['_uid'])) {
                 $uid = $oldRec['_uid'];
@@ -244,7 +255,7 @@ class CalendarBackend {
     private function prepareDataForClient($data)
     {
         foreach ($data as $key => $rec) {
-            unset($data[$key]['_creator']);
+//            unset($data[$key]['_creator']);
             unset($data[$key]['_user']);
         }
         return $data;
