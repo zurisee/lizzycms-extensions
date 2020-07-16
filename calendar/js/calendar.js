@@ -317,8 +317,16 @@ function defaultOpenCalPopup(inx, event0) {
     if (!lzyCal[ inx ].editingPermission) {
         return;
     }
+    // reset selected options:
+    $('#lzy_cal_category option').removeAttr('selected');
 
     var event = event0.event;
+    if (typeof customOpenCalPopup === 'function') {
+        var res = customOpenCalPopup( event0 );
+        if (res) {
+            return res;
+        }
+    }
 
     var options = {};
     options.anker = false;
@@ -364,8 +372,6 @@ function defaultOpenCalPopup(inx, event0) {
             $('#lzy-cal-allday-event-checkbox').prop('checked', true);
             $('#lzy_cal_end_time').attr('type', 'hidden').val('11:00');
         }
-        // reset selected options:
-        $('#lzy_cal_category option').removeAttr('selected');
 
     } else {                                                   // existing entry
         $('#lzy-cal-new-event-header').hide();
@@ -411,8 +417,7 @@ function defaultOpenCalPopup(inx, event0) {
                 }
             }
 
-            // reset selected options and then select anew:
-            $('#lzy_cal_category option').removeAttr('selected');
+            // set selected option:
             if (extendedProps.category) {
                 $('#lzy_cal_category option[value=' + extendedProps.category + ']').attr('selected', 'selected');
             }
