@@ -41,8 +41,8 @@ lzy-cal-delete-entry:
     _: Delete entry
 
 lzy-cal-delete-entry-now:
-    de: Jetzt löschen
-    _: Delete Now
+    de: Löschen
+    _:  Delete
 
 lzy-cal-modif-entry:
     de: Eintrag ändern

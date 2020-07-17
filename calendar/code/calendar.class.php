@@ -13,7 +13,7 @@ class LzyCalendar
         $this->inx = $inx;
         $this->lang = $this->lzy->config->lang;
         $this->source = $args['file'];
-        $this->edPermitted = isset($args['editingPermission']) ? $args['editingPermission'] : false;
+        $this->editingPermission = isset($args['editingPermission']) ? $args['editingPermission'] : false;
 
         $this->fields = isset($args['fields']) ? $args['fields']: false;
         if ($this->fields) {
@@ -122,16 +122,16 @@ class LzyCalendar
 
 
         // handle editing permissions:
-        $edPermitted = $this->edPermitted;
+        $edPermitted0 = $this->editingPermission;
+        $edPermitted = false;
         $creatorOnlyPermission = 'false';
         $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = false;
 
-        if (($edPermitted === 'all') || ($edPermitted === '*') || ($edPermitted === true)) {
+        if (($edPermitted0 === 'all') || ($edPermitted0 === '*') || ($edPermitted0 === true)) {
             $edPermitted = true;
             $this->createPermission = true;
 
-        } elseif ($edPermitted) {
-            $edPermitted0 = $edPermitted;
+        } elseif (is_string($edPermitted0)) {
             if (strpos($edPermitted0, 'user:') !== false) {
                 $groups = explodeTrim(',', $edPermitted0);
                 foreach ($groups as $group) {
@@ -153,10 +153,11 @@ class LzyCalendar
                 }
 
             } else {
-                $edPermitted = $this->lzy->auth->checkAdmission($edPermitted);
+                $edPermitted = $this->lzy->auth->checkAdmission($edPermitted0);
             }
         }
-        $edPermStr = $edPermitted?'true':'false';
+        $edPermStr = $edPermitted? 'true': 'false';
+        $this->edPermitted = $edPermitted;
 
         $defaultEventDuration = DEFAULT_EVENT_DURATION;
         if ($this->defaultEventDuration) {
@@ -194,12 +195,12 @@ class LzyCalendar
         if ($inx == 1) {
             $userRec = $this->lzy->auth->getUserRec();
             $calCatPermission = isset($userRec['calCatetoryPermission'])? $userRec['calCatetoryPermission']: '';
-            $_SESSION['_lizzy']['cal']['calCatPermission'] = $calCatPermission;
+            $_SESSION['lizzy']['cal'][$inx]['calCatPermission'] = $calCatPermission;
 
             $js = <<<EOT
 var calBackend = '$backend';
 var calLang = '{$this->lang}';
-var calCatPermission = '$calCatPermission';
+var calSubmitBtnLabel = ['{{ Save }}', '{{ lzy-cal-delete-entry-now }}'];
 var lzyCal = [];
 EOT;
         }
@@ -211,6 +212,7 @@ lzyCal[$inx] = {
     initialDate: '{$this->initialDate}',
     editingPermission: $edPermStr,
     creatorOnlyPermission: $creatorOnlyPermission,
+    calCatPermission: '$calCatPermission',
     catPrefixes: {$this->prefixJson},
     catDefaultPrefix: '{$this->defaultCatPrefix}',
     tooltips: {$this->tooltips},
@@ -241,13 +243,21 @@ lzyCal[$inx] = {
 EOT;
         $this->page->addJs($js);
 
+        $str = '';
         if ($this->edPermitted) {
             $popupForm = $this->renderDefaultCalPopUpForm();
             if (function_exists('loadCustomCalPopup')) {
                 loadCustomCalPopup($inx, $this->lzy, $popupForm, $this->edPermitted);
 
             } else {
-                $this->loadDefaultPopup($popupForm);
+                $this->loadDefaultPopup();
+                $str .= <<<EOT
+    <div id='lzy-cal-popup-template'>
+$popupForm
+    </div><!-- /lzy-cal-popup-template -->
+
+
+EOT;
             }
         }
 
@@ -259,7 +269,7 @@ EOT;
         }
 
         $edClass = $this->edPermitted ? ' class="lzy-calendar lzy-cal-editing"' : ' class="lzy-calendar"';
-        $str = "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
+        $str .= "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
         $calSession['page'] = $this->source;
         $this->renderFieldNames();
 
@@ -348,7 +358,6 @@ $customFields
                 <label for="lzy-cal-delete-entry-checkbox">
                     <input type='checkbox' id="lzy-cal-delete-entry-checkbox" />
                 {{ lzy-cal-delete-entry }}</label>
-                <input type='button' value='{{ lzy-cal-delete-entry-now }}' id="lzy_btn_delete_entry" class='lzy-button form-button' style="display: none"/>
             </div>
             
             <div class="lzy-cal-form-buttons">
@@ -436,11 +445,11 @@ EOT;
 
 
 
-    private function loadDefaultPopup($popupForm)
+    private function loadDefaultPopup()
     {
         // render popup related arguments:
         $args = [
-            'text' => $popupForm,
+            'contentFrom' => '#lzy-cal-popup-template',
             'class' => 'lzy-cal-popup',
             'draggable' => true,
             'triggerSource' => 'none',

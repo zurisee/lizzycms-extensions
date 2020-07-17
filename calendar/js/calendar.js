@@ -1,6 +1,7 @@
 
 var fcStdElems = ['allDay','className','end','i','source','start','title','_id','__proto__','event'];
 var inx = 0;
+var deleteNotSubmit = false;
 
 $( document ).ready(function() {
 
@@ -244,7 +245,8 @@ function calEventChanged(inx, event0) {
         return false;
     }
     var event = event0.event;
-    if (!checkCreatorOnly( event )) {
+    if (!checkPermission( event )) {
+        alert('You don\'t have permission to modify somebody else\'s event');
         event0.revert();
         return false;
     }
@@ -315,7 +317,8 @@ function defaultOpenCalPopup(inx, event0) {
         return;
     }
     var event = event0.event;
-    if (!checkCreatorOnly( event )) {
+    if (!checkPermission( event )) {
+        alert('You don\'t have permission to modify somebody else\'s event');
         return;
     }
 
@@ -336,6 +339,8 @@ function defaultOpenCalPopup(inx, event0) {
     var start = null;
     var end = null;
     var defaultEventDuration = lzyCal[ inx ].defaultEventDuration;
+
+    applyCatRestrictions();
 
     if (typeof event === 'undefined') {                          // new entry
         if (typeof customOpenNewCalPopup === 'function') {
@@ -373,6 +378,12 @@ function defaultOpenCalPopup(inx, event0) {
             $('#lzy-cal-allday-event-checkbox').prop('checked', true);
             $('#lzy_cal_end_time').attr('type', 'hidden').val('11:00');
         }
+
+        var cat = lzyCal[ inx ].calCatPermission;
+        if ( cat ) {
+            $('#lzy_cal_category option[value=' + cat + ']').attr('selected', 'selected');
+        }
+
 
     } else {                                                   // existing entry
         if (typeof customOpenCalPopup === 'function') {
@@ -440,15 +451,15 @@ function defaultOpenCalPopup(inx, event0) {
             $(this).closest('form').attr('class', '').addClass(cat);
         });
 
+        // Delete Entry checkbox:
         $('#lzy-cal-delete-entry-checkbox').change(function(event) {
             event.preventDefault();
-            if (!$('#lzy-cal-delete-entry-checkbox').prop('checked')) {
-                $('#lzy_btn_delete_entry').hide();
-                $('#lzy-calendar-default-submit').prop('disabled', false).removeClass('lzy-cal-inactive');
-
+            if ($('#lzy-cal-delete-entry-checkbox').prop('checked')) {
+                deleteNotSubmit = true;
+                $('#lzy-calendar-default-submit').val( calSubmitBtnLabel[1] );
             } else {
-                $('#lzy_btn_delete_entry').show();
-                $('#lzy-calendar-default-submit').prop('disabled', true).addClass('lzy-cal-inactive');
+                deleteNotSubmit = false;
+                $('#lzy-calendar-default-submit').val( calSubmitBtnLabel[0] );
             }
         });
     }
@@ -494,17 +505,28 @@ function convertMD(text) {
 
 
 
-
+var doSubmit = true;
 function setupTriggers() {
-    $('#lzy-calendar-default-form').submit(function (event) {    // submit button
+    // submit button:
+    $('#lzy-calendar-default-form').submit(function (event) {
         event.preventDefault();
+
+        // prevent multiple calls (if user opend&closed popup multiple times):
+        if (!doSubmit) {
+            return;
+        }
+        doSubmit = false;
         var $this = $(this);
 
         var post_url = $this.attr("action") + '?save';
         var request_method = $this.attr("method");
         var form_data = $this.serialize();
 
-        // console.log( form_data );
+        if ( deleteNotSubmit ) {    // delete:
+            post_url = $this.attr("action") + '?del';
+            console.log('deleting entry');
+        }
+
         $.ajax({
             url: post_url,
             type: request_method,
@@ -521,48 +543,26 @@ function setupTriggers() {
         });
     });
 
+    // All-day toggle:
     $('#lzy-cal-allday-event-checkbox').change(function (e) {
         var $this = $( this );
         var allday = $this.prop('checked');
         if (allday) {
-            // console.log('allday on');
             $('#lzy-allday').val('true');
             $('#lzy_cal_start_time').attr('type', 'hidden');
             $('#lzy_cal_end_time').attr('type', 'hidden');
         } else {
-            // console.log('allday off');
             $('#lzy-allday').val('false');
             $('#lzy_cal_start_time').attr('type', 'time');
             $('#lzy_cal_end_time').attr('type', 'time');
         }
     });
 
+    // Cancel button:
     $("#lzy-calendar-default-form input[type=reset]").click(function () {
-        $(".lzy-cal-popup").popup('hide');  // close popup
+        $("#lzy-cal-popup-template").popup('hide');  // close popup
     });
 
-
-    $("#lzy_cal_delete_entry input[type=button]").click(function () {
-        var $form = $(this).closest('form');
-        var post_url = $form.attr("action") + '?del';
-        var request_method = $form.attr("method");
-        var form_data = $form.serialize();
-        // console.log('delete entry');
-        $.ajax({
-            url: post_url,
-            type: request_method,
-            data: form_data
-        }).done(function (response) {
-            if (isServerErrMsg(response)) {
-                return;
-            }
-            if (response && response != 'ok') {
-                console.log(response);
-                alert(response);
-            }
-            lzyReload();
-        });
-    });
 
     // if start date changes, move end date accordingly:
     $('#lzy_cal_start_date').change(function () {
@@ -596,7 +596,7 @@ function setupTriggers() {
 
 
 
-function checkCreatorOnly(event) {
+function checkPermission(event) {
     var creatorOnlyPermission = lzyCal[ inx ].creatorOnlyPermission;
     if (creatorOnlyPermission) {
         try {
@@ -608,6 +608,31 @@ function checkCreatorOnly(event) {
         } catch(e){
         }
     }
-    return true;
-} // checkCreatorOnly
 
+    var calCatPermission = lzyCal[ inx ].calCatPermission;
+    if (calCatPermission) {
+        try {
+            var category = event._def.extendedProps.category.toLowerCase();
+            // if (calCatPermission !== category) {
+            if (calCatPermission.toLowerCase().indexOf(category) === -1) {
+                console.log(`Attempt to modify event of unauthorized category ${category} -> blocked.`);
+                return false;
+            }
+        } catch(e){
+        }
+    }
+    return true;
+} // checkPermission
+
+
+
+function applyCatRestrictions() {
+    if (lzyCal[ inx ].calCatPermission) {
+        $('#lzy_cal_category option').hide();
+        var cats = lzyCal[ inx ].calCatPermission.split(',');
+        for (var i in cats) {
+            var cat = cats[i].trim();
+            $('#lzy_cal_category option[value=' + cat + ']').show();
+        }
+    }
+} // applyCatRestrictions
