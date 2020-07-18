@@ -381,6 +381,10 @@ function defaultOpenCalPopup(inx, event0) {
 
         var cat = lzyCal[ inx ].calCatPermission;
         if ( cat ) {
+            if (cat.indexOf(',') !== -1) {
+                var cats = cat.replace(' ', '').split(',');
+                cat = cats[0];
+            }
             $('#lzy_cal_category option[value=' + cat + ']').attr('selected', 'selected');
         }
 
