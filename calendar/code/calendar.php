@@ -46,7 +46,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'initialDate', '[ISO-Date] Defines the initial date, default: today', '');
     $this->getArg($macroName, 'eventTitleRequired', '[true,false] Defines whether title field a new event must be defined, default: true', true);
 
-    if ($source == 'help') {
+    if ($source === 'help') {
         return '';
     }
 

@@ -25,7 +25,7 @@ session_start();
 
 $inx = $_REQUEST['inx'];
 $calSession = &$_SESSION['lizzy']['cal'][$inx];
-$dataSrc = PATH_TO_APP_ROOT.$calSession['page'];
+$dataSrc = PATH_TO_APP_ROOT.$calSession['dataSource'];
 
 $backend = new CalendarBackend($dataSrc);
 

@@ -98,7 +98,9 @@ class LzyCalendar
     {
         $inx = $this->inx;
         $this->source = resolvePath($this->source, true);
+        $_SESSION['lizzy']['cal'][$inx] = [];
         $calSession = &$_SESSION['lizzy']['cal'][$inx];
+        $calSession['dataSource'] = $this->source;
         $calSession['calShowCategories'] = '';
 
         // export ics file if requested:
@@ -270,7 +272,6 @@ EOT;
 
         $edClass = $this->edPermitted ? ' class="lzy-calendar lzy-cal-editing"' : ' class="lzy-calendar"';
         $str .= "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
-        $calSession['page'] = $this->source;
         $this->renderFieldNames();
 
         return $str;
