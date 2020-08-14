@@ -197,10 +197,15 @@ function defaultRenderEvent( arg ) {
 
     // prepare time:
     let elT = document.createElement('div');
-    var start = moment( arg.event._instance.range.start ).utc();
-    var end = moment( arg.event._instance.range.end ).utc();
-    var t = start.format('HH:mm') + ' - ' + end.format('HH:mm');
-    elT.innerHTML = t;
+    if (arg.event._def.allDay) {
+        elT.innerHTML = '';
+
+    } else {
+        var start = moment( arg.event._instance.range.start ).utc();
+        var end = moment( arg.event._instance.range.end ).utc();
+        var t = start.format('HH:mm') + ' - ' + end.format('HH:mm');
+        elT.innerHTML = t;
+    }
     elT.classList.add('lzy-cal-time');
 
     // prepare prefix:
@@ -261,10 +266,6 @@ function calEventChanged(inx, event0) {
         return false;
     }
 
-    if (event.allDay) { // TODO: moving allDay events (possible it's not working due to a bug in fullcalendar)
-        lzyReload();
-        return;
-    }
     var start = moment( event._instance.range.start ).utc();
     var end = moment( event._instance.range.end ).utc();
     var rec = {};
@@ -275,6 +276,9 @@ function calEventChanged(inx, event0) {
     rec['end-date'] = end.format('YYYY-MM-DD');
     rec['end-time'] = end.format('HH:mm');
     rec['allday'] = event.allDay;
+    if (event.allDay) {
+        rec['end-date'] = end.add('days', -1).format('YYYY-MM-DD');
+    }
 
     for (var e in event._def.extendedProps) {
         if (e === 'i') {
@@ -334,6 +338,7 @@ function defaultOpenCalPopup(inx, event0) {
 
     // reset selected options:
     $('#lzy_cal_category option').removeAttr('selected');
+    $('#lzy-calendar-default-form').attr( 'class', '' );
 
 
     var options = {};
@@ -452,18 +457,13 @@ function defaultOpenCalPopup(inx, event0) {
             // set selected option:
             if (extendedProps.category) {
                 $('#lzy_cal_category option[value=' + extendedProps.category + ']').attr('selected', 'selected');
+                $('#lzy-calendar-default-form').addClass( 'lzy-cal-category-' + extendedProps.category );
             }
             $('#lzy-rec-id').val(extendedProps.i);
         }
 
 
         $('#lzy_cal_delete_entry').show();
-
-        $('#lzy_cal_category').change(function(event) {
-            var cat = 'lzy-cal-category-' + $( ':selected', $(this) ).val();
-            // var cat = $( 'option[selected]', $(this) ).val();
-            $(this).closest('form').attr('class', '').addClass(cat);
-        });
 
         // Delete Entry checkbox:
         $('#lzy-cal-delete-entry-checkbox').change(function(event) {
@@ -477,6 +477,12 @@ function defaultOpenCalPopup(inx, event0) {
             }
         });
     }
+
+    // set form class if category changes:
+    $('#lzy_cal_category').change(function() {
+        var cat = 'lzy-cal-category-' + $( ':selected', $(this) ).val();
+        $(this).closest('form').attr('class', '').addClass(cat);
+    });
 
     $(".lzy-cal-popup").popup('show');      // open popup
     setTimeout( function() { $('#lzy_cal_event_name').focus(); }, 500);
