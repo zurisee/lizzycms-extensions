@@ -192,8 +192,10 @@ function defaultRenderEvent( arg ) {
 
     // prepare time:
     let elT = document.createElement('div');
-    var time = arg.timeText;
-    elT.innerHTML = time;
+    var start = moment( arg.event._instance.range.start ).utc();
+    var end = moment( arg.event._instance.range.end ).utc();
+    var t = start.format('HH:mm') + ' - ' + end.format('HH:mm');
+    elT.innerHTML = t;
     elT.classList.add('lzy-cal-time');
 
     // prepare prefix:
