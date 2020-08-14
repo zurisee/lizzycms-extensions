@@ -64,7 +64,7 @@ class LzyCalendar
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
 
-        if (!isset($_SESSION['lizzy']['cal'][$inx])) {
+        if (!isset($_SESSION['lizzy']['cal'][$inx]) || !is_array($_SESSION['lizzy']['cal'][$inx])) {
             $_SESSION['lizzy']['cal'][$inx] = [];
         }
 
@@ -98,7 +98,6 @@ class LzyCalendar
     {
         $inx = $this->inx;
         $this->source = resolvePath($this->source, true);
-        $_SESSION['lizzy']['cal'][$inx] = [];
         $calSession = &$_SESSION['lizzy']['cal'][$inx];
         $calSession['dataSource'] = $this->source;
         $calSession['calShowCategories'] = '';

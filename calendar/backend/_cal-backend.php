@@ -190,7 +190,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveMode($mode)
     {
-        $inx = $_GET['inx'];
+        $inx = intval($_GET['inx']);
         $_SESSION['lizzy']['cal'][$inx]['calMode'] = $mode;
         return '';
     } // saveMode
