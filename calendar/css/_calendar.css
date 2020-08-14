@@ -76,9 +76,38 @@
 #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-speaker, #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-moderator {
   display: none; }
 
-/*.fc-list-view .fc-list-item-title .fc-title-prefix, .fc-list-view .fc-list-item-title .fc-field-label {*/
 .fc-list-view .fc-list-item-title .fc-field-label {
   display: none; }
+
+.lzy-calendar .fc-timegrid .lzy-cal-custom,
+.lzy-calendar .fc-daygrid .lzy-cal-custom {
+  display: none; }
+
+.fc-timegrid-event:hover,
+.fc-timegrid-event,
+.fc-daygrid-event:hover,
+.fc-daygrid-event {
+  background: #3788d8;
+  background: var(--fc-event-bg-color, #3788d8); }
+.fc-daygrid a.fc-daygrid-event {
+  color: white;
+  padding: 0.4em; }
+
+/* === toolips ========== */
+.qtip-content .lzy-cal-title-text, .fc-list-event-title .lzy-cal-title-text, .qtip-content .lzy-cal-custom-label, .fc-list-event-title .lzy-cal-custom-label {
+  font-weight: bold;
+  color: black; }
+.qtip-content .lzy-cal-custom, .fc-list-event-title .lzy-cal-custom, .qtip-content > div, .fc-list-event-title > div {
+  line-height: 1.25em;
+  padding: 0 0 0.25em 2em;
+  padding-left: var(--lzy-cal-tooltip-indent, 2em);
+  text-indent: -2em;
+  text-indent: calc(var(--lzy-cal-tooltip-indent, 2em) * -1);
+}
+.qtip-content .lzy-cal-custom *, .fc-list-event-title .lzy-cal-custom *, .qtip-content > div *, .fc-list-event-title > div * {
+  text-indent: 0em; }
+
+
 
  /*small-screen:*/
 .lzy-small-screen .fc-list-table {

@@ -109,10 +109,15 @@ $( document ).ready(function() {
 function onViewReady( arg ) {
     // view changed, so update state on host:
     var viewType = arg.view.type;
-    if (lzyCal[ inx ].initialView !== viewType) {
+    if (lzyCal[inx].initialView !== viewType) {
         storeViewMode(inx, viewType);
-        lzyCal[ inx ].initialView = viewType;
+        lzyCal[inx].initialView = viewType;
     }
+} // onViewReady
+
+
+
+function activateTooltips( viewType ) {
     // activate Tooltips
     if (!lzyCal[ inx ].tooltips) {
         return;
@@ -236,6 +241,9 @@ function defaultRenderEvent( arg ) {
             elements.push( el1 );
         }
     }
+
+    activateTooltips( arg.view.type );
+
     return { domNodes: elements };
 } // defaultRenderEvent
 
