@@ -384,7 +384,10 @@ EOT;
             if (sizeof($categories) > 1) {
                 foreach ($categories as $cat) {
                     $cat = trim($cat);
-                    $categoryCombo .= "\t<option value='$cat'>$cat</option>\n";
+                    $catVal = strtolower($cat);
+                    $catVal = preg_replace('/\s+/', '-', $catVal);
+                    $catVal = preg_replace('/[^a-z0-9-_]/', '', $catVal);
+                    $categoryCombo .= "\t<option value='$catVal'>$cat</option>\n";
                 }
                 $categoryCombo = <<<EOT
     <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>

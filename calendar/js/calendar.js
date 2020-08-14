@@ -330,6 +330,7 @@ function defaultOpenCalPopup(inx, event0) {
     if (!lzyCal[ inx ].editingPermission) {
         return;
     }
+    var catClass = '';
     var event = event0.event;
     if (!checkPermission( event )) {
         alert('You don\'t have permission to modify somebody else\'s event');
@@ -456,8 +457,9 @@ function defaultOpenCalPopup(inx, event0) {
 
             // set selected option:
             if (extendedProps.category) {
-                $('#lzy_cal_category option[value=' + extendedProps.category + ']').attr('selected', 'selected');
-                $('#lzy-calendar-default-form').addClass( 'lzy-cal-category-' + extendedProps.category );
+                catClass = extendedProps.category.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-_]+/g,'');
+                $('#lzy_cal_category option[value=' + catClass + ']').attr('selected', 'selected');
+                $('#lzy-calendar-default-form').addClass( 'lzy-cal-category-' +  catClass );
             }
             $('#lzy-rec-id').val(extendedProps.i);
         }
@@ -480,11 +482,11 @@ function defaultOpenCalPopup(inx, event0) {
 
     // set form class if category changes:
     $('#lzy_cal_category').change(function() {
-        var cat = 'lzy-cal-category-' + $( ':selected', $(this) ).val();
-        $(this).closest('form').attr('class', '').addClass(cat);
+        catClass = $( ':selected', $(this) ).val();
+        $(this).closest('form').attr('class', '').addClass( 'lzy-cal-category-' + catClass );
     });
 
-    $(".lzy-cal-popup").popup('show');      // open popup
+    $('.lzy-cal-popup').popup('show');      // open popup
     setTimeout( function() { $('#lzy_cal_event_name').focus(); }, 500);
 
 } // defaultOpenCalPopup
