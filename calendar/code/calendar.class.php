@@ -52,9 +52,16 @@ class LzyCalendar
         $defaultCatPrefix = isset($args['defaultPrefix']) ? $args['defaultPrefix']: '';
         $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes']: '';
         if (strpos($catPrefixes, ',') !== false) {
+            $categoryKeys = array_map(function($e) {
+                $e = strtolower($e);
+                $e = preg_replace('/\s+/', '-', $e);
+                $e = preg_replace('/[^a-z0-9-_]/', '', $e);
+                return $e;
+            }, $categories);
             $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
             $catPrefixes = array_slice($catPrefixes, 0, $n);
-            $catPrefixAssoc = array_combine($categories, $catPrefixes);
+            $catPrefixAssoc = array_combine($categoryKeys, $catPrefixes);
+            $catPrefixAssoc[''] = '';
             $this->categoryPrefixes = $catPrefixAssoc;
             $this->prefixJson = json_encode($catPrefixAssoc);
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
