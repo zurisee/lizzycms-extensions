@@ -50,7 +50,7 @@ $this->addMacro($macroName, function () {
 
     $args = $this->getArgsArray($macroName);
 
-    $enroll = new enroll($inx, $this, $args);
+    $enroll = new Enrollment($inx, $this, $args);
     $out = $enroll->render();
 	return $out;
 });
@@ -59,7 +59,7 @@ $this->addMacro($macroName, function () {
 
 
 //=== class ====================================================================
-class enroll
+class Enrollment
 {
 	public function __construct($inx, $trans, $args)
 	{
