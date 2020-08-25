@@ -1,0 +1,40 @@
+# Reservation:
+
+lzy-reservation-info:
+    de: ''
+    _:  ''
+
+
+'First Name':
+  de: 'Vorname'
+  _:  'First Name:'
+
+'Last Name':
+  de: 'Nachnname:'
+  _:  'Last Name:'
+
+'E-Mail':
+  de: 'E-Mail:'
+  _:  'E-Mail:'
+
+'lzy-reservation-count-label':
+  de: 'Anzahl:'
+  _:  'Count:'
+
+'lzy-reservation-submit':
+  de: 'Jetzt reservieren'
+  _:  'Submit reservation'
+
+'lzy-reservation-cancel':
+  de: 'Abbrechen'
+  _:  'Cancel'
+
+__END__
+'':
+  de: ':'
+  _:  ':'
+
+'':
+  de: ':'
+  _:  ':'
+
