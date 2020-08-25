@@ -10,7 +10,7 @@ lzy-reservation-info:
   _:  'First Name:'
 
 'Last Name':
-  de: 'Nachnname:'
+  de: 'Nachname:'
   _:  'Last Name:'
 
 'E-Mail':
