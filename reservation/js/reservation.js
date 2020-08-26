@@ -3,7 +3,7 @@
 
 
 $( document ).ready(function() {
-    var timeout = parseInt( $('[name=lzy-reservation-timeout]').val() );
+    var timeout = parseInt( $('[name=_lzy-reservation-timeout]').val() );
     setTimeout(function () {
         lzyPopup({
             contentRef: '#lzy-reservation-timed-out-msg',

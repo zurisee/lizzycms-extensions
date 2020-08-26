@@ -4,6 +4,13 @@ lzy-reservation-info:
     de: ''
     _:  ''
 
+reservation-count:
+  de: 'Anzahl'
+  _:  'Number'
+
+lzy-timestamp:
+  de: 'Eingang'
+  _:  'Received'
 
 'First Name':
   de: 'Vorname'
@@ -29,9 +36,20 @@ lzy-reservation-info:
   de: 'Abbrechen'
   _:  'Cancel'
 
+lzy-reservation-aborted:
+  de: |
+    <p>Anmeldung abgebrochen.</p>
+    <p><a href="./">Weiter...</a></p>
+  _:  ':'
+
 lzy-confirmation-response-subject:
   de: 'Reservationsbestätigung'
   _:  'Reservation confirmed'
+
+lzy-reservation-full:
+  de: '<p>Die Veranstaltung ist leider bereits ausgebucht.</p>'
+  _:  '<p>Sorry, this event is already booked out.</p>'
+
 
 lzy-reservation-timed-out:
   de: 'Die Zeit ist abgelaufen, bitte laden Sie die Seite erneut.'

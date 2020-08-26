@@ -99,11 +99,16 @@ class Reservation
 
         // Evaluate if form data received
         if (isset($_GET['lizzy_form']) || isset($_POST['lizzy_form'])) {	// we received data:
-            $this->form->evaluate();
+            $res = $this->form->evaluate(); // return value = err msg or false=ok
+            if (!$res) {
+                $this->response = [$res, false];
+//            } elseif (is_array($res)) {
+//                $errMsg = $res[0]; // rec already in DB
+            }
         }
 
 		preparePath($this->dataFile);
-        $this->prepareLog();
+        // $this->prepareLog();
         $this->ds = new DataStorage2($this->dataFile);
         $this->handleClientData();
         $this->setupScheduler();
@@ -120,7 +125,7 @@ class Reservation
             return;
         }
         $userSuppliedData = $_POST;
-        $hash = $userSuppliedData['lzy-reservation-ticket'];
+        $hash = $userSuppliedData['_lzy-reservation-ticket'];
         $tick = new Ticketing();
         $rec = $tick->consumeTicket($hash);
         $inx = $rec['inx'];
@@ -205,7 +210,7 @@ class Reservation
             'legend' => $this->legend,
             'validate' => true,
             'showData' => $this->showData,
-            'postprocess' => 'reservationPostprocess',
+//            'postprocess' => 'reservationPostprocess',
             'next' => './',
         ]);
 
@@ -213,14 +218,14 @@ class Reservation
         $defaultFields = [
           [
               'type' => 'hidden',
-              'label' => 'lzy-reservation-ticket',
-              'labelInOutput' => '_ticket',
+              'label' => '_lzy-reservation-ticket',
+              'shortlabel' => '_ticket',
               'value' => $ticket,
           ],
           [
               'type' => 'hidden',
-              'label' => 'lzy-reservation-timeout',
-              'labelInOutput' => '_timeout',
+              'label' => '_lzy-reservation-timeout',
+              'shortlabel' => '_timeout',
               'value' => $this->timeout,
           ],
           [
@@ -448,7 +453,7 @@ EOT;
 
 
     //------------------------------------
-//    private function enrollLog($out)
+//    private function registrationLog($out)
 //    {
 //        $err = '';
 //        if ($this->err_msg) {
@@ -464,42 +469,26 @@ EOT;
 
 
     //------------------------------------
-    private function prepareLog()
-    {
-return;
-        if (!file_exists($this->logFile)) {
-            $customFields = '';
-            foreach ($this->customFieldsList as $item) {
-                if (preg_match('/[\s,;]/', $item)) {
-                    $customFields .= "; '$item'";
-                } else {
-                    $customFields .= "; $item";
-                }
-            }
-            if ($this->logAgentData) {
-                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields; Client; IP\n");
-            } else {
-                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields\n");
-            }
-        }
-    }
-
-
-
-//    private function isInTime($lastModified)
+//    private function prepareLog()
 //    {
-//        if (($this->freezeTime === false) || $this->admin_mode) {
-//            $inTime = true;
-//        } else {
-//            $this->freezeTime = intval($this->freezeTime);
-//            if ($this->freezeTime < 0) {
-//                $inTime = (intval($lastModified) > time() + $this->freezeTime);
+//        if (!file_exists($this->logFile)) {
+//            $customFields = '';
+//            foreach ($this->customFieldsList as $item) {
+//                if (preg_match('/[\s,;]/', $item)) {
+//                    $customFields .= "; '$item'";
+//                } else {
+//                    $customFields .= "; $item";
+//                }
+//            }
+//            if ($this->logAgentData) {
+//                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields; Client; IP\n");
 //            } else {
-//                $inTime = (time() < $this->freezeTime);
+//                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields\n");
 //            }
 //        }
-//        return $inTime;
-//    }
+//    } // prepareLog
+
+
 
 
 
@@ -526,9 +515,7 @@ return;
         if (!$data) {
             return 0;
         }
-//        $labels = array_shift( $data );
-//        $countInx = array_search('reservation-count', $labels);
-        $countInx = 3;
+        $countInx = 3;  // index of nSeats field
         $count = 0;
         foreach ($data as $rec) {
             if (isset($rec[$countInx])) {   // nSeats field
@@ -688,31 +675,8 @@ function resetScheduleFile()
 
 
 
-function reservationPostprocess()
-{
-    return '';
+//function reservationPostprocess()
+//{
+//    return '';
+//}
 
-//    $userSuppliedData = $_POST;
-//    unset($userSuppliedData['lizzy_form']);
-//    unset($userSuppliedData['lizzy_time']);
-//    unset($userSuppliedData['lizzy_next']);
-//    unset($userSuppliedData['lzy-form-name']);
-//
-//    $existingReservations = $this->countReservations();
-//    $requestedSeats = intval($userSuppliedData['reservation-count']);
-//    if (($existingReservations + $requestedSeats) > $this->maxSeats) {
-//        $msg = $this->renderErrorReply('lzy-reservation-full-error');
-////        $this->lzy->page->addOverride($msg);
-//        return $msg;
-//    }
-//    unset($userSuppliedData['lzy-reservation-ticket']);
-//    return 'ok';
-}
-
-
-
-/*
-
-
-
- */
