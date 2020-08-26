@@ -7,7 +7,7 @@ $macroName = basename(__FILE__, '.php');
 $page->addCssFiles("~ext/$macroName/css/doodle.css");
 $page->addJqFiles("~ext/$macroName/js/doodle.js");
 
-$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
 if (isset($_POST['lzy-doodle-entry-name'])) {
     $name = get_post_data('lzy-doodle-entry-name');

@@ -3,7 +3,7 @@
 // @info:  Lets you set up enrollment lists where people can put their name to indicate that they intend to participate at some event, for instance.
 
 $macroName = basename(__FILE__, '.php');
-$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
 define('ENROLL_LOG_FILE', 'enroll.log.csv');
 define('ENROLL_DATA_FILE', 'enroll.yaml');
@@ -43,7 +43,7 @@ $this->addMacro($macroName, function () {
         return '';
     }
     if ($h === 'info') {
-        $out = $this->translateVariable('lzy-enroll-info');
+        $out = $this->translateVariable('lzy-enroll-info', true);
         $this->compileMd = true;
         return $out;
     }

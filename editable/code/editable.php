@@ -13,7 +13,7 @@ $page->addModules(['~sys/extensions/editable/css/editable.css', '~sys/extensions
 
 $msg = $this->getVariable('lzy-editable-temporarily-locked');
 $page->addJs("var lzy_editable_msg = '$msg';");
-$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
 $_SESSION['lizzy']['pagePath'] = $GLOBALS['globalParams']['pagePath'];
 $_SESSION['lizzy']['pagesFolder'] = $GLOBALS['globalParams']['pagesFolder'];

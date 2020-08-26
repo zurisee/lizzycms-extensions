@@ -10,7 +10,7 @@ require_once SYSTEM_PATH.'forms.class.php';
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
 
 $this->page->addModules(["~ext/$macroName/css/$macroName.css", "~ext/$macroName/js/$macroName.js"]);
-$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/$macroName.yaml"));
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/$macroName.yaml"), false, true);
 
 
 
