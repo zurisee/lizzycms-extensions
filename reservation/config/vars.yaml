@@ -29,6 +29,35 @@ lzy-reservation-info:
   de: 'Abbrechen'
   _:  'Cancel'
 
+lzy-confirmation-response-subject:
+  de: 'Reservationsbestätigung'
+  _:  'Reservation confirmed'
+
+lzy-reservation-timed-out:
+  de: 'Die Zeit ist abgelaufen, bitte laden Sie die Seite erneut.'
+  _:  'Time for making a reservation has expired. Please reload the page.'
+
+lzy-reload:
+  de: 'Neu laden'
+  _:  'Reload'
+
+lzy-confirmation-response-message:
+  de: |
+    Guten Tag {{ first_name-value }} {{ last_name-value }}
+
+    Besten Dank, wir haben Ihre Reservation empfangen.
+    Anzahl Plätze: {{ reservation-count-value }}
+
+    Beste Grüsse
+
+  _:  |
+    Hello {{ first_name-value }} {{ last_name-value }}
+
+    Thank you very much. We received your reservation.
+    Number of seats: {{ reservation-count-value }}
+
+    Regards
+
 __END__
 '':
   de: ':'

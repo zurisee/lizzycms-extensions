@@ -5,7 +5,7 @@
 require_once SYSTEM_PATH.'forms.class.php';
 
 $macroName = basename(__FILE__, '.php');
-$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"));
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml", false), false, true );
 
 define('RESERVATION_DATA_FILE','reservation.csv');
 define('RESERVATION_LOG_FILE', 'reservation.log.txt');
@@ -43,7 +43,7 @@ $this->addMacro($macroName, function () {
         return '';
     }
     if ($h === 'info') {
-        $out = $this->translateVariable('lzy-reservation-info');
+        $out = $this->translateVariable('lzy-reservation-info', true);
         $this->compileMd = true;
         return $out;
     }
@@ -154,7 +154,7 @@ class Reservation
 	public function render()
     {
         if (isset($this->response[$this->inx]) && $this->response[$this->inx]) {
-            $response = $this->lzy->trans->translateVariable($this->response[$this->inx]);
+            $response = $this->lzy->trans->translateVariable($this->response[$this->inx], true);
             return "\t<div class='lzy-reservation-response'>$response</div>\n";
         }
 
@@ -173,7 +173,7 @@ class Reservation
         }
 
         if (($nReservations + $pendingRes) >= $this->maxSeats) {
-            $out = $this->lzy->trans->translateVariable('lzy-reservation-full');
+            $out = $this->lzy->trans->translateVariable('lzy-reservation-full', true);
             return $out;
         }
 
@@ -214,17 +214,18 @@ class Reservation
           [
               'type' => 'hidden',
               'label' => 'lzy-reservation-ticket',
-              'shortlabel' => '_ticket',
+              'labelInOutput' => '_ticket',
               'value' => $ticket,
           ],
           [
               'type' => 'hidden',
               'label' => 'lzy-reservation-timeout',
-              'shortlabel' => '_timeout',
+              'labelInOutput' => '_timeout',
               'value' => $this->timeout,
           ],
           [
               'type' => 'text',
+//              'label' => $this->trans->translateVariable('First Name'),
               'label' => 'First Name',
           ],
           [
@@ -241,7 +242,7 @@ class Reservation
               'type' => 'number',
               'label' => 'lzy-reservation-count-label',
               'name' => 'reservation-count',
-              'shortlabel' => 'reservation-count',
+              'labelInOutput' => 'reservation-count',
               'required' => true,
               'min' => 1,
               'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
@@ -286,8 +287,8 @@ class Reservation
             $str .= $this->form->render($arg);
         }
 
-        $lblSubmit = $this->lzy->trans->translateVariable('lzy-reservation-submit');
-        $lblCancel = $this->lzy->trans->translateVariable('lzy-reservation-cancel');
+        $lblSubmit = $this->lzy->trans->translateVariable('lzy-reservation-submit', true);
+        $lblCancel = $this->lzy->trans->translateVariable('lzy-reservation-cancel', true);
         $str .= $this->form->render(          [
             'value' => 'cancel,submit',
             'label' => "$lblCancel,$lblSubmit",
@@ -525,8 +526,9 @@ return;
         if (!$data) {
             return 0;
         }
-        $labels = array_shift( $data );
-        $countInx = array_search('reservation-count', $labels);
+//        $labels = array_shift( $data );
+//        $countInx = array_search('reservation-count', $labels);
+        $countInx = 3;
         $count = 0;
         foreach ($data as $rec) {
             if (isset($rec[$countInx])) {   // nSeats field
@@ -548,34 +550,39 @@ return;
             if ((strpos($key, 'lizzy_') === 0) || (strpos($key, 'lzy-') === 0)) {
                 continue;
             }
-            $this->trans->addVariable($key, $value);
+            $this->trans->addVariable("$key-value", $value);
         }
         $to = $rec['e-mail'];
-        $file = resolvePath($this->confirmationEmail, true);
-        if (!file_exists($file)) {
-            $this->response = 'lzy-reservation-email-template-not-found';
-            return;
-        }
+        if ($this->confirmationEmail === true) {
+            $subject = '{{ lzy-confirmation-response-subject }}';
+            $message = '{{ lzy-confirmation-response-message }}';
 
-        $ext = fileExt($file);
-        $tmpl = file_get_contents( $file );
+        } else {
+            $file = resolvePath($this->confirmationEmail, true);
+            if (!file_exists($file)) {
+                $this->response = 'lzy-reservation-email-template-not-found';
+                return;
+            }
 
-        if (stripos($ext, 'md') !== false) {
-            $page = new Page();
-            $tmpl = $page->extractFrontmatter($tmpl);
-            $css = $page->get('css');
-            $fm = $page->get('frontmatter');
-            $subject = isset($fm['subject'])? $fm['subject'] : '';
-            if ($css) {
-                $css = <<<EOT
+            $ext = fileExt($file);
+            $tmpl = file_get_contents($file);
+
+            if (stripos($ext, 'md') !== false) {
+                $page = new Page();
+                $tmpl = $page->extractFrontmatter($tmpl);
+                $css = $page->get('css');
+                $fm = $page->get('frontmatter');
+                $subject = isset($fm['subject']) ? $fm['subject'] : '';
+                if ($css) {
+                    $css = <<<EOT
 	<style>
 $css
 	</style>
 
 EOT;
-            }
-            $message = compileMarkdownStr($tmpl);
-            $message = <<<EOT
+                }
+                $message = compileMarkdownStr($tmpl);
+                $message = <<<EOT
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -588,27 +595,27 @@ $message
 </html>
 
 EOT;
-            $isHtml = true;
+                $isHtml = true;
 
-        } elseif ((stripos($ext, 'htm') !== false)) {
-            $page = new Page();
-            $tmpl = $this->lzy->page->extractHtmlBody($tmpl);
-            $css = $page->get('css');
-            $fm = $page->get('frontmatter');
-            $subject = isset($fm['subject'])? $fm['subject'] : '';
-            $message = extractHtmlBody($tmpl);
-            $isHtml = true;
+            } elseif ((stripos($ext, 'htm') !== false)) {
+                $page = new Page();
+                $tmpl = $this->lzy->page->extractHtmlBody($tmpl);
+                $css = $page->get('css');
+                $fm = $page->get('frontmatter');
+                $subject = isset($fm['subject']) ? $fm['subject'] : '';
+                $message = extractHtmlBody($tmpl);
+                $isHtml = true;
 
-        } else {    // .txt
-            if (preg_match('/subject: (.*?)\n(.*)/ims', $tmpl, $m)) {
-                $subject = $m[1];
-                $message = $m[2];
-            } else {
-                $this->response = 'lzy-reservation-email-template-syntax-error';
-                return;
+            } else {    // .txt
+                if (preg_match('/subject: (.*?)\n(.*)/ims', $tmpl, $m)) {
+                    $subject = $m[1];
+                    $message = $m[2];
+                } else {
+                    $this->response = 'lzy-reservation-email-template-syntax-error';
+                    return;
+                }
             }
         }
-
         $subject = $this->trans->translate($subject);
         $message = translateUmlauteToHtml( ltrim($this->trans->translate($message)) );
 
