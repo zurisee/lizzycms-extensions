@@ -21,27 +21,27 @@ $this->addMacro($macroName, function () {
 
 	// form related options:
     $h = $this->getArg($macroName, 'file', 'The file in which to store reservations.', RESERVATION_DATA_FILE);
-    $this->getArg($macroName, 'formName', '', '');
-    $this->getArg($macroName, 'mailto', '', '');
-    $this->getArg($macroName, 'mailfrom', '', '');
-    $this->getArg($macroName, 'leadingText', '', '');
-    $this->getArg($macroName, 'commentText', '', '');
-    $this->getArg($macroName, 'trailingText', '', '');
-    $this->getArg($macroName, 'class', '', '');
-    $this->getArg($macroName, 'deadline', '', false);
+    $this->getArg($macroName, 'formName', 'Defines the Subject in emails to the form owner (and used internally - must be unique per page).', '');
+    $this->getArg($macroName, 'mailto', 'Defines where to send emails for the form owner to announce data entries by users.', '');
+    $this->getArg($macroName, 'mailfrom', 'Sender address of emails to the form owner.', '');
+    $this->getArg($macroName, 'leadingText', 'Defines text to be displayed before the form.', '');
+    $this->getArg($macroName, 'commentText', 'Defines text to be displayed before the form\' submit button.', '');
+    $this->getArg($macroName, 'trailingText', 'Defines text to be displayed after the form\' submit button.', '');
+    $this->getArg($macroName, 'class', 'Optional class to be applied to the form, e.g. "lzy-form-colored"', '');
+    $this->getArg($macroName, 'deadline', 'Optional deadline for the registration form - when expired an announcement is rendered: "lzy-reservation-deadline-exceeded"', false);
     $this->getArg($macroName, 'showData', '(optional) [false, true, loggedIn, privileged, localhost, {group}] Defines, to whom previously received data is presented (default: false).', false);
-    $this->getArg($macroName, 'showDataMinRows', '(optional) .', false);
+    $this->getArg($macroName, 'showDataMinRows', '(optional) If set, the table of received registrations is extended with empty rows.', false);
 
     // reservation related options:
-    $this->getArg($macroName, 'maxSeats', 'Total number of seats available.', 1);
-    $this->getArg($macroName, 'maxSeatsPerReservation', 'Max. number of seats per reservation', 4);
-    $this->getArg($macroName, 'waitingListLength', 'Number of seats in the waiting list.', 0);
-    $this->getArg($macroName, 'moreThanThreshold', 'If more seats are available, display as "More than X"', false);
-    $this->getArg($macroName, 'confirmationEmail', 'If true, users receive a confirmation by E-Mail', true);
-    $this->getArg($macroName, 'timeout', 'The time that a user can take to fill in the form. Note: during that time \'maxSeatsPerReservation\' seats are tentatively reserved.', 600);
-    $this->getArg($macroName, 'notify', 'Activates notification of designated persons, either upon user interactions or in regular intervals. See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', false);
-    $this->getArg($macroName, 'notifyFrom', 'See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', '');
-    $this->getArg($macroName, 'scheduleAgent', 'Specifies user code to assemble and send notfications. See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', 'scheduleAgent.php');
+    $this->getArg($macroName, 'maxSeats', 'Total number of seats available.', 1000);
+    $this->getArg($macroName, 'maxSeatsPerReservation', 'Max. number of seats per reservation (default: 4)', 4);
+    $this->getArg($macroName, 'moreThanThreshold', 'If more seats are available, display as "more than X" (&rarr; embed placeholder \'$moreThanThreshold\' in text resource \'lzy-registration-more-than\')', false);
+//    $this->getArg($macroName, 'waitingListLength', 'Number of seats in the waiting list.', 0);
+    $this->getArg($macroName, 'confirmationEmail', 'If true, users receive a confirmation by E-Mail.', true);
+    $this->getArg($macroName, 'timeout', 'The time a user can take to fill in the form. Note: during that time \'maxSeatsPerReservation\' seats are tentatively reserved.', 600);
+//    $this->getArg($macroName, 'notify', 'Activates notification of designated persons, either upon user interactions or in regular intervals. See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', false);
+//    $this->getArg($macroName, 'notifyFrom', 'See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', '');
+//    $this->getArg($macroName, 'scheduleAgent', 'Specifies user code to assemble and send notfications. See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', 'scheduleAgent.php');
     // $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
 
     if ($h === 'help') {
@@ -197,6 +197,10 @@ class Reservation
 
         $nReservations = $this->countReservations();
         $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
+        if ($this->moreThanThreshold && ($seatsAvailable > $this->moreThanThreshold)) {
+            $seatsAvailable = $this->lzy->trans->translateVariable('lzy-registration-more-than');
+            $seatsAvailable = str_replace('$moreThanThreshold', $this->moreThanThreshold, $seatsAvailable);
+        }
         if ($this->leadingText) {
             $this->leadingText = $this->getText('leadingText');
             $this->leadingText = str_replace(['&#39;','&#34;'], ['"', "'"], $this->leadingText);

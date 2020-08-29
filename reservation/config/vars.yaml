@@ -50,6 +50,10 @@ lzy-reservation-full:
   de: '<p>Die Veranstaltung ist leider bereits ausgebucht.</p>'
   _:  '<p>Sorry, this event is already booked out.</p>'
 
+lzy-registration-more-than:
+  de: 'mehr als $moreThanThreshold'
+  _:  'more than $moreThanThreshold'
+
 
 lzy-reservation-timed-out:
   de: 'Die Zeit ist abgelaufen, bitte laden Sie die Seite erneut.'
