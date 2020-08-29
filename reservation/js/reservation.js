@@ -12,7 +12,8 @@ $( document ).ready(function() {
         });
     }, timeout * 1000);
     $('#lzy-reservation-timed-out-btn').click(function () {
-        lzyReload();
+        $('.lizzy_next').val('_ignore_');
+        $('.lzy-reservation-form').submit();
     });
 });
 
