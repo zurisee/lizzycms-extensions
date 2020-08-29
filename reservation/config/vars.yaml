@@ -76,6 +76,10 @@ lzy-confirmation-response-message:
 
     Regards
 
+lzy-reservation-deadline-exceeded:
+  de: 'Die Anmeldefrist ist am $date abgelaufen.'
+  _:  'Registration deadline exeeded on $date.'
+
 __END__
 '':
   de: ':'

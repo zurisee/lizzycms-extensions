@@ -21,11 +21,16 @@ $this->addMacro($macroName, function () {
 
 	// form related options:
     $h = $this->getArg($macroName, 'file', 'The file in which to store reservations.', RESERVATION_DATA_FILE);
-    $this->getArg($macroName, 'mailfrom', '', '');
+    $this->getArg($macroName, 'formName', '', '');
     $this->getArg($macroName, 'mailto', '', '');
-    $this->getArg($macroName, 'legend', '', '');
+    $this->getArg($macroName, 'mailfrom', '', '');
+    $this->getArg($macroName, 'leadingText', '', '');
+    $this->getArg($macroName, 'commentText', '', '');
+    $this->getArg($macroName, 'trailingText', '', '');
     $this->getArg($macroName, 'class', '', '');
+    $this->getArg($macroName, 'deadline', '', false);
     $this->getArg($macroName, 'showData', '(optional) [false, true, loggedIn, privileged, localhost, {group}] Defines, to whom previously received data is presented (default: false).', false);
+    $this->getArg($macroName, 'showDataMinRows', '(optional) .', false);
 
     // reservation related options:
     $this->getArg($macroName, 'maxSeats', 'Total number of seats available.', 1);
@@ -68,12 +73,20 @@ class Reservation
 	    $this->args = $args;
 
         $this->file = $args['file'];
-        $this->formName = "lzy-reservation-$inx";
-        $this->mailfrom = $args['mailfrom'];
+        $this->formName = $args['formName']? $args['formName'] : "lzy-reservation-$inx";
         $this->mailto = $args['mailto'];
+        $this->mailfrom = $args['mailfrom'];
+        $this->options = $args['options'];
         $this->class = $args['class'];
-        $this->legend = $args['legend'];
+        $this->deadline = $args['deadline'];
+        if (is_string($this->deadline)) {
+            $this->deadline = strtotime($this->deadline);
+        }
+        $this->leadingText = $args['leadingText'];
+        $this->commentText = $args['commentText'];
+        $this->trailingText = $args['trailingText'];
         $this->showData = $args['showData'];
+        $this->showDataMinRows = $args['showDataMinRows'];
 
         $this->maxSeats = intval($args['maxSeats']);
         $this->maxSeatsPerReservation = intval($args['maxSeatsPerReservation']);
@@ -128,8 +141,14 @@ class Reservation
         $hash = $userSuppliedData['_lzy-reservation-ticket'];
         $tick = new Ticketing();
         $rec = $tick->consumeTicket($hash);
-        $inx = $rec['inx'];
+        $inx = @$rec['inx'];
         if ($inx !== $this->inx) {
+            return;
+        }
+
+        if ($rec['deadline'] && ($rec['deadline'] < time())) {
+            $this->deleteRec($hash);
+            $this->response[$inx] = 'lzy-reservation-deadline-exceeded';
             return;
         }
 
@@ -162,6 +181,12 @@ class Reservation
             $response = $this->lzy->trans->translateVariable($this->response[$this->inx], true);
             return "\t<div class='lzy-reservation-response'>$response</div>\n";
         }
+        if ($this->deadline && ($this->deadline < time())) {
+            $date = strftime('%x', $this->deadline);
+            $response = $this->lzy->trans->translateVariable('lzy-reservation-deadline-exceeded', true);
+            $response = str_replace('$date', $date, $response);
+            return "\t<div class='lzy-reservation-response'>$response</div>\n";
+        }
 
         $tick = new Ticketing([
             'defaultType' => 'pending-reservations',
@@ -173,8 +198,11 @@ class Reservation
 
         $nReservations = $this->countReservations();
         $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
-        if (strpos($this->legend, '$seatsAvailable') !== 0) {
-            $this->legend = str_replace('$seatsAvailable', $seatsAvailable, $this->legend);
+        if ($this->leadingText) {
+            $this->leadingText = $this->getText('leadingText');
+        }
+        if (strpos($this->leadingText, '$seatsAvailable') !== 0) {
+            $this->leadingText = str_replace('$seatsAvailable', $seatsAvailable, $this->leadingText);
         }
 
         if (($nReservations + $pendingRes) >= $this->maxSeats) {
@@ -194,6 +222,7 @@ class Reservation
                 'lizzy_form' => $this->formName,
                 'inx' => $this->inx,
                 'file' => $this->file,
+                'deadline' => $this->deadline,
                 'nSeats' => $this->maxSeatsPerReservation,
             ];
             $ticket = $tick->createTicket($rec);
@@ -206,10 +235,14 @@ class Reservation
             'class' => $this->class,
             'mailto' => $this->mailto,
             'mailfrom' => $this->mailfrom,
+            'options' => $this->options,
             'file' => $this->file,
-            'legend' => $this->legend,
+            'legend' => $this->leadingText,
+            'commentText' => $this->commentText,
+            'trailingText' => $this->trailingText,
             'validate' => true,
             'showData' => $this->showData,
+            'showDataMinRows' => $this->showDataMinRows,
 //            'postprocess' => 'reservationPostprocess',
             'next' => './',
         ]);
@@ -230,7 +263,6 @@ class Reservation
           ],
           [
               'type' => 'text',
-//              'label' => $this->trans->translateVariable('First Name'),
               'label' => 'First Name',
           ],
           [
@@ -238,11 +270,17 @@ class Reservation
               'label' => 'Last Name',
               'required' => true,
           ],
-          [
-              'type' => 'email',
-              'label' => 'E-Mail',
-              'required' => true,
-          ],
+        ];
+
+        if ($this->confirmationEmail) {
+            $defaultFields[] =
+                [
+                    'type' => 'email',
+                    'label' => 'E-Mail',
+                    'required' => true,
+                ];
+        }
+        $defaultFields[] =
           [
               'type' => 'number',
               'label' => 'lzy-reservation-count-label',
@@ -253,15 +291,15 @@ class Reservation
               'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
               'value' => 1,
               'wrapperClass' => $wrapperClass,
-          ],
-        ];
+          ];
 
         foreach ($defaultFields as $arg) {
             $str .= $this->form->render($arg);
         }
 
-        $reservedLabels = ',formName,file,mailfrom,mailto,class,legend,showData,maxSeats,maxSeatsPerReservation,'.
-            'waitingListLength,moreThanThreshold,confirmationEmail,timeout,notify,notifyFrom,scheduleAgent,logAgentData,';
+        $reservedLabels = ',formName,file,mailfrom,mailto,class,options,showData,showDataMinRows,deadline,maxSeats,maxSeatsPerReservation,'.
+            'waitingListLength,moreThanThreshold,confirmationEmail,timeout,notify,notifyFrom,scheduleAgent,logAgentData,'.
+            'leadingText,commentText,trailingText,';
 
         $formFieldTypes = ['text','password','email','textarea','radio','checkbox','button','url','date','time',
             'datetime','month','number','range','tel','file','dropdown'];
@@ -292,6 +330,10 @@ class Reservation
             $str .= $this->form->render($arg);
         }
 
+        if ($this->commentText) {
+            $str .= $this->getText('commentText');
+        }
+
         $lblSubmit = $this->lzy->trans->translateVariable('lzy-reservation-submit', true);
         $lblCancel = $this->lzy->trans->translateVariable('lzy-reservation-cancel', true);
         $str .= $this->form->render(          [
@@ -299,8 +341,12 @@ class Reservation
             'label' => "$lblCancel,$lblSubmit",
             'type' => 'button',
         ]);
-        $str .= "\t<div class=''>{{^ lzy-reservation-explanations }}</div>\n";
         $str .= $this->form->render([ 'type' => 'form-tail' ]);
+
+        if ($this->trailingText) {
+            $str .= $this->getText('trailingText');
+        }
+
 
         if ($this->inx === 1) {
             $popup = <<<EOT
@@ -318,6 +364,42 @@ EOT;
 
         return $str;
 	} // render
+
+
+
+
+    //------------------------------------
+    private function getText($name) {
+	    $str = '';
+	    $key = $this->$name;
+        $class = 'lzy-reservation-' . strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $name));
+        if (is_string($key)) {
+            $str = $key;
+
+        } elseif (is_array($key)) {
+            if (isset($key['textFrom'])) {
+                $textFrom = $key['textFrom'];
+                if (($textFrom[0] === '#') || ($textFrom[0] === '.')) {
+                    $jq = "$('#$class{$this->inx}').html( $('$textFrom').html() );";
+                    $this->lzy->page->addJq($jq);
+                } else {
+                    $file = resolvePath($textFrom, true);
+                    if (file_exists($file)) {
+                        $str = file_get_contents($file);
+                        if (fileExt($file) === 'md') {
+                            $str = compileMarkdownStr($str);
+                        }
+                    } else {
+                        $str = "Error: file '$file' not found.";
+                    }
+                }
+            }
+        }
+        $str = "\t<div id='$class{$this->inx}' class='$class'>$str</div>\n";
+        return $str;
+    } // getText
+
+
 
 
     //------------------------------------
@@ -582,6 +664,7 @@ $message
 </html>
 
 EOT;
+                $message = translateUmlauteToHtml( ltrim($message) );
                 $isHtml = true;
 
             } elseif ((stripos($ext, 'htm') !== false)) {
@@ -591,10 +674,11 @@ EOT;
                 $fm = $page->get('frontmatter');
                 $subject = isset($fm['subject']) ? $fm['subject'] : '';
                 $message = extractHtmlBody($tmpl);
+                $message = translateUmlauteToHtml( ltrim($message) );
                 $isHtml = true;
 
             } else {    // .txt
-                if (preg_match('/subject: (.*?)\n(.*)/ims', $tmpl, $m)) {
+                if (preg_match('/^subject: (.*?)\n(.*)/ims', $tmpl, $m)) {
                     $subject = $m[1];
                     $message = $m[2];
                 } else {
@@ -603,10 +687,11 @@ EOT;
                 }
             }
         }
-        $subject = $this->trans->translate($subject);
-        $message = translateUmlauteToHtml( ltrim($this->trans->translate($message)) );
 
-        $this->lzy->sendMail($to, $subject, $message, $isHtml);
+        $subject = $this->trans->translate($subject);
+        $message = $this->trans->translate($message);
+
+        $this->lzy->sendMail($to, $subject, $message, $this->mailfrom, $isHtml);
         return false;
     } // sendConfirmationMail
 
@@ -645,7 +730,7 @@ EOT;
         $pendingRes = $tick->sum('nSeats');
         // if reloading page one ticket is pending for ourself, so discount it:
         if (isset($_SESSION['lizzy']['reservation'][$this->inx])) {
-            $pendingRes -= $this->maxSeatsPerReservation;
+            $pendingRes = max(0, $pendingRes -= $this->maxSeatsPerReservation);
         }
         return $pendingRes;
     } // getPendingReservations
