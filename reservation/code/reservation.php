@@ -1,6 +1,6 @@
 <?php
 
-// @info:  Lets you set up enrollment lists where people can put their name to indicate that they intend to participate at some event, for instance.
+// @info:  Lets you set up a registration form
 
 require_once SYSTEM_PATH.'forms.class.php';
 
@@ -115,8 +115,6 @@ class Reservation
             $res = $this->form->evaluate(); // return value = err msg or false=ok
             if (!$res) {
                 $this->response = [$res, false];
-//            } elseif (is_array($res)) {
-//                $errMsg = $res[0]; // rec already in DB
             }
         }
 
@@ -177,8 +175,9 @@ class Reservation
 	//-----------------------------------------------------------------------------------------------
 	public function render()
     {
-        if (isset($this->response[$this->inx]) && $this->response[$this->inx]) {
-            $response = $this->lzy->trans->translateVariable($this->response[$this->inx], true);
+        $inx = $this->inx;
+        if (isset($this->response[$inx]) && $this->response[$inx]) {
+            $response = $this->lzy->trans->translateVariable($this->response[$inx], true);
             return "\t<div class='lzy-reservation-response'>$response</div>\n";
         }
         if ($this->deadline && ($this->deadline < time())) {
@@ -200,6 +199,7 @@ class Reservation
         $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
         if ($this->leadingText) {
             $this->leadingText = $this->getText('leadingText');
+            $this->leadingText = str_replace(['&#39;','&#34;'], ['"', "'"], $this->leadingText);
         }
         if (strpos($this->leadingText, '$seatsAvailable') !== 0) {
             $this->leadingText = str_replace('$seatsAvailable', $seatsAvailable, $this->leadingText);
@@ -211,8 +211,8 @@ class Reservation
         }
 
         $ticket = false;
-        if (isset($_SESSION['lizzy']['reservation'][$this->inx])) {
-            $ticket = $_SESSION['lizzy']['reservation'][$this->inx];
+        if (isset($_SESSION['lizzy']['reservation'][$inx])) {
+            $ticket = $_SESSION['lizzy']['reservation'][$inx];
             if (!$tick->findTicket($ticket)) {
                 $ticket = false;
             }
@@ -220,19 +220,19 @@ class Reservation
         if (!$ticket) {
             $rec = [
                 'lizzy_form' => $this->formName,
-                'inx' => $this->inx,
+                'inx' => $inx,
                 'file' => $this->file,
                 'deadline' => $this->deadline,
                 'nSeats' => $this->maxSeatsPerReservation,
             ];
             $ticket = $tick->createTicket($rec);
-            $_SESSION['lizzy']['reservation'][$this->inx] = $ticket;
+            $_SESSION['lizzy']['reservation'][$inx] = $ticket;
         }
         // create form head:
         $str = $this->form->render([
             'type' => 'form-head',
             'label' => $this->formName,
-            'class' => $this->class,
+            'class' => ltrim(" {$this->class} lzy-form lzy-reservation-form lzy-reservation-form$inx"),
             'mailto' => $this->mailto,
             'mailfrom' => $this->mailfrom,
             'options' => $this->options,
@@ -297,9 +297,10 @@ class Reservation
             $str .= $this->form->render($arg);
         }
 
-        $reservedLabels = ',formName,file,mailfrom,mailto,class,options,showData,showDataMinRows,deadline,maxSeats,maxSeatsPerReservation,'.
-            'waitingListLength,moreThanThreshold,confirmationEmail,timeout,notify,notifyFrom,scheduleAgent,logAgentData,'.
-            'leadingText,commentText,trailingText,';
+        $reservedLabels = ',formName,file,mailfrom,mailto,class,options,leadingText,commentText,trailingText,'.
+            'showData,showDataMinRows,deadline,maxSeats,maxSeatsPerReservation,'.
+            'waitingListLength,moreThanThreshold,confirmationEmail,timeout,notify,notifyFrom,scheduleAgent,'.
+            'logAgentData,';
 
         $formFieldTypes = ['text','password','email','textarea','radio','checkbox','button','url','date','time',
             'datetime','month','number','range','tel','file','dropdown'];
@@ -331,7 +332,7 @@ class Reservation
         }
 
         if ($this->commentText) {
-            $str .= $this->getText('commentText');
+            $str .= str_replace(['&#39;','&#34;'], ['"', "'"], $this->getText('commentText') );
         }
 
         $lblSubmit = $this->lzy->trans->translateVariable('lzy-reservation-submit', true);
@@ -344,11 +345,11 @@ class Reservation
         $str .= $this->form->render([ 'type' => 'form-tail' ]);
 
         if ($this->trailingText) {
-            $str .= $this->getText('trailingText');
+            $str .= str_replace(['&#39;','&#34;'], ['"', "'"], $this->getText('trailingText') );
         }
 
 
-        if ($this->inx === 1) {
+        if ($inx === 1) {
             $popup = <<<EOT
         <div id='lzy-reservation-timed-out-msg' style="display: none;">
             <div class="lzy-reservation-timeout-pup">
