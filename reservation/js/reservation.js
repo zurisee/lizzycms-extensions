@@ -3,7 +3,10 @@
 
 
 $( document ).ready(function() {
-    var timeout = parseInt( $('[name=_lzy-reservation-timeout]').val() );
+    if (!$('.lzy-reservation-timeout').length) {
+        return;
+    }
+    const timeout = parseInt( $('.lzy-reservation-timeout').val() );
     setTimeout(function () {
         lzyPopup({
             contentRef: '#lzy-reservation-timed-out-msg',
@@ -12,7 +15,7 @@ $( document ).ready(function() {
         });
     }, timeout * 1000);
     $('#lzy-reservation-timed-out-btn').click(function () {
-        $('.lizzy_next').val('_ignore_');
+        $('.lzy-form-cmd').val('_ignore_');
         $('.lzy-reservation-form').submit();
     });
 });
@@ -21,7 +24,7 @@ $( document ).ready(function() {
 
 // handle submit button in add dialog:
 $('[type=submit]').click(function(e) {
-    var $form = $( this ).closest('form');
+    const $form = $( this ).closest('form');
 
     if (checkInput( $form )) {
         $( this ).prop('disabled',true);
@@ -32,13 +35,27 @@ $('[type=submit]').click(function(e) {
 });
 
 
-$('[type=reset]').click(function(e) {
-    var $form = $( this ).closest('form');
-    $('[name=lizzy_next', $form).val('_delete_');
+$('[type=reset]').click(function() {
+    const $form = $( this ).closest('form');
+    $('.lzy-form-cmd', $form).val('_delete_');
     $( $form ).submit();
 });
 
 
 
+function checkInput()
+// function checkInput( $form )
+{
+    return true;
+}
 
 
+function onUnloadReservationPage() {
+    $('form.lzy-reservation-form').each(function() {
+        $('.lzy-form-cmd').val('_clear_');
+        const data = $( this ).serialize();
+        $.post( './', data );
+    });
+    onUnloadPage();
+}
+window.onbeforeunload = onUnloadReservationPage;

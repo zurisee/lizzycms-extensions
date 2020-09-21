@@ -1,7 +1,5 @@
 <?php
 
-// @info:  Lets you set up a registration form
-
 require_once SYSTEM_PATH.'forms.class.php';
 
 $macroName = basename(__FILE__, '.php');
@@ -12,50 +10,24 @@ define('RESERVATION_LOG_FILE', 'reservation.log.txt');
 
 $page->addModules('~ext/reservation/js/reservation.js, ~ext/reservation/css/reservation.css');
 
-resetScheduleFile();
 
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-	$inx = $this->invocationCounter[$macroName] + 1;
 
-	// form related options:
-    $h = $this->getArg($macroName, 'file', 'The file in which to store reservations.', RESERVATION_DATA_FILE);
-    $this->getArg($macroName, 'formName', 'Defines the Subject in emails to the form owner (and used internally - must be unique per page).', '');
-    $this->getArg($macroName, 'mailto', 'Defines where to send emails for the form owner to announce data entries by users.', '');
-    $this->getArg($macroName, 'mailfrom', 'Sender address of emails to the form owner.', '');
-    $this->getArg($macroName, 'leadingText', 'Defines text to be displayed before the form.', '');
-    $this->getArg($macroName, 'commentText', 'Defines text to be displayed before the form\' submit button.', '');
-    $this->getArg($macroName, 'trailingText', 'Defines text to be displayed after the form\' submit button.', '');
-    $this->getArg($macroName, 'class', 'Optional class to be applied to the form, e.g. "lzy-form-colored"', '');
-    $this->getArg($macroName, 'deadline', 'Optional deadline for the registration form - when expired an announcement is rendered: "lzy-reservation-deadline-exceeded"', false);
-    $this->getArg($macroName, 'showData', '(optional) [false, true, loggedIn, privileged, localhost, {group}] Defines, to whom previously received data is presented (default: false).', false);
-    $this->getArg($macroName, 'showDataMinRows', '(optional) If set, the table of received registrations is extended with empty rows.', false);
+    $args = $this->getArgsArray($macroName);
 
-    // reservation related options:
-    $this->getArg($macroName, 'maxSeats', 'Total number of seats available.', 1000);
-    $this->getArg($macroName, 'maxSeatsPerReservation', 'Max. number of seats per reservation (default: 4)', 4);
-    $this->getArg($macroName, 'moreThanThreshold', 'If more seats are available, display as "more than X" (&rarr; embed placeholder \'$moreThanThreshold\' in text resource \'lzy-registration-more-than\')', false);
-//    $this->getArg($macroName, 'waitingListLength', 'Number of seats in the waiting list.', 0);
-    $this->getArg($macroName, 'confirmationEmail', 'If true, users receive a confirmation by E-Mail.', true);
-    $this->getArg($macroName, 'timeout', 'The time a user can take to fill in the form. Note: during that time \'maxSeatsPerReservation\' seats are tentatively reserved.', 600);
-//    $this->getArg($macroName, 'notify', 'Activates notification of designated persons, either upon user interactions or in regular intervals. See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', false);
-//    $this->getArg($macroName, 'notifyFrom', 'See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', '');
-//    $this->getArg($macroName, 'scheduleAgent', 'Specifies user code to assemble and send notfications. See <a href="https://getlizzy.net/macros/extensions/reservation/">documentation</a> for details.', 'scheduleAgent.php');
-    // $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
-
-    if ($h === 'help') {
-        return '';
+    if (@$args[0] === 'help') {
+        $this->compileMd = true;
+        return renderReservationsHelp();
     }
-    if ($h === 'info') {
+    if (@$args[0] === 'info') {
         $out = $this->translateVariable('lzy-reservation-info', true);
         $this->compileMd = true;
         return $out;
     }
 
-    $args = $this->getArgsArray($macroName);
-
-    $rsrv = new Reservation($this->lzy, $inx, $this, $args);
+    $rsrv = new Reservation($this->lzy, $args);
     $out = $rsrv->render();
 	return $out;
 });
@@ -64,136 +36,66 @@ $this->addMacro($macroName, function () {
 
 
 //=== class ====================================================================
-class Reservation
+class Reservation extends Forms
 {
-	public function __construct($lzy, $inx, $trans, $args)
-	{
-	    $this->lzy = $lzy;
-	    $this->inx = $inx;
-	    $this->args = $args;
+    protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation;
+    protected $waitingListLength, $moreThanThreshold, $confirmationEmail;
+    protected $timeout, $notify, $notifyFrom, $scheduleAgent, $reservationCallback;
+    protected $formHash, $ds, $resTick, $resSpecificArgs;
 
-        $this->file = $args['file'];
-        $this->formName = $args['formName']? $args['formName'] : "lzy-reservation-$inx";
-        $this->mailto = $args['mailto'];
-        $this->mailfrom = $args['mailfrom'];
-        $this->options = $args['options'];
-        $this->class = $args['class'];
-        $this->deadline = $args['deadline'];
-        if (is_string($this->deadline)) {
+    public function __construct($lzy, $args)
+    {
+        $this->args = $args;
+
+        $this->dataFile =                   @$args['file'];
+        $this->deadline =                   @$args['deadline'];
+        if ($this->deadline && is_string($this->deadline)) {
             $this->deadline = strtotime($this->deadline);
         }
-        $this->leadingText = $args['leadingText'];
-        $this->commentText = $args['commentText'];
-        $this->trailingText = $args['trailingText'];
-        $this->showData = $args['showData'];
-        $this->showDataMinRows = $args['showDataMinRows'];
 
-        $this->maxSeats = intval($args['maxSeats']);
-        $this->maxSeatsPerReservation = intval($args['maxSeatsPerReservation']);
-        $this->waitingListLength = intval($args['waitingListLength']);
-        $this->moreThanThreshold = intval($args['moreThanThreshold']);
-        $this->confirmationEmail = $args['confirmationEmail'];
-        $this->timeout = $args['timeout'];
-        $this->notify = $args['notify'];
-        $this->notifyFrom = str_replace(['&#39;', '&#34;'], ["'", '"'], $args['notifyFrom']);
-        $this->scheduleAgent = $args['scheduleAgent'];
-//        $this->reservationCallback = $args['reservationCallback'];
-//        $this->logAgentData = $args['logAgentData'];
+        $this->maxSeats =                   intval( @$args['maxSeats'] );
+        $this->maxSeatsPerReservation =     intval( @$args['maxSeatsPerReservation'] );
+    //        $this->waitingListLength = intval($args['waitingListLength']);
+        $this->waitingListLength =          false;
+        $this->moreThanThreshold =          intval( @$args['moreThanThreshold'] );
+        $this->confirmationEmail =          @$args['confirmationEmail'];
+        $this->timeout =                    @$args['timeout'];
+    //        $this->notify = @$args['notify'];
+    //        $this->notifyFrom = str_replace(['&#39;', '&#34;'], ["'", '"'], $args['notifyFrom']);
+    //        $this->scheduleAgent = @$args['scheduleAgent'];
+    //        $this->reservationCallback = @$args['reservationCallback'];
+        $this->notify = false;
+        $this->notifyFrom = false;
+        $this->scheduleAgent = false;
+        $this->reservationCallback = false;
+    //        $this->logAgentData = $args['logAgentData'];
 
-		$this->response = [];
-		$this->admin_mode = false;
-		$this->trans = $trans;
+        parent::__construct($lzy, true);
 
+        $this->formHash = parent::getFormHash();
 
-		$this->dataFile = resolvePath($this->file, true);
-		$this->logFile = resolvePath(RESERVATION_LOG_FILE, true);
-
-        $this->form = new Forms($this->lzy);
-
-        // Evaluate if form data received
-        if (isset($_GET['lizzy_form']) || isset($_POST['lizzy_form'])) {	// we received data:
-            $res = $this->form->evaluate(); // return value = err msg or false=ok
-            if (!$res) {
-                $this->response = [$res, false];
-            }
-        }
-
-		preparePath($this->dataFile);
+        preparePath($this->dataFile);
         // $this->prepareLog();
         $this->ds = new DataStorage2($this->dataFile);
         $this->handleClientData();
-        $this->setupScheduler();
-
+    //        $this->setupScheduler();
     } // __construct
 
 
 
 
-	//----------------------------------------------------------------------
-	private function handleClientData()
+    public function render( $args = null )
     {
-		if (!isset($_POST) || !$_POST) {
-            return;
-        }
-        $userSuppliedData = $_POST;
-        $hash = $userSuppliedData['_lzy-reservation-ticket'];
-        $tick = new Ticketing();
-        $rec = $tick->consumeTicket($hash);
-        $inx = @$rec['inx'];
-        if ($inx !== $this->inx) {
-            return;
-        }
+        $args = $this->args;
 
-        if ($rec['deadline'] && ($rec['deadline'] < time())) {
-            $this->deleteRec($hash);
-            $this->response[$inx] = 'lzy-reservation-deadline-exceeded';
-            return;
-        }
-
-        if ($userSuppliedData['lizzy_next'] === '_delete_') {
-            $this->deleteRec($hash);
-            $this->response[$inx] = 'lzy-reservation-aborted';
-            return;
-        }
-
-        $existingReservations = $this->countReservations();
-        if ($existingReservations > $this->maxSeats) {
-            $this->deleteRec($hash);
-            $this->response[$inx] = 'lzy-reservation-full-error';
-            return;
-        }
-        unset($_SESSION['lizzy']['reservation'][$inx]);
-
-        $this->sendConfirmationMail( $userSuppliedData );
-
-        $this->response[$inx] = 'lzy-reservation-success';
-	} // handle $_POST
-
-
-
-
-	//-----------------------------------------------------------------------------------------------
-	public function render()
-    {
-        $inx = $this->inx;
-        if (isset($this->response[$inx]) && $this->response[$inx]) {
-            $response = $this->lzy->trans->translateVariable($this->response[$inx], true);
-            return "\t<div class='lzy-reservation-response'>$response</div>\n";
-        }
-        if ($this->deadline && ($this->deadline < time())) {
-            $date = strftime('%x', $this->deadline);
-            $response = $this->lzy->trans->translateVariable('lzy-reservation-deadline-exceeded', true);
-            $response = str_replace('$date', $date, $response);
-            return "\t<div class='lzy-reservation-response'>$response</div>\n";
-        }
-
-        $tick = new Ticketing([
+        $this->resTick = new Ticketing([
             'defaultType' => 'pending-reservations',
             'defaultValidityPeriod' => $this->timeout,
             'defaultMaxConsumptionCount' => 1,
         ]);
 
-        $pendingRes = $this->getPendingReservations($tick);
+        $pendingRes = $this->getPendingReservations();
+
 
         $nReservations = $this->countReservations();
         $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
@@ -201,79 +103,96 @@ class Reservation
             $seatsAvailable = $this->lzy->trans->translateVariable('lzy-registration-more-than');
             $seatsAvailable = str_replace('$moreThanThreshold', $this->moreThanThreshold, $seatsAvailable);
         }
-        if ($this->leadingText) {
-            $this->leadingText = $this->getText('leadingText');
-            $this->leadingText = str_replace(['&#39;','&#34;'], ['"', "'"], $this->leadingText);
-        }
-        if (strpos($this->leadingText, '$seatsAvailable') !== 0) {
-            $this->leadingText = str_replace('$seatsAvailable', $seatsAvailable, $this->leadingText);
-        }
 
         if (($nReservations + $pendingRes) >= $this->maxSeats) {
-            $out = $this->lzy->trans->translateVariable('lzy-reservation-full', true);
-            return $out;
+            return $this->lzy->trans->translateVariable('lzy-reservation-full', true);
         }
 
-        $ticket = false;
-        if (isset($_SESSION['lizzy']['reservation'][$inx])) {
-            $ticket = $_SESSION['lizzy']['reservation'][$inx];
-            if (!$tick->findTicket($ticket)) {
-                $ticket = false;
+
+        // additional reservation specific args:
+        $resSpecificElements = ',deadline,maxSeats,maxSeatsPerReservation,'.
+            'waitingListLength,moreThanThreshold,timeout,notify,'.
+            'notifyFrom,scheduleAgent,logAgentData,';
+
+        // separate arguments for header and fields:
+        $headArgs = [];
+        $resSpecificArgs = [];
+        $formElems = [];
+        $formHint = '';
+        $formFooter = '';
+        foreach ($args as $key => $value) {
+            if ($key === 'formHint') {
+                $formHint = $value;
+
+            } elseif ($key === 'formFooter') {
+                $formFooter = $value;
+
+            } elseif ($this->isHeadAttribute( $key )) {
+                $headArgs[$key] = $value;
+
+            } elseif (strpos($resSpecificElements, ",$key,") !== false) {
+                $resSpecificArgs[$key] = $value;
+
+            } else {
+                $formElems[$key] = $value;
             }
         }
-        if (!$ticket) {
-            $rec = [
-                'lizzy_form' => $this->formName,
-                'inx' => $inx,
-                'file' => $this->file,
-                'deadline' => $this->deadline,
-                'nSeats' => $this->maxSeatsPerReservation,
-            ];
-            $ticket = $tick->createTicket($rec);
-            $_SESSION['lizzy']['reservation'][$inx] = $ticket;
+        $this->resSpecificArgs = $resSpecificArgs;
+
+        if (strpos($headArgs['formHeader'], '{seatsAvailable}') !== 0) {
+            $headArgs['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailable, $headArgs['formHeader']);
         }
+
+        if ($formHint) {
+            $headArgs['options'] = @$headArgs['options']? $headArgs['options'].' norequiredcomment': 'norequiredcomment';
+        }
+
+
         // create form head:
-        $str = $this->form->render([
-            'type' => 'form-head',
-            'label' => $this->formName,
-            'class' => ltrim(" {$this->class} lzy-form lzy-reservation-form lzy-reservation-form$inx"),
-            'mailto' => $this->mailto,
-            'mailfrom' => $this->mailfrom,
-            'options' => $this->options,
-            'file' => $this->file,
-            'legend' => $this->leadingText,
-            'commentText' => $this->commentText,
-            'trailingText' => $this->trailingText,
-            'validate' => true,
-            'showData' => $this->showData,
-            'showDataMinRows' => $this->showDataMinRows,
-//            'postprocess' => 'reservationPostprocess',
-            'next' => './',
-        ]);
+        $headArgs['type'] = 'form-head';
+        if (!isset($headArgs['class'])) {
+            $headArgs['class'] = 'lzy-reservation-form lzy-form lzy-form-colored lzy-encapsulated';
+        }
+        $str = parent::render( $headArgs );
+
+        $resTickRec = [
+            'formHash' => parent::getFormHash(),
+            'file' => $this->dataFile,
+            'deadline' => $this->deadline,
+            'nSeats' => $this->maxSeatsPerReservation,
+        ];
+        if (!$this->skipRenderingForm) {
+        $ticket = $this->resTick->createTicket($resTickRec);
+        } else {
+            $ticket = '';
+        }
+        // create form buttons:
+        $buttons = [ 'label' => '', 'type' => 'button', 'value' => '' ];
 
         $wrapperClass = ($this->maxSeatsPerReservation === 1) ? 'dispno': '';
         $defaultFields = [
-          [
-              'type' => 'hidden',
-              'label' => '_lzy-reservation-ticket',
-              'shortlabel' => '_ticket',
-              'value' => $ticket,
-          ],
-          [
-              'type' => 'hidden',
-              'label' => '_lzy-reservation-timeout',
-              'shortlabel' => '_timeout',
-              'value' => $this->timeout,
-          ],
-          [
-              'type' => 'text',
-              'label' => 'First Name',
-          ],
-          [
-              'type' => 'text',
-              'label' => 'Last Name',
-              'required' => true,
-          ],
+            [
+                'type' => 'hidden',
+                'label' => 'lzy-form lzy-reservation-ticket',
+                'name' => '_res-ticket',
+                'value' => $ticket,
+            ],
+            [
+                'type' => 'hidden',
+                'label' => 'lzy-reservation-timeout',
+                'class' => 'lzy-reservation-timeout',
+                'name' => '_timeout',
+                'value' => $this->timeout,
+            ],
+            [
+                'type' => 'text',
+                'label' => 'First Name',
+            ],
+            [
+                'type' => 'text',
+                'label' => 'Last Name',
+                'required' => true,
+            ],
         ];
 
         if ($this->confirmationEmail) {
@@ -285,314 +204,138 @@ class Reservation
                 ];
         }
         $defaultFields[] =
-          [
-              'type' => 'number',
-              'label' => 'lzy-reservation-count-label',
-              'name' => 'reservation-count',
-              'labelInOutput' => 'reservation-count',
-              'required' => true,
-              'min' => 1,
-              'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
-              'value' => 1,
-              'wrapperClass' => $wrapperClass,
-          ];
+            [
+                'type' => 'number',
+                'label' => 'lzy-reservation-count-label',
+                'name' => 'reservation-count',
+                'labelInOutput' => 'reservation-count',
+                'required' => true,
+                'min' => 1,
+                'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
+                'value' => 1,
+                'wrapperClass' => $wrapperClass,
+            ];
 
         foreach ($defaultFields as $arg) {
-            $str .= $this->form->render($arg);
+            $str .= parent::render($arg);
         }
-
-        $reservedLabels = ',formName,file,mailfrom,mailto,class,options,leadingText,commentText,trailingText,'.
-            'showData,showDataMinRows,deadline,maxSeats,maxSeatsPerReservation,'.
-            'waitingListLength,moreThanThreshold,confirmationEmail,timeout,notify,notifyFrom,scheduleAgent,'.
-            'logAgentData,';
-
-        $formFieldTypes = ['text','password','email','textarea','radio','checkbox','button','url','date','time',
-            'datetime','month','number','range','tel','file','dropdown'];
 
         // parse further arguments, interpret as form field definitions:
-        foreach ($this->args as $label => $arg) {
-            if (strpos($reservedLabels, ",$label,") !== false) {
-                continue;
-            }
+        foreach ($formElems as $label => $arg) {
             if (is_string($arg)) {
                 $arg = ['type' => $arg ? $arg : 'text'];
-            } else {
-                foreach ($arg as $k => $v) {
-                    if (is_int($k)) {
-                        if (in_array($v, $formFieldTypes)) {
-                            $arg['type'] = $v;
-                        } else {
-                            $arg[$v] = true;
-                        }
-                        unset($arg[$k]);
-                    }
-                }
-                if (!isset($arg['type'])) {
-                    $arg['type'] = 'text';
-                }
             }
-            $arg['label'] = $label;
-            $str .= $this->form->render($arg);
-        }
-
-        if ($this->commentText) {
-            $str .= str_replace(['&#39;','&#34;'], ['"', "'"], $this->getText('commentText') );
-        }
-
-        $lblSubmit = $this->lzy->trans->translateVariable('lzy-reservation-submit', true);
-        $lblCancel = $this->lzy->trans->translateVariable('lzy-reservation-cancel', true);
-        $str .= $this->form->render(          [
-            'value' => 'cancel,submit',
-            'label' => "$lblCancel,$lblSubmit",
-            'type' => 'button',
-        ]);
-        $str .= $this->form->render([ 'type' => 'form-tail' ]);
-
-        if ($this->trailingText) {
-            $str .= str_replace(['&#39;','&#34;'], ['"', "'"], $this->getText('trailingText') );
-        }
-
-
-        if ($inx === 1) {
-            $popup = <<<EOT
-        <div id='lzy-reservation-timed-out-msg' style="display: none;">
-            <div class="lzy-reservation-timeout-pup">
-{{ lzy-reservation-timed-out }}
-                <button id="lzy-reservation-timed-out-btn" class="lzy-button">{{ lzy-reload }}</button>
-            </div>
-        </div>
-
-EOT;
-            $this->lzy->page->addBodyEndInjections($popup);
-            $this->lzy->page->addModules( 'JS_POPUPS' );
-        }
-
-        return $str;
-	} // render
-
-
-
-
-    //------------------------------------
-    private function getText($name) {
-	    $str = '';
-	    $key = $this->$name;
-        $class = 'lzy-reservation-' . strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $name));
-        if (is_string($key)) {
-            $str = $key;
-
-        } elseif (is_array($key)) {
-            if (isset($key['textFrom'])) {
-                $textFrom = $key['textFrom'];
-                if (($textFrom[0] === '#') || ($textFrom[0] === '.')) {
-                    $jq = "$('#$class{$this->inx}').html( $('$textFrom').html() );";
-                    $this->lzy->page->addJq($jq);
+            if (isset($arg[0])) {
+                if ($arg[0] === 'required') {
+                    $arg['required'] = true;
+                    unset($arg[0]);
                 } else {
-                    $file = resolvePath($textFrom, true);
-                    if (file_exists($file)) {
-                        $str = file_get_contents($file);
-                        if (fileExt($file) === 'md') {
-                            $str = compileMarkdownStr($str);
-                        }
-                    } else {
-                        $str = "Error: file '$file' not found.";
-                    }
+                    $arg['type'] = $arg[0];
                 }
             }
-        }
-        $str = "\t<div id='$class{$this->inx}' class='$class'>$str</div>\n";
-        return $str;
-    } // getText
+            if ($label === 'submit') {
+                $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Submit }},';
+                $buttons["value"] .= 'submit,';
+                $arg['type'] = 'button';
 
+            } elseif ($label === 'cancel') {
+                $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Cancel }},';
+                $buttons["value"] .= 'cancel,';
+                $arg['type'] = 'button';
 
+            } elseif ($label === 'reset') {
+                $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Reset }},';
+                $buttons["value"] .= 'reset,';
+                $arg['type'] = 'button';
 
-
-    //------------------------------------
-    private function sendNotification($enrollData)
-    {
-        $notifies = explodeTrim(',', $this->notify);
-        foreach ($notifies as $notify) {
-            if (preg_match('/\( (.*) \) (.*)/x', $notify, $m)) {
-                $time = trim($m[1]);
-                $to = trim($m[2]);
-                if (preg_match('/(.*) :: (.*)/x', $time, $mm)) {
-                    $time = $mm[1];
-                    $freq = $mm[2];
-                    $this->setupScheduler($time, $freq, $to);
-                    continue;
-                }
-                list($from, $till) = $this->deriveFromTill($time);
-                $now = time();
-                if (($now > $from) && ($now < $till)) {
-                    $this->_sendNotification($enrollData, $to);
-                }
+            } elseif (strpos('formName,mailto,mailfrom,legend,showData', $label) !== false) {
+                // nothing to do
             } else {
-                $this->_sendNotification($enrollData, $notify);
+                $arg['label'] = $label;
+                $str .= parent::render($arg);
             }
         }
-    } // sendNotification
 
-
-
-    //------------------------------------
-    private function _sendNotification($enrollData, $to)
-    {
-        $msg = "{{ lzy-reservation-notify-text-1 }}\n";
-
-        foreach ($enrollData as $listName => $list) {
-            $n = sizeof($list) - 1;
-            list($nRequired, $title) = isset($list['_']) ? explode('=>', $list['_']) : ['?', ''];
-            $listName = $title ? $title : $listName;
-            $listName = str_pad("$listName: ", 24, '.');
-            $msg .= "$listName $n {{ of }} $nRequired\n";
+        // inject formHint:
+        if ($formHint && !$this->skipRenderingForm) {
+            if (!preg_match('/<.+>/', $formHint)) {
+                $formHint = "\t<div class='lzy-form-footer'>$formHint</div>\n";
+            }
+            $str .= str_replace(['&#39;','&#34;'], ['"', "'"], $formHint );
         }
-        $msg .= "{{ lzy-reservation-notify-text-2 }}\n";
-        $msg = $this->trans->translate($msg);
-        $msg = str_replace('\\n', "\n", $msg);
-        $subject = $this->trans->translate('{{ lzy-reservation-notify-subject }}');
 
-        require_once SYSTEM_PATH.'messenger.class.php';
+        // add buttons, preset with default buttons if not defined:
+        if (!$buttons["label"]) {
+            $buttons = [ 'label' => 'Send,Cancel', 'type' => 'button', 'options' => 'submit,cancel' ];
+        }
+        $str .= parent::render($buttons);
 
-        $mess = new Messenger($this->notifyFrom, $this->trans->lzy);
-        $mess->send($to, $msg, $subject);
-    } // _sendNotification
+        // inject formFooter:
+        if ($formFooter && !$this->skipRenderingForm) {
+            if (!preg_match('/<.+>/', $formFooter)) {
+                $formFooter = "\t<div class='lzy-form-footer'>$formFooter</div>\n";
+            }
+            $str .= str_replace(['&#39;','&#34;'], ['"', "'"], $formFooter );
+        }
+
+        $str .= parent::render([ 'type' => 'form-tail' ]);
+
+        return $str;
+    } // render
 
 
-
-
-    //------------------------------------
-    private function setupScheduler()
+    //----------------------------------------------------------------------
+    private function handleClientData()
     {
-        if (!$this->notify) {
+        if (!isset($_POST) || !$_POST) {
+            return;
+        }
+        $userSuppliedData = $_POST;
+        $cmd = @$userSuppliedData['_lizzy-form-cmd'];
+        if ($cmd === '_clear_') {     // _clear_ -> clear reservation ticket
+            $hash = $_SESSION["lizzy"][ $_SESSION["lizzy"]["pathToPage"] ]["tickets"]["pending-reservations"];
+            $resTick = new Ticketing([
+                'defaultType' => 'pending-reservations',
+                'defaultValidityPeriod' => $this->timeout,
+                'defaultMaxConsumptionCount' => 1,
+            ]);
+            $resTick->deleteTicket( $hash );
+            exit;
+        }
+
+        $resHash = $userSuppliedData['_res-ticket_1'];
+
+        $tick = new Ticketing();
+        $rec = $tick->consumeTicket($resHash);
+
+        $formHash = $rec["formHash"];
+        $currForm = parent::restoreFormDescr( $formHash );
+
+        if ($rec['deadline'] && ($rec['deadline'] < time())) {
+            $this->errorDescr[$currForm->formId]['_announcement_'] = 'lzy-reservation-deadline-exceeded';
+            $this->skipRenderingForm = true;
+            $tick->deleteTicket($resHash);
             return;
         }
 
-        $newSchedule = [];
-        $notifies = explode(',', $this->notify);
-        foreach ($notifies as $notify) {
-            if (preg_match('/\( (.*) \) (.*)/x', $notify, $m)) {
-                $time = trim($m[1]);
-                $to = trim($m[2]);
-                if (preg_match('/(.*) :: (.*)/x', $time, $mm)) {
-                    list($from, $till) = $this->deriveFromTill(trim($mm[1]));
-                    $freq = trim(strtolower($mm[2]));
-                    if ($freq === 'daily') {
-                        $time = '****-**-** 08:00';
-                    } elseif ($freq === 'weekly') {
-                        $time = 'Mo 08:00';
-                    } else {
-                        die("Error: reservation() -> time pattern not recognized: '$freq'");
-                    }
-                    $newSchedule[] = [
-                        'src' => $GLOBALS["globalParams"]["pathToPage"],
-                        'time' => $time,
-                        'from' => date('Y-m-d H:i', $from),
-                        'till' => date('Y-m-d H:i', $till),
-                        'loadLizzy' => true,
-                        'do' => $this->scheduleAgent,
-                        'args' => [
-                            'to' => $to,
-                            'from' => $this->notifyFrom,
-                            'dataFile' => $this->dataFile,
-                        ]
-                    ];
-                }
-            }
+        if ($userSuppliedData['_lizzy-form-cmd'] === '_delete_') {
+            $this->errorDescr[$currForm->formId]['_announcement_'] = 'lzy-reservation-aborted';
+            $this->skipRenderingForm = true;
+            $tick->deleteTicket($resHash);
+            return;
         }
 
-        $file = SCHEDULE_FILE;
-        $schedule = getYamlFile($file);
-
-        // clean up existing schedule entries:
-        $now = time();
-        foreach ($schedule as $i => $rec) {
-            $from = strtotime($rec['from']);
-            $till = strtotime($rec['till']);
-            if (($now < $from) || ($now > $till)) {
-                unset($schedule[$i]);
-            }
+        $existingReservations = $this->countReservations();
+        if ($existingReservations > $this->maxSeats) {
+            $this->errorDescr[$currForm->formId]['_announcement_'] = 'lzy-reservation-full-error';
+            $this->skipRenderingForm = true;
+            $tick->deleteTicket($resHash);
+            return;
         }
 
-        $schedule = array_merge($schedule, $newSchedule);
-        writeToYamlFile($file, $schedule);
-    } // setupScheduler
-
-
-
-
-    //------------------------------------
-    private function createErrorMsgs()
-    {
-        $errMsg = <<<EOT
-
-<!-- Enrollment Dialog error messages: -->
-<div class="dispno">
-    <div class="lzy-reservation-name-required">{{ lzy-reservation-name-required }}:</div>
-    <div class="lzy-reservation-email-required">{{ lzy-reservation-email-required }}:</div>
-    <div class="lzy-reservation-email-invalid">{{ lzy-reservation-email-invalid }}:</div>
-</div>
-
-
-EOT;
-        return $errMsg;
-    } // createErrorMsgs
-
-
-
-    //------------------------------------
-//    private function registrationLog($out)
-//    {
-//        $err = '';
-//        if ($this->err_msg) {
-//            $err = "\tError: {$this->err_msg}";
-//        }
-//        if ($this->logAgentData) {
-//            file_put_contents($this->logFile, timestamp() . "$out\t{$_SERVER["HTTP_USER_AGENT"]}\t{$_SERVER['REMOTE_ADDR']}$err\n", FILE_APPEND);
-//        } else {
-//            file_put_contents($this->logFile, timestamp() . "$out$err\n", FILE_APPEND);
-//        }
-//    }
-
-
-
-    //------------------------------------
-//    private function prepareLog()
-//    {
-//        if (!file_exists($this->logFile)) {
-//            $customFields = '';
-//            foreach ($this->customFieldsList as $item) {
-//                if (preg_match('/[\s,;]/', $item)) {
-//                    $customFields .= "; '$item'";
-//                } else {
-//                    $customFields .= "; $item";
-//                }
-//            }
-//            if ($this->logAgentData) {
-//                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields; Client; IP\n");
-//            } else {
-//                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields\n");
-//            }
-//        }
-//    } // prepareLog
-
-
-
-
-
-    private function deriveFromTill($time)
-    {
-        $from = 0;
-        $till = time() + 1000;
-
-        if (preg_match('/^ (\d\d\d\d-\d\d-\d\d) (.*) /x', $time, $m)) {
-            $from = strtotime(trim($m[1]));
-            $time = $m[2];
-        }
-        if (preg_match('/- \s*(\d\d\d\d-\d\d-\d\d) /x', $time, $m)) {
-            $till = strtotime('+1 day', strtotime(trim($m[1])));
-        }
-        return array($from, $till);
-    } // deriveFromTill
+        $tick->deleteTicket($resHash);
+        $this->evaluateUserSuppliedData();
+    } // handle $_POST
 
 
 
@@ -602,9 +345,24 @@ EOT;
         if (!$data) {
             return 0;
         }
-        $countInx = 3;  // index of nSeats field
+
+        $countInx = false;  // index of nSeats field
         $count = 0;
-        foreach ($data as $rec) {
+        foreach ($data as $key => $rec) {
+            if ($key === '_meta_') {
+                continue;
+            }
+            if (!$countInx) {
+                foreach ($rec as $k => $v) {
+                    if (strpos($k, 'reservation-count') === 0) {
+                        $countInx = $k;
+                        break;
+                    }
+                }
+                if (!$countInx) {
+                    die("Error Macro Reservation: elem 'reservation-count' not found in reservation data");
+                }
+            }
             if (isset($rec[$countInx])) {   // nSeats field
                 $count += intval($rec[$countInx]);
             }
@@ -614,159 +372,43 @@ EOT;
 
 
 
-    private function sendConfirmationMail( $rec )
+    private function getPendingReservations()
     {
-        if (!$this->confirmationEmail) {
-            return;
-        }
-        $isHtml = false;
-        foreach ($rec as $key => $value) {
-            if ((strpos($key, 'lizzy_') === 0) || (strpos($key, 'lzy-') === 0)) {
-                continue;
-            }
-            $this->trans->addVariable("$key-value", $value);
-        }
-        $to = $rec['e-mail'];
-        if ($this->confirmationEmail === true) {
-            $subject = '{{ lzy-confirmation-response-subject }}';
-            $message = '{{ lzy-confirmation-response-message }}';
-
-        } else {
-            $file = resolvePath($this->confirmationEmail, true);
-            if (!file_exists($file)) {
-                $this->response = 'lzy-reservation-email-template-not-found';
-                return;
-            }
-
-            $ext = fileExt($file);
-            $tmpl = file_get_contents($file);
-
-            if (stripos($ext, 'md') !== false) {
-                $page = new Page();
-                $tmpl = $page->extractFrontmatter($tmpl);
-                $css = $page->get('css');
-                $fm = $page->get('frontmatter');
-                $subject = isset($fm['subject']) ? $fm['subject'] : '';
-                if ($css) {
-                    $css = <<<EOT
-	<style>
-$css
-	</style>
-
-EOT;
-                }
-                $message = compileMarkdownStr($tmpl);
-                $message = <<<EOT
-<!DOCTYPE html>
-<html lang="de">
-<head>
-	<meta charset="utf-8" />
-$css
-</head>
-<body>
-$message
-</body>
-</html>
-
-EOT;
-                $message = translateUmlauteToHtml( ltrim($message) );
-                $isHtml = true;
-
-            } elseif ((stripos($ext, 'htm') !== false)) {
-                $page = new Page();
-                $tmpl = $this->lzy->page->extractHtmlBody($tmpl);
-                $css = $page->get('css');
-                $fm = $page->get('frontmatter');
-                $subject = isset($fm['subject']) ? $fm['subject'] : '';
-                $message = extractHtmlBody($tmpl);
-                $message = translateUmlauteToHtml( ltrim($message) );
-                $isHtml = true;
-
-            } else {    // .txt
-                if (preg_match('/^subject: (.*?)\n(.*)/ims', $tmpl, $m)) {
-                    $subject = $m[1];
-                    $message = $m[2];
-                } else {
-                    $this->response = 'lzy-reservation-email-template-syntax-error';
-                    return;
-                }
-            }
-        }
-
-        $subject = $this->trans->translate($subject);
-        $message = $this->trans->translate($message);
-
-        $this->lzy->sendMail($to, $subject, $message, $this->mailfrom, $isHtml);
-        return false;
-    } // sendConfirmationMail
-
-
-
-
-    private function deleteRec( $hash )
-    {
-        $data = $this->ds->read();
-        $data = array_reverse($data);
-        foreach ($data as $key => $rec) {
-            if ($rec[0] === $hash) {
-                $this->ds->deleteRecord( $key );
-                return true;
-            }
-        }
-        return false;
-    } // deleteRec
-
-
-
-
-    private function renderErrorReply($msg)
-    {
-        $out = <<<EOT
-{{ $msg }}
-EOT;
-        $out = $this->lzy->trans->translate($out);
-        return $out;
-    } // renderErrorReply
-
-
-
-    private function getPendingReservations(Ticketing $tick)
-    {
-        $pendingRes = $tick->sum('nSeats');
+        $hash = $_SESSION["lizzy"][ $_SESSION["lizzy"]["pathToPage"] ]["tickets"]["pending-reservations"];
+        $pendingRes = $this->resTick->sum('nSeats', $hash);
         // if reloading page one ticket is pending for ourself, so discount it:
         if (isset($_SESSION['lizzy']['reservation'][$this->inx])) {
-            $pendingRes = max(0, $pendingRes -= $this->maxSeatsPerReservation);
+            $pendingRes = max(0, $pendingRes - $this->maxSeatsPerReservation);
         }
         return $pendingRes;
     } // getPendingReservations
+
 } // class reservation
 
 
 
 
-function resetScheduleFile()
+function renderReservationsHelp()
 {
-    $thisSrc = $GLOBALS["globalParams"]["pathToPage"];
-    $file = SCHEDULE_FILE;
-    $schedule = getYamlFile($file);
-    $modified = false;
-    foreach ($schedule as $i => $rec) {
-        $src = $rec['src'];
-        if ($src === $thisSrc) {
-            unset($schedule[$i]);
-            $modified = true;
-        }
-    }
-    if ($modified) {
-        $schedule = array_values($schedule);
-        writeToYamlFile($file, $schedule);
-    }
+
+    return <<<'EOT'
+
+## Help on macro reservation()
+
+Macro ``reseravtion()`` accepts all arguments that ``formhead()`` and ``formelem()`` do.
+
+### Deviations:
+
+formHeader:
+: Text rendered above the form. Patter ``{seatsAvailable}`` will be replaced with the actual value.
+: Will be hidden upon successful completion of form entry.
+
+{{ vgap }}
+
+{{ formhead( help ) }}
+{{ vgap }}
+{{ formelem( help ) }}
+
+EOT;
+
 }
-
-
-
-//function reservationPostprocess()
-//{
-//    return '';
-//}
-
