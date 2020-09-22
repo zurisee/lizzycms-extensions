@@ -47,8 +47,8 @@ lzy-confirmation-response-subject:
   _:  'Reservation confirmed'
 
 lzy-reservation-full:
-  de: '<p>Die Veranstaltung ist leider bereits ausgebucht.</p>'
-  _:  '<p>Sorry, this event is already booked out.</p>'
+  de: '<p>Die Veranstaltung ist ausgebucht.</p>'
+  _:  '<p>Sorry, this event is fully booked.</p>'
 
 lzy-registration-more-than:
   de: 'mehr als $moreThanThreshold'
@@ -80,9 +80,16 @@ lzy-confirmation-response-message:
 
     Regards
 
-lzy-reservation-deadline-exceeded:
-  de: 'Die Anmeldefrist ist am $date abgelaufen.'
-  _:  'Registration deadline exeeded on $date.'
+lzy-reservation-deadline-passed:
+  de: 'Die Anmeldefrist ist abgelaufen.'
+  _:  'Registration deadline has passed.'
+
+lzy-reservation-email-sent:
+  de: 'Sie erhalten in Kürze eine Bestätigung per E-Mail.'
+  _:  'You will receive a confirmation by e-mail shortly.'
+
+
+
 
 __END__
 '':

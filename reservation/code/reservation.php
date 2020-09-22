@@ -1,5 +1,9 @@
 <?php
 
+define('RESERVATION_SPECIFIC_ELEMENTS', ',deadline,maxSeats,maxSeatsPerReservation,'.
+    'waitingListLength,moreThanThreshold,notify,'.
+    'notifyFrom,scheduleAgent,logAgentData,');
+
 require_once SYSTEM_PATH.'forms.class.php';
 
 $macroName = basename(__FILE__, '.php');
@@ -8,7 +12,7 @@ $this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml", fa
 define('RESERVATION_DATA_FILE','reservation.csv');
 define('RESERVATION_LOG_FILE', 'reservation.log.txt');
 
-$page->addModules('~ext/reservation/js/reservation.js, ~ext/reservation/css/reservation.css');
+$page->addModules('~ext/reservation/css/reservation.css');
 
 
 $this->addMacro($macroName, function () {
@@ -40,13 +44,14 @@ class Reservation extends Forms
 {
     protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation;
     protected $waitingListLength, $moreThanThreshold, $confirmationEmail;
-    protected $timeout, $notify, $notifyFrom, $scheduleAgent, $reservationCallback;
-    protected $formHash, $ds, $resTick, $resSpecificArgs;
+    protected $notify, $notifyFrom, $scheduleAgent, $reservationCallback;
+    protected $formHash, $ds, $resTick, $resSpecificArgs, $requireEmail;
 
     public function __construct($lzy, $args)
     {
         $this->args = $args;
 
+        $this->requireEmail =               isset($args['requireEmail'])? $args['requireEmail']: false;
         $this->dataFile =                   @$args['file'];
         $this->deadline =                   @$args['deadline'];
         if ($this->deadline && is_string($this->deadline)) {
@@ -59,7 +64,6 @@ class Reservation extends Forms
         $this->waitingListLength =          false;
         $this->moreThanThreshold =          intval( @$args['moreThanThreshold'] );
         $this->confirmationEmail =          @$args['confirmationEmail'];
-        $this->timeout =                    @$args['timeout'];
     //        $this->notify = @$args['notify'];
     //        $this->notifyFrom = str_replace(['&#39;', '&#34;'], ["'", '"'], $args['notifyFrom']);
     //        $this->scheduleAgent = @$args['scheduleAgent'];
@@ -90,7 +94,7 @@ class Reservation extends Forms
 
         $this->resTick = new Ticketing([
             'defaultType' => 'pending-reservations',
-            'defaultValidityPeriod' => $this->timeout,
+            'defaultValidityPeriod' => 900, // 15 min
             'defaultMaxConsumptionCount' => 1,
         ]);
 
@@ -104,15 +108,10 @@ class Reservation extends Forms
             $seatsAvailable = str_replace('$moreThanThreshold', $this->moreThanThreshold, $seatsAvailable);
         }
 
-        if (($nReservations + $pendingRes) >= $this->maxSeats) {
+        if (!$this->responseToClient && ($seatsAvailable <= 0)) {
             return $this->lzy->trans->translateVariable('lzy-reservation-full', true);
         }
 
-
-        // additional reservation specific args:
-        $resSpecificElements = ',deadline,maxSeats,maxSeatsPerReservation,'.
-            'waitingListLength,moreThanThreshold,timeout,notify,'.
-            'notifyFrom,scheduleAgent,logAgentData,';
 
         // separate arguments for header and fields:
         $headArgs = [];
@@ -130,7 +129,7 @@ class Reservation extends Forms
             } elseif ($this->isHeadAttribute( $key )) {
                 $headArgs[$key] = $value;
 
-            } elseif (strpos($resSpecificElements, ",$key,") !== false) {
+            } elseif (strpos(RESERVATION_SPECIFIC_ELEMENTS, ",$key,") !== false) {
                 $resSpecificArgs[$key] = $value;
 
             } else {
@@ -155,21 +154,20 @@ class Reservation extends Forms
         }
         $str = parent::render( $headArgs );
 
-        $resTickRec = [
-            'formHash' => parent::getFormHash(),
-            'file' => $this->dataFile,
-            'deadline' => $this->deadline,
-            'nSeats' => $this->maxSeatsPerReservation,
-        ];
         if (!$this->skipRenderingForm) {
-        $ticket = $this->resTick->createTicket($resTickRec);
+            $resTickRec = [
+                'formHash' => parent::getFormHash(),
+                'file' => $this->dataFile,
+                'deadline' => $this->deadline,
+                'nSeats' => $this->maxSeatsPerReservation,
+            ];
+            $ticket = $this->resTick->createTicket($resTickRec);
         } else {
             $ticket = '';
         }
         // create form buttons:
         $buttons = [ 'label' => '', 'type' => 'button', 'value' => '' ];
 
-        $wrapperClass = ($this->maxSeatsPerReservation === 1) ? 'dispno': '';
         $defaultFields = [
             [
                 'type' => 'hidden',
@@ -178,19 +176,13 @@ class Reservation extends Forms
                 'value' => $ticket,
             ],
             [
-                'type' => 'hidden',
-                'label' => 'lzy-reservation-timeout',
-                'class' => 'lzy-reservation-timeout',
-                'name' => '_timeout',
-                'value' => $this->timeout,
+                'type' => 'text',
+                'label' => '-First Name',
+                'required' => true,
             ],
             [
                 'type' => 'text',
-                'label' => 'First Name',
-            ],
-            [
-                'type' => 'text',
-                'label' => 'Last Name',
+                'label' => '-Last Name',
                 'required' => true,
             ],
         ];
@@ -199,22 +191,33 @@ class Reservation extends Forms
             $defaultFields[] =
                 [
                     'type' => 'email',
-                    'label' => 'E-Mail',
-                    'required' => true,
+                    'label' => '-E-Mail',
+                    'required' => $this->requireEmail,
                 ];
         }
-        $defaultFields[] =
-            [
-                'type' => 'number',
-                'label' => 'lzy-reservation-count-label',
-                'name' => 'reservation-count',
-                'labelInOutput' => 'reservation-count',
-                'required' => true,
-                'min' => 1,
-                'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
-                'value' => 1,
-                'wrapperClass' => $wrapperClass,
-            ];
+        if ($this->maxSeatsPerReservation === 1) {
+            $defaultFields[] =
+                [
+                    'type' => 'hidden',
+                    'label' => '-lzy-reservation-count-label',
+                    'name' => 'reservation-count',
+                    'labelInOutput' => 'reservation-count',
+                    'value' => 1,
+                ];
+
+        } else {
+            $defaultFields[] =
+                [
+                    'type' => 'number',
+                    'label' => '-lzy-reservation-count-label',
+                    'name' => 'reservation-count',
+                    'labelInOutput' => 'reservation-count',
+                    'required' => true,
+                    'min' => 1,
+                    'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
+                    'value' => 1,
+                ];
+        }
 
         foreach ($defaultFields as $arg) {
             $str .= parent::render($arg);
@@ -238,17 +241,13 @@ class Reservation extends Forms
                 $buttons["value"] .= 'submit,';
                 $arg['type'] = 'button';
 
-            } elseif ($label === 'cancel') {
+            } elseif (($label === 'cancel') || ($label === 'reset')) {
                 $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Cancel }},';
                 $buttons["value"] .= 'cancel,';
                 $arg['type'] = 'button';
 
-            } elseif ($label === 'reset') {
-                $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Reset }},';
-                $buttons["value"] .= 'reset,';
-                $arg['type'] = 'button';
-
             } elseif (strpos('formName,mailto,mailfrom,legend,showData', $label) !== false) {
+                die(__FILE__. ' '.__LINE__.' Error: clause should be obsolete...');
                 // nothing to do
             } else {
                 $arg['label'] = $label;
@@ -291,43 +290,39 @@ class Reservation extends Forms
             return;
         }
         $userSuppliedData = $_POST;
-        $cmd = @$userSuppliedData['_lizzy-form-cmd'];
-        if ($cmd === '_clear_') {     // _clear_ -> clear reservation ticket
-            $hash = $_SESSION["lizzy"][ $_SESSION["lizzy"]["pathToPage"] ]["tickets"]["pending-reservations"];
-            $resTick = new Ticketing([
-                'defaultType' => 'pending-reservations',
-                'defaultValidityPeriod' => $this->timeout,
-                'defaultMaxConsumptionCount' => 1,
-            ]);
-            $resTick->deleteTicket( $hash );
+        $this->userSuppliedData = $userSuppliedData;
+        $resHash = $userSuppliedData['_res-ticket_1'];
+        $tick = new Ticketing();
+        $tick->deleteTicket($resHash);
+
+        if (@$userSuppliedData['_lizzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
             exit;
         }
 
-        $resHash = $userSuppliedData['_res-ticket_1'];
 
-        $tick = new Ticketing();
-        $rec = $tick->consumeTicket($resHash);
+        $currForm = parent::restoreFormDescr( $userSuppliedData['_lizzy-form'] );
+        $formId = $currForm? $currForm->formId: 'generic';
 
-        $formHash = $rec["formHash"];
-        $currForm = parent::restoreFormDescr( $formHash );
-
-        if ($rec['deadline'] && ($rec['deadline'] < time())) {
-            $this->errorDescr[$currForm->formId]['_announcement_'] = 'lzy-reservation-deadline-exceeded';
+        // deadline for reservations: reject if deadline has passed:
+        if ($this->deadline && ($this->deadline < time())) {
+            $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-deadline-passed }}';
             $this->skipRenderingForm = true;
             $tick->deleteTicket($resHash);
             return;
         }
 
-        if ($userSuppliedData['_lizzy-form-cmd'] === '_delete_') {
-            $this->errorDescr[$currForm->formId]['_announcement_'] = 'lzy-reservation-aborted';
+        $requestedSeats = $this->getUserSuppliedValue("reservation-count");
+        if ($requestedSeats > $this->maxSeatsPerReservation) {
+            // this case is likely result of tampering, so react as if fully booked...
+            $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
             $tick->deleteTicket($resHash);
             return;
         }
 
         $existingReservations = $this->countReservations();
-        if ($existingReservations > $this->maxSeats) {
-            $this->errorDescr[$currForm->formId]['_announcement_'] = 'lzy-reservation-full-error';
+        if (($existingReservations + $requestedSeats) >= $this->maxSeats) {
+            $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
             $tick->deleteTicket($resHash);
             return;
@@ -336,6 +331,7 @@ class Reservation extends Forms
         $tick->deleteTicket($resHash);
         $this->evaluateUserSuppliedData();
     } // handle $_POST
+
 
 
 
@@ -374,7 +370,7 @@ class Reservation extends Forms
 
     private function getPendingReservations()
     {
-        $hash = $_SESSION["lizzy"][ $_SESSION["lizzy"]["pathToPage"] ]["tickets"]["pending-reservations"];
+        $hash = @$_SESSION["lizzy"][ $_SESSION["lizzy"]["pathToPage"] ]["tickets"]["pending-reservations"];
         $pendingRes = $this->resTick->sum('nSeats', $hash);
         // if reloading page one ticket is pending for ourself, so discount it:
         if (isset($_SESSION['lizzy']['reservation'][$this->inx])) {
