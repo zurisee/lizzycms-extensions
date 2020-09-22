@@ -9,3 +9,10 @@
 .lzy-forms-preview {
 	font-size: 10pt;
 }
+.lzy-reservtion-deadline-passed {
+	padding: 2em 0;
+
+}
+.lzy-formelem-show-info .lzy-icon-info::before {
+	top: 30%;
+}
