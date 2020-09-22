@@ -92,6 +92,10 @@ class Reservation extends Forms
     {
         $args = $this->args;
 
+        if ($this->deadline && ($this->deadline < time())) {
+            return "<p class='lzy-reservtion-deadline-passed'>{{ lzy-reservation-deadline-passed }}</p>";
+        }
+
         $this->resTick = new Ticketing([
             'defaultType' => 'pending-reservations',
             'defaultValidityPeriod' => 900, // 15 min
@@ -119,6 +123,7 @@ class Reservation extends Forms
         $formElems = [];
         $formHint = '';
         $formFooter = '';
+        $emailFound = false;
         foreach ($args as $key => $value) {
             if ($key === 'formHint') {
                 $formHint = $value;
@@ -133,6 +138,15 @@ class Reservation extends Forms
                 $resSpecificArgs[$key] = $value;
 
             } else {
+                if (isset($value[ 0 ])) {
+                    if (strpos(SUPPORTED_TYPES, $value[ 0 ]) !== false) {
+                        $value['type'] = $value[ 0 ];
+                        unset( $value[ 0 ] );
+                    }
+                }
+                if (@$value['type'] === 'email') {
+                    $emailFound = true;
+                }
                 $formElems[$key] = $value;
             }
         }
@@ -187,7 +201,7 @@ class Reservation extends Forms
             ],
         ];
 
-        if ($this->confirmationEmail) {
+        if ($this->confirmationEmail && !$emailFound) {
             $defaultFields[] =
                 [
                     'type' => 'email',
