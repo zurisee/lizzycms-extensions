@@ -207,7 +207,7 @@ class Reservation extends Forms
                     'type' => 'email',
                     'label' => '-E-Mail',
                     'required' => $this->requireEmail,
-                    'info' => '{{ lzy-reservation-email-info }}',
+                    'info' => 'lzy-form-email-confirmation-info',
                 ];
         }
         if ($this->maxSeatsPerReservation === 1) {
