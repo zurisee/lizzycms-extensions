@@ -81,7 +81,7 @@ class Reservation extends Forms
         preparePath($this->dataFile);
         // $this->prepareLog();
         $this->ds = new DataStorage2($this->dataFile);
-        $this->handleClientData();
+        $this->evaluateClientData();
     //        $this->setupScheduler();
     } // __construct
 
@@ -152,6 +152,7 @@ class Reservation extends Forms
         }
         $this->resSpecificArgs = $resSpecificArgs;
 
+        $headArgs['formHeader'] = isset($headArgs['formHeader'])? $headArgs['formHeader']: '';
         if (strpos($headArgs['formHeader'], '{seatsAvailable}') !== 0) {
             $headArgs['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailable, $headArgs['formHeader']);
         }
@@ -191,12 +192,14 @@ class Reservation extends Forms
             ],
             [
                 'type' => 'text',
-                'label' => '-First Name',
+                'label' => '-lzy-reservation-first-name',
+                'name' => 'first_name',
                 'required' => true,
             ],
             [
                 'type' => 'text',
-                'label' => '-Last Name',
+                'label' => '-lzy-reservation-last-name',
+                'name' => 'last_name',
                 'required' => true,
             ],
         ];
@@ -205,7 +208,8 @@ class Reservation extends Forms
             $defaultFields[] =
                 [
                     'type' => 'email',
-                    'label' => '-E-Mail',
+                    'label' => '-lzy-reservation-email',
+                    'name' => 'e-mail',
                     'required' => $this->requireEmail,
                     'info' => 'lzy-form-email-confirmation-info',
                 ];
@@ -216,7 +220,7 @@ class Reservation extends Forms
                     'type' => 'hidden',
                     'label' => '-lzy-reservation-count-label',
                     'name' => 'reservation-count',
-                    'labelInOutput' => 'reservation-count',
+                    'labelInOutput' => 'lzy-reservation-count-output-label',
                     'value' => 1,
                 ];
 
@@ -226,7 +230,7 @@ class Reservation extends Forms
                     'type' => 'number',
                     'label' => '-lzy-reservation-count-label',
                     'name' => 'reservation-count',
-                    'labelInOutput' => 'reservation-count',
+                    'labelInOutput' => 'lzy-reservation-count-output-label',
                     'required' => true,
                     'min' => 1,
                     'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
@@ -299,7 +303,7 @@ class Reservation extends Forms
 
 
     //----------------------------------------------------------------------
-    private function handleClientData()
+    private function evaluateClientData()
     {
         if (!isset($_POST) || !$_POST) {
             return;
@@ -322,7 +326,6 @@ class Reservation extends Forms
         if ($this->deadline && ($this->deadline < time())) {
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-deadline-passed }}';
             $this->skipRenderingForm = true;
-            $tick->deleteTicket($resHash);
             return;
         }
 
@@ -331,7 +334,6 @@ class Reservation extends Forms
             // this case is likely result of tampering, so react as if fully booked...
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
-            $tick->deleteTicket($resHash);
             return;
         }
 
@@ -339,13 +341,11 @@ class Reservation extends Forms
         if (($existingReservations + $requestedSeats) > $this->maxSeats) {
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
-            $tick->deleteTicket($resHash);
             return;
         }
 
-        $tick->deleteTicket($resHash);
         $this->evaluateUserSuppliedData();
-    } // handle $_POST
+    } // evaluateClientData
 
 
 

@@ -4,7 +4,7 @@ lzy-reservation-info:
     de: ''
     _:  ''
 
-reservation-count:
+lzy-reservation-count-output-label:
   de: 'Anzahl'
   _:  'Number'
 
@@ -12,15 +12,15 @@ lzy-timestamp:
   de: 'Eingang'
   _:  'Received'
 
-'First Name':
-  de: 'Vorname'
+'lzy-reservation-first-name':
+  de: 'Vorname:'
   _:  'First Name:'
 
-'Last Name':
+'lzy-reservation-last-name':
   de: 'Nachname:'
   _:  'Last Name:'
 
-'E-Mail':
+'lzy-reservation-email':
   de: 'E-Mail:'
   _:  'E-Mail:'
 
