@@ -86,13 +86,15 @@ lzy-confirmation-response-message:
 
 lzy-reservation-deadline-passed:
   de: 'Die Anmeldefrist ist abgelaufen.'
-  _:  'Registration deadline has passed.'
+  _:  'Reservation deadline has passed.'
 
 lzy-reservation-email-sent:
   de: '<p>Sie erhalten in Kürze eine Bestätigung per E-Mail.</p>'
   _:  '<p>You will receive a confirmation by e-mail shortly.</p>'
 
-
+lzy-reservation-email-info:
+  de: 'Wenn Sie Ihre E-Mail Adresse hier eingeben, erhalten Sie eine Bestästigung per E-Mail.'
+  _:  'If you fill in your e-mail address, we will send you confirmation message.'
 
 
 __END__
