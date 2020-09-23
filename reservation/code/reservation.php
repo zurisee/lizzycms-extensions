@@ -335,7 +335,7 @@ class Reservation extends Forms
         }
 
         $existingReservations = $this->countReservations();
-        if (($existingReservations + $requestedSeats) >= $this->maxSeats) {
+        if (($existingReservations + $requestedSeats) > $this->maxSeats) {
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
             $tick->deleteTicket($resHash);
