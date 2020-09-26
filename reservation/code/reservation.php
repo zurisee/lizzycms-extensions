@@ -211,7 +211,7 @@ class Reservation extends Forms
                     'label' => '-lzy-reservation-email',
                     'name' => 'e-mail',
                     'required' => $this->requireEmail,
-                    'info' => 'lzy-form-email-confirmation-info',
+                    'info' => '-lzy-form-email-confirmation-info',
                 ];
         }
         if ($this->maxSeatsPerReservation === 1) {
@@ -220,7 +220,7 @@ class Reservation extends Forms
                     'type' => 'hidden',
                     'label' => '-lzy-reservation-count-label',
                     'name' => 'reservation-count',
-                    'labelInOutput' => 'lzy-reservation-count-output-label',
+                    'labelInOutput' => '-lzy-reservation-count-output-label',
                     'value' => 1,
                 ];
 
