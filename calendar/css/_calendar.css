@@ -51,7 +51,7 @@
 
 .field-type-date .lzy-cal-label {
   position: absolute;
-  right: -1000vh; }
+  right: -10000px; }
 
 .lzy_cal_allday_event label {
   display: block;
