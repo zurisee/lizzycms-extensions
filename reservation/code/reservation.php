@@ -1,6 +1,6 @@
 <?php
 
-define('RESERVATION_SPECIFIC_ELEMENTS', ',deadline,maxSeats,maxSeatsPerReservation,'.
+define('RESERVATION_SPECIFIC_ELEMENTS', ',emailField,requireEmail,deadline,maxSeats,maxSeatsPerReservation,'.
     'waitingListLength,moreThanThreshold,notify,'.
     'notifyFrom,scheduleAgent,logAgentData,');
 
@@ -43,7 +43,7 @@ $this->addMacro($macroName, function () {
 class Reservation extends Forms
 {
     protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation;
-    protected $waitingListLength, $moreThanThreshold, $confirmationEmail;
+    protected $waitingListLength, $moreThanThreshold, $confirmationEmail, $emailField;
     protected $notify, $notifyFrom, $scheduleAgent, $reservationCallback;
     protected $formHash, $ds, $resTick, $resSpecificArgs, $requireEmail;
 
@@ -64,6 +64,7 @@ class Reservation extends Forms
         $this->waitingListLength =          false;
         $this->moreThanThreshold =          intval( @$args['moreThanThreshold'] );
         $this->confirmationEmail =          @$args['confirmationEmail'];
+        $this->emailField =                 @$args['emailField'] || $this->confirmationEmail;
     //        $this->notify = @$args['notify'];
     //        $this->notifyFrom = str_replace(['&#39;', '&#34;'], ["'", '"'], $args['notifyFrom']);
     //        $this->scheduleAgent = @$args['scheduleAgent'];
@@ -204,7 +205,8 @@ class Reservation extends Forms
             ],
         ];
 
-        if ($this->confirmationEmail && !$emailFound) {
+//        if ($this->confirmationEmail && !$emailFound) {
+        if ($this->emailField && !$emailFound) {
             $defaultFields[] =
                 [
                     'type' => 'email',
@@ -268,6 +270,9 @@ class Reservation extends Forms
             } elseif (strpos('formName,mailto,mailfrom,legend,showData', $label) !== false) {
                 die(__FILE__. ' '.__LINE__.' Error: clause should be obsolete...');
                 // nothing to do
+            } elseif (is_bool($arg)) {
+                writeLog("Reservation(): unknown arg '$label' (probablt forgot to add it to RESERVATION_SPECIFIC_ELEMENTS)");
+                exit;
             } else {
                 $arg['label'] = $label;
                 $str .= parent::render($arg);
@@ -286,6 +291,7 @@ class Reservation extends Forms
         if (!$buttons["label"]) {
             $buttons = [ 'label' => 'Send,Cancel', 'type' => 'button', 'options' => 'submit,cancel' ];
         }
+        $buttons["value"] = rtrim($buttons["value"], ',');
         $str .= parent::render($buttons);
 
         // inject formFooter:
@@ -310,7 +316,7 @@ class Reservation extends Forms
         }
         $userSuppliedData = $_POST;
         $this->userSuppliedData = $userSuppliedData;
-        $resHash = $userSuppliedData['_res-ticket_1'];
+        $resHash = @$userSuppliedData['_res-ticket'];
         $tick = new Ticketing();
         $tick->deleteTicket($resHash);
 
