@@ -58,8 +58,8 @@ class Reservation extends Forms
             $this->deadline = strtotime($this->deadline);
         }
 
-        $this->maxSeats =                   intval( @$args['maxSeats'] );
-        $this->maxSeatsPerReservation =     intval( @$args['maxSeatsPerReservation'] );
+        $this->maxSeats =                   intval(isset($args['maxSeats']) ? $args['maxSeats']: 999 );
+        $this->maxSeatsPerReservation =     intval(isset($args['maxSeatsPerReservation']) ? $args['maxSeatsPerReservation']: 1 );
     //        $this->waitingListLength = intval($args['waitingListLength']);
         $this->waitingListLength =          false;
         $this->moreThanThreshold =          intval( @$args['moreThanThreshold'] );
@@ -107,12 +107,13 @@ class Reservation extends Forms
 
 
         $nReservations = $this->countReservations();
-        $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
+        $seatsAvailableStr = $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
         if ($this->moreThanThreshold && ($seatsAvailable > $this->moreThanThreshold)) {
-            $seatsAvailable = $this->lzy->trans->translateVariable('lzy-registration-more-than');
-            $seatsAvailable = str_replace('$moreThanThreshold', $this->moreThanThreshold, $seatsAvailable);
+            $seatsAvailableStr = '{{ lzy-reservation-more-than-seats-available }}';
         }
-
+        if ($formHeader = @$args['formHeader']) {
+            $args['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailableStr, $formHeader);
+        }
         if (!$this->responseToClient && ($seatsAvailable <= 0)) {
             return $this->lzy->trans->translateVariable('lzy-reservation-full', true);
         }
@@ -205,12 +206,11 @@ class Reservation extends Forms
             ],
         ];
 
-//        if ($this->confirmationEmail && !$emailFound) {
         if ($this->emailField && !$emailFound) {
             $defaultFields[] =
                 [
                     'type' => 'email',
-                    'label' => '-lzy-reservation-email',
+                    'label' => '-lzy-reservation-email-label',
                     'name' => 'e-mail',
                     'required' => $this->requireEmail,
                     'info' => '-lzy-form-email-confirmation-info',
@@ -412,13 +412,66 @@ function renderReservationsHelp()
 
 ## Help on macro reservation()
 
-Macro ``reseravtion()`` accepts all arguments that ``formhead()`` and ``formelem()`` do.
+Macro ``reseravtion()`` accepts all arguments that ``form-head()`` and ``form-elem()`` do.
 
-### Deviations:
+A reservation form contains at least fields ``First Name`` and ``Last Name``.  
+Depending on further options, fields for ``Number of Seats`` 
+and ``E-mail`` may also appear by default. Any number of additional fields of any type 
+supported by ``form-elem()`` may be added.
+
+### Options Specific to reservation():
+
+emailField:
+: If true, an e-mail fields is included. (default: false, unless ``confirmationEmail`` is true, 
+: see ``form-head()`` for reference).
+
+requireEmail:
+: If true, the e-mail field is made mandatory.
+
+deadline:
+: (date) Defines the date (and optionally time) when registration is closed. 
+: After that point in time an announcement (i.e. variable ``&#123;{ lzy-reservation-deadline-passed }}`` 
+: appears in place of the form.  
+: Use ISO format, e.g. "2020-12-31 20:50"
+
+maxSeats:
+: (integer) Defines the maximum number of seats available. When the number 
+: of reservations reaches that threshold a corresponding message (i.e. variable 
+: ``&#123;{ lzy-reservation-full }}`` 
+: appears 
+: in place of the form.
+
+maxSeatsPerReservation:
+: (integer) Defines the maximum number of seats a user can book at the time.  
+: If the number is greater than 1, a 'number of seas' (i.e. variable 
+: &#123;{ lzy-reservation-count-label }}) appears. 
+: (Default: 1)
 
 formHeader:
-: Text rendered above the form. Patter ``{seatsAvailable}`` will be replaced with the actual value.
-: Will be hidden upon successful completion of form entry.
+: (string) If defined, this string will appear above the form.  
+: -> Use placeholder ``{seatsAvailable}`` 
+: to present the number of currently available seats.  
+: Note: when a reservation form is rendered, ``maxSeatsPerReservation`` are blocked  
+: for other uses opening the form thereafter. 
+: Thus, ``{seatsAvailable}`` may temporarily differ from the actual number of available seats.  
+: Blocked seats are freed upon submitting the form or after a 15 minute timeout.
+
+moreThanThreshold:
+: (integer) If set, defines a threshold. If the number of available seats exceeds 
+: that threshold, variable ``&#123;{ lzy-reservation-more-than-seats-available }}`` is presented 
+: instead, e.g. stating "More than 20 seats available".
+
+### Variables
+
+    \{{ lzy-reservation-first-name }}
+    \{{ lzy-reservation-last-name }}
+    \{{ lzy-reservation-email-label }}
+    \{{ lzy-reservation-count-label }}
+    \{{ lzy-reservation-full }}
+    \{{ lzy-reservation-deadline-passed }}
+    \{{ lzy-reservation-more-than-seats-available }}
+    \{{ lzy-form-email-confirmation-info }}
+    
 
 {{ vgap }}
 
@@ -429,3 +482,10 @@ formHeader:
 EOT;
 
 }
+
+
+//notify
+//notifyFrom
+//scheduleAgent
+//reservationCallback
+

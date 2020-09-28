@@ -20,7 +20,7 @@ lzy-timestamp:
   de: 'Nachname:'
   _:  'Last Name:'
 
-'lzy-reservation-email':
+'lzy-reservation-email-label':
   de: 'E-Mail:'
   _:  'E-Mail:'
 
