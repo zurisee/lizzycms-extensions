@@ -38,6 +38,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
     $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
     $this->getArg($macroName, 'data_path', 'Synonym for dataPath', false);
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($h === 'help') {
         return '';

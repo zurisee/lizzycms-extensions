@@ -32,6 +32,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'preloadRec', '[false|integer|string] Defines how form fields will be prefilled: false=hour-glass, string=literal, integer=recKey (default: false)', false);
     $this->getArg($macroName, 'elemPrefix', '(optional) Prefix applied to input field IDs (default: \'fld_\')', false);
     //    $this->getArg($macroName, 'checkDataCallback', 'Name of a php script that will be invoked upon storing data received from the client', ''); // not implemented yet
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($dataSource === 'help') {
         return '';

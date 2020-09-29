@@ -45,6 +45,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'headerRightButtons', '[day,week,month,year] Defines which buttons (to select views) will be displayed and in which order (ltr)', 'week,month,year');
     $this->getArg($macroName, 'initialDate', '[ISO-Date] Defines the initial date, default: today', '');
     $this->getArg($macroName, 'eventTitleRequired', '[true,false] Defines whether title field a new event must be defined, default: true', true);
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($source === 'help') {
         return '';

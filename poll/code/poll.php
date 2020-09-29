@@ -20,6 +20,7 @@ $this->addMacro($macroName, function () {
     $resultFile = $this->getArg($macroName, 'resultFile', 'File in which to store results. (default: "poll-results.yaml"', "poll-results.yaml");
     $showResults = $this->getArg($macroName, 'showResults', 'Immediately show number of votes per option.', false);
     $limitVotesPerUser = $this->getArg($macroName, 'limitVotesPerUser', '[integer] Monitor who has already voted and exclude this user, if limit is reached.', false);
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
     $votesCountFile = resolvePath("~page/.#votesCount.yaml");
 
     if ($options === 'help') {

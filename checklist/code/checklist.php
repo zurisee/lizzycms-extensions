@@ -15,6 +15,11 @@ $this->addMacro($macroName, function () {
     $dataStorage = $this->getArg($macroName, 'dataStorage', 'Name of a file (local to current page) where to store checklist states, e.g. "mychecklist.json".', '');
     $dataStorage = resolvePath($dataStorage, true);
     $scope = $this->getArg($macroName, 'scope', '[all|user] Defines who will see changes, only the user or everybody visiting the web-page. (Default: all)', '');
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
+
+    if ($selector === 'help') {
+        return '';
+    }
 
     require_once SYSTEM_PATH.'ticketing.class.php';
     $ticketing = new Ticketing(['hashSize' => 6, 'defaultType' => 'checklist', 'defaultMaxConsumptionCount' => 999999999, 'defaultValidityPeriod' => 999999999]);

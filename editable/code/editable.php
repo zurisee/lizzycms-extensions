@@ -37,6 +37,7 @@ $this->addMacro($macroName, function () {
     $args['showRowNumbers'] = $this->getArg($macroName, 'showRowNumbers', '[true|false] Adds an index number to every row (default: true)', true);
     $args['useRecycleBin'] = $this->getArg($macroName, 'useRecycleBin', '[true|false] If true, previous values will be saved in a recycle bin rather than discared (default: false)', false);
     $args['freezeFieldAfter'] = $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
 
     if (($args['id'] == 'help') || ($args['id'] === false)) {

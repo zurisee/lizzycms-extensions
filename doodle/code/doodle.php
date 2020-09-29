@@ -41,6 +41,7 @@ $this->addMacro($macroName, function () {
 
 	$multipleAnswers = $this->getArg($macroName, 'multipleAnswers', '[true,false] Defines whether multiple answers are permitted.', true);
 	$allowOverwrite = $this->getArg($macroName, 'allowOverwrite', '[true,false] If true, previous entries can be overwritten by anybody.', false);
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($options === 'help') {
         return '';

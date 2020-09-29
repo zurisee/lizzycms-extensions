@@ -16,6 +16,7 @@ $this->addMacro($macroName, function () {
     $msgAfter = $this->getArg($macroName, 'commentAfter', 'Text that will be shown AFTER the form (unless already logged in)', '');
     $loggedInMessage = $this->getArg($macroName, 'loggedInMessage', 'Text that will be shown if logged in', 'default');
     $group = $this->getArg($macroName, 'group', '(Optional) Name of a user group', 'guest');
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     $notLoggedInMessage = "$msgBefore $$ $msgAfter";
 

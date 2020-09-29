@@ -11,6 +11,7 @@ $this->addMacro($macroName, function () {
 	$id = $this->getArg($macroName, 'id', "ID to be applied to output image", '');
 	$class = $this->getArg($macroName, 'class', "Class to be applied to output image", '');
     $cacheFile = $this->getArg($macroName, 'cacheFile', "Name of file to be used for caching.", '');
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(true) Disables page caching. Note: only active if system-wide caching is enabled.', false);
 
 	if (!$cacheFile) {
 		$cacheFile = '~page/'.CACHE_PATH.translateToFilename($text, false).'.tmp';
