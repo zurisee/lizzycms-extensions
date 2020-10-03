@@ -1,15 +1,15 @@
 <?php
 
-define('SYSTEM_PATH', '../../../');
-define('PATH_TO_APP_ROOT', SYSTEM_PATH.'../');
-define('CUSTOM_CAL_BACKEND', PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
+define('SYSTEM_PATH',           '../../../');
+define('PATH_TO_APP_ROOT',      SYSTEM_PATH.'../');
+define('CUSTOM_CAL_BACKEND',    PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
 
 // Require Event class and datetime utilities
 require dirname(__FILE__) . '/../third-party/fullcalendar/php/utils.php';
 
 // Require Datastorage class:
-require_once SYSTEM_PATH.'datastorage2.class.php';
 require_once SYSTEM_PATH.'backend_aux.php';
+require_once SYSTEM_PATH.'datastorage2.class.php';
 
 
 // Check whether there is custome backend code 'code/_custom-cal-backend.php':
