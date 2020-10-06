@@ -31,8 +31,8 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'editingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
     $this->getArg($macroName, 'fields', '[comma-separated-list] Comma separated list of (custom-) fields, e.g. "fields:\'title,topic,speaker,moderator,start,end,location,comment,category,time\',"', false);
     $this->getArg($macroName, 'defaultEventDuration', '[allday|minutes] In month and year view: defines the default duration of new events.', false);
-    $this->getArg($macroName, 'class', 'Class applied to wrapper div', '');
-    $this->getArg($macroName, 'options', '', '');
+    $this->getArg($macroName, 'class', 'Class applied to wrapper div.', '');
+    $this->getArg($macroName, 'options', '[light] For further options, currently just "light" -> light color scheme for categories', '');
     $this->getArg($macroName, 'publish', '[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false);
     $this->getArg($macroName, 'publishCallback', '[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);
