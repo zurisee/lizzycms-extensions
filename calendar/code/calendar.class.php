@@ -22,6 +22,12 @@ class LzyCalendar
             $this->fields = [];
         }
 
+        $this->class = isset($args['class']) ? $args['class']: false;
+        $this->options = isset($args['options']) ? $args['options']: false;
+        if (strpos($this->options, 'light') !== false) {
+            $this->class .= ' lzy-calendar-light';
+        }
+
         // Whether to publish the calendar (i.e. save in an .ics file):
         $this->publish = isset($args['publish']) ? $args['publish']: false;
         $this->publishCallback = isset($args['publishCallback']) ? $args['publishCallback']: false;
@@ -42,7 +48,7 @@ class LzyCalendar
 
         // Categories:
         $this->category = isset($args['categories']) ? $args['categories']: '';
-        $categories = explodeTrim(',', $this->category);
+        $this->categories = $categories = explodeTrim(',', $this->category);
         $this->showCategories = isset($args['showCategories']) ? $args['showCategories']: '';
         $this->domain = isset($args['domain']) ? $args['domain']: $_SERVER["HTTP_HOST"];
         $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired']: true;
@@ -91,6 +97,9 @@ class LzyCalendar
         // Timezone:
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
+        // Recycle bin
+        $this->useRecycleBin = isset($args['useRecycleBin']) ? $args['useRecycleBin']: false;
+
         // UI:
         $this->headerLeftButtons = isset($args['headerLeftButtons']) ? $args['headerLeftButtons']: false;
         $this->headerRightButtons = isset($args['headerRightButtons']) ? $args['headerRightButtons']: false;
@@ -107,7 +116,8 @@ class LzyCalendar
         $this->source = resolvePath($this->source, true);
         $calSession = &$_SESSION['lizzy']['cal'][$inx];
         $calSession['dataSource'] = $this->source;
-        $calSession['calShowCategories'] = '';
+        $calSession['calShowCategories'] = $this->showCategories;
+        $calSession['useRecycleBin'] = $this->useRecycleBin;
 
         // export ics file if requested:
         if ($this->publish) {
@@ -212,7 +222,7 @@ var calSubmitBtnLabel = ['{{ Save }}', '{{ lzy-cal-delete-entry-now }}'];
 var lzyCal = [];
 EOT;
         }
-
+        $categories = "['" . implode("','", $this->categories) . "']";
         $js .= <<<EOT
 
 lzyCal[$inx] = {
@@ -220,6 +230,7 @@ lzyCal[$inx] = {
     initialDate: '{$this->initialDate}',
     editingPermission: $edPermStr,
     creatorOnlyPermission: $creatorOnlyPermission,
+    categories: $categories,
     calCatPermission: '$calCatPermission',
     catPrefixes: {$this->prefixJson},
     catDefaultPrefix: '{$this->defaultCatPrefix}',
@@ -276,8 +287,9 @@ EOT;
             $defaultDate = date('Y-m-d', $t);
         }
 
-        $edClass = $this->edPermitted ? ' class="lzy-calendar lzy-cal-editing"' : ' class="lzy-calendar"';
-        $str .= "<div id='lzy-calendar$inx'$edClass data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
+        $class = $this->class? " {$this->class}": '';
+        $edClass = $this->edPermitted ? ' lzy-cal-editing' : '';
+        $str .= "<div id='lzy-calendar$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
         $this->renderFieldNames();
 
         return $str;
@@ -473,19 +485,17 @@ EOT;
 
 
 
-    private function publishICal()
+    public function publishICal()
     {
         // get destination filename:
         $destFile = $this->publish;
         if (is_bool($destFile)) {
-            $destFile = '~/ics/'.base_name($this->source, false).'.ics';
+            $destFile = "~/ics/$this->source";
 
         } elseif ($destFile[0] !== '~') {
-            $destFile = "~/ics/$destFile.ics";
+            $destFile = "~/ics/$destFile";
         }
-        if (!fileExt($destFile)) {
-            $destFile .= '.ics';
-        }
+        $destFile = fileExt($destFile, true).'.ics';
         $destFile = resolvePath($destFile);
 
         // get modif time of destination file:

@@ -69,8 +69,9 @@ class CalendarBackend {
 
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
-        $this->ds = new DataStorage2(['dataFile' => $dataSrc, 'useRecycleBin' => true]);
-        $this->calCatPermission = $_SESSION['lizzy']['cal'][$inx]['calCatPermission'];
+        $useRecycleBin = $_SESSION['lizzy']['cal'][$inx]['useRecycleBin'];
+        $this->ds = new DataStorage2(['dataFile' => $dataSrc, 'useRecycleBin' => $useRecycleBin]);
+        $this->calCatPermission = @$_SESSION['lizzy']['cal'][$inx]['calCatPermission'];
 
     } // __construct
 

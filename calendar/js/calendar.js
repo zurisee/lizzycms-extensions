@@ -68,7 +68,9 @@ $( document ).ready(function() {
             // apply category specific classes:
             eventClassNames: function(arg) {
                 if (typeof arg.event._def.extendedProps.category !== 'undefined') {
-                    return 'lzy-cal-category-' + arg.event._def.extendedProps.category;
+                    const catName = arg.event._def.extendedProps.category;
+                    const catInx = lzyCal[ inx ].categories.indexOf( catName ) + 1;
+                    return 'lzy-cal-category-' + catInx + ' lzy-cal-category-' + catName;
                 }
             },
 
@@ -458,6 +460,7 @@ function defaultOpenCalPopup(inx, event0) {
             // set selected option:
             if (extendedProps.category) {
                 catClass = extendedProps.category.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-_]+/g,'');
+                // const catInx = categories.indexOf( catClass );
                 $('#lzy_cal_category option[value=' + catClass + ']').attr('selected', 'selected');
                 $('#lzy-calendar-default-form').addClass( 'lzy-cal-category-' +  catClass );
             }

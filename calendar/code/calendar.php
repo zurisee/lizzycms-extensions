@@ -31,12 +31,14 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'editingPermission', '[all|group name(s)] Defines, who will be able to add and modify calendar entries.', false);
     $this->getArg($macroName, 'fields', '[comma-separated-list] Comma separated list of (custom-) fields, e.g. "fields:\'title,topic,speaker,moderator,start,end,location,comment,category,time\',"', false);
     $this->getArg($macroName, 'defaultEventDuration', '[allday|minutes] In month and year view: defines the default duration of new events.', false);
+    $this->getArg($macroName, 'class', 'Class applied to wrapper div', '');
+    $this->getArg($macroName, 'options', '', '');
     $this->getArg($macroName, 'publish', '[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false);
     $this->getArg($macroName, 'publishCallback', '[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);
     $this->getArg($macroName, 'tooltips', 'Name of event property that shall be shown in a tool-tip. If "true", all will be shown.', false);
     $this->getArg($macroName, 'eventOverlap', '[true|false] Determines whether events are allowed to overlap (default: true).', true);
-    $this->getArg($macroName, 'categories', 'A (comma separated) list of supported categories.', '');
+    $this->getArg($macroName, 'categories', '[comma-separated-list] A list of supported categories.', '');
     $this->getArg($macroName, 'showCategories', '[comma-separated-list] A comma separated list of categories - only events carrying that category will be presented.', '');
     $this->getArg($macroName, 'defaultPrefix', 'Prefix applied to event titles (if no category-specific prefix is defined). E.g. "[XY] ".', '');
     $this->getArg($macroName, 'categoryPrefixes', '[string|comma-separated-list] Category-specific prefixes for events.', '');
@@ -45,6 +47,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'headerRightButtons', '[day,week,month,year] Defines which buttons (to select views) will be displayed and in which order (ltr)', 'week,month,year');
     $this->getArg($macroName, 'initialDate', '[ISO-Date] Defines the initial date, default: today', '');
     $this->getArg($macroName, 'eventTitleRequired', '[true,false] Defines whether title field a new event must be defined, default: true', true);
+    $this->getArg($macroName, 'useRecycleBin', '[true,false] If true, changes to calendar data (via editing mode) don\'t overrite old data but send a copy to a recycle bin. (Default: false)', false);
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($source === 'help') {

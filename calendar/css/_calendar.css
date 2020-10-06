@@ -1,9 +1,51 @@
 
 /* Calendar */
 
-.lzy-cal-title-label,
-.lzy-cal-custom-category {
+/* colos */
+.lzy-calendar .lzy-cal-category-1 {
+  background: var(--lzy-cal-category-bg-1, #660000ff); }
+.lzy-calendar .lzy-cal-category-2 {
+  background: var(--lzy-cal-category-bg-2, #7a007aff); }
+.lzy-calendar .lzy-cal-category-3 {
+  background: var(--lzy-cal-category-bg-3, #636600ff); }
+.lzy-calendar .lzy-cal-category-4 {
+  background: var(--lzy-cal-category-bg-4, #116600ff); }
+.lzy-calendar .lzy-cal-category-5 {
+  background: var(--lzy-cal-category-bg-5, #004b52ff); }
+.lzy-calendar .lzy-cal-category-6 {
+  background: var(--lzy-cal-category-bg-6, #002f7aff); }
+.lzy-calendar .lzy-cal-category-7 {
+  background: var(--lzy-cal-category-bg-7, #15008fff); }
+.lzy-calendar .lzy-cal-category-8 {
+  background: var(--lzy-cal-category-bg-8, #663800ff); }
+
+.lzy-calendar.lzy-calendar-light .fc-event div {
+  color: #000; }
+.lzy-calendar.lzy-calendar-light .fc-event {
+  background: var(--lzy-cal-category-bg-0, #8fbae5); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-1 {
+  background: var(--lzy-cal-category-bg-1, #ffbf70ff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-2 {
+  background: var(--lzy-cal-category-bg-2, #fcffadff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-3 {
+  background: var(--lzy-cal-category-bg-3, #caffbfff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-4 {
+  background: var(--lzy-cal-category-bg-4, #9bf6ffff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-5 {
+  background: var(--lzy-cal-category-bg-5, #c2d9ffff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-6 {
+  background: var(--lzy-cal-category-bg-6, #dcd6ffff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-7 {
+  background: var(--lzy-cal-category-bg-7, #ffebffff); }
+.lzy-calendar.lzy-calendar-light .lzy-cal-category-8 {
+  background: var(--lzy-cal-category-bg-8, #ffadadff); }
+
+
+.lzy-cal-title-label {
   display: none;
+}
+.lzy-cal-custom-category {
+//  display: none;
 }
 .lzy-calendar a {
   border-bottom: none;
@@ -83,15 +125,17 @@
 .lzy-calendar .fc-daygrid .lzy-cal-custom {
   display: none; }
 
-.fc-timegrid-event:hover,
 .fc-timegrid-event,
-.fc-daygrid-event:hover,
 .fc-daygrid-event {
   background: #3788d8;
   background: var(--fc-event-bg-color, #3788d8); }
 .fc-daygrid a.fc-daygrid-event {
   color: white;
   padding: 0.4em; }
+
+.fc-timegrid-event:hover,
+.fc-daygrid-event:hover {
+  filter: brightness(133%);}
 
 /* === toolips ========== */
 .qtip-content .lzy-cal-title-text, .fc-list-event-title .lzy-cal-title-text, .qtip-content .lzy-cal-custom-label, .fc-list-event-title .lzy-cal-custom-label {
