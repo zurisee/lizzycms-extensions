@@ -489,8 +489,8 @@ EOT;
     {
         // get destination filename:
         $destFile = $this->publish;
-        if (is_bool($destFile)) {
-            $destFile = "~/ics/$this->source";
+        if ($destFile === true) {
+            $destFile = "~/ics/".basename($this->source);
 
         } elseif ($destFile[0] !== '~') {
             $destFile = "~/ics/$destFile";
