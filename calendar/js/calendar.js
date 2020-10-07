@@ -212,7 +212,7 @@ function defaultRenderEvent( arg ) {
 
     // prepare prefix:
     var prefix = lzyCal[inx].catPrefixes[ category ];
-    if (typeof prefix === 'undefined') {
+    if (!prefix || (typeof prefix === 'undefined')) {
         prefix = lzyCal[inx].catDefaultPrefix;
     }
     if (prefix) {
