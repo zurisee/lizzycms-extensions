@@ -40,7 +40,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'eventOverlap', '[true|false] Determines whether events are allowed to overlap (default: true).', true);
     $this->getArg($macroName, 'categories', '[comma-separated-list] A list of supported categories.', '');
     $this->getArg($macroName, 'showCategories', '[comma-separated-list] A comma separated list of categories - only events carrying that category will be presented.', '');
-    $this->getArg($macroName, 'defaultPrefix', 'Prefix applied to event titles (if no category-specific prefix is defined). E.g. "[XY] ".', '');
+    $this->getArg($macroName, 'prefix', 'Prefix applied to event titles (if no category-specific prefix is defined). E.g. "[XY] ".', '');
     $this->getArg($macroName, 'categoryPrefixes', '[string|comma-separated-list] Category-specific prefixes for events.', '');
     $this->getArg($macroName, 'defaultView', '[week,month,year] Defines the initial view when the widget is presented for the very first time', '');
     $this->getArg($macroName, 'headerLeftButtons', '[next,prev,today] Defines which buttons (to select views) will be displayed and in which order (ltr)', 'prev,today,next');
