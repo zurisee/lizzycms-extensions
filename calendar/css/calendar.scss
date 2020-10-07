@@ -1,6 +1,7 @@
-// Colors
+// Calendar Styling
+//==================
 
-//__END__
+// Colors
 
 $color1: #660000ff;
 $color2: #663800ff;
@@ -143,4 +144,108 @@ $color-light8: #ffebffff;
 	}
 }
 
+
+// General
+
+/* Calendar */
+
+.lzy-field-wrapper {
+	margin: 0.5em 0;
+}
+.lzy-cal-title-label,
+.lzy-cal-custom-category {
+	display: none;
+}
+.lzy-calendar a {
+	border-bottom: none;
+}
+.fc-event-main {
+	overflow: auto;
+}
+
+.qtip-default {
+	border-radius: 0.6em; }
+
+.fc-title-prefix:not(:empty) {
+	margin-right: 0.3em;}
+.qtip-content .fc-field-label {
+	font-weight: bold;
+	display: block;
+	margin-right: 0.5em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden; }
+.qtip-content .fc-field-value {
+	display: block;
+	margin: 0.3em 0 0.7em 1em; }
+.qtip-content .fc-time, .qtip-content .fc-title, .qtip-content .fc-custom-field-wrapper > div {
+	margin-bottom: 0.5em; }
+
+.fc-event .fc-field-label, .fc-event .fc-custom-field-wrapper {
+	display: none; }
+
+.lzy-cal-link {
+	z-index: 999; }
+
+.fc-event .fc-bg {
+	z-index: -1; }
+
+.fc-category {
+	display: none; }
+
+.lzy-cal-editing {
+	border: 1px solid red; }
+
+.lzy-cal-field {
+	width: 100%; }
+
+.lzy-field-type-date .lzy-cal-label {
+	position: absolute;
+	right: -1000vh; }
+
+.lzy_cal_allday_event label {
+	display: inline-block;
+	width: auto;
+	padding-right: 20px;
+}
+.lzy-cal-label {
+	padding-bottom: 0.2em;
+	display: inline-block;}
+
+.field-wrapper:not(.lzy-field-type-date) {
+	margin: 10px 0; }
+
+#lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-speaker, #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-moderator {
+	display: none; }
+
+.fc-list-view .fc-list-item-title .fc-field-label {
+	display: none; }
+
+.lzy-calendar .fc-timegrid .lzy-cal-custom,
+.lzy-calendar .fc-daygrid .lzy-cal-custom {
+	display: none; }
+
+.fc-timegrid-event:hover,
+.fc-timegrid-event,
+.fc-daygrid-event:hover,
+.fc-daygrid-event {
+	background: #3788d8;
+	background: var(--fc-event-bg-color, #3788d8); }
+.fc-daygrid a.fc-daygrid-event {
+	color: white;
+	padding: 0.4em; }
+
+/* === toolips ========== */
+.qtip-content .lzy-cal-title-text, .fc-list-event-title .lzy-cal-title-text, .qtip-content .lzy-cal-custom-label, .fc-list-event-title .lzy-cal-custom-label {
+	font-weight: bold;
+	color: black; }
+.qtip-content .lzy-cal-custom, .fc-list-event-title .lzy-cal-custom, .qtip-content > div, .fc-list-event-title > div {
+	line-height: 1.25em;
+	padding: 0 0 0.25em 2em;
+	padding-left: var(--lzy-cal-tooltip-indent, 2em);
+	text-indent: -2em;
+	text-indent: calc(var(--lzy-cal-tooltip-indent, 2em) * -1);
+}
+.qtip-content .lzy-cal-custom *, .fc-list-event-title .lzy-cal-custom *, .qtip-content > div *, .fc-list-event-title > div * {
+	text-indent: 0em; }
 
