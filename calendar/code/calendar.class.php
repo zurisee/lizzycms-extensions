@@ -337,43 +337,42 @@ EOT;
 
 $categoryCombo
 
-            <div class='field-wrapper field-type-text lzy-cal-event'>
+            <div class='lzy-field-wrapper lzy-field-type-text lzy-cal-event'>
                 <label for='lzy_cal_event_name' class="lzy-cal-label">{{ lzy-cal-event-title }}:</label>
                 <input type='text' id='lzy_cal_event_name' class="lzy-cal-field" name='title'$required placeholder='{{^ lzy-cal-event-placeholder }}' />
-            </div><!-- /field-wrapper -->
+            </div><!-- /lzy-field-wrapper -->
            
            
-            <div id="lzy_cal_allday_event" class='field-wrapper lzy_cal_allday_event'>
-                <label for="lzy-cal-allday-event-checkbox">{{ lzy-cal-allday-event }}:
-                    <input type='checkbox' id="lzy-cal-allday-event-checkbox" />
-                </label>
-            </div><!-- /field-wrapper -->
+            <div id="lzy_cal_allday_event" class='lzy-field-wrapper lzy_cal_allday_event'>
+                <label for="lzy-cal-allday-event-checkbox">{{ lzy-cal-allday-event }}:</label>
+                <input type='checkbox' id="lzy-cal-allday-event-checkbox" />
+            </div><!-- /lzy-field-wrapper -->
             
 
-            <fieldset>
+            <fieldset class="lzy-cal-fieldset">
                 <legend>{{ lzy-cal-legend-from }}</legend>
-                <div class='field-wrapper field-type-date lzy-cal-start-date'>
+                <div class='lzy-field-type-date lzy-cal-start-date'>
                     <label for='lzy_cal_start_date' class="lzy-cal-label">{{ lzy-cal-start-date-label }}</label>
                     <input type='date' id='lzy_cal_start_date' name='start-date' placeholder='{{^ lzy-cal-start-date-placeholder }}' value='' />
                     <label for='lzy_cal_start_time' class="lzy-cal-label">{{ lzy-cal-start-time-label }}</label>
                     <input type='time' id='lzy_cal_start_time' name='start-time' placeholder='{{^ lzy-cal-start-time-placeholder }}' value='' />
-                </div><!-- /field-wrapper -->
+                </div><!-- /lzy-field-wrapper -->
             </fieldset>
 
-            <fieldset>
+            <fieldset class="lzy-cal-fieldset">
                 <legend>{{ lzy-cal-legend-till }}</legend>
-                <div class='field-wrapper field-type-date lzy-cal-end-date'>
+                <div class='lzy-field-type-date lzy-cal-end-date'>
                     <label for='lzy_cal_end_date' class="lzy-cal-label">{{ lzy-cal-end-date-label }}</label>
                     <input type='date' id='lzy_cal_end_date' name='end-date' placeholder='{{^ lzy-cal-end-date-placeholder }}' value='' />
                     <label for='lzy_cal_end_time' class="lzy-cal-label">{{ lzy-cal-end-time-label }}</label>
                     <input type='time' id='lzy_cal_end_time' name='end-time' placeholder='{{^ lzy-cal-end-time-placeholder }}' value='' />
-                </div><!-- /field-wrapper -->
+                </div><!-- /lzy-field-wrapper -->
             </fieldset>
 
  
 $customFields
  
-            <div id="lzy_cal_delete_entry" class='field-wrapper lzy_cal_delete_entry' style="display:none">
+            <div id="lzy_cal_delete_entry" class='lzy-field-wrapper lzy_cal_delete_entry' style="display:none">
                 <label for="lzy-cal-delete-entry-checkbox">
                     <input type='checkbox' id="lzy-cal-delete-entry-checkbox" />
                 {{ lzy-cal-delete-entry }}</label>
@@ -402,11 +401,10 @@ EOT;
             $categories = explode(',', $category);
             if (sizeof($categories) > 1) {
                 foreach ($categories as $cat) {
-                    $cat = trim($cat);
-                    $catVal = strtolower($cat);
+                    $catVal = trim($cat);
                     $catVal = preg_replace('/\s+/', '-', $catVal);
-                    $catVal = preg_replace('/[^a-z0-9-_]/', '', $catVal);
-                    $categoryCombo .= "\t<option value='$catVal'>$cat</option>\n";
+                    $catVal = preg_replace('/[^\w-]/', '', $catVal);
+                    $categoryCombo .= "\t<option value='$cat'>$cat</option>\n";
                 }
                 $categoryCombo = <<<EOT
     <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>
@@ -424,6 +422,12 @@ EOT;
 EOT;
             }
         }
+        $categoryCombo = <<<EOT
+    <div class='lzy-field-wrapper'>
+$categoryCombo
+    </div><!-- /lzy-field-wrapper -->
+EOT;
+
         return $categoryCombo;
     } // prepareCategoryCombo
 
@@ -442,24 +446,32 @@ EOT;
             if ($field === 'comment') {
                 $div = <<<EOT
 
-            <div class='field-wrapper field-type-textarea'>
+            <div class='lzy-field-wrapper lzy-field-type-textarea'>
                 <label for='lzy_cal_comment' class="lzy-cal-label">{{ comment }}:</label>
                 <textarea id='lzy_cal_comment' class="lzy-cal-field" name='comment' placeholder='{{ lzy-cal-comment-placeholder }}'></textarea>
-            </div><!-- /field-wrapper -->
+            </div><!-- /lzy-field-wrapper -->
 
 EOT;
 
             } else {
                 $div = <<<EOT
 
-            <div class='field-wrapper field-type-text lzy-cal-$field'>
+            <div class='lzy-field-wrapper lzy-field-type-text lzy-cal-$field'>
                 <label for='lzy_cal_event_$field' class="lzy-cal-label">{{ $field }}:</label>
                 <input type='text' id='lzy_cal_event_$field' class="lzy-cal-field" name='$field'  placeholder='{{^ lzy-cal-$field-placeholder }}' />
-            </div><!-- /field-wrapper -->
+            </div><!-- /lzy-field-wrapper -->
 
 EOT;
             }
             $out .= $div;
+        }
+        if ($out) {
+            $out = <<<EOT
+    <div class='lzy-cal-custom-fields'>
+$out
+    </div><!-- /lzy-cal-custom-fields -->
+EOT;
+
         }
         return $out;
     } // prepareCustomFields
