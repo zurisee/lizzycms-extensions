@@ -3,6 +3,7 @@
 if (!defined('CALENDAR_BACKEND')) { define('CALENDAR_BACKEND', '~sys/extensions/calendar/backend/_cal-backend.php'); }
 define('DEFAULT_EVENT_DURATION', 120); // in minutes
 
+$GLOBALS['lizzy']['calInitiales'] = false;
 
 class LzyCalendar
 {
@@ -210,7 +211,8 @@ class LzyCalendar
 
         // inject js code into page body:
         $js = '';
-        if ($inx == 1) {
+        if (!$GLOBALS['lizzy']['calInitiales']) {
+            $GLOBALS['lizzy']['calInitiales'] = true;
             $userRec = $this->lzy->auth->getUserRec();
             $calCatPermission = isset($userRec['calCatetoryPermission'])? $userRec['calCatetoryPermission']: '';
             $_SESSION['lizzy']['cal'][$inx]['calCatPermission'] = $calCatPermission;
