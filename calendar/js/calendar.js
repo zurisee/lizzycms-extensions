@@ -221,7 +221,7 @@ function defaultRenderEvent( arg ) {
 
     // apply time, prefix and title:
     var title = convertMD(arg.event._def.title);
-    el.innerHTML = '<span class="lzy-cal-title-label">'+ lbl +':</span> <span class="lzy-cal-title-text">' + prefix + title + '</span>';
+    el.innerHTML = '<span class="lzy-cal-title-label">'+ lbl +':</span> <span class="lzy-cal-title-text">' + prefix + ' <span>' + title + '</span></span>';
     var elements = [ elT, el ];
 
     // apply custom properties:

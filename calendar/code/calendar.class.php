@@ -55,13 +55,13 @@ class LzyCalendar
 
         // Prefixes:
         $n = sizeof($categories);
-        $defaultCatPrefix = isset($args['defaultPrefix']) ? $args['defaultPrefix']: '';
+        $defaultCatPrefix = isset($args['prefix']) ? $args['prefix']: '';
+        $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix']: $defaultCatPrefix;
         $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes']: '';
         if (strpos($catPrefixes, ',') !== false) {
             $categoryKeys = array_map(function($e) {
-                $e = strtolower($e);
                 $e = preg_replace('/\s+/', '-', $e);
-                $e = preg_replace('/[^a-z0-9-_]/', '', $e);
+                $e = preg_replace('/[^\w-]/', '', $e);
                 return $e;
             }, $categories);
             $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
