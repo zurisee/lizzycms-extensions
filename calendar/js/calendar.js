@@ -459,9 +459,8 @@ function defaultOpenCalPopup(inx, event0) {
 
             // set selected option:
             if (extendedProps.category) {
+                $('#lzy_cal_category option[value=' + extendedProps.category + ']').attr('selected', 'selected');
                 catClass = extendedProps.category.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-_]+/g,'');
-                // const catInx = categories.indexOf( catClass );
-                $('#lzy_cal_category option[value=' + catClass + ']').attr('selected', 'selected');
                 $('#lzy-calendar-default-form').addClass( 'lzy-cal-category-' +  catClass );
             }
             $('#lzy-rec-id').val(extendedProps.i);
@@ -485,7 +484,7 @@ function defaultOpenCalPopup(inx, event0) {
 
     // set form class if category changes:
     $('#lzy_cal_category').change(function() {
-        catClass = $( ':selected', $(this) ).val();
+        catClass = $( ':selected', $(this) ).val().toLowerCase();
         $(this).closest('form').attr('class', '').addClass( 'lzy-cal-category-' + catClass );
     });
 
@@ -638,7 +637,6 @@ function checkPermission(event) {
     if (calCatPermission) {
         try {
             var category = event._def.extendedProps.category.toLowerCase();
-            // if (calCatPermission !== category) {
             if (calCatPermission.toLowerCase().indexOf(category) === -1) {
                 console.log(`Attempt to modify event of unauthorized category ${category} -> blocked.`);
                 return false;
