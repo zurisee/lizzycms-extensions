@@ -2,15 +2,11 @@
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
 
 $page->addModules('~ext/livedata/js/live_data.js');
-//$page->addModules('~sys/js/live_data.js');
 
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-
-	// typical variables that might be useful:
-	$inx = $this->invocationCounter[$macroName] + 1;
 
 	// how to get access to macro arguments:
     $file = $this->getArg($macroName, 'dataSource', 'Defines the data-source from which to retrieve the data element(s)', '');
@@ -35,7 +31,7 @@ $this->addMacro($macroName, function () {
     }
 
     $args = $this->getArgsArray($macroName);
-    $ld = new LiveData($this->lzy, $inx, $args);
+    $ld = new LiveData($this->lzy, $args);
 
     $str = $ld->render();
 

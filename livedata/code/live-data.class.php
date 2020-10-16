@@ -6,7 +6,7 @@ $GLOBALS['lizzy']['liveDataInx'][ $GLOBALS["globalParams"]["pagePath"] ] = 0;
 
 class LiveData
 {
-    public function __construct($lzy, $inx = false, $args = false)
+    public function __construct($lzy, $args = false)
     {
         $this->lzy = $lzy;
         $this->inx = &$GLOBALS['lizzy']['liveDataInx'][ $GLOBALS["globalParams"]["pagePath"] ];
