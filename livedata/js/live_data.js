@@ -38,7 +38,8 @@ function initLiveData() {
 
 function markLockedFields( lockedElements ) {
     // console.log('updating locked states ' + lockedElements);
-    $('.lzy-live-data').removeClass('lzy-live-data-locked');
+    $('.lzy-live-data-locked').removeClass('lzy-live-data-locked');
+    // $('.lzy-live-data').removeClass('lzy-live-data-locked');
 
     for (var i in lockedElements) {
         var targSel = lockedElements[ i ];
