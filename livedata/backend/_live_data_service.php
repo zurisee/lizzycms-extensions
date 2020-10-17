@@ -1,14 +1,16 @@
 <?php
-// Backend for live-data() macro
+/*
+ *  Backend for live-data() macro
+ */
 
 
-//define('SYSTEM_PATH', 		'');		 // same directory
-//define('PATH_TO_APP_ROOT', 	'../');		 // root folder of web app
 define('SYSTEM_PATH',           '../../../');
 define('PATH_TO_APP_ROOT',      SYSTEM_PATH.'../');
 define('DEFAULT_POLLING_TIME', 	60);		 // s
 define('MAX_POLLING_TIME', 	    90);		 // s
-define('POLLING_INTERVAL', 	330000);		 // Us
+define('POLLING_INTERVAL', 	330000);		 // us
+
+ob_start();
 
 require_once SYSTEM_PATH . 'vendor/autoload.php';
 require_once SYSTEM_PATH . 'backend_aux.php';
@@ -17,7 +19,7 @@ require_once SYSTEM_PATH . 'ticketing.class.php';
 
 $serv = new LiveDataService();
 $response = $serv->execute();
-exit($response);
+lzyExit($response);
 
 
 
@@ -68,7 +70,7 @@ class LiveDataService
 
         $returnData['lastUpdated'] = microtime(true) + 0.000001;
         $json = json_encode($returnData);
-        exit($json);
+        lzyExit($json);
     } // execute
 
 
@@ -77,7 +79,7 @@ class LiveDataService
     private function getListOfTickets()
     {
         if (!isset($_POST['ref'])) {
-            exit('Error: "ref" missing in call to _live_data_service.php');
+            lzyExit('Error: "ref" missing in call to _live_data_service.php');
         }
         $ref = $_POST['ref'];
         $this->lastUpdated = floatval($_POST['last']);
@@ -219,7 +221,6 @@ class LiveDataService
                 $dataKey = preg_replace('/\{'.$this->dynDataSelectors['name'].'\}/', $this->dynDataSelectors['value'], $dataKey);
             }
 
-//            $targetSelector = $dbDescr[$k]['targetSelector'];
             if ((strpos($targetSelector, '{') !== false) && $this->dynDataSelectors) {
                 $targetSelector = preg_replace('/\{'.$this->dynDataSelectors['name'].'\}/', $this->dynDataSelectors['value'], $targetSelector);
             }
@@ -231,18 +232,10 @@ class LiveDataService
             } else {
                 $value = $db->readElement( $dataKey );
             }
-//            $value = $db->readElement( $dataKey );
             if (is_array($value)) {
                 $j = 1;
                 foreach ($value as $i => $v) {
                     $t = str_replace('*', $j++, $targetSelector);
-//                    if (is_int($i)) {
-//                        $t = str_replace('*', ($i + 1), $targetSelector);
-//                    } else {
-//                        $t = str_replace('*', $j++, $targetSelector);
-////                        $t = str_replace('*', $i, $targetSelector);
-//                    }
-//                    $t = str_replace('*', ($i + 1), $targetSelector);
                     $tmp[$t] = $v;
                 }
             } else {
@@ -285,7 +278,7 @@ class LiveDataService
             $returnData['result'] = 'None';
             $returnData['lastUpdated'] = microtime(true) + 0.000001;
             $json = json_encode($returnData);
-            exit($json);
+            lzyExit($json);
         }
         session_abort();
     } // checkAbort

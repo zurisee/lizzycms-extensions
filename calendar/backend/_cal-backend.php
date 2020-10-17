@@ -4,6 +4,8 @@ define('SYSTEM_PATH',           '../../../');
 define('PATH_TO_APP_ROOT',      SYSTEM_PATH.'../');
 define('CUSTOM_CAL_BACKEND',    PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
 
+ob_start();
+
 // Require Event class and datetime utilities
 require dirname(__FILE__) . '/../third-party/fullcalendar/php/utils.php';
 
@@ -18,7 +20,7 @@ if (file_exists(CUSTOM_CAL_BACKEND)) {
 }
 
 if (!isset($_REQUEST['inx'])) {
-    exit('error: inx missing in ajax request');
+    lzyExit('error: inx missing in ajax request');
 }
 
 session_start();
@@ -30,19 +32,19 @@ $dataSrc = PATH_TO_APP_ROOT.$calSession['dataSource'];
 $backend = new CalendarBackend($dataSrc);
 
 if (isset($_GET['save'])) {
-    exit( $backend->saveData($_POST) );
+    lzyExit( $backend->saveData($_POST) );
 }
 if (isset($_GET['del'])) {
-    exit( $backend->deleteRec($_POST) );
+    lzyExit( $backend->deleteRec($_POST) );
 }
 if (isset($_GET['mode'])) {
-    exit( $backend->saveMode($_GET['mode']) );
+    lzyExit( $backend->saveMode($_GET['mode']) );
 }
 if (isset($_GET['date'])) {
-    exit( $backend->saveCurrDate($_GET['date']) );
+    lzyExit( $backend->saveCurrDate($_GET['date']) );
 }
 
-exit( $backend->getData($inx) );
+lzyExit( $backend->getData($inx) );
 
 
 
@@ -130,7 +132,7 @@ class CalendarBackend {
                 if ($creatorOnlyPermission && ($creatorOnlyPermission !== $creator)) {
                     // Note: this case is already taken care of in the client,
                     // so we probably have a hacking attempt here:
-                    exit("Error: user {$creatorOnlyPermission} attempted to modify event created by $creator");
+                    lzyExit("Error: user {$creatorOnlyPermission} attempted to modify event created by $creator");
                 }
             }
             if (isset($oldRec['_uid'])) {
