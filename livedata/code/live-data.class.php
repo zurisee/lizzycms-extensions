@@ -16,13 +16,11 @@ class LiveData
 
 
 
-    public function render()
+    public function render( $returnAttrib = false )
     {
-//        $dataSelector = $this->dataSelector;
         $dataSelectors = explodeTrim('|', $this->dataSelector);
         $n = sizeof($dataSelectors);
 
-//        $targetSelector = $this->targetSelector;
         $targetSelectors = explodeTrim('|', $this->targetSelector);
         $nT = sizeof($targetSelectors);
 
@@ -36,16 +34,10 @@ class LiveData
             }
             $this->addTicketRec($targetSelectors[0], $dataSelectors[0], $this->polltime, $tickRec);
             $values[0] = $this->db->readElement($dataSelectors[0]);
-//            $values = $this->db->readElement($dataSelector);
 
         } else {                                            // array value:
-//            $n = sizeof($dataSelectors);
-//            $targetSelector = $this->targetSelector;
-//            $targetSelectors = explodeTrim(',|', $targetSelector);
-//            $nT = sizeof($targetSelectors);
             for ($i=$nT; $i<$n; $i++) {
                 $targetSelectors[$i] = "lzy-live-data-" . ($i+1);
-//                $targetSelectors[$i] = "lzy-live-data-$i";
             }
 
             foreach ($dataSelectors as $i => $dataSelector) {
@@ -59,9 +51,14 @@ class LiveData
         $this->dataSelectors = $dataSelectors;
         $this->targetSelectors = $targetSelectors;
 
-        $ticket = $this->createOrUpdateTicket($tickRec);
+        $tick = new Ticketing(['defaultType' => 'live-data']);
+        $ticket = $tick->createTicket($tickRec, 99, 86400);
 
-        $str = $this->renderHTML($ticket, $values);
+        if ($returnAttrib) {
+            $str = " data-live-data-ref='$ticket'";
+        } else {
+            $str = $this->renderHTML($ticket, $values);
+        }
         return $str;
     } // render
 
@@ -134,31 +131,6 @@ class LiveData
 
 
 
-    private function createOrUpdateTicket(array $tickRec)
-    {
-        $tick = new Ticketing();
-        $ticket = $tick->createTicket($tickRec, 99, 86400);
-
-//        if (isset($_SESSION['lizzy']['liveDataTicket'])) {
-//            $ticket = $_SESSION['lizzy']['liveDataTicket'];
-//            $res = $tick->findTicket($ticket);
-//            if ($res) {     // yes, ticket found
-//                if (!isset($res[$this->inx - 1])) {
-//                    $tick->updateTicket($ticket, $tickRec);
-//                }
-//            } else {    // it was some stray ticket
-//                $ticket = $tick->createTicket($tickRec, 99, 86400);
-//                $_SESSION['lizzy']['liveDataTicket'] = $ticket;
-//            }
-//        } else {
-//            $ticket = $tick->createTicket($tickRec, 99, 86400);
-//            $_SESSION['lizzy']['liveDataTicket'] = $ticket;
-//        }
-        return $ticket;
-    } // createOrUpdateTicket
-
-
-
     private function deriveTargetSelector($targetSelector, $dataSelector, $tickRec)
     {
         if (!$targetSelector) {
@@ -218,13 +190,13 @@ EOT;
                     $selector = "id='$targetSelector' class='lzy-live-data'";
                 }
                 $str .= <<<EOT
-<span $selector data-live-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
+    <span $selector data-live-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
 
 EOT;
             }
         }
         return $str;
-    }
+    } // renderHTML
 
 } // class
 
