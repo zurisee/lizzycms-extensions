@@ -49,12 +49,11 @@ if (!defined('MKDIR_MASK')) {
     define('MKDIR_MASK', 0700);
 }
 
+ob_start();
+
 require_once SYSTEM_PATH.'backend_aux.php';
 require_once SYSTEM_PATH.'datastorage2.class.php';
-require_once SYSTEM_PATH.'elementLevelDataStorage.class.php';
 require_once SYSTEM_PATH.'ticketing.class.php';
-
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.'.LZY_DEFAULT_FILE_TYPE);
 
 $appRoot = preg_replace('/_lizzy\/.*$/', '', getcwd());
 
@@ -66,7 +65,7 @@ class EditableBackend
 	{
         $this->terminatePolling = false;
 		if (sizeof($_GET) < 1) {
-			exit('Hello, this is '.basename(__FILE__));
+			lzyExit('Hello, this is '.basename(__FILE__));
 		}
         if (!session_start()) {
             mylog("ERROR in __construct(): failed to start session");
@@ -79,7 +78,7 @@ class EditableBackend
 
         if (!isset($_SESSION['lizzy']['userAgent'])) {
             mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
-            exit('restart');
+            lzyExit('restart');
         }
 
 		$this->sessionId = session_id();
@@ -144,7 +143,7 @@ class EditableBackend
 	ClientID:	{$this->clientID}
 	</pre>
 EOT;
-		exit($msg);
+		lzyExit($msg);
 	} // info
 
 
@@ -156,16 +155,16 @@ EOT;
         }
         $this->clear_duplicate_cookies();		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
             mylog("*** Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
-            exit('failed#conn');
+            lzyExit('failed#conn');
         }
 
-        $pagePath = $_SESSION['lizzy']['pagePath'];
+        $pagePath = $_SESSION["lizzy"]["pageFolder"];
         mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent} (pagePath: $pagePath)");
 
 		$_SESSION['lizzy']['lastSentData'] = '';
 		session_write_close();
 
-		exit('ok#conn');
+		lzyExit('ok#conn');
 	} // initConnection
 
 
@@ -175,21 +174,21 @@ EOT;
 	private function lock($id) {
 		if (!$id) {
 			mylog("lock: Error -> id not defined");
-			exit;
+			lzyExit();
 		}
 
         if (!$this->openDB()) {
-            exit('failed#lock/DB');
+            lzyExit('failed#lock/DB');
         }
 
-        $res = $this->db->lockElement($id);
+        $res = $this->db->lockRec($id);
 
         if (!$res) {
 			mylog("lock: $id -> failed");
-			exit('failed#lock');
+			lzyExit('failed#lock');
 
 		} else {
-            exit($this->prepareClientData($id).'#lock:ok');
+            lzyExit($this->prepareClientData($id).'#lock:ok');
 		}
 	} // lock
 
@@ -200,33 +199,25 @@ EOT;
 	private function unlock($id) {
 		if (!$id) {
 			mylog("unlock: Error -> id not defined");
-			exit;
+			lzyExit();
 		}
         if (!$this->openDB()) {
-            exit('failed#unlock');
+            lzyExit('failed#unlock');
         }
-        $res = $this->db->unLockElement($id);
+        $res = $this->db->unlockRec($id);
         if ($res) {
 			mylog("unlock: $id -> ok");
-            exit($this->prepareClientData($id).'#unlock:ok');
+            lzyExit($this->prepareClientData($id).'#unlock:ok');
         }
-        exit('failed#unlock');
+        lzyExit('failed#unlock');
 	} // unlock
 
 
 
 
 	//---------------------------------------------------------------------------
-    //	private function update($upd) {
-    //		exit($this->prepareClientData($upd).'#update');
-    //	} // get
-
-
-
-
-	//---------------------------------------------------------------------------
 	private function get($id) {
-		exit($this->prepareClientData($id).'#get');
+		lzyExit($this->prepareClientData($id).'#get');
 	} // get
 
 
@@ -236,17 +227,17 @@ EOT;
 	private function save($id) {
 		if (!$id) {
 			mylog("save & unlock: Error -> id not defined");
-            exit('failed#save');
+            lzyExit('failed#save');
 		}
 		$text = $this->get_request_data('text');
 		if ($text === 'undefined') {
-            exit('failed#save');
+            lzyExit('failed#save');
         }
 
         $ref = $this->getRef();
         mylog("save: {$id}[$ref] -> [$text]");
         if (!$this->openDB()) {
-            exit('failed#save');
+            lzyExit('failed#save');
         }
 //		$lzyEditableFreezeAfter = $this->freezeFieldAfter;
 //		if ($lzyEditableFreezeAfter) {
@@ -254,18 +245,18 @@ EOT;
 //		    $lastModif = $this->db->lastModified($id);
 //		    if ($lastModif && ($lastModif < $freezeBefore)) {
 //                mylog("### value frozen - save failed!: $id -> [$text]");
-//                exit('restart');
+//                lzyExit('restart');
 //            }
 //        }
 
-        $res = $this->db->writeElement($id, $text, $ref);
+        $res = $this->db->writeElement($id, $text, false, false);
 
         if (!$res) {
             mylog("### save failed!: $id -> [$text]");
         }
-		$this->db->unLockElement(true); // unlock all owner's locks
+		$this->db->unlockRec($id, true); // unlock all owner's locks
 
-		exit($this->prepareClientData($id).'#save');
+		lzyExit($this->prepareClientData($id).'#save');
 	} // save
 
 
@@ -275,10 +266,29 @@ EOT;
 	private function getAllData()
     {
         if (!$this->openDB()) {
-            exit('failed#save');
+            lzyExit('failed#save');
         }
-        exit($this->prepareClientData().'#get-all');
+        lzyExit($this->prepareClientData().'#get-all');
     } // getAllData
+
+
+
+
+    //---------------------------------------------------------------------------
+    private function reset()
+    {
+        if (!$this->openDB()) {
+            lzyExit('failed#reset');
+        }
+
+        //Todo: add some protection from fraululant use -> at least restrict to loggedin users
+        $this->db->unlockDB( true );
+        $data = $this->db->read();
+        foreach ($data as $key => $value) {
+            $this->db->unlockRec( $key, true );
+        }
+        lzyExit();
+    } // reset
 
 
 
@@ -301,10 +311,10 @@ EOT;
 //$diff = microtime( true ) - $tFreeze;
                 if (is_array($data)) {
                     foreach ($data as $k => $v) {
-                        if ($this->db->isElementLocked($k)) {
+                        if ($this->db->isRecLocked($k)) {
                             $data[$k] .= '**LOCKED**';
                         }
-                        $t = $this->db->elementLastModified($k);
+                        $t = $this->db->lastModifiedElement($k);
                         if ($this->freezeFieldAfter && ($t < $tFreeze)) {
                             $data[$k] .= '**FROZEN**';
                         }
@@ -317,12 +327,12 @@ EOT;
 
         } else {        // return specific data element:
             if (!$this->openDB()) {
-                exit('failed#getData');
+                lzyExit('failed#getData');
             }
             $ref = $this->getRef();
 
             $val = $this->db->readElement($key, $ref);
-            if ($this->db->isElementLocked($key)) {
+            if ($this->db->isRecLocked($key)) {
                 $val .= '**LOCKED**';
             }
             $data[$key] = $val;
@@ -368,7 +378,7 @@ EOT;
         }
 
         if ($this->dataFile) {
-            $this->db = new ElementLevelDataStorage([
+            $this->db = new DataStorage2([
                 'dataFile' => PATH_TO_APP_ROOT.$this->dataFile,
                 'sid' => $this->sessionId,
                 'lockDB' => false,
@@ -403,16 +413,6 @@ EOT;
 		}
 		return $out;
 	} // get_request_data
-
-
-
-
-    //    private function endPolling()
-    //    {
-    //        $this->terminatePolling = true;
-    //        $this->mylog("termination initiated");
-    //        exit('#termination initiated');
-    //    }
 
 
 
@@ -479,44 +479,28 @@ EOT;
 
     private function handleEditableRequests()
     {
-        // Possible enhancement: continuous updating of editable fields:
-        //		if ($upd = $this->get_request_data('upd')) {		// update request (long-polling)
-        //			$this->update($upd);
-        //			exit;
-        //		}
-        //        if ($this->get_request_data('end') !== null) {	    // end update
-        //            $this->endPolling();
-        //        }
-
-
         if (isset($_GET['conn'])) {                                // conn  initial interaction with client, defines used ids
             $this->initConnection();
-            exit;
         }
 
         if ($id = $this->get_request_data('get')) {     // get value(s)
             $this->get($id);
-            exit;
         }
 
         if (isset($_GET['reset'])) {                            // reset all locks
             $this->reset();
-            exit;
         }
 
         if ($id = $this->get_request_data('lock')) {    // lock an editable field
             $this->lock($id);
-            exit;
         }
 
         if ($id = $this->get_request_data('unlock')) {    // unlock an editable field
             $this->unlock($id);
-            exit;
         }
 
         if ($id = $this->get_request_data('save')) {    // save data & unlock
             $this->save($id);
-            exit;
         }
     } // handleEditableRequests
 
@@ -529,7 +513,7 @@ EOT;
         if (isset($_GET['log'])) {                                // remote log, write to backend's log
             $msg = $this->get_request_data('text');
             mylog("Client: $msg");
-            exit;
+            lzyExit();
         }
         if ($this->get_request_data('info') !== null) {    // respond with info-msg
             $this->info();
