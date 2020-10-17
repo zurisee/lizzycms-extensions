@@ -7,6 +7,7 @@ editableObj.backend = systemPath+'extensions/editable/backend/_editable_backend.
 editableObj.doSave = false;
 editableObj.lastText = {};
 editableObj.editing = false;
+editableObj.ignore = false;
 editableObj.keyTimeout = false;
 editableObj.fieldIDs = [];
 editableObj.dataRef = [];
@@ -94,12 +95,10 @@ function initEditableFields()
 {
     var edObj = editableObj;
     var $editable = $('.'+edObj.invokingClass);
-    var h = $editable.height();
+    var okSymbol = '&#10003;';
 
     if ($('body').hasClass('legacy')) {
-        var okSymbol = '&radic;';
-    } else {
-        var okSymbol = '&#10003;';
+        okSymbol = '&radic;';
     }
     
     $editable.each(function(inx, elem) {
@@ -139,7 +138,7 @@ function initEditableFields()
 
     var $edInput = $('input', $editable);
     
-    $edInput.focus(function() {        // on focus()
+    $edInput.focus(function() {               // on focus()
         onFocus(edObj, this);
     });
 
@@ -151,6 +150,10 @@ function initEditableFields()
     $editable.click(function(e) {               // on click on ✓ button
        e.stopPropagation();
         var $this = $(this);
+        if ($this.hasClass('lzy-locked')) {
+            console.log('field is locked');
+            return;
+        }
         if (!$('input', $this ).hasClass('lzy-editable-active')) {
             return;
         }
@@ -396,7 +399,7 @@ function _ajaxSend(edObj, arg, method, postData, onSuccess)
                 return;
             }
             console.log('- response: ' + json);
-            if ((json != 'failed') && onSuccess) {
+            if ((json !== 'failed') && onSuccess) {
                 onSuccess(json);
             }
             updateUi(edObj, json);
@@ -428,12 +431,12 @@ function updateUi(edObj, json)
 
             } else {    // data identified by ids:
                 for (var id in data) {
-                    if ((id === 'undefined') || !id || (id.substr(0,1) == '_')) {
+                    if ((id === 'undefined') || !id || (id.substr(0,1) === '_')) {
                         continue;
                     }
                     var $input = $('#'+id+' input');
-                    if (typeof data[id] != 'undefined') {
-                        var value = data[id];
+                    if (typeof data[id] !== 'undefined') {
+                        var value = data[id].toString();
                         console.log('-- ' + id + ': ' + value);
                         if (value && value.match(/\*\*LOCKED\*\*/)) {
                             value = data[id].replace('**LOCKED**', '');
@@ -485,14 +488,13 @@ function setupKeyHandler()
     var edObj = editableObj;
     $('.'+edObj.invokingClass+' input').keydown(function (e) {
         var key = e.which;
-        if (key == 9) {                  // Tab
+        if (key === 9) {                  // Tab
             onKeyTab(e);
         }
     });
 
     $('.'+edObj.invokingClass+' input').keypress(function (e) {
         if ($(e.target).hasClass('lzy-wait')) {
-        // if ($(e.target).parent().hasClass('lzy-wait')) {
             e.preventDefault();
 
         } else {                // reset editing mode timeout
@@ -506,10 +508,10 @@ function setupKeyHandler()
     $('.'+edObj.invokingClass+' input').keyup(function (e) {
         var key = e.which;
         e.preventDefault();
-        if (key == 13) {             // Enter
+        if (key === 13) {             // Enter
             onKeyEnter(e);
         }
-        if(key == 27) {                // ESC
+        if(key === 27) {                // ESC
             onKeyEsc(e);
         }
     });
@@ -521,6 +523,14 @@ function setupKeyHandler()
 function onFocus(edObj, that)
 {
     var id = $(that).parent().attr('id');
+    if ($('#_' + id).hasClass('lzy-live-data-locked') || $('#' + id).hasClass('lzy-locked')) {
+        edObj.value = $('#_' + id).val();
+        edObj.ignore = true;
+        $('#_' + id).blur();
+        console.log('field is locked');
+        return;
+    }
+    edObj.ignore = false;
     initEdit(edObj, id);
 }
 
@@ -528,6 +538,9 @@ function onFocus(edObj, that)
 
 function onBlur(edObj, that)
 {
+    if (edObj.ignore) {
+        return;
+    }
     var _id = $(that).attr('id');
     edObj.value = $('#' + _id).val();
 
