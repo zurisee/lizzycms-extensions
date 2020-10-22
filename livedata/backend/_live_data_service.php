@@ -42,14 +42,14 @@ class LiveDataService
 
     public function execute()
     {
-        $dynDataSel = isset($_GET['dynDataSel']) ? $_GET['dynDataSel'] : false;
-        $dynDataSelectors = [];
-        if ($dynDataSel && preg_match('/(.*):(.*)/', $dynDataSel, $m)) {
-            $dynDataSelectors[ 'name' ] = $m[1];
-            $dynDataSelectors[ 'value' ] = $m[2];
+        $requestedDataSelector = isset($_GET['dynDataSel']) ? $_GET['dynDataSel'] : false;
+        $this->requestedDataSelector = $requestedDataSelector;
+        $dynDataSelector = [];
+        if ($requestedDataSelector && preg_match('/(.*):(.*)/', $requestedDataSelector, $m)) {
+            $dynDataSelector[ 'name' ] = $m[1];
+            $dynDataSelector[ 'value' ] = $m[2];
         }
-        $this->dynDataSelectors = $dynDataSelectors;
-        $this->dynDataSel = $dynDataSel;
+        $this->dynDataSelector = $dynDataSelector;
 
         $this->openDataSrcs();
 
@@ -86,10 +86,17 @@ class LiveDataService
 
         $tickets = explode(',', $ref);
         $ticketList = [];
+        $setList = [];
         foreach ($tickets as $ticket) {
+            $set = '';
+            if (preg_match('/(.*?):(.*)/', $ticket, $m)) {
+                $ticket = $m[1];
+                $set = $m[2];
+            }
             if (in_array($ticket, $ticketList) === false) {
                 $ticketList[] = $ticket;
             }
+            $setList[$set] = $ticket;
         }
         return $ticketList;
     } // getListOfTickets
@@ -102,29 +109,25 @@ class LiveDataService
         $ticketList = $this->getListOfTickets();
 
         $tick = new Ticketing();
-        $this->dataSrcs = [];
         foreach ($ticketList as $ticket) {
-            $recs = $tick->consumeTicket($ticket);
-            if (!is_array($recs)) {
+            $this->sets = $tick->consumeTicket($ticket);
+            if (!is_array($this->sets)) {
                 continue;
             }
-            foreach ($recs as $rec) {
-                $file = $rec['dataSource'];
-                if (!isset($this->dataSrcs[$file])) {
-                    $this->dataSrcs[$file] = [$rec];
-                } else {
-                    array_push($this->dataSrcs[$file], $rec);
-                }
+            foreach ($this->sets as $setName => $set) {
+                if ($set) {
+                    $rec = reset($set);
+                    $file = $rec['dataSource'];
+                    $db = new DataStorage2(PATH_TO_APP_ROOT . $file);
+                    $this->sets[$setName]['_db'] = $db;
 
-                if (isset($rec['pollingTime']) && ($rec['pollingTime'] > 2)) {
-                    $this->pollingTime = $rec['pollingTime'];
-                } else {
-                    $this->pollingTime = DEFAULT_POLLING_TIME;
+                    if (isset($rec['pollingTime']) && ($rec['pollingTime'] > 2)) {
+                        $this->pollingTime = $rec['pollingTime'];
+                    } else {
+                        $this->pollingTime = DEFAULT_POLLING_TIME;
+                    }
                 }
             }
-        }
-        foreach ($this->dataSrcs as $file => $elems) {
-            $this->dataSrcs[$file]['db'] = new DataStorage2(PATH_TO_APP_ROOT . $file);
         }
     } // openDataSrcs
 
@@ -138,19 +141,17 @@ class LiveDataService
         while (time() < $till) {
             $this->outData = [];
             // there may be multiple data sources, so loop over all of them:
-            foreach ($this->dataSrcs as $file => $taskDescr) {
-                $db = $taskDescr['db'];
-                $lastDbModified = $db->lastDbModified();
+            foreach ($this->sets as $setName => $set) {
+                $lastDbModified = $set['_db']->lastDbModified();
                 if (($this->lastUpdated < $lastDbModified)) {
                     $this->lastUpdated = $lastDbModified;
                     return true;
                 }
-
-                foreach ($taskDescr as $k => $r) {
-                    if (!is_int($k)) {
+                foreach ($set as $k => $elem) {
+                    if ($k[0] === '_') {
                         continue;
                     }
-                    $this->lastModif = $db->lastModifiedElement( $k );
+                    $this->lastModif = $set['_db']->lastModifiedElement( $k );
                     if ($this->lastUpdated < $this->lastModif) {
                         $this->lastUpdated = $this->lastModif;
                         return true;
@@ -169,13 +170,13 @@ class LiveDataService
     private function assembleResponse()
     {
         $outData = [];
-        foreach ($this->dataSrcs as $file => $dbDescr) {
-            $outRec = $this->getData( $dbDescr );
-            if (is_array($outRec)) {
-                $outData = array_merge($outData, $outRec);
+        foreach ($this->sets as $setName => $set) {
+            $outRec = $this->getData( $set );
+            if (!$outData) {
+                $outData = $outRec;
             } else {
-                $outData = $outRec; // case error msg
-                break;
+                $outData['data'] = array_merge($outData['data'], $outRec['data']);
+                $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
             }
         }
         return $outData;
@@ -184,61 +185,43 @@ class LiveDataService
 
 
 
-    private function getData( $dbDescr )
+    private function getData( $set )
     {
-        $db = $dbDescr['db'];
+        $db = $set['_db'];
+        $data = $db->read();
+
         $dbIsLocked = $db->isDbLocked( false );
         $lockedElements = [];
         $tmp = [];
-        foreach ($dbDescr as $k => $elem) {
-            if (!is_int($k)) {
+        foreach ($set as $k => $elem) {
+            if ($k[0] === '_') {
                 continue;
             }
 
-            $dataKey = $dbDescr[$k]["dataSelector"];
-            $targetSelector = $dbDescr[$k]['targetSelector'];
+            $dataKey = $elem["dataSelector"];
+            $targetSelector = $elem['targetSelector'];
 
-            if (str_replace(' ', '', $dataKey) === '*,*') {
-                $data = $db->read();
-                $r = 1;
-                foreach ($data as $key => $rec) {
-                    $c = 1;
-                  foreach ($rec as $k => $v) {
-                      if (preg_match('/(.*?) \* (.*?) \* (.*?) /x', $targetSelector, $m)) {
-                          $targSel = "{$m[1]}$r{$m[2]}$c{$m[3]}";
-                          $tmp[$targSel] = $v;
-                          $c++;
-                      } else {
-                          die("Error in ...");
-                      }
-                  }
-                  $r++;
-                }
+            if (strpos($dataKey, '*') !== false) {
+                $tmp = $this->getValueArray($set, $k);
                 continue;
-            }
 
-            if ((strpos($dataKey, '{') !== false) && $this->dynDataSelectors) {
-                $dataKey = preg_replace('/\{'.$this->dynDataSelectors['name'].'\}/', $this->dynDataSelectors['value'], $dataKey);
-            }
-
-            if ((strpos($targetSelector, '{') !== false) && $this->dynDataSelectors) {
-                $targetSelector = preg_replace('/\{'.$this->dynDataSelectors['name'].'\}/', $this->dynDataSelectors['value'], $targetSelector);
-            }
-            if ($dbIsLocked || $db->isRecLocked( $dataKey )) {
-                $lockedElements[] = $targetSelector;
-            }
-            if (preg_match('/(.*?),\*$/', $dataKey, $m)) {
-                $value = $db->readRecord( $m[1] );
             } else {
-                $value = $db->readElement( $dataKey );
-            }
-            if (is_array($value)) {
-                $j = 1;
-                foreach ($value as $i => $v) {
-                    $t = str_replace('*', $j++, $targetSelector);
-                    $tmp[$t] = $v;
+                if ($this->dynDataSelector) {
+                    if (strpos($dataKey, '{') !== false) {
+                        $dataKey = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $dataKey);
+                    }
+
+                    if (strpos($targetSelector, '{') !== false) {
+                        $targetSelector = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $targetSelector);
+                    }
                 }
-            } else {
+
+                if ($dbIsLocked || $db->isRecLocked( $dataKey )) {
+                    $lockedElements[] = $targetSelector;
+                }
+                if (isset($data[ $dataKey ])) {
+                    $value = $data[ $dataKey ];
+                }
                 $tmp[$targetSelector] = $value;
             }
         }
@@ -258,6 +241,71 @@ class LiveDataService
     } // getData
 
 
+
+    public function getValueArray($set, $k)
+    {
+        $elem = $set[ $k ];
+        $dataKey = $elem["dataSelector"];
+        $targetSelector = $elem['targetSelector'];
+
+        // dynDataSelector: select a data element upuo client request:
+        if ($this->dynDataSelector) {
+            // check for '{r}' pattern in dataKey and replace it value in client request:
+            if (strpos($dataKey, '{') !== false) {
+                $dataKey = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $dataKey);
+            }
+
+            // check for '{r}' pattern in targetSelector and replace it value in client request:
+            if (strpos($this->targetSelector, '{') !== false) {
+                $targetSelector = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $targetSelector);
+            }
+
+            // try to retrieve requested record using compiled dataKey:
+            $rec = $set['_db']->readRecord( $dataKey );
+            if ($rec) {
+                $c = 1;
+                foreach ($rec as $k => $v) {
+                    if (preg_match('/(.*?) \* (.*?)/x', $targetSelector, $m)) {
+                        $targSel = "{$m[1]}$c{$m[2]}";
+                        $tmp[$targSel] = $v;
+                        $c++;
+                    } else {
+                        die("Error in targetSelector '$targetSelector' -> '*' missing");
+                    }
+                }
+                return $tmp;
+            } else {
+                return [];
+            }
+        }
+
+        $tmp = [];
+        $data = $set['_db']->read();
+        $r = 1;
+        foreach ($data as $key => $rec) {
+            if (is_array($rec)) {
+                $c = 1;
+                foreach ($rec as $k => $v) {
+                    if (preg_match('/(.*?) \* (.*?) \* (.*?) /x', $targetSelector, $m)) {
+                        $targSel = "{$m[1]}$r{$m[2]}$c{$m[3]}";
+                        $tmp[$targSel] = $v;
+                        $c++;
+                    } else {
+                        die("Error in targetSelector '$targetSelector' -> '*' missing");
+                    }
+                }
+            } else {
+                if (preg_match('/(.*?) \* (.*?)/x', $targetSelector, $m)) {
+                    $targSel = "{$m[1]}$r{$m[2]}";
+                    $tmp[$targSel] = $rec;
+                } else {
+                    die("Error in targetSelector '$targetSelector' -> '*' missing");
+                }
+            }
+            $r++;
+        }
+        return $tmp;
+    } // getValueArray
 
 
     private function checkAbort()

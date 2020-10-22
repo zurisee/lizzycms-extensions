@@ -9,8 +9,10 @@ class LiveData
     public function __construct($lzy, $args = false)
     {
         $this->lzy = $lzy;
-        $this->inx = &$GLOBALS['lizzy']['liveDataInx'][ $GLOBALS["globalParams"]["pagePath"] ];
-        $this->inx++;
+        $pagePath = $GLOBALS["globalParams"]["pagePath"];
+        $GLOBALS['lizzy']['liveDataInx'][ $pagePath ]++;
+        $this->setInx = $GLOBALS['lizzy']['liveDataInx'][ $pagePath ];
+        $this->inx = 1;
         $this->init($args);
     } // __construct
 
@@ -30,22 +32,27 @@ class LiveData
         // dataSelector can be scalar or array:
         if (sizeof($dataSelectors) === 1) {                  // scalar value:
             if ($nT === 0) {
-                $targetSelectors[0] = "lzy-live-data-1";
+                $targetSelectors[0] = "lzy-live-data-$this->setInx";
             }
             $this->addTicketRec($targetSelectors[0], $dataSelectors[0], $this->polltime, $tickRec);
-            $values[0] = $this->db->readElement($dataSelectors[0]);
+            if ($dataSelectors[0] === '*') {
+                $values[0] = $this->db->read();
+            } else {
+                $values[0] = $this->db->readElement($dataSelectors[0]);
+            }
+//            $values[0] = $this->db->readElement($dataSelectors[0]);
 
         } else {                                            // array value:
-            for ($i=$nT; $i<$n; $i++) {
-                $targetSelectors[$i] = "lzy-live-data-" . ($i+1);
+            for ($i=$nT; $i<$n; $i++) { // add targetSelectors that are not explicitly supplied:
+                $targetSelectors[$i] = "lzy-live-data-$this->setInx-" . ($i+1);
             }
 
             foreach ($dataSelectors as $i => $dataSelector) {
-                $targetSelector = isset($targetSelectors[$i])? $targetSelectors[$i]: $targetSelectors[0];
-                $this->addTicketRec($targetSelector, $dataSelector, $this->polltime, $tickRec);
+                $targetSelector = isset($targetSelectors[$i])? $targetSelectors[$i]: "lzy-live-data-$this->setInx-$this->inx";
+                $this->addTicketRec($targetSelector, $dataSelector, $this->polltime, $tickRec, $i);
                 $values[] = $this->db->readElement($dataSelector);
+                $this->inx++;
             }
-            $this->inx += sizeof($dataSelectors) - 1;
         }
 
         $this->dataSelectors = $dataSelectors;
@@ -55,7 +62,7 @@ class LiveData
         $ticket = $tick->createTicket($tickRec, 99, 86400);
 
         if ($returnAttrib) {
-            $str = " data-live-data-ref='$ticket'";
+            $str = " data-lzy-data-ref='$ticket'";
         } else {
             $str = $this->renderHTML($ticket, $values);
         }
@@ -117,11 +124,12 @@ class LiveData
 
 
 
-    private function addTicketRec($targetSelector, $dataSelector, $pollTime, &$tickRec)
+    private function addTicketRec($targetSelector, $dataSelector, $pollTime, &$tickRec, $inx = 0)
     {
         $targetSelector = $this->deriveTargetSelector($targetSelector, $dataSelector, $tickRec);
         $this->targetSelector = $targetSelector;
-        $tickRec[] = [
+        $recInx = "e$this->inx";
+        $tickRec["set$this->setInx"][$recInx] = [
             'dataSource' => $this->dataSource,
             'dataSelector' => $dataSelector,
             'targetSelector' => $targetSelector,
@@ -140,6 +148,9 @@ class LiveData
             if ($tickRec) {
                 $existingIds = array_map(function ($e) { return $e['targetSelector']; }, $tickRec);
                 if (in_array($targetSelector, $existingIds)) {
+                    if ($this->setInx > 1) {
+                        $targetSelector .= "-$this->setInx";
+                    }
                     $targetSelector .= "-$this->inx";
                 }
             }
@@ -170,6 +181,8 @@ class LiveData
         if ($this->postUpdateCallback) {
             $postUpdateCallback = " data-live-post-update-callback='$this->postUpdateCallback'";
         }
+
+        $ticket .= ":set$this->setInx";
 
         // normally, this macro renders visible output directly.
         // 'mode: manual' overrides this -> just renders infrastructure, you place the visible code manually into your page
