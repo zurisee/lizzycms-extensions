@@ -1,13 +1,4 @@
 
-.lzy-editable-frozen,
-.lzy-editable {
-	position: relative;
-	border: none;
-	padding: 0;
-	overflow: hidden;
-	width: 16em;
-	height: 2em;
-}
 .lzy-editable.lzy-editable-show-button {
     opacity: 0.99; /* create stacking context */
 }
@@ -18,13 +9,39 @@
 	padding: 0;
 }
 
-.lzy-editable-frozen,
-.lzy-editable input {
+/*.lzy-editable-wrapper,*/
+.lzy-editable-active,
+.lzy-editable {
+	position: relative;
+	border: none;
+	overflow: hidden;
+	width: 16em;
+	height: 2em;
+	line-height: 2em;
 	background: #eff;
 	border: 1px solid #ddd;
 	padding: 0 5px;
-	width: 100%;
 }
+.lzy-editable-active {
+	padding: 0;
+}
+.lzy-editable-active input {
+	background: #efe;
+	width: 100%;
+	height: 100%;
+	border: 1px solid #ddd;
+	padding: 0 5px;
+}
+.lzy-editable-active input:focus {
+	outline: none;
+}
+/*.lzy-editable-frozen,*/
+/*.lzy-editable input {*/
+/*	background: #eff;*/
+/*	border: 1px solid #ddd;*/
+/*	padding: 0 5px;*/
+/*	width: 100%;*/
+/*}*/
 .lzy-editable input {
 	position: absolute;
 	top: 0;
