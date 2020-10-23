@@ -6,27 +6,37 @@ $GLOBALS['lizzy']['liveDataInx'][ $GLOBALS["globalParams"]["pagePath"] ] = 0;
 
 class LiveData
 {
-    public function __construct($lzy, $args = false)
+    protected $args = [];
+    protected $dataSelectors = [];
+    protected $targetSelectors = [];
+
+    public function __construct($lzy, $args = [])
     {
         $this->lzy = $lzy;
         $pagePath = $GLOBALS["globalParams"]["pagePath"];
         $GLOBALS['lizzy']['liveDataInx'][ $pagePath ]++;
         $this->setInx = $GLOBALS['lizzy']['liveDataInx'][ $pagePath ];
         $this->inx = 1;
-        $this->init($args);
+        $this->args = $args;
+//        $this->init($args);
     } // __construct
 
 
 
-    public function render( $returnAttrib = false )
+    public function render( $args = [], $returnAttrib = false )
+//    public function render( $args = [], $returnAttrib = false )
     {
+        $args = array_merge($this->args, $args);
+        $this->init($args);
+
         $dataSelectors = explodeTrim('|', $this->dataSelector);
         $n = sizeof($dataSelectors);
 
         $targetSelectors = explodeTrim('|', $this->targetSelector);
         $nT = sizeof($targetSelectors);
 
-        $tickRec = [];
+        $tickRec = $args['tickRecCustomFields']? $args['tickRecCustomFields'] : [];
+//        $tickRec = [];
         $values = [];
 
         // dataSelector can be scalar or array:
@@ -40,7 +50,6 @@ class LiveData
             } else {
                 $values[0] = $this->db->readElement($dataSelectors[0]);
             }
-//            $values[0] = $this->db->readElement($dataSelectors[0]);
 
         } else {                                            // array value:
             for ($i=$nT; $i<$n; $i++) { // add targetSelectors that are not explicitly supplied:
@@ -60,6 +69,7 @@ class LiveData
 
         $tick = new Ticketing(['defaultType' => 'live-data']);
         $ticket = $tick->createTicket($tickRec, 99, 86400);
+        $ticket .= ":set$this->setInx";
 
         if ($returnAttrib) {
             $str = " data-lzy-data-ref='$ticket'";
@@ -68,7 +78,6 @@ class LiveData
         }
         return $str;
     } // render
-
 
 
 
@@ -182,7 +191,7 @@ class LiveData
             $postUpdateCallback = " data-live-post-update-callback='$this->postUpdateCallback'";
         }
 
-        $ticket .= ":set$this->setInx";
+//        $ticket .= ":set$this->setInx";
 
         // normally, this macro renders visible output directly.
         // 'mode: manual' overrides this -> just renders infrastructure, you place the visible code manually into your page

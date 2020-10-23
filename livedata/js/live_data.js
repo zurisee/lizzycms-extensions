@@ -11,8 +11,8 @@ var debugOutput = false;
 
 function initLiveData() {
     // collect all references within page:
-    $('[data-live-data-ref]').each(function () {
-        var ref = $( this ).attr('data-live-data-ref');
+    $('[data-lzy-data-ref]').each(function () {
+        var ref = $( this ).attr('data-lzy-data-ref');
         refs = refs + ref + ',';
     });
     refs = refs.replace(/,+$/, '');
@@ -64,6 +64,11 @@ function updateDOM(data) {
         //mylog(`writing to '${targSel}' value '${val}'`);
         $( targSel ).each(function() {
             var $targ = $( this );
+            const id = $targ.attr('id');
+            // if it's an editable field, target the inner input element:
+             if ($('#_' + id, $targ).length) {
+                 $targ = $('#_' + id, $targ);
+             }
 
             var goOn = true;
             // var callback = $('.lzy-live-data').attr('data-live-callback');
@@ -107,6 +112,7 @@ function handleAjaxResponse(json) {
         console.log('No data received - terminating live-data');
         return;
     }
+    json = json.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
     try {
         var data = JSON.parse(json);
     } catch (e) {
@@ -152,7 +158,6 @@ function handleAjaxResponse(json) {
 
 function updateLiveData( returnImmediately ) {
     var url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
-    // var url = appRoot + "_lizzy/_live_data_service.php";
     if (paramName) {
         var paramValue = $( paramSource ).text();
         url = appendToUrl(url, 'dynDataSel=' + paramName + ':' + paramValue);
@@ -182,11 +187,11 @@ function updateLiveData( returnImmediately ) {
 
 
 // initialize live data:
-$( document ).ready(function() {
-    if ($('[data-live-data-ref]').length) {
-        initLiveData();
-    }
-});
+// $( document ).ready(function() {
+//     if ($('[data-lzy-data-ref]').length) {
+//         initLiveData();
+//     }
+// });
 
 
 
