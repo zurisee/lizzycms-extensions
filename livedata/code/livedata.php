@@ -2,6 +2,13 @@
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
 
 $page->addModules('~ext/livedata/js/live_data.js');
+$jq = <<<EOT
+if ($('[data-lzy-data-ref]').length) {
+    initLiveData();
+}
+
+EOT;
+$page->addJq($jq);
 
 $macroName = basename(__FILE__, '.php');    // macro name normally the same as the file name
 $this->addMacro($macroName, function () {

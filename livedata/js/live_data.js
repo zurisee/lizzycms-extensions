@@ -185,7 +185,7 @@ function updateLiveData( returnImmediately ) {
 } // update
 
 
-
+// -> replaced by explicit invokation in livedata.php, resp. editable module
 // initialize live data:
 // $( document ).ready(function() {
 //     if ($('[data-lzy-data-ref]').length) {

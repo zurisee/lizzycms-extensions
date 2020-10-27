@@ -18,13 +18,11 @@ class LiveData
         $this->setInx = $GLOBALS['lizzy']['liveDataInx'][ $pagePath ];
         $this->inx = 1;
         $this->args = $args;
-//        $this->init($args);
     } // __construct
 
 
 
     public function render( $args = [], $returnAttrib = false )
-//    public function render( $args = [], $returnAttrib = false )
     {
         $args = array_merge($this->args, $args);
         $this->init($args);
@@ -36,7 +34,6 @@ class LiveData
         $nT = sizeof($targetSelectors);
 
         $tickRec = $args['tickRecCustomFields']? $args['tickRecCustomFields'] : [];
-//        $tickRec = [];
         $values = [];
 
         // dataSelector can be scalar or array:
@@ -191,14 +188,12 @@ class LiveData
             $postUpdateCallback = " data-live-post-update-callback='$this->postUpdateCallback'";
         }
 
-//        $ticket .= ":set$this->setInx";
-
         // normally, this macro renders visible output directly.
         // 'mode: manual' overrides this -> just renders infrastructure, you place the visible code manually into your page
         // e.g. <span id="my-id""></span>
         if ($this->manual) {
             $str = <<<EOT
-<span class='lzy-live-data disp-no' data-live-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback><!-- live-data manual mode --></span>
+<span class='lzy-live-data disp-no' data-lzy-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback><!-- live-data manual mode --></span>
 EOT;
 
         } else {
@@ -212,7 +207,7 @@ EOT;
                     $selector = "id='$targetSelector' class='lzy-live-data'";
                 }
                 $str .= <<<EOT
-    <span $selector data-live-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
+    <span $selector data-lzy-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
 
 EOT;
             }
