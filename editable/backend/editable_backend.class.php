@@ -26,9 +26,6 @@ save
 get
 	GET:	?get=id
 
-reset
-	GET:	?reset
-
 log
 	GET:	?log=message
 
@@ -60,7 +57,7 @@ class EditableBackend
 
         if (!isset($_SESSION['lizzy']['userAgent'])) {
             mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
-            lzyExit('restart');
+            $this->sendResponse('restart');
         }
 
 		$this->sessionId = session_id();
@@ -92,42 +89,42 @@ class EditableBackend
 		$this->remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : 'REMOTE_ADDR';
 		$this->userAgent = isset($_SESSION['lizzy']['userAgent']) ? $_SESSION['lizzy']['userAgent'] : $_SERVER["HTTP_USER_AGENT"];
 		$this->isLocalhost = (($this->remoteAddress == 'localhost') || (strpos($this->remoteAddress, '192.') === 0) || ($this->remoteAddress == '::1'));
-//		$this->handleUrlArguments();
-		$this->config = [];
 	} // __construct
 
 
 
 	//---------------------------------------------------------------------------
-//	private function handleUrlArguments()
 	public function execute()
 	{
-        $this->handleEditableRequests();    // Editable: conn, get, reset, lock, unlock, save
+        if (isset($_GET['conn'])) {                                // conn  initial interaction with client, defines used ids
+            $this->initConnection();
+        }
+
+        if (!$this->openDB()) {
+            $cmd = str_replace(['ds', '_', 'ref'], '', implode('', array_keys($_GET)));
+            mylog("### openDB -> failed: $cmd");
+            $this->sendResponse("failed#openDB:$cmd");
+        }
+
+        if ($id = $this->getRequestData('get')) {     // get value(s)
+            $this->get($id);
+        }
+
+        if ($id = $this->getRequestData('lock')) {    // lock an editable field
+            $this->lock($id);
+        }
+
+        if ($id = $this->getRequestData('unlock')) {    // unlock an editable field
+            $this->unlock($id);
+        }
+
+        if ($id = $this->getRequestData('save')) {    // save data & unlock
+            $this->save($id);
+        }
 
         $this->handleGenericRequests();     // log, info
 
     } // handleUrlArguments
-
-
-
-	//---------------------------------------------------------------------------
-	private function info()
-	{
-		$localhost = ($this->isLocalhost) ? 'yes':'no';
-		$dbs = $this->var_r($_SESSION['lizzy']['db']);
-		$msg = <<<EOT
-	<pre>
-	Page:		{$_SESSION['lizzy']['pagePath']}
-	DB:		$dbs
-	Hash:		{$this->hash}
-	Remote Addr:	{$this->remoteAddress}
-	UA:		{$this->userAgent}
-	isLocalhost:	{$localhost}
-	ClientID:	{$this->clientID}
-	</pre>
-EOT;
-		lzyExit($msg);
-	} // info
 
 
 
@@ -137,9 +134,11 @@ EOT;
             mylog("ERROR in initConnection(): failed to start session");
         }
         $this->clear_duplicate_cookies();		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
-            mylog("*** Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
-            lzyExit('failed#conn');
+            mylog("### Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
+            $this->sendResponse('failed#conn');
         }
+
+        $ok = $this->openDB();
 
         $pagePath = $_SESSION["lizzy"]["pageFolder"];
         mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent} (pagePath: $pagePath)");
@@ -147,7 +146,13 @@ EOT;
 		$_SESSION['lizzy']['lastSentData'] = '';
 		session_write_close();
 
-		lzyExit('ok#conn');
+		if ($ok) {
+            mylog("conn -> ok");
+            $this->sendResponse('ok#conn');
+        } else {
+            mylog("### conn -> failed");
+            $this->sendResponse('failed#conn');
+        }
 	} // initConnection
 
 
@@ -156,18 +161,21 @@ EOT;
 	//---------------------------------------------------------------------------
 	private function lock($id) {
 		if (!$id) {
-			mylog("lock: Error -> id not defined");
-			lzyExit();
+			mylog("### lock: Error -> id not defined");
+            $this->sendResponse("failed#lock (id not defined)");
 		}
 
-        $db = $this->sets[ $this->setInx ];
-        $res = $db->lockRec($id);
+		$set = $this->getSet( $id );
+        $dataKey = $this->getDataSelector( $id );
+        $db = $set['_db'];
+        $res = $db->lockRec( $dataKey );
         if (!$res) {
-			mylog("lock: $id -> failed");
-			lzyExit('failed#lock');
+			mylog("### lock: $dataKey -> failed");
+            $this->sendResponse(['id' => $id], 'failed#lock');
 
 		} else {
-            lzyExit($this->prepareClientData($id).'#lock:ok');
+            mylog("lock: $dataKey -> ok");
+            $this->sendResponse($this->assembleResponse($id), 'ok#lock');
 		}
 	} // lock
 
@@ -177,16 +185,18 @@ EOT;
 	//---------------------------------------------------------------------------
 	private function unlock($id) {
 		if (!$id) {
-			mylog("unlock: Error -> id not defined");
-			lzyExit();
+			mylog("### unlock: Error -> id not defined");
+            $this->sendResponse("failed#unlock (id not defined)");
 		}
-        $db = $this->sets[ $this->setInx ];
-        $res = $db->unlockRec($id);
+        $db = $this->sets[ $this->setInx ]['_db'];
+        $dataKey = $this->getDataSelector( $id );
+        $res = $db->unlockRec($dataKey);
         if ($res) {
-			mylog("unlock: $id -> ok");
-            lzyExit($this->prepareClientData($id).'#unlock:ok');
+			mylog("unlock: $dataKey -> ok");
+            $this->sendResponse($this->assembleResponse($id), 'ok#unlock');
         }
-        lzyExit('failed#unlock');
+        mylog("### unlock: $dataKey -> failed");
+        $this->sendResponse(['id' => $id], 'failed#unlock');
 	} // unlock
 
 
@@ -194,7 +204,8 @@ EOT;
 
 	//---------------------------------------------------------------------------
 	private function get($id) {
-		lzyExit($this->prepareClientData($id).'#get');
+        mylog("get: $id -> ok");
+        $this->sendResponse($this->assembleResponse($id),'ok#get');
 	} // get
 
 
@@ -203,129 +214,29 @@ EOT;
 	//---------------------------------------------------------------------------
 	private function save($id) {
 		if (!$id) {
-			mylog("save & unlock: Error -> id not defined");
-            lzyExit('failed#save');
+			mylog("### save & unlock: Error -> id not defined");
+            $this->sendResponse("failed#save (id not defined)");
 		}
-		$text = $this->get_request_data('text');
+		$text = $this->getRequestData('text');
 		if ($text === 'undefined') {
-            lzyExit('failed#save');
-        }
-		$id1 = "#$id";
-		foreach ($this->ticketRec as $setInx => $set) {
-		    if (strpos($setInx, 'set') !== 0) {
-		        continue;
-            }
-		    foreach ($set as $k => $rec) {
-		        if ($id1 === $rec['targetSelector']) {
-                    break 2;
-                }
-            }
+            mylog("### save: $id -> failed (text not defined)");
+            $this->sendResponse("failed#save (text not defined)");
         }
 
-//        $ref = $this->getRef();
-//        mylog("save: {$id}[$ref] -> [$text]");
-//        if (!$this->openDB()) {
-//            lzyExit('failed#save');
-//        }
-//		$lzyEditableFreezeAfter = $this->freezeFieldAfter;
-//		if ($lzyEditableFreezeAfter) {
-//		    $freezeBefore = time() - $lzyEditableFreezeAfter;
-//		    $lastModif = $this->db->lastModified($id);
-//		    if ($lastModif && ($lastModif < $freezeBefore)) {
-//                mylog("### value frozen - save failed!: $id -> [$text]");
-//                lzyExit('restart');
-//            }
-//        }
-
-        $db = $this->sets[$setInx];
-        $res = $db->writeElement($rec['dataSelector'], $text, false, false);
-//        $db = $this->sets[ $this->setInx ];
-//        $res = $db->writeElement($id, $text, false, false);
+        $dataKey = $this->getDataSelector( $id );
+        $set = $this->getSet( $id );
+        $db = $set['_db'];
+        $res = $db->writeElement($dataKey, $text, false, false);
 
         if (!$res) {
             mylog("### save failed!: $id -> [$text]");
+            $this->sendResponse("failed#save (locked)");
         }
-		$db->unlockRec($id, true); // unlock all owner's locks
+		$db->unlockRec($dataKey, true); // unlock all owner's locks
 
-		lzyExit($this->prepareClientData($id).'#save');
+        mylog("save: $id => '$text' -> ok");
+        $this->sendResponse($this->assembleResponse($id), 'ok#save');
 	} // save
-
-
-
-
-	//---------------------------------------------------------------------------
-//	private function getAllData()
-//    {
-////        if (!$this->openDB()) {
-////            lzyExit('failed#save');
-////        }
-//        lzyExit($this->prepareClientData().'#get-all');
-//    } // getAllData
-
-
-
-
-    //---------------------------------------------------------------------------
-    private function reset()
-    {
-//        if (!$this->openDB()) {
-//            lzyExit('failed#reset');
-//        }
-//
-        //Todo: add some protection from fraululant use -> at least restrict to loggedin users
-        $this->sets->unlockDB( true );
-        $data = $this->sets->read();
-        foreach ($data as $key => $value) {
-            $this->sets->unlockRec( $key, true );
-        }
-        lzyExit();
-    } // reset
-
-
-
-
-	//------------------------------------------------------------
-	private function prepareClientData($key = false)
-	{
-        $outData = $this->assembleResponse();
-        $outData['result'] = 'ok';
-        return json_encode( $outData );
-
-//        $outData = [];
-//        foreach ($this->dbs as $setInx => $db) {
-//            $dbLocked = $db->isLockDB( false );
-//            $data = $db->read();
-//            foreach ($data as $key => $elem) {
-//                if (is_array($elem)) {
-//                    if (preg_match('/(.*?-)(\d+)$/', $key, $m)) {
-//                        $key0 = $m[1];
-//                        $i = intval($m[2]);
-//                    }
-//                    foreach ($elem as $r => $row) {
-//                        if (is_array($row)) {
-//                            foreach ($row as $c => $val) {
-//                                if ($dbLocked || $db->isRecLocked("$key.$r.$c", true)) {
-//                                    $val .= '**LOCKED**';
-//                                }
-//                                $data["$key0$i"] = $val;
-//                                $i++;
-//                            }
-//                        } else {
-//                            $data["$key0$i"] = $row;
-//                            $i++;
-//                        }
-//                    }
-//                } else {
-//                    if ($dbLocked || $db->isRecLocked($key, true)) {
-//                        $data[$key] .= '**LOCKED**';
-//                    }
-//                }
-//            }
-//            $outData = array_merge($outData, $data);
-//        }
-//
-//        return json_encode(['data' =>$data, 'result' => 'ok']);
-	} // prepareClientData
 
 
 
@@ -334,7 +245,7 @@ EOT;
     {
         $outData = [];
         foreach ($this->sets as $setName => $set) {
-            $outRec = $this->getData( $set );
+            $outRec = $this->getData( $setName );
             if (!$outData) {
                 $outData = $outRec;
             } else {
@@ -347,27 +258,38 @@ EOT;
 
 
 
-
-    private function getData( $setDb )
+    private function sendResponse( $out, $result = null )
     {
-//        $setDb = $set['_db'];
-        $data = $setDb->read();
-//        $data = $setDb->data;
+        $outData = [];
+        if (is_string($out)) {
+            $outData['result'] = $out;
+        } else {
+            $outData = $out;
+            if ($result !== null) {
+                $outData['result'] = $result;
+            } elseif (!isset($outData['result'])) {
+                $outData['result'] = 'ok';
+            }
+        }
+        lzyExit( json_encode( $outData ) );
+    } // sendResponse
 
+
+
+
+    private function getData( $setName )
+    {
+        $setDb = $this->sets[ $setName ]['_db'];
         $dbIsLocked = $setDb->isDbLocked( false );
         $lockedElements = [];
         $tmp = [];
-//        foreach ($setDb as $k => $elem) {
-        foreach ($this->config as $k => $elem) {
-            if ($k[0] === '_') {
+        foreach ($this->sets[ $setName ] as $targetSelector => $dataKey) {
+            if ($targetSelector[0] === '_') {
                 continue;
             }
-
-            $dataKey = $elem["dataSelector"];
-            $targetSelector = $elem['targetSelector'];
-
+            $data = $setDb->read();
             if (strpos($dataKey, '*') !== false) {
-                $tmp = $this->getValueArray($setDb, $k);
+                $tmp = $this->getValueArray($setDb, $targetSelector);
                 continue;
 
             } else {
@@ -381,11 +303,15 @@ EOT;
                     }
                 }
 
+                $lastModif = $setDb->lastModifiedElement($dataKey);
+
                 if ($dbIsLocked || $setDb->isRecLocked( $dataKey )) {
                     $lockedElements[] = $targetSelector;
                 }
                 if (isset($data[ $dataKey ])) {
                     $value = $data[ $dataKey ];
+                } else {
+                    $value = '';
                 }
                 $tmp[$targetSelector] = $value;
             }
@@ -474,6 +400,26 @@ EOT;
 
 
 
+    private function getSet( $id )
+    {
+        if (isset($this->editableElements[$id])) {
+            return $this->sets[ $this->editableElements[$id][1] ];
+        }
+        return false;
+    } // getSet
+
+
+
+    private function getDataSelector( $id )
+    {
+        if (isset($this->editableElements[$id])) {
+            return $this->editableElements[$id][0];
+        }
+        return false;
+    } // getDataSelector
+
+
+
     //---------------------------------------------------------------------------
     private function openDB() {
 	    if ($this->sets) {
@@ -481,7 +427,7 @@ EOT;
         }
 
 	    $useRecycleBin = false;
-        $dataRef = $this->get_request_data('ds');
+        $dataRef = $this->getRequestData('ds');
         if (!$dataRef || !preg_match('/^[A-Z][A-Z0-9]{4,20}/', $dataRef)) {   // dataRef missing
             return false;
         }
@@ -505,16 +451,21 @@ EOT;
                 $recInx = "e$i";
                 if ($recInx && isset($tRec[$recInx])) {
                     $rec = $tRec[$recInx];
-                    $this->config[$recInx] = $rec;
+                    $this->sets[$setInx]['_tickRec'] = $rec;
                     $this->freezeFieldAfter = intval($rec['freezeFieldAfter']);
                     $useRecycleBin |= $rec['useRecycleBin'];
-                    $this->sets[$setInx] = new DataStorage2([
+                    $this->sets[$setInx]['_db'] = new DataStorage2([
                         'dataFile' => PATH_TO_APP_ROOT.$rec['dataSource'],
                         'sid' => $this->sessionId,
                         'lockDB' => false,
                         'useRecycleBin' => $useRecycleBin,
                         'lockTimeout' => false,
+                        'logModifTimes' => true,
                     ]);
+                    $tSel = substr($rec['targetSelector'], 1);
+                    $this->sets[$setInx][ $tSel ] = $rec['dataSelector'];
+                    $this->editableElements[ $tSel ][0] = $rec['dataSelector'];
+                    $this->editableElements[ $tSel ][1] = $setInx;
                 } else {
                     break;
                 }
@@ -527,7 +478,7 @@ EOT;
 
 
 //------------------------------------------------------------
-	private function get_request_data($varName) {
+	private function getRequestData($varName) {
 		global $argv;
 		$out = null;
 		if (isset($_GET[$varName])) {
@@ -545,7 +496,7 @@ EOT;
 			}
 		}
 		return $out;
-	} // get_request_data
+	} // getRequestData
 
 
 
@@ -610,50 +561,14 @@ EOT;
 
 
 
-    private function handleEditableRequests()
-    {
-        if (isset($_GET['conn'])) {                                // conn  initial interaction with client, defines used ids
-            $this->initConnection();
-        }
-
-        if (!$this->openDB()) {
-            $cmd = str_replace(['ds', '_', 'ref'], '', implode('', array_keys($_GET)));
-            lzyExit("failed#$cmd");
-        }
-
-        if ($id = $this->get_request_data('get')) {     // get value(s)
-            $this->get($id);
-        }
-
-        if (isset($_GET['reset'])) {                            // reset all locks
-            $this->reset();
-        }
-
-        if ($id = $this->get_request_data('lock')) {    // lock an editable field
-            $this->lock($id);
-        }
-
-        if ($id = $this->get_request_data('unlock')) {    // unlock an editable field
-            $this->unlock($id);
-        }
-
-        if ($id = $this->get_request_data('save')) {    // save data & unlock
-            $this->save($id);
-        }
-    } // handleEditableRequests
-
-
-
-
-
     private function handleGenericRequests()
     {
         if (isset($_GET['log'])) {                                // remote log, write to backend's log
-            $msg = $this->get_request_data('text');
+            $msg = $this->getRequestData('text');
             mylog("Client: $msg");
-            lzyExit();
+            $this->sendResponse('ok');
         }
-        if ($this->get_request_data('info') !== null) {    // respond with info-msg
+        if ($this->getRequestData('info') !== null) {    // respond with info-msg
             $this->info();
         }
     } // handleGenericRequests
@@ -663,8 +578,29 @@ EOT;
 
     private function getRef()
     {
-        return $this->get_request_data('ref');
+        return $this->getRequestData('ref');
     } // getRef
+
+
+
+    //---------------------------------------------------------------------------
+    private function info()
+    {
+        $localhost = ($this->isLocalhost) ? 'yes':'no';
+        $dbs = $this->var_r($_SESSION['lizzy']['db']);
+        $msg = <<<EOT
+	<pre>
+	Page:		{$_SESSION['lizzy']['pagePath']}
+	DB:		$dbs
+	Hash:		{$this->hash}
+	Remote Addr:	{$this->remoteAddress}
+	UA:		{$this->userAgent}
+	isLocalhost:	{$localhost}
+	ClientID:	{$this->clientID}
+	</pre>
+EOT;
+        $this->sendResponse(['text' => $msg], 'ok');
+    } // info
 
 } // EditingService
 

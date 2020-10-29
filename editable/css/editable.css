@@ -1,4 +1,5 @@
 
+.lzy-editable.lzy-editable-show-buttons,
 .lzy-editable.lzy-editable-show-button {
     opacity: 0.99; /* create stacking context */
 }
@@ -21,6 +22,7 @@
 	background: #eff;
 	border: 1px solid #ddd;
 	padding: 0 5px;
+	cursor: pointer;
 }
 .lzy-editable-active {
 	padding: 0;
@@ -31,17 +33,18 @@
 	height: 100%;
 	border: 1px solid #ddd;
 	padding: 0 5px;
+	opacity: 0.999;
+	z-index: 0;
 }
 .lzy-editable-active input:focus {
 	outline: none;
 }
-/*.lzy-editable-frozen,*/
-/*.lzy-editable input {*/
-/*	background: #eff;*/
-/*	border: 1px solid #ddd;*/
-/*	padding: 0 5px;*/
-/*	width: 100%;*/
-/*}*/
+.lzy-editable input {
+	background: #eff;
+	border: 1px solid #ddd;
+	padding: 0 5px;
+	width: 100%;
+}
 .lzy-editable input {
 	position: absolute;
 	top: 0;
@@ -49,17 +52,17 @@
 	height: 100%;
 }
 .lzy-editable-frozen {
-	line-height: 2em;
+	/*line-height: 2em;*/
 	background: #dceeee;
 	background: repeating-linear-gradient(    -55deg,    #eeffff,    #eeffff 10px,    #edf8f8 10px,    #edf8f8 15px  );
-	width: calc(16em - 12px) !important;
-	height: calc(2em - 2px);
+	/*width: calc(16em - 12px) !important;*/
+	/*height: calc(2em - 2px);*/
 	cursor: url(../rsc/locked.png), auto;
 }
 
 
+.lzy-editable.lzy-editable-show-buttons input:focus + .lzy-editable-submit-button,
 .lzy-editable.lzy-editable-show-button input:focus + .lzy-editable-submit-button {
-    z-index: 99999!important;
     cursor: pointer;
 }
 .lzy-editable .lzy-locked,
@@ -84,11 +87,12 @@
 	color: #999;
 }
 
+.lzy-editable-cancel-button,
 .lzy-editable-submit-button {
 	position: absolute;
-	top: 0;
+	top: 1px;
 	right: 0;
-	z-index: -1;
+	z-index: 0;
 	text-align: center;
 	vertical-align: top;
 	padding: 0;
@@ -98,6 +102,11 @@
 	display: inline-block;
 	margin: 1px 1px 0 0;
 	font-size: 14pt;
+}
+.lzy-editable-show-buttons .lzy-editable-submit-button,
+.touchevents .lzy-editable-submit-button,
+.touch .lzy-editable-submit-button {
+	right: 2.2em;
 }
 
 .lzy-editable .lzy-wait {
@@ -111,4 +120,15 @@
 	height: 2em;
 	line-height: 2em;
 	padding: 0 5px;
+}
+
+.lzy-live-data-locked {
+	background: #fee;
+	border: 1px dashed red;
+	cursor: url(../rsc/stop.png), auto;
+	/*cursor: no-drop;*/
+}
+
+.lzy-js-popup-wrapper {
+	min-height: auto;
 }

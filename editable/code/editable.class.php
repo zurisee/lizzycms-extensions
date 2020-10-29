@@ -2,10 +2,22 @@
 
 $GLOBALS['globalParams']['editableInx'] = 0;
 
+$page->addModules('JS_POPUPS');
+
+$textResources = <<<EOT
+<div style="display: none">
+    <div id='db-error' style="display: none">{{ lzy-editable-db-error }}</div>
+    <div id='error-locked' style="display: none">{{ lzy-editable-db-locked }}</div>
+    <div id='conn-error' style="display: none">{{ lzy-editable-conn-error }}</div>
+</div>
+
+EOT;
+
+$page->addBody($textResources);
+
+
 class Editable extends LiveData
 {
-//    protected $args = [];
-
     public function __construct($lzy, $args = false)
     {
         if (!@$args['dataSource']) {
@@ -22,16 +34,6 @@ class Editable extends LiveData
         $this->editaleSetInx = $GLOBALS['globalParams']['editableInx'];
 
         $args = $this->prepareArguments( $args );
-
-        // create or obtain ticket from previous session:
-//        $ticketing = new Ticketing(['hashSize' => 8, 'defaultType' => 'editable', 'defaultValidityPeriod' => 900]);
-//        $rec["e$inx"] = [
-//            'dataSrc' => $args['dataSource'],
-//            'useRecycleBin' => @$args['useRecycleBin'],
-//            'freezeFieldAfter' => @$args['freezeFieldAfter'],
-//        ];
-//        $ticketHash = $ticketing->createTicket($rec, 99999);
-//        $this->ticketHash = "$ticketHash:e$inx";
 
         if (($args['nCols'] === 1) && ($args['nRows'] === 1)) {
             $out = $this->renderEditableFields();
@@ -59,22 +61,40 @@ class Editable extends LiveData
 
         $dataRef = parent::render( $args, true );
 
+        $data = $this->db->read();
+
         $id = $args['id'] ? " id='{$args['id']}'" : '';
         $eClass = '';
 
         $class = trim("lzy-editable-wrapper {$args['showButtonClass']}{$args['wrapperClass']}");
-        $out = "\t<div$id class='$class'$dataRef>\n";
+        $out = '';
 
-        foreach ($this->targetSelectors as $eId) {
+        foreach ($this->targetSelectors as $i => $eId) {
             if ($eId[0] === '#') {
                 $eId = substr($eId, 1);
+                $eClass = '';
             } elseif ($eId[0] === '.') {
-                $eClass = ' class="'.substr($eId, 1).'"';
+                $eClass = substr($eId, 1);
                 $eId = "lzy-editable-$this->editaleSetInx-1";
             }
-            $out .= "\t\t<div id='$eId' class='lzy-editable'$eClass></div>\n";
+            $value = '';
+            if (isset( $data[ $this->dataSelectors[$i] ]) ) {
+                if ($this->db->isRecLocked($this->dataSelectors[$i])) {
+                    $eClass .= ' lzy-editable-locked';
+                }
+                $value = $data[ $this->dataSelectors[$i] ];
+                if ($value && $this->freezeFieldAfter) {
+                    $lastModif = $this->db->lastModifiedElement($this->dataSelectors[$i]);
+                    if ($lastModif < (time() - $this->freezeFieldAfter)) {
+                        $eClass .= ' lzy-editable-frozen';
+                    }
+                }
+            }
+            $eClass = trim($eClass);
+            $out .= "\t\t<div id='$eId' class='lzy-editable $eClass'>$value</div>\n";
         }
 
+        $out = "\t<div$id class='$class'$dataRef>\n$out";
         $out .= "\t</div><!-- /lzy-editable-wrapper -->\n";
         return $out;
     } // renderEditableFields
@@ -128,20 +148,29 @@ class Editable extends LiveData
         }
         if (!isset($args['targetSelector'])) {
             $args['targetSelector'] = 'lzy-editable' . $this->editaleSetInx;
-//            $args['targetSelector'] = '';
         }
 
         $args['id'] = $args['id']? translateToClassName($args['id']) : '';
         $args['wrapperClass'] = @$args['class'] ? " {$args['class']}" : '';
-//        $args['class'] = 'lzy-editable';
         $args['class'] = @$args['class']? "lzy-editable {$args['class']}": 'lzy-editable';
 
-        $args['freezeThreshold'] = @$args['freezeFieldAfter'] ? time() - intval($args['freezeFieldAfter']) : 0;
+        if (@$args['freezeFieldAfter']) {
+            $args['freezeThreshold'] = time() - intval($args['freezeFieldAfter']);
+            $this->freezeFieldAfter = intval($args['freezeFieldAfter']);
+        } else {
+            $args['freezeThreshold'] = 0;
+            $this->freezeFieldAfter = false;
+        }
+//        $args['freezeThreshold'] = @$args['freezeFieldAfter'] ? time() - intval($args['freezeFieldAfter']) : 0;
+//        $this->freezeThreshold = intval($args['freezeFieldAfter']);
+
 
         $args['showButtonClass'] = '';
         if (isset($args['showButton'])) {
             if ($args['showButton'] === 'auto') {
                 $args['showButtonClass'] = ' lzy-editable-auto-show-button';
+            } elseif ($args['showButton'] === 'all') {
+                $args['showButtonClass'] = ' lzy-editable-show-buttons';
             } elseif ($args['showButton']) {
                 $args['showButtonClass'] = ' lzy-editable-show-button';
             }
@@ -151,8 +180,6 @@ class Editable extends LiveData
 
         $args['nCols'] = max(1, intval(@$args['nCols']));
         $args['nRows'] = max(1, intval(@$args['nRows']));
-//        $args['nCols'] = intval(@$args['nCols']);
-//        $args['nRows'] = intval(@$args['nRows']);
 
         // dataFile synonyme for dataSource for backward compatibility:
         if (!isset($args['dataSource']) && @$args['dataFile']) {
@@ -160,7 +187,6 @@ class Editable extends LiveData
         }
 
         if (@$args['dataSource']) {
-            //        if (preg_match('/^\s*(\d+)\s*,\s*(\d+)\s*$/', $args['dataKey'], $m)) {
             if (is_string(@$args['dataKey']) && preg_match('/^\s*(\d+)\s*,\s*(\d+)\s*$/', $args['dataKey'], $m)) {
                 $args['dataKey'] = (intval($m[1]) - 1) . ',' . (intval($m[2]) - 1);
                 $args['id'] = 'lzy-editable-field' . $this->editaleSetInx;
@@ -236,43 +262,5 @@ class Editable extends LiveData
         $args['protectedCells'] = $protectedCells;
         return $args;
     } // prepareProtectedCellsArray
-
-
-
-
-//    //---------------------------------------------------------------
-//    private function prepareDataSource($args)
-//    {
-//        if (@$args['dataSource']) {
-//    //        if (preg_match('/^\s*(\d+)\s*,\s*(\d+)\s*$/', $args['dataKey'], $m)) {
-//            if (is_string(@$args['dataKey']) && preg_match('/^\s*(\d+)\s*,\s*(\d+)\s*$/', $args['dataKey'], $m)) {
-//                $args['dataKey'] = (intval($m[1]) - 1) . ',' . (intval($m[2]) - 1);
-//                $args['id'] = 'lzy-editable-field' . $this->inx;
-//            }
-//
-//            $dataSource1 = resolvePath($args['dataSource'], true);
-//            if (file_exists($dataSource1)) {
-//                if (is_file($dataSource1)) {
-//                    $args['dataFile'] = $dataSource1;
-//                } elseif (is_dir($dataSource1)) {
-//                    $args['dataFile'] = $dataSource1 . DEFAULT_EDITABLE_DATA_FILE;
-//                } else {
-//                    fatalError("Error: folder to store editable data does not exist.");
-//                }
-//
-//            } elseif (file_exists(basename($dataSource1))) {    // folder exists, but not the file
-//                $args['dataFile'] = $dataSource1 . DEFAULT_EDITABLE_DATA_FILE;
-//
-//            } else {
-//                preparePath($dataSource1);
-//                touch($dataSource1);
-//                $args['dataFile'] = $dataSource1;
-//            }
-//        } else {
-//            $args['dataFile'] = $GLOBALS['globalParams']['pageFolder'] . DEFAULT_EDITABLE_DATA_FILE;
-//        }
-//        $args['dataSource'] = $args['dataFile'];
-//        return $args;
-//    } // prepareDataSource
 
 } // class Editable

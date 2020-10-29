@@ -3,3 +3,15 @@ lzy-editable-field-frozen:
     de: Das Feld kann nach einer Überganszeit nicht mehr verändert werden.
     _: This field can no longer be modified.
 
+lzy-editable-db-error:
+  de: 'Fehler beim Ansprechen der Datenbank.<br>Versuchen Sie es bitte etwas später noch einmal.'
+  _:  'An error occurred while accessing the database.<br>Please try again later.'
+
+lzy-editable-db-locked:
+  de: 'Dieses Datenfeld ist momentan gesperrt.<br>Versuchen Sie es bitte etwas später noch einmal.'
+  _:  'This element is currently locked.<br>Please try again later.'
+
+lzy-editable-conn-error:
+  de: 'Die Verbindung zum Server scheiterte.<br>Versuchen Sie es bitte etwas später noch einmal.'
+  _:  'Error connecting to server.<br>Please try again with another browser or another computer.'
+

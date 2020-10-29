@@ -9,22 +9,13 @@ $macroName = basename(__FILE__, '.php');
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
 require_once SYSTEM_PATH.'extensions/editable/code/editable.class.php';
 
-$page->addModules(['~sys/extensions/editable/css/editable.css', '~sys/extensions/editable/js/editable.js']);
-//$page->addModules('~sys/extensions/livedata/js/live_data.js');
-
-$msg = $this->getVariable('lzy-editable-temporarily-locked');
-$msg = str_replace("\n", '\\n', $msg);
-$page->addJs("var lzy_editable_msg = '$msg';");
 $this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
+$GLOBALS['lizzy']['editableLiveDataInitialized'] = false;
 
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-
-	if ($_GET) {
-	    return '';
-    }
 
     $help = $this->getArg($macroName, 'id', 'Defines the base-Id applied to editable field(s).<br />If omitted, "lzy-editable-field{index}" is used.', '');
 
@@ -53,13 +44,29 @@ $this->addMacro($macroName, function () {
     }
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
+    // load modules on first run only:
+    if ($this->invocationCounter[$macroName] === 0) {
+        $this->page->addModules(['~sys/extensions/editable/css/editable.css', '~sys/extensions/editable/js/editable.js']);
+    }
+
+    // option liveData:
+    $liveData = $this->getArg($macroName, 'liveData', '', false);
+    if ($liveData && !$GLOBALS['lizzy']['editableLiveDataInitialized']) {
+        $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
+        $jq = <<<EOT
+if ($('[data-lzy-data-ref]').length) {
+    initLiveData();
+}
+
+EOT;
+        $this->page->addJq($jq);
+        $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
+    }
+
     $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
     $edbl = new Editable( $this->lzy, $args );
     $out = $edbl->render();
 
-//    if ($liveData) {
-//        $out .= renderLiveUpdate($this->lzy, $args);
-//    }
     return $out;
 }); // editable
 
