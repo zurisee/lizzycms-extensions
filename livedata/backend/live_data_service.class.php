@@ -92,6 +92,9 @@ class LiveDataService
                 continue;
             }
             foreach ($this->sets as $setName => $set) {
+                if (strpos($setName, 'set') !== 0) {
+                    continue;
+                }
                 if ($set) {
                     $rec = reset($set);
                     $file = $rec['dataSource'];
@@ -119,6 +122,9 @@ class LiveDataService
             $this->outData = [];
             // there may be multiple data sources, so loop over all of them:
             foreach ($this->sets as $setName => $set) {
+                if (strpos($setName, 'set') !== 0) {
+                    continue;
+                }
                 $lastDbModified = $set['_db']->lastDbModified();
                 if (($this->lastUpdated < $lastDbModified)) {
                     $this->lastUpdated = $lastDbModified;
@@ -147,13 +153,24 @@ class LiveDataService
     private function assembleResponse()
     {
         $outData = [];
+        $freezeFieldAfter = false;
         foreach ($this->sets as $setName => $set) {
-            $outRec = $this->getData( $set );
+            if (strpos($setName, 'freeze') === 0) {
+                $freezeFieldAfter = $set;
+                continue;
+            }
+            if (strpos($setName, 'set') !== 0) {
+                continue;
+            }
+            $outRec = $this->getData( $set, $freezeFieldAfter );
             if (!$outData) {
                 $outData = $outRec;
             } else {
                 $outData['data'] = array_merge($outData['data'], $outRec['data']);
                 $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
+                if ($freezeFieldAfter) {
+                    $outData['frozen'] = array_merge($outData['frozen'], $outRec['frozen']);
+                }
             }
         }
         return $outData;
@@ -162,19 +179,22 @@ class LiveDataService
 
 
 
-    private function getData( $set )
+    private function getData( $set, $freezeFieldAfter = false )
     {
+        if (!$set) {
+            return [];
+        }
         $db = $set['_db'];
         $data = $db->read();
 
         $dbIsLocked = $db->isDbLocked( false );
         $lockedElements = [];
+        $frozenElements = [];
         $tmp = [];
         foreach ($set as $k => $elem) {
             if ($k[0] === '_') {
                 continue;
             }
-
             $dataKey = $elem["dataSelector"];
             $targetSelector = $elem['targetSelector'];
 
@@ -198,6 +218,14 @@ class LiveDataService
                 }
                 if (isset($data[ $dataKey ])) {
                     $value = $data[ $dataKey ];
+                    if ($freezeFieldAfter) {
+                        $lastModif = $db->lastModifiedElement($dataKey);
+                        if ($lastModif < (time() - $freezeFieldAfter)) {
+                            $frozenElements[] = $targetSelector;
+                        }
+                    }
+                } else {
+                    $value = '';
                 }
                 $tmp[$targetSelector] = $value;
             }
@@ -212,6 +240,9 @@ class LiveDataService
         if ($lockedElements !== $_SESSION['lizzy']['hasLockedElements']) {
             $outData['locked'] = $lockedElements;
             $_SESSION['lizzy']['hasLockedElements'] = $lockedElements;
+        }
+        if ($frozenElements) {
+            $outData['frozen'] = $frozenElements;
         }
         session_abort();
         return $outData;

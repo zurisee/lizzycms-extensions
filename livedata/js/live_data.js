@@ -1,4 +1,5 @@
 // LiveData
+//  Note: requires explicit invokation in livedata.php, resp. editable module
 
 var ajaxHndl = null;
 var lastUpdated = 0;
@@ -54,9 +55,31 @@ function markLockedFields( lockedElements ) {
 
 
 
+function markFrozenFields( frozenElements ) {
+    // console.log('updating locked states ' + frozenElements);
+    $('.lzy-live-data-locked').removeClass('lzy-live-data-locked');
+    // $('.lzy-live-data').removeClass('lzy-live-data-locked');
+
+    for (var i in frozenElements) {
+        var targSel = frozenElements[ i ];
+        if (targSel === '*') {
+            $('.lzy-live-data').addClass('lzy-editable-frozen');
+        } else {
+            $( targSel ).addClass('lzy-editable-frozen');
+        }
+    }
+} // markFrozenFields
+
+
+
+
 function updateDOM(data) {
     if (typeof data.locked !== 'undefined') {
         markLockedFields(data.locked);
+    }
+
+    if (typeof data.frozen !== 'undefined') {
+        markFrozenFields(data.frozen);
     }
 
     for (var targSel in data.data) {
@@ -65,10 +88,12 @@ function updateDOM(data) {
         $( targSel ).each(function() {
             var $targ = $( this );
             const id = $targ.attr('id');
-            // if it's an editable field, target the inner input element:
-             if ($('#_' + id, $targ).length) {
-                 $targ = $('#_' + id, $targ);
-             }
+
+            // skip element if it's in active editable mode:
+            if ($targ.hasClass('lzy-editable-active')) {
+                mylog('live-data: skipping active editable field: ' + id);
+                return;
+            }
 
             var goOn = true;
             // var callback = $('.lzy-live-data').attr('data-live-callback');
@@ -121,7 +146,6 @@ function handleAjaxResponse(json) {
         return false;
     }
 
-    // var data = JSON.parse(json);
     if (typeof data.lastUpdated !== 'undefined') {
         lastUpdated = data.lastUpdated;
     }
@@ -183,15 +207,6 @@ function updateLiveData( returnImmediately ) {
         return handleAjaxResponse(json);
     });
 } // update
-
-
-// -> replaced by explicit invokation in livedata.php, resp. editable module
-// initialize live data:
-// $( document ).ready(function() {
-//     if ($('[data-lzy-data-ref]').length) {
-//         initLiveData();
-//     }
-// });
 
 
 
