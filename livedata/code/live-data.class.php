@@ -33,7 +33,7 @@ class LiveData
         $targetSelectors = explodeTrim('|', $this->targetSelector);
         $nT = sizeof($targetSelectors);
 
-        $tickRec = $args['tickRecCustomFields']? $args['tickRecCustomFields'] : [];
+        $tickRec = @$args['tickRecCustomFields']? $args['tickRecCustomFields'] : [];
         $values = [];
 
         // dataSelector can be scalar or array:
