@@ -4,8 +4,8 @@
 
 var editableObj = new Object();
 editableObj.backend = systemPath+'extensions/editable/backend/_editable_backend.php';
-editableObj.ignoreBlur = false;
 editableObj.dataRef = '';
+editableObj.ignoreBlur = [];
 editableObj.origValue = [];
 editableObj.newValue =  [];
 editableObj.editingTimeout = 60; // sec
@@ -22,8 +22,8 @@ editableObj.timeoutTimer = false;
     initializeConnection();
 
     $('.lzy-editable').focus(function () {
-        var id = $(this).attr('id');
-        mylog('make editable on focus: ' + id);
+        // var id = $(this).attr('id');
+        // mylog('make editable on focus: ' + id);
         makeEditable( this );
     });
 
@@ -55,17 +55,29 @@ function makeEditable( that )
         return;
     }
     // check whether field is locked, ignore:
-    if ($elem.hasClass('lzy-live-data-locked')) {
+    if ($elem.hasClass('lzy-element-locked') ||
+            $elem.hasClass('lzy-element-frozen')) {
+        mylog('element is locked or frozen -> ignored');
+        $elem.blur();
         return;
     }
 
-    const id = $elem.attr('id');
+    var id = $elem.attr('id');
+    if (typeof id === 'undefined') {
+        const x = $elem[0].cellIndex + 1;
+        const y = $elem[0].parentNode.rowIndex + 1;
+        id = 'lzy-elem-' + y + '-' + x;
+        $elem.attr('id', id);
+    }
+    mylog('make editable: ' + id);
+
     edObj.dataRef = $elem.data('lzyDataRef');
 
-    edObj.ignoreBlur = false;
+    edObj.ignoreBlur[ id ] = false;
     var origValue = $elem.text();
     edObj.origValue[ id ] = origValue;
     edObj.newValue[ id ] = origValue;
+
     var _id = '_' + id;
     $elem.removeClass('lzy-editable').addClass('lzy-editable-active');
 
@@ -86,7 +98,7 @@ function makeEditable( that )
         $('.lzy-editable-submit-button', $elem).click(function (e) {
             e.stopPropagation();
             mylog( 'ok button clicked: ' + edObj.newValue[ id ] );
-            edObj.ignoreBlur = true;
+            edObj.ignoreBlur[ id ] = true;
             edObj.newValue[ id ] = $('input', $elem).val();
             terminateEditable(edObj, $elem, true);
         });
@@ -95,7 +107,8 @@ function makeEditable( that )
             $('.lzy-editable-cancel-button', $elem).click(function (e) {
                 e.stopPropagation();
                 mylog('cancel button clicked');
-                edObj.ignoreBlur = true;
+                edObj.newValue[ id ] = edObj.origValue[ id ];
+                edObj.ignoreBlur[ id ] = true;
                 terminateEditable(edObj, $elem, false);
             });
         }
@@ -124,9 +137,9 @@ function makeEditable( that )
 
             // wait a moment to make sure key and button handlers fire first:
             setTimeout(function () {
-                if (!edObj.ignoreBlur) {
+                if (!edObj.ignoreBlur[ id ]) {
                     // if this point reached: no button or key became active.
-                    edObj.ignoreBlur = true;
+                    edObj.ignoreBlur[ id ] = true;
 
                     if (!edObj.showOkButton) {           // no buttons -> save
                         terminateEditable(edObj, $elem, true);
@@ -135,7 +148,7 @@ function makeEditable( that )
                         return;
 
                     } else {                            // only ok button -> cancel
-                        edObj.newValue[ id ] = $('input', $elem).val();
+                        edObj.newValue[ id ] = edObj.origValue[ id ];
                         terminateEditable(edObj, $elem, false);
                     }
                 }
@@ -167,8 +180,12 @@ function lockField(edObj, id)
         cache: false,
         success: function(json) {
             handleResponse(edObj, json, '#error-locked', function (edObj, data) {
-                edObj.ignoreBlur = true;
-                terminateEditable(edObj, $('#' + data.id), false);
+                edObj.ignoreBlur[ id ] = true;
+                if (data.result.match(/^ok/)) {
+                    terminateEditable(edObj, $('#' + data.id), false);
+                } else {
+                    mylog(data.result);
+                }
             });
         },
     });
@@ -194,14 +211,20 @@ function unlockField(edObj, id)
 
 
 
+
+
 //--------------------------------------------------------------
 function saveAndUnlockField(edObj, id)
 {
     var $elem = $('#' + id);
+    if (typeof edObj.newValue[ id ] === 'undefined') {
+        return;
+    }
     if (edObj.origValue[ id ] === edObj.newValue[ id ]) {
         mylog('unchanged, not saving');
-        edObj.ignoreBlur = true;
+        edObj.ignoreBlur[ id ] = true;
         if (edObj.showOkButton) {
+            // edObj.newValue[ id ] = edObj.origValue[ id ];
             hideButtons($elem);
             setTimeout(function(){ // wait for buttons to disappear
                 $elem.text(edObj.origValue[ id ]).removeClass('lzy-editable-active').addClass('lzy-editable');
@@ -213,7 +236,7 @@ function saveAndUnlockField(edObj, id)
         }
         return;
     }
-    mylog( 'save: '+id + ' => ' +edObj.newValue[ id ] );
+    mylog( 'save: '+id + ' => ' + edObj.newValue[ id ] );
     var url = edObj.backend + '?save=' + id + '&ds=' + getDataRef(id);
 
     $.ajax({
@@ -245,20 +268,20 @@ function terminateEditable(edObj, $elem, save)
         saveAndUnlockField(edObj, id);
     } else {
         unlockField(edObj, id);
-        edObj.newValue[ id ] = edObj.origValue[ id ];
+        // edObj.newValue[ id ] = edObj.origValue[ id ];
     }
 
     if (edObj.showOkButton) {
         hideButtons($elem);
         setTimeout(function(){ // wait for buttons to disappear
             $elem.text( edObj.newValue[ id ] ).removeClass('lzy-editable-active').addClass('lzy-editable');
-            edObj.ignoreBlur = true;
+            edObj.ignoreBlur[ id ] = true;
             $('input', $elem).blur();
             $elem.blur();
         }, 150);
     } else {
         $elem.text( edObj.newValue[ id ] ).removeClass('lzy-editable-active').addClass('lzy-editable');
-        edObj.ignoreBlur = true;
+        edObj.ignoreBlur[ id ] = true;
         $('input', $elem).blur();
         $elem.blur();
     }
@@ -340,6 +363,9 @@ function handleResponse(edObj, json, msgId, errorHandler)
         updateUi(edObj, data);
     } else {
         if (msgId) {
+            if (msgId === true) {
+                msgId = data.result;
+            }
             lzyPopup({
                 contentFrom: msgId,
             });
@@ -356,16 +382,16 @@ function handleResponse(edObj, json, msgId, errorHandler)
 function updateUi(edObj, data)
 {
     var txt = '';
-    if ((typeof data.data === 'object') && data.data.length) {
-        for (var tSel in data.data) {
-            txt = data.data[ tSel ];
+    var data1 = data.data;
+    if (typeof data1 === 'object') {
+        for (var tSel in data1) {
+            txt = data1[ tSel ];
             const c1 = tSel.substr(0,1);
             if ((c1 !== '#') && (c1 !== '.')) {
                 tSel = '#' + tSel;
             }
             if (!$( tSel ).hasClass('lzy-editable-active')) {
                 $(tSel).text(txt);
-            } else {
             }
         }
     }
@@ -436,9 +462,16 @@ function setupKeyHandlers( edObj, $elem )
         e.preventDefault();
         if (key === 13) {                // Enter
             onKeyEnter(e, edObj, $elem);
-        }
-        if(key === 27) {                // ESC
+
+        } else if(key === 27) {                // ESC
             onKeyEsc(e, edObj, $elem);
+
+        } else {
+            const id = $elem.attr('id');
+            const newValue = $('input', $elem).val();
+            if (typeof newValue !== 'undefined') {
+                edObj.newValue[ id ] = newValue;
+            }
         }
     });
 } // setupKeyHandler
@@ -447,12 +480,10 @@ function setupKeyHandlers( edObj, $elem )
 
 function onKeyEnter( e, edObj, $elem )
 {
-    e.stopPropagation();
     e.stopImmediatePropagation();
     const id = $elem.attr('id');
     //mylog( 'Enter key hit: ' + edObj.newValue[ id ] );
-    edObj.ignoreBlur = true;
-    edObj.newValue[ id ] = $('input', $elem).val();
+    edObj.ignoreBlur[ id ] = true;
     terminateEditable(edObj, $elem, true);
 } // onKeyEnter
 
@@ -460,12 +491,10 @@ function onKeyEnter( e, edObj, $elem )
 
 function onKeyTab( e, edObj, $elem )
 {
-    e.stopPropagation();
     e.stopImmediatePropagation();
     const id = $elem.attr('id');
     //mylog( 'Tab key hit: ' + edObj.newValue[ id ] );
-    edObj.ignoreBlur = true;
-    edObj.newValue[ id ] = $('input', $elem).val();
+    edObj.ignoreBlur[ id ] = true;
     terminateEditable(edObj, $elem, true);
 } // onKeyTab
 
@@ -473,10 +502,11 @@ function onKeyTab( e, edObj, $elem )
 
 function onKeyEsc( e, edObj, $elem )
 {
-    e.stopPropagation();
     e.stopImmediatePropagation();
     //mylog('ESC key hit');
-    edObj.ignoreBlur = true;
+    const id = $elem.attr('id');
+    edObj.newValue[ id ] = edObj.origValue[ id ];
+    edObj.ignoreBlur[ id ] = true;
     terminateEditable(edObj, $elem, false);
 } // onKeyEsc
 

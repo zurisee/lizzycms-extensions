@@ -1,3 +1,4 @@
+/* Editable.css */
 
 .lzy-editable.lzy-editable-show-buttons,
 .lzy-editable.lzy-editable-show-button {
@@ -51,23 +52,20 @@
 	left: 0;
 	height: 100%;
 }
-.lzy-editable-frozen {
-	/*line-height: 2em;*/
-	background: #dceeee;
-	background: repeating-linear-gradient(    -55deg,    #eeffff,    #eeffff 10px,    #edf8f8 10px,    #edf8f8 15px  );
-	/*width: calc(16em - 12px) !important;*/
-	/*height: calc(2em - 2px);*/
-	cursor: url(../rsc/locked.png), auto;
-}
-
 
 .lzy-editable.lzy-editable-show-buttons input:focus + .lzy-editable-submit-button,
 .lzy-editable.lzy-editable-show-button input:focus + .lzy-editable-submit-button {
     cursor: pointer;
 }
-.lzy-editable .lzy-locked,
-.lzy-editable.lzy-locked input {
-	cursor: url(../rsc/stop.png), auto;
+
+.lzy-element-locked {
+	background: #dceeee;
+	background: repeating-linear-gradient(-55deg, #eeffff,#eeffff 10px,#edf8f8 10px,#edf8f8 15px);
+	cursor: not-allowed;
+}
+.lzy-element-frozen {
+	background: #eee;
+	cursor: not-allowed;
 }
 
 
@@ -120,13 +118,6 @@
 	height: 2em;
 	line-height: 2em;
 	padding: 0 5px;
-}
-
-.lzy-live-data-locked {
-	background: #fee;
-	border: 1px dashed red;
-	cursor: url(../rsc/stop.png), auto;
-	/*cursor: no-drop;*/
 }
 
 .lzy-js-popup-wrapper {

@@ -148,7 +148,7 @@ class EditableBackend
 
 		if ($ok) {
             mylog("conn -> ok");
-            $this->sendResponse('ok#conn');
+            $this->sendResponse($this->assembleResponse(), 'ok#conn');
         } else {
             mylog("### conn -> failed");
             $this->sendResponse('failed#conn');
@@ -170,8 +170,8 @@ class EditableBackend
         $db = $set['_db'];
         $res = $db->lockRec( $dataKey );
         if (!$res) {
-			mylog("### lock: $dataKey -> failed");
-            $this->sendResponse(['id' => $id], 'failed#lock');
+			mylog("### lock: '$dataKey' -> failed");
+            $this->sendResponse(['id' => $id], "failed#lock '$dataKey'");
 
 		} else {
             mylog("lock: $dataKey -> ok");
@@ -188,15 +188,16 @@ class EditableBackend
 			mylog("### unlock: Error -> id not defined");
             $this->sendResponse("failed#unlock (id not defined)");
 		}
-        $db = $this->sets[ $this->setInx ]['_db'];
+        $set = $this->getSet( $id );
         $dataKey = $this->getDataSelector( $id );
+        $db = $set['_db'];
         $res = $db->unlockRec($dataKey);
         if ($res) {
 			mylog("unlock: $dataKey -> ok");
             $this->sendResponse($this->assembleResponse($id), 'ok#unlock');
         }
-        mylog("### unlock: $dataKey -> failed");
-        $this->sendResponse(['id' => $id], 'failed#unlock');
+        mylog("### unlock: $dataKey -> failed: '$dataKey'");
+        $this->sendResponse(['id' => $id], "failed#unlock '$dataKey'");
 	} // unlock
 
 
@@ -288,8 +289,38 @@ class EditableBackend
                 continue;
             }
             $data = $setDb->read();
-            if (strpos($dataKey, '*') !== false) {
-                $tmp = $this->getValueArray($setDb, $targetSelector);
+            if (strpos($dataKey, '*,*') !== false) {
+                if ($data) {
+                    foreach ($data as $r => $rec) {
+                        foreach ($rec as $c => $value) {
+                            if (is_int($r) && is_int($c)) {
+                                if (preg_match('/(.*? ) \* (.*? ) \* (.*? )/x', $targetSelector, $m)) {
+                                    $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
+                                }
+                            } else {
+                                fatalError("Error: 'getData' -> non numerical indexes");
+                            }
+                            $tmp[ $tSel ] = $value;
+                        }
+                    }
+                } else {
+                    $tmp = [];
+                }
+                continue;
+
+            } elseif (strpos($dataKey, '*') !== false) {
+                if ($data) {
+                    foreach ($data as $i => $value) {
+                        if (is_int($i)) {
+                            $tSel = preg_replace('/\*/', $i + 1, $targetSelector);
+                        } else {
+                            $tSel = $i;
+                        }
+                        $tmp[ $tSel ] = $value;
+                    }
+                } else {
+                    $tmp = [];
+                }
                 continue;
 
             } else {
@@ -302,8 +333,6 @@ class EditableBackend
                         $targetSelector = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $targetSelector);
                     }
                 }
-
-                $lastModif = $setDb->lastModifiedElement($dataKey);
 
                 if ($dbIsLocked || $setDb->isRecLocked( $dataKey )) {
                     $lockedElements[] = $targetSelector;
@@ -333,88 +362,50 @@ class EditableBackend
 
 
 
-    public function getValueArray($set, $k)
-    {
-        $elem = $set[ $k ];
-        $dataKey = $elem["dataSelector"];
-        $targetSelector = $elem['targetSelector'];
-
-        // dynDataSelector: select a data element upuo client request:
-        if ($this->dynDataSelector) {
-            // check for '{r}' pattern in dataKey and replace it value in client request:
-            if (strpos($dataKey, '{') !== false) {
-                $dataKey = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $dataKey);
-            }
-
-            // check for '{r}' pattern in targetSelector and replace it value in client request:
-            if (strpos($this->targetSelector, '{') !== false) {
-                $targetSelector = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $targetSelector);
-            }
-
-            // try to retrieve requested record using compiled dataKey:
-            $rec = $set['_db']->readRecord( $dataKey );
-            if ($rec) {
-                $c = 1;
-                foreach ($rec as $k => $v) {
-                    if (preg_match('/(.*?) \* (.*?)/x', $targetSelector, $m)) {
-                        $targSel = "{$m[1]}$c{$m[2]}";
-                        $tmp[$targSel] = $v;
-                        $c++;
-                    } else {
-                        die("Error in targetSelector '$targetSelector' -> '*' missing");
-                    }
-                }
-                return $tmp;
-            } else {
-                return [];
-            }
-        }
-
-        $tmp = [];
-        $data = $set['_db']->read();
-        $r = 1;
-        foreach ($data as $key => $rec) {
-            if (is_array($rec)) {
-                $c = 1;
-                foreach ($rec as $k => $v) {
-                    if (preg_match('/(.*?) \* (.*?) \* (.*?) /x', $targetSelector, $m)) {
-                        $targSel = "{$m[1]}$r{$m[2]}$c{$m[3]}";
-                        $tmp[$targSel] = $v;
-                        $c++;
-                    } else {
-                        die("Error in targetSelector '$targetSelector' -> '*' missing");
-                    }
-                }
-            } else {
-                if (preg_match('/(.*?) \* (.*?)/x', $targetSelector, $m)) {
-                    $targSel = "{$m[1]}$r{$m[2]}";
-                    $tmp[$targSel] = $rec;
-                } else {
-                    die("Error in targetSelector '$targetSelector' -> '*' missing");
-                }
-            }
-            $r++;
-        }
-        return $tmp;
-    } // getValueArray
-
-
 
     private function getSet( $id )
     {
+        if ($id && ($id[0] !== '#')&& ($id[0] !== '.')) {
+            $id = "#$id";
+        }
         if (isset($this->editableElements[$id])) {
             return $this->sets[ $this->editableElements[$id][1] ];
+        } else {
+            foreach ($this->editableElements as $k => $rec) {
+                if (strpos($k,'*') !== false) {
+                    return $this->sets[ $this->editableElements[$k][1] ];
+                }
+            }
         }
-        return false;
+        $this->sendResponse("Error: unidentified ID '$id' in getSet()");
     } // getSet
 
 
 
     private function getDataSelector( $id )
     {
+        if ($id && ($id[0] !== '#')&& ($id[0] !== '.')) {
+            $id = "#$id";
+        }
         if (isset($this->editableElements[$id])) {
             return $this->editableElements[$id][0];
+        } else {
+            $targ = array_keys($this->editableElements)[0];
+            if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m )) {
+                if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
+                    $row = intval( $mm[1] ) - 1;
+                    $col = intval( $mm[2] - 1);
+                    return "$row,$col";
+                }
+
+            } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m )) {
+                if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
+                    $col = intval( $mm[1] ) - 1;
+                    return $col;
+                }
+            }
         }
+        $this->sendResponse("Error: unidentified ID '$id' in getDataSelector()");
         return false;
     } // getDataSelector
 
@@ -462,7 +453,7 @@ class EditableBackend
                         'lockTimeout' => false,
                         'logModifTimes' => true,
                     ]);
-                    $tSel = substr($rec['targetSelector'], 1);
+                    $tSel = $rec['targetSelector'];
                     $this->sets[$setInx][ $tSel ] = $rec['dataSelector'];
                     $this->editableElements[ $tSel ][0] = $rec['dataSelector'];
                     $this->editableElements[ $tSel ][1] = $setInx;
@@ -477,9 +468,10 @@ class EditableBackend
 
 
 
-//------------------------------------------------------------
+    //------------------------------------------------------------
 	private function getRequestData($varName) {
 		global $argv;
+
 		$out = null;
 		if (isset($_GET[$varName])) {
 			$out = $this->safeStr($_GET[$varName]);
@@ -495,6 +487,9 @@ class EditableBackend
 				}
 			}
 		}
+		if ($out === 'undefined') {
+            lzyExit( json_encode( ['result' => "Error: arg $varName undefined."] ) );
+        }
 		return $out;
 	} // getRequestData
 

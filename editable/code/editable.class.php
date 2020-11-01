@@ -80,20 +80,21 @@ class Editable extends LiveData
             $value = '';
             if (isset( $data[ $this->dataSelectors[$i] ]) ) {
                 if ($this->db->isRecLocked($this->dataSelectors[$i])) {
-                    $eClass .= ' lzy-editable-locked';
+                    $eClass .= ' lzy-element-locked';
                 }
                 $value = $data[ $this->dataSelectors[$i] ];
                 if ($value && $this->freezeFieldAfter) {
                     $lastModif = $this->db->lastModifiedElement($this->dataSelectors[$i]);
                     if ($lastModif < (time() - $this->freezeFieldAfter)) {
-                        $eClass .= ' lzy-editable-frozen';
+                        $eClass .= ' lzy-element-frozen';
                     }
                 }
             }
-            $eClass = trim($eClass);
-            $out .= "\t\t<div id='$eId' class='lzy-editable $eClass'>$value</div>\n";
+            $eClass = $eClass? ' '.trim($eClass): '';
+            $out .= "\t\t<div id='$eId' class='lzy-editable$eClass'>$value</div>\n";
         }
 
+        $class = $class? str_replace('  ', ' ', $class): '';
         $out = "\t<div$id class='$class'$dataRef>\n$out";
         $out .= "\t</div><!-- /lzy-editable-wrapper -->\n";
         return $out;
@@ -106,21 +107,20 @@ class Editable extends LiveData
     {
         require_once SYSTEM_PATH.'htmltable.class.php';
 
+        $this->args['dataSource'] = '~/'.$this->args['dataSource'];
+//        $this->args['targetSelector'] = '#lzy-table1 .lzy-col-*';
+        $dataRef = parent::render( $this->args, true );
+
         $options = $this->args;
         $options['id'] = '';
         $options['cellClass'] = 'lzy-editable';
-        $options['tableDataAttr'] = "lzy-editable=$this->ticketHash";
-        $options['includeCellRefs'] = true;
-        if (!$options['nCols']) {
-            $options['nCols'] = 1;
-        }
-        if (!$options['nRows']) {
-            $options['nRows'] = 1;
-        }
+//        $options['includeCellRefs'] = true;
         if ($options['class']) {
             $options['cellClass'] = $options['class'];
             $options['class'] = '';
         }
+        $options['class'] = $options['tableClass'] = 'lzy-editable-wrapper';
+        $options['tableDataAttr'] = $dataRef;
     //    $options['cellMask'] = $args['protectedCells'];
     //    $options['cellMaskedClass'] = 'lzy-non-editable';
         unset($options['dataSource']);
@@ -142,17 +142,61 @@ class Editable extends LiveData
             $args = $this->args;
         }
         $args['inx'] = $this->editaleSetInx;
+        if (!isset($args['nCols'])) {
+            $args['nCols'] = 1;
+        } else {
+            $args['nCols'] = max(1, intval($args['nCols']));
+        }
+        if (!isset($args['nRows'])) {
+            $args['nRows'] = 1;
+        } else {
+            $args['nRows'] = max(1, intval($args['nRows']));
+        }
+
 
         if (!isset($args['dataSelector'])) {
-            $args['dataSelector'] = 'elem' . $this->editaleSetInx;
+            if ($args['nCols'] > 1) {
+                if ($args['nRows'] > 1) {
+                    $args['dataSelector'] = '*,*';
+                } else {
+                    $args['dataSelector'] = '*';
+                }
+            } else {
+                $args['dataSelector'] = 'elem-' . $this->editaleSetInx;
+            }
         }
         if (!isset($args['targetSelector'])) {
-            $args['targetSelector'] = 'lzy-editable' . $this->editaleSetInx;
+            if ($args['nCols'] > 1) {
+                if ($args['nRows'] > 1) {
+                    $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-row-* .lzy-col-*";
+                } else {
+                    $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-col-*";
+                }
+            } else {
+                $args['targetSelector'] = '#lzy-editable-' . $this->editaleSetInx;
+            }
+//            $args['targetSelector'] = 'lzy-editable' . $this->editaleSetInx;
         }
+//        if (!isset($args['dataSelector'])) {
+//            if ($args['nCols'] > 1) {
+//                $args['dataSelector'] = '*';
+//            } else {
+//                $args['dataSelector'] = 'elem-' . $this->editaleSetInx;
+//            }
+////            $args['dataSelector'] = 'elem' . $this->editaleSetInx;
+//        }
+//        if (!isset($args['targetSelector'])) {
+//            if ($args['nCols'] > 1) {
+//                $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-col-*";
+//            } else {
+//                $args['targetSelector'] = '#lzy-editable-' . $this->editaleSetInx;
+//            }
+////            $args['targetSelector'] = 'lzy-editable' . $this->editaleSetInx;
+//        }
 
         $args['id'] = $args['id']? translateToClassName($args['id']) : '';
         $args['wrapperClass'] = @$args['class'] ? " {$args['class']}" : '';
-        $args['class'] = @$args['class']? "lzy-editable {$args['class']}": 'lzy-editable';
+        $args['class'] = @$args['class']? trim("lzy-editable {$args['class']}"): 'lzy-editable';
 
         if (@$args['freezeFieldAfter']) {
             $args['freezeThreshold'] = time() - intval($args['freezeFieldAfter']);
@@ -178,8 +222,8 @@ class Editable extends LiveData
 
         //    $args = prepareProtectedCellsArray($args);
 
-        $args['nCols'] = max(1, intval(@$args['nCols']));
-        $args['nRows'] = max(1, intval(@$args['nRows']));
+//        $args['nCols'] = max(1, intval(@$args['nCols']));
+//        $args['nRows'] = max(1, intval(@$args['nRows']));
 
         // dataFile synonyme for dataSource for backward compatibility:
         if (!isset($args['dataSource']) && @$args['dataFile']) {
