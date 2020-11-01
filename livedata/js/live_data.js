@@ -39,15 +39,15 @@ function initLiveData() {
 
 function markLockedFields( lockedElements ) {
     // console.log('updating locked states ' + lockedElements);
-    $('.lzy-live-data-locked').removeClass('lzy-live-data-locked');
-    // $('.lzy-live-data').removeClass('lzy-live-data-locked');
+    $('.lzy-element-locked').removeClass('lzy-element-locked');
+    // $('.lzy-live-data').removeClass('lzy-element-locked');
 
     for (var i in lockedElements) {
         var targSel = lockedElements[ i ];
         if (targSel === '*') {
-            $('.lzy-live-data').addClass('lzy-live-data-locked');
+            $('.lzy-live-data').addClass('lzy-element-locked');
         } else {
-            $( targSel ).addClass('lzy-live-data-locked');
+            $( targSel ).addClass('lzy-element-locked');
         }
     }
 } // markLockedFields
@@ -57,15 +57,15 @@ function markLockedFields( lockedElements ) {
 
 function markFrozenFields( frozenElements ) {
     // console.log('updating locked states ' + frozenElements);
-    $('.lzy-live-data-locked').removeClass('lzy-live-data-locked');
-    // $('.lzy-live-data').removeClass('lzy-live-data-locked');
+    $('.lzy-element-locked').removeClass('lzy-element-locked');
+    // $('.lzy-live-data').removeClass('lzy-element-locked');
 
     for (var i in frozenElements) {
         var targSel = frozenElements[ i ];
         if (targSel === '*') {
-            $('.lzy-live-data').addClass('lzy-editable-frozen');
+            $('.lzy-live-data').addClass('lzy-element-frozen');
         } else {
-            $( targSel ).addClass('lzy-editable-frozen');
+            $( targSel ).addClass('lzy-element-frozen');
         }
     }
 } // markFrozenFields
