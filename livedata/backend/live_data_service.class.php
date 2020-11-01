@@ -212,16 +212,20 @@ class LiveDataService
                         $targetSelector = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $targetSelector);
                     }
                 }
-
+                $elemIsLocked = false;
                 if ($dbIsLocked || $db->isRecLocked( $dataKey )) {
                     $lockedElements[] = $targetSelector;
+                    $elemIsLocked = true;
                 }
                 if (isset($data[ $dataKey ])) {
                     $value = $data[ $dataKey ];
-                    if ($freezeFieldAfter) {
+                    if ($freezeFieldAfter && $value) {
                         $lastModif = $db->lastModifiedElement($dataKey);
                         if ($lastModif < (time() - $freezeFieldAfter)) {
                             $frozenElements[] = $targetSelector;
+                            if (!$elemIsLocked) {
+                                $db->lockRec($dataKey, false, true);
+                            }
                         }
                     }
                 } else {
