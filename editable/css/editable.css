@@ -1,17 +1,5 @@
 /* Editable.css */
 
-.lzy-editable.lzy-editable-show-buttons,
-.lzy-editable.lzy-editable-show-button {
-    opacity: 0.99; /* create stacking context */
-}
-.lzy-editable > * {
-	box-sizing: border-box;
-}
-.lzy-editable-active {
-	padding: 0;
-}
-
-/*.lzy-editable-wrapper,*/
 .lzy-editable-active,
 .lzy-editable {
 	position: relative;
@@ -40,23 +28,7 @@
 .lzy-editable-active input:focus {
 	outline: none;
 }
-.lzy-editable input {
-	background: #eff;
-	border: 1px solid #ddd;
-	padding: 0 5px;
-	width: 100%;
-}
-.lzy-editable input {
-	position: absolute;
-	top: 0;
-	left: 0;
-	height: 100%;
-}
 
-.lzy-editable.lzy-editable-show-buttons input:focus + .lzy-editable-submit-button,
-.lzy-editable.lzy-editable-show-button input:focus + .lzy-editable-submit-button {
-    cursor: pointer;
-}
 
 .lzy-element-locked {
 	background: #dceeee;
@@ -67,7 +39,10 @@
 	background: #eee;
 	cursor: not-allowed;
 }
-
+.lzy-editable-inactive * {
+	cursor: auto;
+	background: #f8f8f8;
+}
 
 
 .lzy-editable-row-nr,
@@ -107,7 +82,7 @@
 	right: 2.2em;
 }
 
-.lzy-editable .lzy-wait {
+.lzy-editable-active .lzy-wait {
 	cursor: wait!important;
 }
 

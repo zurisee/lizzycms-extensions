@@ -179,6 +179,7 @@ function lockField(edObj, id)
         type: 'get',
         cache: false,
         success: function(json) {
+            $inputField.removeClass('lzy-wait');
             handleResponse(edObj, json, '#error-locked', function (edObj, data) {
                 edObj.ignoreBlur[ id ] = true;
                 if (data.result.match(/^ok/)) {
