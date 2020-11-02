@@ -47,7 +47,11 @@ function makeEditable( that )
     // check for already active fields, close others:
     $('.lzy-editable-active').each(function () {
         if (this !== that) {
-            terminateEditable(edObj, $(this), false);
+            if ($elem.closest('.lzy-editable-show-button,.lzy-editable-show-buttons').length) {
+                terminateEditable(edObj, $(this), false);
+            } else {
+                terminateEditable(edObj, $(this), true);
+            }
         }
     });
     // check for spurious re-entry, ignore:
@@ -99,7 +103,6 @@ function makeEditable( that )
             e.stopPropagation();
             mylog( 'ok button clicked: ' + edObj.newValue[ id ] );
             edObj.ignoreBlur[ id ] = true;
-            edObj.newValue[ id ] = $('input', $elem).val();
             terminateEditable(edObj, $elem, true);
         });
 
@@ -113,16 +116,19 @@ function makeEditable( that )
             });
         }
     } else {
-        $elem.html('<input id="' + _id + '" aria-live="polite" aria-relevant="all" value="' + edObj.origValue[ id ] + '"/>');
+        if (isMultiLineElement( $elem )) {
+            $elem.html('<textarea id="' + _id + '" aria-live="polite" aria-relevant="all">' + edObj.origValue[id] + '</textarea>');
+        } else {
+            $elem.html('<input id="' + _id + '" aria-live="polite" aria-relevant="all" value="' + edObj.origValue[id] + '"/>');
+        }
     }
 
     // first: lock field:
     lockField(edObj, id);
 
     // then set input elem up:
-    $('input', $elem)
+    $('input, textarea', $elem)
         .click(function (e) {
-            e.stopPropagation();
             e.stopImmediatePropagation();
         })
         .each(function () {
@@ -153,11 +159,10 @@ function makeEditable( that )
                     }
                 }
             }, 100);
-
         });
 
     // place cursor at end of string:
-   $('input', $elem)[0].setSelectionRange(origValue.length, origValue.length);
+   $('input, textarea', $elem)[0].setSelectionRange(origValue.length, origValue.length);
 
     // set up timeout on editable field:
     resetEditableTimeout();
@@ -225,7 +230,6 @@ function saveAndUnlockField(edObj, id)
         mylog('unchanged, not saving');
         edObj.ignoreBlur[ id ] = true;
         if (edObj.showOkButton) {
-            // edObj.newValue[ id ] = edObj.origValue[ id ];
             hideButtons($elem);
             setTimeout(function(){ // wait for buttons to disappear
                 $elem.text(edObj.origValue[ id ]).removeClass('lzy-editable-active').addClass('lzy-editable');
@@ -239,11 +243,12 @@ function saveAndUnlockField(edObj, id)
     }
     mylog( 'save: '+id + ' => ' + edObj.newValue[ id ] );
     var url = edObj.backend + '?save=' + id + '&ds=' + getDataRef(id);
+    const text = encodeURI( edObj.newValue[ id ] );   // -> php urldecode() to decode
 
     $.ajax({
         url: url,
         type: 'post',
-        data: { text: edObj.newValue[ id ] },
+        data: { text: text },
         cache: false,
         success: function (json) {
             handleResponse(edObj, json, '#db-error');
@@ -269,7 +274,6 @@ function terminateEditable(edObj, $elem, save)
         saveAndUnlockField(edObj, id);
     } else {
         unlockField(edObj, id);
-        // edObj.newValue[ id ] = edObj.origValue[ id ];
     }
 
     if (edObj.showOkButton) {
@@ -277,13 +281,13 @@ function terminateEditable(edObj, $elem, save)
         setTimeout(function(){ // wait for buttons to disappear
             $elem.text( edObj.newValue[ id ] ).removeClass('lzy-editable-active').addClass('lzy-editable');
             edObj.ignoreBlur[ id ] = true;
-            $('input', $elem).blur();
+            $('input, textarea', $elem).blur();
             $elem.blur();
         }, 150);
     } else {
         $elem.text( edObj.newValue[ id ] ).removeClass('lzy-editable-active').addClass('lzy-editable');
         edObj.ignoreBlur[ id ] = true;
-        $('input', $elem).blur();
+        $('input, textarea', $elem).blur();
         $elem.blur();
     }
 } // terminateEditable
@@ -294,7 +298,6 @@ function terminateEditable(edObj, $elem, save)
 function renderOkButton()
 {
     var okSymbol = '&#10003;';
-
     if ($('body').hasClass('legacy')) {
         okSymbol = '&radic;';
     }
@@ -316,7 +319,7 @@ function renderCancelButton()
 
 function revealButtons(edObj, $elem)
 {
-    const $inp = $('input', $elem);
+    const $inp = $('input, textarea', $elem);
     const $btn = $('button', $elem);
     var bw = $btn.width();
     var w = $elem.width();
@@ -333,7 +336,7 @@ function revealButtons(edObj, $elem)
 //--------------------------------------------------------------
 function hideButtons($elem)
 {
-    const $inp = $('input', $elem);
+    const $inp = $('input, textarea', $elem);
     $inp.animate({width: '100%'}, 150);
 } // hideButtons
 
@@ -441,6 +444,14 @@ function onEditableTimedOut()
 
 
 
+function isMultiLineElement( $elem )
+{
+    return $elem.closest('.lzy-editable-multiline').length;
+} // isMultiLineElement
+
+
+
+
 //--------------------------------------------------------------
 function setupKeyHandlers( edObj, $elem )
 {
@@ -450,7 +461,7 @@ function setupKeyHandlers( edObj, $elem )
 
     resetEditableTimeout();
 
-    var $input = $('input', $elem);
+    var $input = $('input, textarea', $elem);
     $input.keydown(function (e) {
         var key = e.which;
         if (key === 9) {                  // Tab
@@ -461,7 +472,7 @@ function setupKeyHandlers( edObj, $elem )
     $input.keyup(function (e) {
         var key = e.which;
         e.preventDefault();
-        if (key === 13) {                // Enter
+        if ((key === 13) && !isMultiLineElement( $elem )) { // Enter
             onKeyEnter(e, edObj, $elem);
 
         } else if(key === 27) {                // ESC
@@ -469,10 +480,7 @@ function setupKeyHandlers( edObj, $elem )
 
         } else {
             const id = $elem.attr('id');
-            const newValue = $('input', $elem).val();
-            if (typeof newValue !== 'undefined') {
-                edObj.newValue[ id ] = newValue;
-            }
+            edObj.newValue[ id ] = $('input, textarea', $elem).val();
         }
     });
 } // setupKeyHandler
@@ -483,7 +491,6 @@ function onKeyEnter( e, edObj, $elem )
 {
     e.stopImmediatePropagation();
     const id = $elem.attr('id');
-    //mylog( 'Enter key hit: ' + edObj.newValue[ id ] );
     edObj.ignoreBlur[ id ] = true;
     terminateEditable(edObj, $elem, true);
 } // onKeyEnter
@@ -494,7 +501,6 @@ function onKeyTab( e, edObj, $elem )
 {
     e.stopImmediatePropagation();
     const id = $elem.attr('id');
-    //mylog( 'Tab key hit: ' + edObj.newValue[ id ] );
     edObj.ignoreBlur[ id ] = true;
     terminateEditable(edObj, $elem, true);
 } // onKeyTab
@@ -504,7 +510,6 @@ function onKeyTab( e, edObj, $elem )
 function onKeyEsc( e, edObj, $elem )
 {
     e.stopImmediatePropagation();
-    //mylog('ESC key hit');
     const id = $elem.attr('id');
     edObj.newValue[ id ] = edObj.origValue[ id ];
     edObj.ignoreBlur[ id ] = true;

@@ -219,6 +219,7 @@ class EditableBackend
             $this->sendResponse("failed#save (id not defined)");
 		}
 		$text = $this->getRequestData('text');
+		$text = urldecode($text);
 		if ($text === 'undefined') {
             mylog("### save: $id -> failed (text not defined)");
             $this->sendResponse("failed#save (text not defined)");
@@ -390,20 +391,36 @@ class EditableBackend
         if (isset($this->editableElements[$id])) {
             return $this->editableElements[$id][0];
         } else {
-            $targ = array_keys($this->editableElements)[0];
-            if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m )) {
-                if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
-                    $row = intval( $mm[1] ) - 1;
-                    $col = intval( $mm[2] - 1);
-                    return "$row,$col";
-                }
+            $targs = array_keys($this->editableElements);
+            foreach ($targs as $targ) {
+                if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m)) {
+                    if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
+                        $row = intval($mm[1]) - 1;
+                        $col = intval($mm[2] - 1);
+                        return "$row,$col";
+                    }
 
-            } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m )) {
-                if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
-                    $col = intval( $mm[1] ) - 1;
-                    return $col;
+                } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m)) {
+                    if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
+                        $col = intval($mm[1]) - 1;
+                        return $col;
+                    }
                 }
             }
+//            $targ = array_keys($this->editableElements)[0];
+//            if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m )) {
+//                if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
+//                    $row = intval( $mm[1] ) - 1;
+//                    $col = intval( $mm[2] - 1);
+//                    return "$row,$col";
+//                }
+//
+//            } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m )) {
+//                if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
+//                    $col = intval( $mm[1] ) - 1;
+//                    return $col;
+//                }
+//            }
         }
         $this->sendResponse("Error: unidentified ID '$id' in getDataSelector()");
         return false;

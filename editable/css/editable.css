@@ -9,6 +9,7 @@
 	height: 2em;
 	line-height: 2em;
 	background: #eff;
+	background: var(--lzy-editable-bg, #eff);
 	border: 1px solid #ddd;
 	padding: 0 5px;
 	cursor: pointer;
@@ -16,8 +17,10 @@
 .lzy-editable-active {
 	padding: 0;
 }
+.lzy-editable-multiline textarea,
 .lzy-editable-active input {
 	background: #efe;
+	background: var(--lzy-editable-bg-active, #efe);
 	width: 100%;
 	height: 100%;
 	border: 1px solid #ddd;
@@ -42,6 +45,7 @@
 .lzy-editable-inactive * {
 	cursor: auto;
 	background: #f8f8f8;
+	background: var(--lzy-editable-bg-inactive, #f8f8f8);
 }
 
 
@@ -98,3 +102,20 @@
 .lzy-js-popup-wrapper {
 	min-height: auto;
 }
+
+
+.lzy-editable-multiline .lzy-editable-active,
+.lzy-editable-multiline .lzy-editable {
+	min-height: 4.5em;
+	white-space: pre;
+	overflow: auto;
+	font-family: "Lucida Grande", "Lucida Sans Unicode", Arial, sans-serif;
+	font-size: 90%;
+	line-height: 1em;
+	padding: 5px;
+}
+
+.lzy-editable-multiline .lzy-editable-active {
+	padding: 0;
+}
+

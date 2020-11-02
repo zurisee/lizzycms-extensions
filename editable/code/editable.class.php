@@ -66,6 +66,10 @@ class Editable extends LiveData
         $id = $args['id'] ? " id='{$args['id']}'" : '';
         $eClass = '';
 
+        if (@$args['multiline']) {
+            $args['wrapperClass'] .= ' lzy-editable-multiline';
+        }
+
         $class = trim("lzy-editable-wrapper {$args['showButtonClass']}{$args['wrapperClass']}");
         if (!$args['permission']) {
             $class .= ' lzy-editable-inactive';
@@ -124,6 +128,9 @@ class Editable extends LiveData
         $wrapperClass = 'lzy-editable-wrapper';
         if (!$options['permission']) {
             $wrapperClass .= ' lzy-editable-inactive';
+        }
+        if (@$options['multiline']) {
+            $wrapperClass .= ' lzy-editable-multiline';
         }
 
         $options['class'] = $options['tableClass'] = $wrapperClass;
