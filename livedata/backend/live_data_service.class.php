@@ -217,8 +217,7 @@ class LiveDataService
                     $lockedElements[] = $targetSelector;
                     $elemIsLocked = true;
                 }
-                if (isset($data[ $dataKey ])) {
-                    $value = $data[ $dataKey ];
+                if ($value = $db->readElement( $dataKey )) {
                     if ($freezeFieldAfter && $value) {
                         $lastModif = $db->lastModifiedElement($dataKey);
                         if ($lastModif < (time() - $freezeFieldAfter)) {
