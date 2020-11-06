@@ -45,7 +45,7 @@ class LiveDataService
             }
         }
 
-        $returnData['lastUpdated'] = microtime(true) + 0.000001;
+        $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001 );
         $json = json_encode($returnData);
         lzyExit($json);
     } // execute
@@ -335,7 +335,7 @@ class LiveDataService
             $_SESSION['lizzy']['ajaxServerAbort'] = false;
             session_write_close();
             $returnData['result'] = 'None';
-            $returnData['lastUpdated'] = microtime(true) + 0.000001;
+            $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001);
             $json = json_encode($returnData);
             lzyExit($json);
         }
