@@ -105,6 +105,8 @@ class LzyCalendar
         $this->headerLeftButtons = isset($args['headerLeftButtons']) ? $args['headerLeftButtons']: false;
         $this->headerRightButtons = isset($args['headerRightButtons']) ? $args['headerRightButtons']: false;
         $this->buttonLabels = isset($args['buttonLabels']) ? $args['buttonLabels']: false;
+        $this->dayStart = @$args['dayStart'] ? $args['dayStart']: '08:00';
+        $this->dayEnd = @$args['dayEnd'] ? $args['dayEnd']: '20:00';
 
     } // __construct
 
@@ -245,6 +247,8 @@ lzyCal[$inx] = {
     calCatPermission: '$calCatPermission',
     catPrefixes: {$this->prefixJson},
     catDefaultPrefix: '{$this->defaultCatPrefix}',
+    calDayStart: '{$this->dayStart}',
+    calDayEnd: '{$this->dayEnd}',
     tooltips: {$this->tooltips},
     eventOverlap: {$this->eventOverlap},
     defaultEventDuration: $defaultEventDuration,

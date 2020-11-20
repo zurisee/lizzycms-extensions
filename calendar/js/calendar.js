@@ -43,8 +43,8 @@ $( document ).ready(function() {
             nowIndicator: true,
             weekNumbers: true,
             weekNumberCalculation: 'ISO',
-            slotMinTime: '08:00',
-            slotMaxTime: '20:00',
+            slotMinTime: calDev.calDayStart,
+            slotMaxTime: calDev.calDayEnd,
             customButtons: {
                 addEventButton: {
                     text: '＋',
@@ -356,13 +356,14 @@ function defaultOpenCalPopup(inx, event0) {
     var timeStr = '';
     var start = null;
     var end = null;
+    var res = false;
     var defaultEventDuration = lzyCal[ inx ].defaultEventDuration;
 
     applyCatRestrictions();
 
     if (typeof event === 'undefined') {                          // new entry
         if (typeof customOpenNewCalPopup === 'function') {
-            var res = customOpenNewCalPopup( event0 );
+            res = customOpenNewCalPopup( event0 );
             if (res) {
                 return res;
             }
@@ -403,13 +404,19 @@ function defaultOpenCalPopup(inx, event0) {
                 var cats = cat.replace(' ', '').split(',');
                 cat = cats[0];
             }
-            $('#lzy_cal_category option[value=' + cat + ']').attr('selected', 'selected');
+            cat = cat.toLocaleLowerCase();
+            $('#lzy_cal_category option').each(function() {
+                if ($(this).val().toLocaleLowerCase() === cat) {
+                    $(this).attr('selected', 'selected');
+                }
+            });
+            // attr('selected', 'selected');
         }
 
 
     } else {                                                   // existing entry
         if (typeof customOpenCalPopup === 'function') {
-            var res = customOpenCalPopup( event0 );
+            res = customOpenCalPopup( event0 );
             if (res) {
                 return res;
             }
