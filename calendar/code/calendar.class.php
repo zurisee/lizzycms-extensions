@@ -214,7 +214,16 @@ class LzyCalendar
         if (!$GLOBALS['lizzy']['calInitiales']) {
             $GLOBALS['lizzy']['calInitiales'] = true;
             $userRec = $this->lzy->auth->getUserRec();
-            $calCatPermission = isset($userRec['calCatetoryPermission'])? $userRec['calCatetoryPermission']: '';
+            if (isset($userRec['calCatetoryPermission'])) {
+                if (!$userRec['calCatetoryPermission'] || ($userRec['calCatetoryPermission'] === 'self')) {
+                    $calCatPermission = $userRec['username'];
+                } else {
+                    $calCatPermission = $userRec['calCatetoryPermission'];
+                }
+            } else {
+                $calCatPermission = '';
+            }
+
             $_SESSION['lizzy']['cal'][$inx]['calCatPermission'] = $calCatPermission;
 
             $js = <<<EOT
