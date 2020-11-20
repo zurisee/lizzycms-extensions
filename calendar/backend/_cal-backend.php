@@ -183,7 +183,15 @@ class CalendarBackend {
     //--------------------------------------------------------------
     private function _deleteRec($recId)
     {
-        $this->ds->deleteRecord($recId);
+        $data = $this->ds->read();
+        if (isset($data[$recId])) {
+            unset($data[$recId]);
+            // make sure index remains numeric:
+            $data = array_values($data);
+            $this->ds->write( $data );
+        } else {
+            $this->writeLogEntry("Error deleting event '$recId'");
+        }
         return 'ok';
     } // deleteRec
 
