@@ -26,10 +26,10 @@ $( document ).ready(function() {
             timeZone: false,
 
             buttonText: calDev.buttonLabels,
-            weekText: calDev.calLabels['weekText'], //'KW',
-            allDayText: calDev.calLabels['allDayText'], // 'Ganztag',
-            moreLinkText: calDev.calLabels['moreLinkText'], // 'mehr',
-            noEventsText: calDev.calLabels['noEventsText'], // 'Leer',
+            weekText: calDev.calLabels['weekText'],
+            allDayText: calDev.calLabels['allDayText'],
+            moreLinkText: calDev.calLabels['moreLinkText'],
+            noEventsText: calDev.calLabels['noEventsText'],
 
             initialDate: calDev.initialDate,
             initialView: calDev.initialView,
@@ -55,7 +55,7 @@ $( document ).ready(function() {
             },
 
             events: {
-                url: calBackend + '?inx=' + inx,
+                url: calBackend + '?inx=' + inx + '&ds=' + calDev.ref,
                 success: saveCurrDate,
                 failure: function( events ) {
                     console.log('Error in calendar data:');
@@ -70,7 +70,7 @@ $( document ).ready(function() {
                 if (typeof arg.event._def.extendedProps.category !== 'undefined') {
                     const catName = arg.event._def.extendedProps.category;
                     const catInx = lzyCal[ inx ].categories.indexOf( catName ) + 1;
-                    return 'lzy-cal-category-' + catInx + ' lzy-cal-category-' + catName;
+                    return 'lzy-cal-category-' + catInx + ' lzy-cal-category-' + catName.replace(/\s+/, '-').toLowerCase();
                 }
             },
 
@@ -115,52 +115,6 @@ function onViewReady( arg ) {
         storeViewMode(inx, viewType);
         lzyCal[inx].initialView = viewType;
     }
-} // onViewReady
-
-
-
-function activateTooltips( viewType ) {
-    // activate Tooltips
-    if (!lzyCal[ inx ].tooltips) {
-        return;
-    }
-    setTimeout(function () {
-        if (viewType === 'dayGridMonth') {
-            $('.fc-daygrid-event').each(function () {
-                var $elem = $(this);
-                $elem.qtip({
-                    content: $elem.html(),
-                    position: {
-                        my: 'bottom center',
-                        at: 'top center',
-                        target: $elem
-                    },
-                    hide: {
-                        fixed: true,
-                        delay: 500
-                    }
-                });
-            });
-
-        } else if (viewType === 'timeGridWeek') {
-            $('.fc-timegrid-event > div:first-child').each(function () {
-                var $elem = $(this);
-                $elem.qtip({
-                    content: $elem.html(),
-                    position: {
-                        my: 'bottom center',
-                        at: 'top center',
-                        target: $elem
-                    },
-                    hide: {
-                        fixed: true,
-                        delay: 500
-                    }
-                });
-            });
-        }
-    }, 500);
-
 } // onViewReady
 
 
@@ -267,6 +221,11 @@ function calEventChanged(inx, event0) {
         event0.revert();
         return false;
     }
+    if (!checkFreeze( event0 )) {
+        alert('You can\'t create or modify events in the past');
+        event0.revert();
+        return;
+    }
 
     var start = moment( event._instance.range.start ).utc();
     var end = moment( event._instance.range.end ).utc();
@@ -292,7 +251,7 @@ function calEventChanged(inx, event0) {
     var json = JSON.stringify(rec);
 
     $.ajax({
-        url : calBackend + '?inx=' + inx + '&save',
+        url : calBackend + '?inx=' + inx + '&save' + '&ds=' + lzyCal[inx].ref,
         type: 'post',
         data : 'json='+json,
     }).done(function(response){
@@ -302,10 +261,56 @@ function calEventChanged(inx, event0) {
 
 
 
+function activateTooltips( viewType ) {
+    // activate Tooltips
+    if (!lzyCal[ inx ].tooltips) {
+        return;
+    }
+    setTimeout(function () {
+        if (viewType === 'dayGridMonth') {
+            $('.fc-daygrid-event').each(function () {
+                var $elem = $(this);
+                $elem.qtip({
+                    content: $elem.html(),
+                    position: {
+                        my: 'bottom center',
+                        at: 'top center',
+                        target: $elem
+                    },
+                    hide: {
+                        fixed: true,
+                        delay: 500
+                    }
+                });
+            });
+
+        } else if (viewType === 'timeGridWeek') {
+            $('.fc-timegrid-event > div:first-child').each(function () {
+                var $elem = $(this);
+                $elem.qtip({
+                    content: $elem.html(),
+                    position: {
+                        my: 'bottom center',
+                        at: 'top center',
+                        target: $elem
+                    },
+                    hide: {
+                        fixed: true,
+                        delay: 500
+                    }
+                });
+            });
+        }
+    }, 500);
+
+} // onViewReady
+
+
+
 
 function storeViewMode(inx, viewName) {
     $.ajax({
-        url : calBackend + '?inx=' + inx + '&mode=' + viewName,
+        url : calBackend + '?inx=' + inx + '&mode=' + viewName + '&ds=' + lzyCal[inx].ref,
         type: 'get',
     }).done(function(response){
         if (isServerErrMsg(response)) { return; }
@@ -319,7 +324,7 @@ function storeViewMode(inx, viewName) {
 function saveCurrDate( arg ) {
     var dateStr = moment( this.currentData.currentDate ).utc().format('YYYY-MM-DD');
     $.ajax({
-        url : calBackend + '?inx=' + inx + '&date=' + dateStr,
+        url : calBackend + '?inx=' + inx + '&date=' + dateStr + '&ds=' + lzyCal[inx].ref,
         type: 'get',
     }).done(function(response){
         if (isServerErrMsg(response)) { return; }
@@ -336,6 +341,13 @@ function defaultOpenCalPopup(inx, event0) {
     var event = event0.event;
     if (!checkPermission( event )) {
         alert('You don\'t have permission to modify somebody else\'s event');
+        event0.revert();
+        return;
+    }
+
+    if (!checkFreeze( event0 )) {
+        alert('You can\'t create or modify events in the past');
+        event0.revert();
         return;
     }
 
@@ -549,24 +561,24 @@ function setupTriggers() {
         doSubmit = false;
         var $this = $(this);
 
-        var post_url = $this.attr("action") + '?save';
-        var request_method = $this.attr("method");
-        var form_data = $this.serialize();
+        var postUrl = $this.attr('action') + '?save' + '&ds=' + lzyCal[inx].ref;
+        var requestMethod = $this.attr('method');
+        var formData = $this.serialize();
 
         if ( deleteNotSubmit ) {    // delete:
-            post_url = $this.attr("action") + '?del';
+            postUrl = $this.attr('action') + '?del' + '&ds=' + lzyCal[inx].ref;
             console.log('deleting entry');
         }
 
         $.ajax({
-            url: post_url,
-            type: request_method,
-            data: form_data
+            url: postUrl,
+            type: requestMethod,
+            data: formData
         }).done(function (response) {
             if (isServerErrMsg(response)) {
                 return;
             }
-            if (response && response != 'ok') {
+            if (response && response !== 'ok') {
                 console.log(response);
                 alert(response);
             }
@@ -575,7 +587,7 @@ function setupTriggers() {
     });
 
     // All-day toggle:
-    $('#lzy-cal-allday-event-checkbox').change(function (e) {
+    $('#lzy-cal-allday-event-checkbox').change(function () {
         var $this = $( this );
         var allday = $this.prop('checked');
         if (allday) {
@@ -653,6 +665,27 @@ function checkPermission(event) {
     }
     return true;
 } // checkPermission
+
+
+
+function checkFreeze(event) {
+    var freeze = lzyCal[ inx ].freezePast;
+    if (!freeze) {
+        return true;
+    }
+    var start = null;
+    if (typeof event.date !== 'undefined') {
+        start = moment(event.date).utc();
+    } else if (typeof event.event._instance.range.start !== 'undefined') {
+        start = moment( event.event._instance.range.start ).utc();
+    } else {
+        return false;
+    }
+    var now = moment().utc();
+    var isAfter = start.isAfter( now );
+    return isAfter;
+} // checkFreeze
+
 
 
 

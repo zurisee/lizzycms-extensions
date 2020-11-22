@@ -48,6 +48,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'initialDate', '[ISO-Date] Defines the initial date, default: today', '');
     $this->getArg($macroName, 'dayStart', '[hh:mm] Defines first visible hour, default: 08:00', '');
     $this->getArg($macroName, 'dayEnd', '[hh:mm] Defines last visible hour, default: 20:00', '');
+    $this->getArg($macroName, 'freezePast', 'If true, events in the past can no longer be edited, default: false', false);
     $this->getArg($macroName, 'eventTitleRequired', '[true,false] Defines whether title field a new event must be defined, default: true', true);
     $this->getArg($macroName, 'useRecycleBin', '[true,false] If true, changes to calendar data (via editing mode) don\'t overrite old data but send a copy to a recycle bin. (Default: false)', false);
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);

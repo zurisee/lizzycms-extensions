@@ -3,7 +3,7 @@
 if (!defined('CALENDAR_BACKEND')) { define('CALENDAR_BACKEND', '~sys/extensions/calendar/backend/_cal-backend.php'); }
 define('DEFAULT_EVENT_DURATION', 120); // in minutes
 
-$GLOBALS['lizzy']['calInitiales'] = false;
+$GLOBALS['lizzy']['calInitialized'] = false;
 
 class LzyCalendar
 {
@@ -12,6 +12,7 @@ class LzyCalendar
         $this->lzy = $lzy;
         $this->page = $lzy->page;
         $this->inx = $inx;
+        $this->tickHash = '';
         $this->lang = $this->lzy->config->lang;
         $this->source = $args['file'];
         $this->editingPermission = isset($args['editingPermission']) ? $args['editingPermission'] : false;
@@ -78,9 +79,11 @@ class LzyCalendar
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
 
+
         if (!isset($_SESSION['lizzy']['cal'][$inx]) || !is_array($_SESSION['lizzy']['cal'][$inx])) {
             $_SESSION['lizzy']['cal'][$inx] = [];
         }
+        $this->calSession = &$_SESSION['lizzy']['cal'][$inx];
 
         // Default View:
         $defaultView = isset($args['defaultView']) ? $args['defaultView']: 'month';
@@ -107,6 +110,7 @@ class LzyCalendar
         $this->buttonLabels = isset($args['buttonLabels']) ? $args['buttonLabels']: false;
         $this->dayStart = @$args['dayStart'] ? $args['dayStart']: '08:00';
         $this->dayEnd = @$args['dayEnd'] ? $args['dayEnd']: '20:00';
+        $this->freezePast = @$args['freezePast'] ? $args['freezePast']: false;
 
     } // __construct
 
@@ -117,10 +121,13 @@ class LzyCalendar
     {
         $inx = $this->inx;
         $this->source = resolvePath($this->source, true);
-        $calSession = &$_SESSION['lizzy']['cal'][$inx];
-        $calSession['dataSource'] = $this->source;
-        $calSession['calShowCategories'] = $this->showCategories;
-        $calSession['useRecycleBin'] = $this->useRecycleBin;
+
+        $calRec = [];
+        $calRec['inx'] = $inx;
+        $calRec['dataSource'] = $this->source;
+        $calRec['calShowCategories'] = $this->showCategories;
+        $calRec['useRecycleBin'] = $this->useRecycleBin;
+        $calRec['freezePast'] = $this->freezePast;
 
         // export ics file if requested:
         if ($this->publish) {
@@ -133,20 +140,20 @@ class LzyCalendar
         }
 
         $backend = CALENDAR_BACKEND;
-        if (isset($calSession['initialDate'])) {
-            $this->initialDate = $calSession['initialDate'];
+        if (isset($this->calSession['initialDate'])) {
+            $this->initialDate = $this->calSession['initialDate'];
         } else {
             $this->initialDate = date('Y-m-d');
-            $calSession['initialDate'] = $this->initialDate;
+            $this->calSession['initialDate'] = $this->initialDate;
         }
-        $viewMode = (isset($calSession['calMode'])) ? $calSession['calMode'] : $this->defaultView;
+        $viewMode = (isset($this->calSession['calMode'])) ? $this->calSession['calMode'] : $this->defaultView;
 
 
         // handle editing permissions:
         $edPermitted0 = $this->editingPermission;
         $edPermitted = false;
         $creatorOnlyPermission = 'false';
-        $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = false;
+        $calRec['creatorOnlyPermission'] = false;
 
         if (($edPermitted0 === 'all') || ($edPermitted0 === '*') || ($edPermitted0 === true)) {
             $edPermitted = true;
@@ -161,13 +168,13 @@ class LzyCalendar
                         if ($this->lzy->auth->checkAdmission($group)) {
                             $creatorOnlyPermission = "'{$_SESSION["lizzy"]["user"]}'";
                             $edPermitted = true;
-                            $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = $_SESSION["lizzy"]["user"];
+                            $calRec['creatorOnlyPermission'] = $_SESSION["lizzy"]["user"];
                         }
                     } else {
                         if ($this->lzy->auth->checkAdmission($group)) {
                             $creatorOnlyPermission = 'false';
                             $edPermitted = true;
-                            $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'] = false;
+                            $calRec['creatorOnlyPermission'] = false;
                             break;
                         }
                     }
@@ -180,6 +187,7 @@ class LzyCalendar
         $edPermStr = $edPermitted? 'true': 'false';
         $this->edPermitted = $edPermitted;
 
+        // Get Default Event Duration
         $defaultEventDuration = DEFAULT_EVENT_DURATION;
         if ($this->defaultEventDuration) {
             if (stripos($this->defaultEventDuration, 'allday') !== false) {
@@ -188,6 +196,7 @@ class LzyCalendar
                 $defaultEventDuration = intval($this->defaultEventDuration);
             }
         }
+
 
         // header buttons:
         $headerLeftButtons = $this->headerLeftButtons;
@@ -213,8 +222,8 @@ class LzyCalendar
 
         // inject js code into page body:
         $js = '';
-        if (!$GLOBALS['lizzy']['calInitiales']) {
-            $GLOBALS['lizzy']['calInitiales'] = true;
+        if (!$GLOBALS['lizzy']['calInitialized']) {
+            $GLOBALS['lizzy']['calInitialized'] = true;
             $userRec = $this->lzy->auth->getUserRec();
             if (isset($userRec['calCatetoryPermission'])) {
                 if (!$userRec['calCatetoryPermission'] || ($userRec['calCatetoryPermission'] === 'self')) {
@@ -226,7 +235,11 @@ class LzyCalendar
                 $calCatPermission = '';
             }
 
-            $_SESSION['lizzy']['cal'][$inx]['calCatPermission'] = $calCatPermission;
+            $calRec['calCatPermission'] = $calCatPermission;
+
+            $tck = new Ticketing(['defaultType' => 'cal', 'defaultMaxConsumptionCount' => 99]);
+            $hash = $tck->createTicket($calRec);
+            $this->tickHash = $hash;
 
             $js = <<<EOT
 var calBackend = '$backend';
@@ -239,6 +252,7 @@ EOT;
         $js .= <<<EOT
 
 lzyCal[$inx] = {
+    ref: '$hash',
     initialView: '$viewMode',
     initialDate: '{$this->initialDate}',
     editingPermission: $edPermStr,
@@ -249,6 +263,7 @@ lzyCal[$inx] = {
     catDefaultPrefix: '{$this->defaultCatPrefix}',
     calDayStart: '{$this->dayStart}',
     calDayEnd: '{$this->dayEnd}',
+    freezePast: '{$this->freezePast}',
     tooltips: {$this->tooltips},
     eventOverlap: {$this->eventOverlap},
     defaultEventDuration: $defaultEventDuration,
@@ -278,6 +293,14 @@ EOT;
         $this->page->addJs($js);
 
         $str = '';
+
+        $class = $this->class? " {$this->class}": '';
+        $edClass = $this->edPermitted ? ' lzy-cal-editing' : '';
+
+        $str .= "\t<div id='lzy-calendar$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx'></div>\n";
+        $this->renderFieldNames();
+
+        // render edit form:
         if ($this->edPermitted) {
             $popupForm = $this->renderDefaultCalPopUpForm();
             if (function_exists('loadCustomCalPopup')) {
@@ -286,26 +309,14 @@ EOT;
             } else {
                 $this->loadDefaultPopup();
                 $str .= <<<EOT
+
     <div id='lzy-cal-popup-template'>
 $popupForm
     </div><!-- /lzy-cal-popup-template -->
 
-
 EOT;
             }
         }
-
-        $defaultDate = (isset($_SESSION['lizzy']['defaultDate']) && $_SESSION['lizzy']['defaultDate']) ? $_SESSION['lizzy']['defaultDate']: date('Y-m-d');
-        // fix a peculiarity of fullcalendar: round up 1 week to make sure the same month is displayed as before
-        if ($viewMode == 'month') {
-            $t = strtotime('+1 week', strtotime($defaultDate));
-            $defaultDate = date('Y-m-d', $t);
-        }
-
-        $class = $this->class? " {$this->class}": '';
-        $edClass = $this->edPermitted ? ' lzy-cal-editing' : '';
-        $str .= "<div id='lzy-calendar$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx' data-lzy-cal-start='$defaultDate'></div>";
-        $this->renderFieldNames();
 
         return $str;
     } // render
@@ -347,6 +358,7 @@ EOT;
         <h1><span id="lzy-cal-new-event-header">{{ lzy-cal-new-entry }}</span><span id="lzy-cal-modify-event-header">{{ lzy-cal-modif-entry }}</span></h1>
         <form id='lzy-calendar-default-form' method='post' action="$backend">
             <input type='hidden' id='lzy-inx' name='inx' value='$inx' />
+            <input type='hidden' id='lzy-cal-ref' name='lzy-cal-ref' value='$this->tickHash' />
             <input type='hidden' id='lzy-rec-id' name='rec-id' value='' />
             <input type='hidden' id='lzy-allday' name='allday' value='' />
 
@@ -416,16 +428,16 @@ EOT;
             $categories = explode(',', $category);
             if (sizeof($categories) > 1) {
                 foreach ($categories as $cat) {
-                    $catVal = trim($cat);
+                    $catVal = $cat = trim($cat);
                     $catVal = preg_replace('/\s+/', '-', $catVal);
                     $catVal = preg_replace('/[^\w-]/', '', $catVal);
-                    $categoryCombo .= "\t<option value='$cat'>$cat</option>\n";
+                    $categoryCombo .= "\t\t<option value='$catVal'>$cat</option>\n";
                 }
                 $categoryCombo = <<<EOT
     <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>
     <select id="lzy_cal_category" class="lzy_cal_category" name="category">
         <option value="">{{ lzy-cal-category-all }}</option>
-    $categoryCombo
+$categoryCombo
     </select>
 
 EOT;

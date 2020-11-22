@@ -12,6 +12,7 @@ require dirname(__FILE__) . '/../third-party/fullcalendar/php/utils.php';
 // Require Datastorage class:
 require_once SYSTEM_PATH.'backend_aux.php';
 require_once SYSTEM_PATH.'datastorage2.class.php';
+require_once SYSTEM_PATH.'ticketing.class.php';
 
 
 // Check whether there is custome backend code 'code/_custom-cal-backend.php':
@@ -25,11 +26,8 @@ if (!isset($_REQUEST['inx'])) {
 
 session_start();
 
-$inx = $_REQUEST['inx'];
-$calSession = &$_SESSION['lizzy']['cal'][$inx];
-$dataSrc = PATH_TO_APP_ROOT.$calSession['dataSource'];
 
-$backend = new CalendarBackend($dataSrc);
+$backend = new CalendarBackend();
 
 if (isset($_GET['save'])) {
     lzyExit( $backend->saveData($_POST) );
@@ -44,20 +42,28 @@ if (isset($_GET['date'])) {
     lzyExit( $backend->saveCurrDate($_GET['date']) );
 }
 
-lzyExit( $backend->getData($inx) );
+lzyExit( $backend->getData() );
 
 
 
 
 class CalendarBackend {
 
-    public function __construct($dataSrc)
+    public function __construct()
     {
-        global $inx;
+        $inx = $_REQUEST['inx'];
+        $this->calSession = &$_SESSION['lizzy']['cal'][$inx];
+
+        $this->tickHash = $_GET['ds'];
+        $this->tck = new Ticketing();
+        $calRec = $this->tck->consumeTicket( $this->tickHash );
+        $this->calRec = $calRec;
+
+        $dataSrc = PATH_TO_APP_ROOT.$calRec['dataSource'];
         $this->dataSrc = $dataSrc;
         if (isset($_GET['start'])) {
             $rangeStart = $_GET['start'];
-            $_SESSION['lizzy']['defaultDate'] = $rangeStart;
+            $calRec['defaultDate'] = $rangeStart;
         } else {
             $rangeStart = date('Y-m-d', strtotime('+1 week'));
         }
@@ -71,19 +77,20 @@ class CalendarBackend {
 
         $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
 
-        $useRecycleBin = $_SESSION['lizzy']['cal'][$inx]['useRecycleBin'];
+        $useRecycleBin = $calRec['useRecycleBin'];
         $this->ds = new DataStorage2(['dataFile' => $dataSrc, 'useRecycleBin' => $useRecycleBin]);
-        $this->calCatPermission = @$_SESSION['lizzy']['cal'][$inx]['calCatPermission'];
+
+        $this->calCatPermission = @$calRec['calCatPermission'];
 
     } // __construct
 
 
 
     //--------------------------------------------------------------
-    public function getData($inx)
+    public function getData()
     {
         $data = $this->ds->read();
-        $categoriesToShow = $_SESSION['lizzy']['cal'][$inx]['calShowCategories'];
+        $categoriesToShow = $this->calRec['calShowCategories'];
         // possible enhancement: chose category from browser:
         //        if ($categoriesToShow2 = (isset($_GET['category'])) ? $_GET['category']: '') {
         //          $categoriesToShow = "$categoriesToShow,$categoriesToShow2";
@@ -112,6 +119,20 @@ class CalendarBackend {
         }
         mylog( var_r($rec0) );
 
+        $freeze = false;
+        // check freezePast:
+        if ($this->calRec['freezePast']) {
+            $end = strtotime("{$rec0['end-date']} {$rec0['end-time']}");
+            if ($end < time()) {
+                $this->writeLogEntry("freezePast", $rec0);
+                return 'Event in the past may not be created or modified';
+            }
+            $start = strtotime("{$rec0['start-date']} {$rec0['start-time']}");
+            if ($start < time()) {
+                $freeze = true;
+            }
+        }
+
         $data = $this->ds->read();
 
         if (isset($rec0['rec-id']) && ($rec0['rec-id'] !== '')) {    // Modify:
@@ -119,12 +140,15 @@ class CalendarBackend {
             $msg = 'Modified event';
             if (isset($data[$recId])) {
                 $oldRec = $data[$recId];
+                if ($freeze) {
+                    $freeze = $oldRec['start']; // just freeze start, modify end
+                }
                 unset($data[$recId]);
             } else {
                 $oldRec = false;
             }
 
-            $creatorOnlyPermission = $_SESSION["lizzy"]['cal'][$inx]['creatorOnlyPermission'];
+            $creatorOnlyPermission = $this->calRec['creatorOnlyPermission'];
             if (isset($oldRec['_creator'])) {
                 $creator = $oldRec['_creator'];
 
@@ -151,6 +175,9 @@ class CalendarBackend {
         }
 
         $rec = $this->prepareRecord($rec0);
+        if ($freeze) {
+            $rec['start'] = $freeze;
+        }
         $this->writeLogEntry($msg, $rec);
 
         $rec['_creator'] =  $creator;
@@ -171,6 +198,15 @@ class CalendarBackend {
             return 'not ok';
         }
         $recId = $rec['rec-id'];
+
+        // check freezePast:
+        if ($this->calRec['freezePast']) {
+            $start = strtotime("{$rec['start-date']} {$rec['start-time']}");
+            if ($start < time()) {
+                return 'Event in the past may not be deleted';
+            }
+        }
+
         $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
         $rec['_user'] = $user;
         $this->writeLogEntry("Deleted event", $this->prepareRecord($rec));
@@ -201,8 +237,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveMode($mode)
     {
-        $inx = intval($_GET['inx']);
-        $_SESSION['lizzy']['cal'][$inx]['calMode'] = $mode;
+        $this->calSession['calMode'] = $mode;
         return '';
     } // saveMode
 
@@ -211,8 +246,7 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveCurrDate($date)
     {
-        $inx = $_GET['inx'];
-        $_SESSION['lizzy']['cal'][$inx]['initialDate'] = $date;
+        $this->calSession['initialDate'] = $date;
         return '';
     } // saveCurrDate
 
@@ -304,6 +338,7 @@ class CalendarBackend {
         }
         unset($rec['inx']);
         unset($rec['rec-id']);
+        unset($rec['lzy-cal-ref']);
         unset($rec['start-time']);
         unset($rec['start-date']);
         unset($rec['end-time']);
