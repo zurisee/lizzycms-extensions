@@ -334,7 +334,8 @@ function saveCurrDate( arg ) {
 
 
 function defaultOpenCalPopup(inx, event0) {
-    if (!lzyCal[ inx ].editingPermission) {
+    var thisCal = lzyCal[ inx ];
+    if (!thisCal.editingPermission) {
         return;
     }
     var catClass = '';
@@ -347,7 +348,9 @@ function defaultOpenCalPopup(inx, event0) {
 
     if (!checkFreeze( event0 )) {
         alert('You can\'t create or modify events in the past');
-        event0.revert();
+        if (typeof event0.revert === 'function') {
+            event0.revert();
+        }
         return;
     }
 
@@ -369,7 +372,7 @@ function defaultOpenCalPopup(inx, event0) {
     var start = null;
     var end = null;
     var res = false;
-    var defaultEventDuration = lzyCal[ inx ].defaultEventDuration;
+    var defaultEventDuration = thisCal.defaultEventDuration;
 
     applyCatRestrictions();
 
@@ -387,6 +390,13 @@ function defaultOpenCalPopup(inx, event0) {
         dateStr = start.format('YYYY-MM-DD');
         if (defaultEventDuration === 'allday') {
             event0.allDay = true;
+
+        } else if (event0.view.type === 'dayGridMonth') {
+            // for month view: avoid allDay event as default, unless no defaultEventDuration is defined:
+            if (defaultEventDuration) {
+                event0.allDay = false;
+            }
+            start = moment(dateStr + ' ' + thisCal.calDayStart);
         }
         if (event0.allDay === false) {
             $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
@@ -410,7 +420,7 @@ function defaultOpenCalPopup(inx, event0) {
             $('#lzy_cal_end_time').attr('type', 'hidden').val('11:00');
         }
 
-        var cat = lzyCal[ inx ].calCatPermission;
+        var cat = thisCal.calCatPermission;
         if ( cat ) {
             if (cat.indexOf(',') !== -1) {
                 var cats = cat.replace(' ', '').split(',');
