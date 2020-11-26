@@ -3,14 +3,23 @@
 
 // Colors
 
-$color1: #660000ff;
-$color2: #663800ff;
-$color3: #636600ff;
-$color4: #116600ff;
-$color5: #004b52ff;
-$color6: #002f7aff;
-$color7: #15008fff;
-$color8: #7a007aff;
+$color1: #660000;
+$color2: #663800;
+$color3: #636600;
+$color4: #116600;
+$color5: #004b52;
+$color6: #002f7a;
+$color7: #15008f;
+$color8: #7a007a;
+$color9: #001f66;
+$color10: #97000d;
+$color11: #7d8007;
+$color12: #188402;
+$color13: #036c76;
+$color14: #0242a9;
+$color15: #0062a9;
+$color16: #560593;
+
 
 $color-light1: #ffadadff;
 $color-light2: #ffbf70ff;
@@ -55,6 +64,30 @@ $color-light8: #ffebffff;
 		.lzy-cal-category-8 {
 			background: var(--lzy-cal-category-bg-8, $color2);
 		}
+		.lzy-cal-category-9 {
+			background: var(--lzy-cal-category-bg-9, $color9);
+		}
+		.lzy-cal-category-10 {
+			background: var(--lzy-cal-category-bg-10, $color10);
+		}
+		.lzy-cal-category-11 {
+			background: var(--lzy-cal-category-bg-11, $color11);
+		}
+		.lzy-cal-category-12 {
+			background: var(--lzy-cal-category-bg-12, $color12);
+		}
+		.lzy-cal-category-13 {
+			background: var(--lzy-cal-category-bg-13, $color13);
+		}
+		.lzy-cal-category-14 {
+			background: var(--lzy-cal-category-bg-14, $color14);
+		}
+		.lzy-cal-category-15 {
+			background: var(--lzy-cal-category-bg-15, $color15);
+		}
+		.lzy-cal-category-16 {
+			background: var(--lzy-cal-category-bg-16, $color16);
+		}
 	}
 	.fc-list {
 		.lzy-cal-category-1 .fc-list-event-dot {
@@ -80,6 +113,30 @@ $color-light8: #ffebffff;
 		}
 		.lzy-cal-category-8 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-8, $color2);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-9, $color9);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-10, $color10);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-11, $color11);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-12, $color12);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-13, $color13);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-14, $color14);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-15, $color15);
+		}
+		.lzy-cal-category-8 .fc-list-event-dot {
+			border-color: var(--lzy-cal-category-bg-16, $color16);
 		}
 	}
 }
