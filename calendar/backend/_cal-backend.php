@@ -3,6 +3,7 @@
 define('SYSTEM_PATH',           '../../../');
 define('PATH_TO_APP_ROOT',      SYSTEM_PATH.'../');
 define('CUSTOM_CAL_BACKEND',    PATH_TO_APP_ROOT.'code/_custom-cal-backend.php');
+define('LOG_WIDTH', 80);
 
 ob_start();
 
@@ -366,8 +367,23 @@ class CalendarBackend {
 
         $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
         $rec['_user'] = $user;
-        mylog("$msg ({$this->dataSrc}): $logEntry", $user);
 
+        if (!is_string($msg)) {
+            $msg = var_export($msg, true);
+            $msg = str_replace("\n", '', $msg);
+        }
+        $msg = "$msg ({$this->dataSrc}): $logEntry";
+
+        $str = '';
+        $indent = '                     ';
+        $s = str_replace(["\n", "\t", "\r"], [' ',' ',''], $msg);
+        while (strlen($s) > LOG_WIDTH) {
+            $str .= substr($s, 0,LOG_WIDTH)."\n$indent";
+            $s = substr($s, LOG_WIDTH);
+        }
+        $str .= $s;
+
+        writeLog($str, $user, PATH_TO_APP_ROOT . LOG_PATH . 'log.txt');
     } // writeLogEntry
 
 } // class
