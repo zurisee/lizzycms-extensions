@@ -123,6 +123,7 @@ class CalendarBackend {
         $freeze = false;
         // check freezePast:
         if ($this->calRec['freezePast']) {
+            // End is in the past -> just reject:
             $end = strtotime("{$rec0['end-date']} {$rec0['end-time']}");
             if ($end < time()) {
                 $this->writeLogEntry("freezePast", $rec0);
