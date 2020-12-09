@@ -112,8 +112,11 @@ class LiveData
 
         $this->output = (isset($args['output'])) ? $args['output'] : true;
         $this->mode = (isset($args['mode'])) ? $args['mode'] : false;
+        $this->manual = (isset($args['manual'])) ? $args['manual'] : false;
 
-        $this->manual = !$this->output || (strpos($this->mode, 'manual') !== false);
+        if ($this->manual !== 'silent') {
+            $this->manual = !$this->output || (strpos($this->mode, 'manual') !== false);
+        }
         $this->callback = (isset($args['callback'])) ? $args['callback'] : false;
         $this->postUpdateCallback = (isset($args['postUpdateCallback'])) ? $args['postUpdateCallback'] : false;
 
@@ -192,8 +195,9 @@ class LiveData
         // 'mode: manual' overrides this -> just renders infrastructure, you place the visible code manually into your page
         // e.g. <span id="my-id""></span>
         if ($this->manual) {
+            $comment = ($this->manual === 'silent') ?'' : '<!-- live-data manual mode -->';
             $str = <<<EOT
-<span class='lzy-live-data disp-no' data-lzy-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback><!-- live-data manual mode --></span>
+<span class='lzy-live-data disp-no' data-lzy-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>$comment</span>
 EOT;
 
         } else {
