@@ -40,7 +40,7 @@ function initLiveData() {
 function markLockedFields( lockedElements ) {
     // console.log('updating locked states ' + lockedElements);
     $('.lzy-element-locked').removeClass('lzy-element-locked');
-    // $('.lzy-live-data').removeClass('lzy-element-locked');
+// $('.lzy-live-data').removeClass('lzy-element-locked');
 
     for (var i in lockedElements) {
         var targSel = lockedElements[ i ];
@@ -58,7 +58,7 @@ function markLockedFields( lockedElements ) {
 function markFrozenFields( frozenElements ) {
     // console.log('updating locked states ' + frozenElements);
     $('.lzy-element-locked').removeClass('lzy-element-locked');
-    // $('.lzy-live-data').removeClass('lzy-element-locked');
+// $('.lzy-live-data').removeClass('lzy-element-locked');
 
     for (var i in frozenElements) {
         var targSel = frozenElements[ i ];
@@ -96,7 +96,7 @@ function updateDOM(data) {
             }
 
             var goOn = true;
-            // var callback = $('.lzy-live-data').attr('data-live-callback');
+// var callback = $('.lzy-live-data').attr('data-live-callback');
             var callback = $targ.attr('data-live-callback');
             if (typeof window[callback] === 'function') {
                 goOn = window[callback]( targSel, val );
@@ -121,10 +121,10 @@ function updateDOM(data) {
             console.log(targSel + ' -> ' + val);
         }
     }
-    // var postCallback = $('.lzy-live-data').attr('data-live-post-update-callback');
-    // if (typeof window[postCallback] === 'function') {
-    //     window[postCallback]( data.data );
-    // }
+// var postCallback = $('.lzy-live-data').attr('data-live-post-update-callback');
+// if (typeof window[postCallback] === 'function') {
+//     window[postCallback]( data.data );
+// }
 } // updateDOM
 
 
