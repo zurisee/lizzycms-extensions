@@ -32,8 +32,10 @@ class LiveDataService
 
         $this->openDataSrcs();
 
-        $returnImmediately = isset($_GET['returnImmediately']);
-        if ($returnImmediately) {
+        if ($this->lastUpdate == -1) {
+            $this->lastUpdated = microtime(true) - 0.1;
+        }
+        if (!$this->lastUpdate) {
             $this->lastUpdated = microtime( true );
             $returnData = $this->assembleResponse();
             $returnData['result'] = 'Ok';

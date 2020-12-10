@@ -10,7 +10,7 @@ var refs = '';
 var debugOutput = false;
 
 
-function initLiveData() {
+function initLiveData( skipInitialUpdate ) {
     // collect all references within page:
     $('[data-lzy-data-ref]').each(function () {
         var ref = $( this ).attr('data-lzy-data-ref');
@@ -31,16 +31,19 @@ function initLiveData() {
 
     debugOutput = ($('.debug').length !== 0);
 
-    updateLiveData( true );
+    if (typeof skipInitialUpdate !== 'undefined') {
+        lastUpdated = -1;
+    }
+
+    updateLiveData(  );
+// updateLiveData( true );
 } // init
 
 
 
 
 function markLockedFields( lockedElements ) {
-    // console.log('updating locked states ' + lockedElements);
     $('.lzy-element-locked').removeClass('lzy-element-locked');
-// $('.lzy-live-data').removeClass('lzy-element-locked');
 
     for (var i in lockedElements) {
         var targSel = lockedElements[ i ];
@@ -56,9 +59,7 @@ function markLockedFields( lockedElements ) {
 
 
 function markFrozenFields( frozenElements ) {
-    // console.log('updating locked states ' + frozenElements);
     $('.lzy-element-locked').removeClass('lzy-element-locked');
-// $('.lzy-live-data').removeClass('lzy-element-locked');
 
     for (var i in frozenElements) {
         var targSel = frozenElements[ i ];
@@ -180,18 +181,15 @@ function handleAjaxResponse(json) {
 
 
 
-function updateLiveData( returnImmediately ) {
+function updateLiveData() {
     var url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
     if (paramName) {
         var paramValue = $( paramSource ).text();
         url = appendToUrl(url, 'dynDataSel=' + paramName + ':' + paramValue);
         if (paramValue !== prevParamValue) {
-            returnImmediately = true;
+            lastUpdated = 0;
             prevParamValue = paramValue;
         }
-    }
-    if (typeof returnImmediately !== 'undefined') {
-        url = appendToUrl(url, 'returnImmediately');
     }
 
     if (ajaxHndl !== null){
