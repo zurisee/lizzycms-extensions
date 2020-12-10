@@ -10,6 +10,7 @@ class LiveDataService
         date_default_timezone_set($timezone);
 
         $this->lastModif = 0;
+        $this->lastUpdate = 0;
         $this->pollingTime = DEFAULT_POLLING_TIME;
         session_abort();
     } // __construct
@@ -19,6 +20,7 @@ class LiveDataService
 
     public function execute()
     {
+        $this->lastUpdate = isset($_POST['last']) ? $_POST['last'] : false;
         $requestedDataSelector = isset($_GET['dynDataSel']) ? $_GET['dynDataSel'] : false;
         $this->requestedDataSelector = $requestedDataSelector;
         $dynDataSelector = [];
@@ -97,8 +99,10 @@ class LiveDataService
                 }
                 if ($set) {
                     $rec = reset($set);
-                    $file = $rec['dataSource'];
-                    $db = new DataStorage2(PATH_TO_APP_ROOT . $file);
+                    $db = new DataStorage2([
+                        'dataFile' => PATH_TO_APP_ROOT . $rec['dataSource'],
+                        'logModifTimes' => true,
+                    ]);
                     $this->sets[$setName]['_db'] = $db;
 
                     if (isset($rec['pollingTime']) && ($rec['pollingTime'] > 2)) {
@@ -185,7 +189,6 @@ class LiveDataService
             return [];
         }
         $db = $set['_db'];
-        $data = $db->read();
 
         $dbIsLocked = $db->isDbLocked( false );
         $lockedElements = [];
@@ -291,9 +294,12 @@ class LiveDataService
         }
 
         $tmp = [];
-        $data = $set['_db']->read();
+        $data = $set['_db']->readModified( $this->lastUpdate );
         $r = 1;
         foreach ($data as $key => $rec) {
+            if (is_int($key)) {
+                $r = $key + 1;
+            }
             if (is_array($rec)) {
                 $c = 1;
                 foreach ($rec as $k => $v) {
