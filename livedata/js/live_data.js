@@ -10,7 +10,7 @@ var refs = '';
 var debugOutput = false;
 
 
-function initLiveData( skipInitialUpdate ) {
+function initLiveData( execInitialUpdate ) {
     // collect all references within page:
     $('[data-lzy-data-ref]').each(function () {
         var ref = $( this ).attr('data-lzy-data-ref');
@@ -31,7 +31,7 @@ function initLiveData( skipInitialUpdate ) {
 
     debugOutput = ($('.debug').length !== 0);
 
-    if (typeof skipInitialUpdate !== 'undefined') {
+    if ((typeof execInitialUpdate !== 'undefined') && !execInitialUpdate) {
         lastUpdated = -1;
     }
 

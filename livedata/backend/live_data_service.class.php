@@ -32,7 +32,7 @@ class LiveDataService
 
         $this->openDataSrcs();
 
-        if ($this->lastUpdate == -1) {
+        if ($this->lastUpdate == -1) { // means "skip initial update"
             $this->lastUpdated = microtime(true) - 0.1;
         }
         if (!$this->lastUpdate) {
