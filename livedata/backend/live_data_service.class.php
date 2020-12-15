@@ -264,7 +264,7 @@ class LiveDataService
         $dataKey = $elem["dataSelector"];
         $targetSelector = $elem['targetSelector'];
 
-        // dynDataSelector: select a data element upuo client request:
+        // dynDataSelector: select a data element upon client request:
         if ($this->dynDataSelector) {
             // check for '{r}' pattern in dataKey and replace it value in client request:
             if (strpos($dataKey, '{') !== false) {
