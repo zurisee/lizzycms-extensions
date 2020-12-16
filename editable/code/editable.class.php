@@ -35,7 +35,12 @@ class Editable extends LiveData
 
         $args = $this->prepareArguments( $args );
 
-        if (($args['nCols'] === 1) && ($args['nRows'] === 1)) {
+        if (isset($args['output']) && ($args['output'] === false)) {
+            $args = $this->args;
+            $args['dataSource'] = '~/'.$args['dataSource'];
+            $dataRef = parent::render( $args, true );
+            $out = "\t<div class='lzy-data-ref'$dataRef></div>\n";
+        } elseif (($args['nCols'] === 1) && ($args['nRows'] === 1)) {
             $out = $this->renderEditableFields();
         } else {
             $out = $this->renderTable();
@@ -192,7 +197,7 @@ class Editable extends LiveData
             }
         }
 
-        $args['id'] = $args['id']? translateToClassName($args['id']) : '';
+        $args['id'] = @$args['id']? translateToClassName($args['id']) : '';
         $args['wrapperClass'] = @$args['class'] ? " {$args['class']}" : '';
 //        $args['permission'] = @$args['permission'] ? $args['permission'] : true;
         $args['class'] = @$args['class']? trim("lzy-editable {$args['class']}"): 'lzy-editable';
@@ -209,7 +214,8 @@ class Editable extends LiveData
         if (isset($args['showButton'])) {
             if ($args['showButton'] === 'auto') {
                 $args['showButtonClass'] = ' lzy-editable-auto-show-button';
-            } elseif ($args['showButton'] === 'all') {
+            } elseif (($args['showButton'] === 'all') || ($args['showButton'] === 'true')) {
+//            } elseif ($args['showButton'] === 'all') {
                 $args['showButtonClass'] = ' lzy-editable-show-buttons';
             } elseif ($args['showButton']) {
                 $args['showButtonClass'] = ' lzy-editable-show-button';

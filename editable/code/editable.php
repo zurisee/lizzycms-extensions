@@ -39,6 +39,7 @@ $this->addMacro($macroName, function () {
         $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
         $this->getArg($macroName, 'permission', '[true|false|loggedin|privileged|admins] If set, defines who can edit values.', true);
         $this->getArg($macroName, 'multiline', 'If true, .', false);
+        $this->getArg($macroName, 'output', 'If true, .', false);
         $this->getArg($macroName, 'liveData', 'If true, data values are immediately updated if the database on the host is modified.', false);
         $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
         return '';
