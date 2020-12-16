@@ -14,6 +14,7 @@ editableObj.showAllButtons = false;
 editableObj.showOkButton = false;
 editableObj.showCancelButton = false;
 editableObj.timeoutTimer = false;
+editableObj.doubleClick = [];
 
 
 (function ( $ ) {
@@ -22,9 +23,16 @@ editableObj.timeoutTimer = false;
     initializeConnection();
 
     $('.lzy-editable').focus(function () {
-        // var id = $(this).attr('id');
-        // mylog('make editable on focus: ' + id);
+        var id = $(this).attr('id');
+        mylog('make editable on focus: ' + id);
         makeEditable( this );
+    });
+
+    $('.lzy-editable').dblclick(function (e) {
+        var id = $(this).attr('id');
+        mylog('double click: ' + id);
+        editableObj.doubleClick[ id ] = true;
+        // makeEditable( this );
     });
 
     editableObj.showAllButtons = $('body').hasClass('touch') ||
@@ -36,6 +44,52 @@ editableObj.timeoutTimer = false;
         editableObj.showCancelButton = true;
     }
 }( jQuery ));
+
+
+function initEditingHandlers($elem, edObj, id, origValue) {
+    // then set input elem up:
+    $('input, textarea', $elem)
+        .click(function (e) {
+            e.stopImmediatePropagation();
+        })
+        .each(function () {
+            setupKeyHandlers(edObj, $elem);
+        })
+        .focus()
+        .blur(function () {
+//return;
+            if (edObj.timeoutTimer) {
+                clearTimeout(edObj.timeoutTimer);
+                edObj.timeoutTimer = false;
+            }
+
+            // wait a moment to make sure key and button handlers fire first:
+            setTimeout(function () {
+                if (!edObj.ignoreBlur[id]) {
+                    // if this point reached: no button or key became active.
+                    edObj.ignoreBlur[id] = true;
+
+                    if (!edObj.showOkButton) {           // no buttons -> save
+                        terminateEditable(edObj, $elem, true);
+
+                    } else if (edObj.showCancelButton) { // ok&cancel -> ignore
+                        return;
+
+                    } else {                            // only ok button -> cancel
+                        edObj.newValue[id] = edObj.origValue[id];
+                        terminateEditable(edObj, $elem, false);
+                    }
+                }
+            }, 100);
+        });
+
+    // place cursor at end of string:
+    $('input, textarea', $elem)[0].setSelectionRange(origValue.length, origValue.length);
+
+    // set up timeout on editable field:
+    resetEditableTimeout();
+} // initEditingHandlers
+
 
 
 
@@ -69,7 +123,8 @@ function makeEditable( that )
     var id = $elem.attr('id');
     if (typeof id === 'undefined') {
         const x = $elem[0].cellIndex + 1;
-        const y = $elem[0].parentNode.rowIndex + 1;
+        const y = $elem[0].parentNode.rowIndex;
+        // const y = $elem[0].parentNode.rowIndex + 1;
         id = 'lzy-elem-' + y + '-' + x;
         $elem.attr('id', id);
     }
@@ -117,7 +172,8 @@ function makeEditable( that )
         }
     } else {
         if (isMultiLineElement( $elem )) {
-            $elem.html('<textarea id="' + _id + '" aria-live="polite" aria-relevant="all">' + edObj.origValue[id] + '</textarea>');
+            $elem.html('<textarea id="' + _id + '" class="lzy-editable-multiline" aria-live="polite" aria-relevant="all">' + edObj.origValue[id] + '</textarea>');
+            // $elem.html('<textarea id="' + _id + '" aria-live="polite" aria-relevant="all">' + edObj.origValue[id] + '</textarea>');
         } else {
             $elem.html('<input id="' + _id + '" aria-live="polite" aria-relevant="all" value="' + edObj.origValue[id] + '"/>');
         }
@@ -125,47 +181,7 @@ function makeEditable( that )
 
     // first: lock field:
     lockField(edObj, id);
-
-    // then set input elem up:
-    $('input, textarea', $elem)
-        .click(function (e) {
-            e.stopImmediatePropagation();
-        })
-        .each(function () {
-            setupKeyHandlers( edObj, $elem );
-        })
-        .focus()
-        .blur(function () {
-            if (edObj.timeoutTimer) {
-                clearTimeout(edObj.timeoutTimer);
-                edObj.timeoutTimer = false;
-            }
-
-            // wait a moment to make sure key and button handlers fire first:
-            setTimeout(function () {
-                if (!edObj.ignoreBlur[ id ]) {
-                    // if this point reached: no button or key became active.
-                    edObj.ignoreBlur[ id ] = true;
-
-                    if (!edObj.showOkButton) {           // no buttons -> save
-                        terminateEditable(edObj, $elem, true);
-
-                    } else if (edObj.showCancelButton) { // ok&cancel -> ignore
-                        return;
-
-                    } else {                            // only ok button -> cancel
-                        edObj.newValue[ id ] = edObj.origValue[ id ];
-                        terminateEditable(edObj, $elem, false);
-                    }
-                }
-            }, 100);
-        });
-
-    // place cursor at end of string:
-   $('input, textarea', $elem)[0].setSelectionRange(origValue.length, origValue.length);
-
-    // set up timeout on editable field:
-    resetEditableTimeout();
+    initEditingHandlers($elem, edObj, id, origValue);
 } // makeEditable
 
 
@@ -185,7 +201,8 @@ function lockField(edObj, id)
         cache: false,
         success: function(json) {
             $inputField.removeClass('lzy-wait');
-            handleResponse(edObj, json, '#error-locked', function (edObj, data) {
+            handleResponse(edObj, json, id, '#error-locked', function (edObj, data) {
+            // handleResponse(edObj, json, '#error-locked', function (edObj, data) {
                 edObj.ignoreBlur[ id ] = true;
                 if (data.result.match(/^ok/)) {
                     terminateEditable(edObj, $('#' + data.id), false);
@@ -209,7 +226,8 @@ function unlockField(edObj, id)
         type: 'get',
         cache: false,
         success: function (json) {
-            handleResponse(edObj, json, false);
+            handleResponse(edObj, json, id, false);
+            // handleResponse(edObj, json, false);
         }
     });
     return true;
@@ -251,7 +269,8 @@ function saveAndUnlockField(edObj, id)
         data: { text: text },
         cache: false,
         success: function (json) {
-            handleResponse(edObj, json, '#db-error');
+            handleResponse(edObj, json, id, '#db-error');
+            // handleResponse(edObj, json, '#db-error');
         }
     });
     return true;
@@ -350,17 +369,35 @@ function getDataRef(id) {
     } else {
         dataRef = $('.lzy-editable-wrapper').attr('data-lzy-data-ref');
     }
-    if (typeof dataRef === 'undefined') {
+    if ((typeof dataRef === 'undefined') && (typeof id !== 'undefined')) {
         dataRef = $('#' + id).closest('[data-lzy-data-ref]').attr('data-lzy-data-ref');
     }
+    if (typeof dataRef === 'undefined') {
+        dataRef = $('.lzy-data-ref').attr('data-lzy-data-ref');
+    }
+    // if (typeof dataRef === 'undefined') {
+    //     dataRef = $('#' + id).closest('[data-lzy-data-ref]').attr('data-lzy-data-ref');
+    // }
     return dataRef;
 } // getDataRef
 
 
 
-function handleResponse(edObj, json, msgId, errorHandler)
+function handleResponse(edObj, json, id, msgId, errorHandler)
+// function handleResponse(edObj, json, msgId, errorHandler)
 {
     json = json.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
+    if (!json) {
+        return;
+    }
+
+    if (typeof edObj.doubleClick[id] !== 'undefined') {
+        edObj.doubleClick[id] = false;
+        const $elem = $( '#' + id );
+        $elem.html('<textarea id="_' + id + '" class="lzy-editable-multiline" aria-live="polite" aria-relevant="all">' + edObj.origValue[id] + '</textarea>');
+        initEditingHandlers($elem, edObj, id, edObj.origValue[id]);
+    }
+
     var data = JSON.parse(json);
     var result = data.result;
     if (result.match(/^ok/)) {
@@ -371,7 +408,8 @@ function handleResponse(edObj, json, msgId, errorHandler)
                 msgId = data.result;
             }
             lzyPopup({
-                contentFrom: msgId,
+                contentRef: msgId,
+//                contentFrom: msgId,
             });
         }
         if (typeof errorHandler === 'function') {
@@ -414,7 +452,8 @@ function initializeConnection()
         type: 'get',
         cache: false,
         success: function (json) {
-            handleResponse(edObj, json, '#conn-error');
+            handleResponse(edObj, json,  null,'#conn-error');
+            // handleResponse(edObj, json, '#conn-error');
         }
     });
 } // initializeConnection
@@ -446,7 +485,11 @@ function onEditableTimedOut()
 
 function isMultiLineElement( $elem )
 {
-    return $elem.closest('.lzy-editable-multiline').length;
+    const m1 = $('.lzy-editable-multiline', $elem).length;
+    const m2 = $elem.closest('.lzy-editable-multiline').length;
+mylog('isMultiLineElement: ' + m1 + '/' + m2);
+    return (m1 || m2);
+    // return $elem.closest('.lzy-editable-multiline').length;
 } // isMultiLineElement
 
 

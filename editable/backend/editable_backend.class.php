@@ -292,16 +292,25 @@ class EditableBackend
             $data = $setDb->read();
             if (strpos($dataKey, '*,*') !== false) {
                 if ($data) {
-                    foreach ($data as $r => $rec) {
+//                    foreach ($data as $r => $rec) {
+                    $r = -1 ;
+                    foreach ($data as $rec) {
+                        $r++;
+                        // at this point we address data by position, not labels -> remove elem-labels:
+                        $rec = array_values($rec);
                         foreach ($rec as $c => $value) {
-                            if (is_int($r) && is_int($c)) {
-                                if (preg_match('/(.*? ) \* (.*? ) \* (.*? )/x', $targetSelector, $m)) {
-                                    $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
-                                }
-                            } else {
-                                fatalError("Error: 'getData' -> non numerical indexes");
+                            if (preg_match('/(.*? ) \* (.*? ) \* (.*? )/x', $targetSelector, $m)) {
+                                $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
                             }
                             $tmp[ $tSel ] = $value;
+//                            if (is_int($r) && is_int($c)) {
+//                                if (preg_match('/(.*? ) \* (.*? ) \* (.*? )/x', $targetSelector, $m)) {
+//                                    $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
+//                                }
+//                            } else {
+//                                fatalError("Error: 'getData' -> non numerical indexes");
+//                            }
+//                            $tmp[ $tSel ] = $value;
                         }
                     }
                 } else {

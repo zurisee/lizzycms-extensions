@@ -1,30 +1,37 @@
 /* Editable.css */
 
 .lzy-editable-active,
-.lzy-editable {
+.lzy-editable.lzy-editable {
 	position: relative;
 	border: none;
 	overflow: hidden;
 	width: 16em;
-	height: 2em;
-	line-height: 2em;
+	/*min-height: 3em;*/
+	white-space: pre-wrap;
+	/*height: 2em;*/
+	/*line-height: 2em;*/
 	background: #eff;
 	background: var(--lzy-editable-bg, #eff);
 	border: 1px solid #ddd;
-	padding: 0 5px;
+	padding: 0.4em 0.6em;
+	/*padding: 0.3em 0.6em;*/
+	/*padding: 0 5px;*/
 	cursor: pointer;
 }
-.lzy-editable-active {
+#lzy .lzy-editable-active {
 	padding: 0;
 }
 .lzy-editable-multiline textarea,
+.lzy-editable-active textarea,
 .lzy-editable-active input {
 	background: #efe;
 	background: var(--lzy-editable-bg-active, #efe);
 	width: 100%;
 	height: 100%;
-	border: 1px solid #ddd;
-	padding: 0 5px;
+	border: none;
+	/*border: 1px solid #ddd;*/
+	/*padding: 0 5px;*/
+	padding: 0.4em 0.6em;
 	opacity: 0.999;
 	z-index: 0;
 }
