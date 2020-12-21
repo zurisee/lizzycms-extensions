@@ -40,6 +40,8 @@ getfile
 
 class EditableBackend
 {
+    private $dynDataSelector = null;
+
 	public function __construct()
 	{
         $this->terminatePolling = false;
@@ -93,7 +95,6 @@ class EditableBackend
 
 
 
-	//---------------------------------------------------------------------------
 	public function execute()
 	{
         if (isset($_GET['conn'])) {                                // conn  initial interaction with client, defines used ids
@@ -128,7 +129,6 @@ class EditableBackend
 
 
 
-	//---------------------------------------------------------------------------
 	private function initConnection() {
         if (!session_start()) {
             mylog("ERROR in initConnection(): failed to start session");
@@ -158,7 +158,6 @@ class EditableBackend
 
 
 
-	//---------------------------------------------------------------------------
 	private function lock($id) {
 		if (!$id) {
 			mylog("### lock: Error -> id not defined");
@@ -168,6 +167,14 @@ class EditableBackend
 		$set = $this->getSet( $id );
         $dataKey = $this->getDataSelector( $id );
         $db = $set['_db'];
+        if ($this->ticketRec['freezeFieldAfter']) {
+            $feezeFieldAfter = intval($this->ticketRec['freezeFieldAfter']);
+            $lastModif = $db->lastModifiedElement( $dataKey );
+            if ($lastModif < (time() - $feezeFieldAfter)) {
+                mylog("### lock: '$dataKey' -> failed:frozen");
+                $this->sendResponse(['id' => $id], "failed#lockFrozen '$dataKey'");
+            }
+        }
         $res = $db->lockRec( $dataKey );
         if (!$res) {
 			mylog("### lock: '$dataKey' -> failed");
@@ -175,14 +182,13 @@ class EditableBackend
 
 		} else {
             mylog("lock: $dataKey -> ok");
-            $this->sendResponse($this->assembleResponse($id), 'ok#lock');
+            $this->sendResponse( $this->assembleResponse($id), 'ok#lock');
 		}
 	} // lock
 
 
 
 
-	//---------------------------------------------------------------------------
 	private function unlock($id) {
 		if (!$id) {
 			mylog("### unlock: Error -> id not defined");
@@ -203,7 +209,6 @@ class EditableBackend
 
 
 
-	//---------------------------------------------------------------------------
 	private function get($id) {
         mylog("get: $id -> ok");
         $this->sendResponse($this->assembleResponse($id),'ok#get');
@@ -212,7 +217,6 @@ class EditableBackend
 
 
 
-	//---------------------------------------------------------------------------
 	private function save($id) {
 		if (!$id) {
 			mylog("### save & unlock: Error -> id not defined");
@@ -263,6 +267,7 @@ class EditableBackend
     private function sendResponse( $out, $result = null )
     {
         $outData = [];
+        $outData['result'] = 'error';
         if (is_string($out)) {
             $outData['result'] = $out;
         } else {
@@ -292,7 +297,6 @@ class EditableBackend
             $data = $setDb->read();
             if (strpos($dataKey, '*,*') !== false) {
                 if ($data) {
-//                    foreach ($data as $r => $rec) {
                     $r = -1 ;
                     foreach ($data as $rec) {
                         $r++;
@@ -303,14 +307,6 @@ class EditableBackend
                                 $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
                             }
                             $tmp[ $tSel ] = $value;
-//                            if (is_int($r) && is_int($c)) {
-//                                if (preg_match('/(.*? ) \* (.*? ) \* (.*? )/x', $targetSelector, $m)) {
-//                                    $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
-//                                }
-//                            } else {
-//                                fatalError("Error: 'getData' -> non numerical indexes");
-//                            }
-//                            $tmp[ $tSel ] = $value;
                         }
                     }
                 } else {
@@ -334,15 +330,16 @@ class EditableBackend
                 continue;
 
             } else {
-                if ($this->dynDataSelector) {
-                    if (strpos($dataKey, '{') !== false) {
-                        $dataKey = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $dataKey);
-                    }
-
-                    if (strpos($targetSelector, '{') !== false) {
-                        $targetSelector = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $targetSelector);
-                    }
-                }
+//ToDo: dynDataSelector for editable
+//                if ($this->dynDataSelector) {
+//                    if (strpos($dataKey, '{') !== false) {
+//                        $dataKey = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $dataKey);
+//                    }
+//
+//                    if (strpos($targetSelector, '{') !== false) {
+//                        $targetSelector = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $targetSelector);
+//                    }
+//                }
 
                 if ($dbIsLocked || $setDb->isRecLocked( $dataKey )) {
                     $lockedElements[] = $targetSelector;
@@ -404,8 +401,8 @@ class EditableBackend
             foreach ($targs as $targ) {
                 if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m)) {
                     if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
-                        $row = intval($mm[1]) - 1;
-                        $col = intval($mm[2] - 1);
+                        $row = intval($mm[1]);
+                        $col = intval($mm[2]);
                         return "$row,$col";
                     }
 
@@ -416,20 +413,6 @@ class EditableBackend
                     }
                 }
             }
-//            $targ = array_keys($this->editableElements)[0];
-//            if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m )) {
-//                if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
-//                    $row = intval( $mm[1] ) - 1;
-//                    $col = intval( $mm[2] - 1);
-//                    return "$row,$col";
-//                }
-//
-//            } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m )) {
-//                if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
-//                    $col = intval( $mm[1] ) - 1;
-//                    return $col;
-//                }
-//            }
         }
         $this->sendResponse("Error: unidentified ID '$id' in getDataSelector()");
         return false;
@@ -437,7 +420,7 @@ class EditableBackend
 
 
 
-    //---------------------------------------------------------------------------
+
     private function openDB() {
 	    if ($this->sets) {
 	        return true;
@@ -494,7 +477,7 @@ class EditableBackend
 
 
 
-    //------------------------------------------------------------
+
 	private function getRequestData($varName) {
 		global $argv;
 
@@ -522,7 +505,7 @@ class EditableBackend
 
 
 
-    //---------------------------------------------------------------------------
+
 	private function var_r($data, $varName = false)
 	{
 		$out = var_export($data, true);
@@ -604,7 +587,7 @@ class EditableBackend
 
 
 
-    //---------------------------------------------------------------------------
+
     private function info()
     {
         $localhost = ($this->isLocalhost) ? 'yes':'no';

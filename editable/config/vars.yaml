@@ -11,6 +11,10 @@ lzy-editable-db-locked:
   de: 'Dieses Datenfeld ist momentan gesperrt.<br>Versuchen Sie es bitte etwas später noch einmal.'
   _:  'This element is currently locked.<br>Please try again later.'
 
+lzy-info-frozen:
+  de: 'Die Frist, in der das Feld verändert werden konnte, ist abgelaufen.'
+  _:  'The time expired during which this field could be modified. The element is frozen now.'
+
 lzy-editable-conn-error:
   de: 'Die Verbindung zum Server scheiterte.<br>Versuchen Sie es bitte etwas später noch einmal.'
   _:  'Error connecting to server.<br>Please try again with another browser or another computer.'

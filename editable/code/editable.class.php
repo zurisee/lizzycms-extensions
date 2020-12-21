@@ -4,11 +4,17 @@ $GLOBALS['globalParams']['editableInx'] = 0;
 
 $page->addModules('JS_POPUPS');
 
+$okSymbol = true? '&#10003;': '&radic;';
+$cancelSymbol = '&times;';
+
 $textResources = <<<EOT
 <div style="display: none">
-    <div id='db-error' style="display: none">{{ lzy-editable-db-error }}</div>
-    <div id='error-locked' style="display: none">{{ lzy-editable-db-locked }}</div>
-    <div id='conn-error' style="display: none">{{ lzy-editable-conn-error }}</div>
+    <div id='lzy-db-error' style="display: none">{{ lzy-editable-db-error }}</div>
+    <div id='lzy-error-locked' style="display: none">{{ lzy-editable-db-locked }}</div>
+    <div id='lzy-info-frozen' style="display: none">{{ lzy-editable-elem-frozen }}</div>
+    <div id='lzy-conn-error' style="display: none">{{ lzy-editable-conn-error }}</div>
+    <div id='lzy-editable-ok-text' style="display: none"><button class='lzy-editable-submit-button lzy-button' title='{{ lzy-editable-ok-text }}'>$okSymbol<span class='invisible'> {{ lzy-editable-ok-text }}</span></button></div>
+    <div id='lzy-editable-cancel-text' style="display: none"><button class='lzy-editable-cancel-button lzy-button' title='{{ lzy-editable-cancel-text }}'>$cancelSymbol<span class='invisible'> {{ lzy-editable-cancel-text }}</span></button></div>
 </div>
 
 EOT;
@@ -50,7 +56,7 @@ class Editable extends LiveData
 
 
 
-    //---------------------------------------------------------------
+
     private function renderEditableFields()
     {
         $args = &$this->args;
@@ -79,6 +85,7 @@ class Editable extends LiveData
         if (!$args['permission']) {
             $class .= ' lzy-editable-inactive';
         }
+
         $out = '';
 
         foreach ($this->targetSelectors as $i => $eId) {
@@ -136,14 +143,15 @@ class Editable extends LiveData
         }
         if (@$options['multiline']) {
             $wrapperClass .= ' lzy-editable-multiline';
+            $this->lzy->page->addModules('MAC_KEYS');
         }
 
-        $options['class'] = $options['tableClass'] = $wrapperClass;
+        $options['class'] = $options['tableClass'] = trim("$wrapperClass {$this->args['showButtonClass']}");
         $options['tableDataAttr'] = $dataRef;
-    //    $options['cellMask'] = $args['protectedCells'];
-    //    $options['cellMaskedClass'] = 'lzy-non-editable';
-//        unset($options['dataSource']);
+        //    $options['cellMask'] = $args['protectedCells'];
+        //    $options['cellMaskedClass'] = 'lzy-non-editable';
         $options['dataSource'] = $dataSource;
+        $options['tableClass'] = "lzy-table lzy-editable-table lzy-editable-table-$this->editaleSetInx";
 
         $tbl = new HtmlTable($this->lzy, $this->editaleSetInx, $options);
         $out = $tbl->render();
@@ -199,7 +207,6 @@ class Editable extends LiveData
 
         $args['id'] = @$args['id']? translateToClassName($args['id']) : '';
         $args['wrapperClass'] = @$args['class'] ? " {$args['class']}" : '';
-//        $args['permission'] = @$args['permission'] ? $args['permission'] : true;
         $args['class'] = @$args['class']? trim("lzy-editable {$args['class']}"): 'lzy-editable';
 
         if (@$args['freezeFieldAfter']) {
@@ -212,17 +219,27 @@ class Editable extends LiveData
 
         $args['showButtonClass'] = '';
         if (isset($args['showButton'])) {
-            if ($args['showButton'] === 'auto') {
-                $args['showButtonClass'] = ' lzy-editable-auto-show-button';
-            } elseif (($args['showButton'] === 'all') || ($args['showButton'] === 'true')) {
-//            } elseif ($args['showButton'] === 'all') {
-                $args['showButtonClass'] = ' lzy-editable-show-buttons';
-            } elseif ($args['showButton']) {
+
+            if ($args['showButton'] === 'ok') {                 // explicit: ok
                 $args['showButtonClass'] = ' lzy-editable-show-button';
+
+            } elseif ($args['showButton'] === 'auto') {         // explicit: auto
+                $args['showButtonClass'] = ' lzy-editable-auto-show-button';
+
+            } elseif ($args['showButton']) {                    // explicit: true
+                $args['showButtonClass'] = ' lzy-editable-show-buttons';
             }
+        } else {                                                // implicit: true
+            $args['showButtonClass'] = ' lzy-editable-show-buttons';
         }
 
-        //    $args = prepareProtectedCellsArray($args);
+        if ($GLOBALS['globalParams']['editableInx'] === 1) {
+            if (isset($args['enableDoubleClick']) && $args['enableDoubleClick']) {
+                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = true;\n");
+            } else {
+                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
+            }
+        }
 
         // dataFile synonyme for dataSource for backward compatibility:
         if (!isset($args['dataSource']) && @$args['dataFile']) {
@@ -263,47 +280,46 @@ class Editable extends LiveData
 
 
 
-    //---------------------------------------------------------------
-    private function prepareProtectedCellsArray($args)
-    {
-        $protectedCells = [];
-        if ($args['protectedCells']) {
-            $protCells = $args['protectedCells'];
-            $delim = (substr_count($protCells, ',') > substr_count($protCells, '|')) ? ',' : '|';
-            $elems = parseArgumentStr($protCells, $delim);
-            $protectedCells = array_fill(0, $args['nRows'], array_fill(0, $args['nCols'], false));;
-            foreach ($elems as $elem) {
-                if (!trim($elem)) {
-                    continue;
-                }
-                $param = substr($elem, 1);
-                $paramArr = parseNumbersetDescriptor($param);
-                switch ($elem[0]) {
-                    case 'r':
-                        while ($r = array_shift($paramArr)) {
-                            $r = intval($param) - 1;
-                            $protectedCells[$r] = array_fill(0, $args['nCols'], true);
-                        }
-                        break;
-                    case 'c':
-                        while ($c = array_shift($paramArr)) {
-                            $c = intval($c) - 1;
-                            for ($r = 0; $r < $args['nRows']; $r++) {
-                                $protectedCells[$r][$c] = true;
-                            }
-                        }
-                        break;
-                    case 'e':
-                        list($c, $r) = preg_split('/\D/', $param);
-                        $r = intval($r) - 1;
-                        $c = intval($c) - 1;
-                        $protectedCells[$r][$c] = true;
-                        break;
-                }
-            }
-        }
-        $args['protectedCells'] = $protectedCells;
-        return $args;
-    } // prepareProtectedCellsArray
+//    private function prepareProtectedCellsArray($args)
+//    {
+//        $protectedCells = [];
+//        if ($args['protectedCells']) {
+//            $protCells = $args['protectedCells'];
+//            $delim = (substr_count($protCells, ',') > substr_count($protCells, '|')) ? ',' : '|';
+//            $elems = parseArgumentStr($protCells, $delim);
+//            $protectedCells = array_fill(0, $args['nRows'], array_fill(0, $args['nCols'], false));;
+//            foreach ($elems as $elem) {
+//                if (!trim($elem)) {
+//                    continue;
+//                }
+//                $param = substr($elem, 1);
+//                $paramArr = parseNumbersetDescriptor($param);
+//                switch ($elem[0]) {
+//                    case 'r':
+//                        while ($r = array_shift($paramArr)) {
+//                            $r = intval($param) - 1;
+//                            $protectedCells[$r] = array_fill(0, $args['nCols'], true);
+//                        }
+//                        break;
+//                    case 'c':
+//                        while ($c = array_shift($paramArr)) {
+//                            $c = intval($c) - 1;
+//                            for ($r = 0; $r < $args['nRows']; $r++) {
+//                                $protectedCells[$r][$c] = true;
+//                            }
+//                        }
+//                        break;
+//                    case 'e':
+//                        list($c, $r) = preg_split('/\D/', $param);
+//                        $r = intval($r) - 1;
+//                        $c = intval($c) - 1;
+//                        $protectedCells[$r][$c] = true;
+//                        break;
+//                }
+//            }
+//        }
+//        $args['protectedCells'] = $protectedCells;
+//        return $args;
+//    } // prepareProtectedCellsArray
 
 } // class Editable

@@ -3,20 +3,23 @@
 .lzy-editable-active,
 .lzy-editable.lzy-editable {
 	position: relative;
-	border: none;
 	overflow: hidden;
 	width: 16em;
-	/*min-height: 3em;*/
 	white-space: pre-wrap;
-	/*height: 2em;*/
-	/*line-height: 2em;*/
+	min-height: 1.7em;
 	background: #eff;
 	background: var(--lzy-editable-bg, #eff);
 	border: 1px solid #ddd;
-	padding: 0.4em 0.6em;
-	/*padding: 0.3em 0.6em;*/
-	/*padding: 0 5px;*/
+	padding: 4px 8px;
+	padding-left: var(--lzy-editable-padding-x, 8px);
+	padding-right: var(--lzy-editable-padding-x, 8px);
+	padding-top: var(--lzy-editable-padding-y, 4px);
+	padding-bottom: var(--lzy-editable-padding-y, 4px);
 	cursor: pointer;
+}
+td.lzy-editable-active,
+td.lzy-editable.lzy-editable {
+	height: 1.7em;
 }
 #lzy .lzy-editable-active {
 	padding: 0;
@@ -28,33 +31,42 @@
 	background: var(--lzy-editable-bg-active, #efe);
 	width: 100%;
 	height: 100%;
-	border: none;
-	/*border: 1px solid #ddd;*/
-	/*padding: 0 5px;*/
-	padding: 0.4em 0.6em;
+	border: 0 solid transparent;
+	padding: 4px 8px;
+	padding-left: var(--lzy-editable-padding-x, 8px);
+	padding-right: var(--lzy-editable-padding-x, 8px);
+	padding-top: var(--lzy-editable-padding-y, 2px);
+	padding-bottom: var(--lzy-editable-padding-y, 4px);
 	opacity: 0.999;
 	z-index: 0;
 }
+.lzy-editable-multiline textarea,
+.lzy-editable-active textarea {
+	padding-top: 4px;
+	line-height: 1em;
+}
+
 .lzy-editable-active input:focus {
 	outline: none;
 }
 
 
-.lzy-element-locked {
+.lzy-element-locked,
+.lzy-editable.lzy-element-locked {
 	background: #dceeee;
 	background: repeating-linear-gradient(-55deg, #eeffff,#eeffff 10px,#edf8f8 10px,#edf8f8 15px);
 	cursor: not-allowed;
 }
-.lzy-element-frozen {
+.lzy-element-frozen,
+.lzy-editable.lzy-element-frozen {
 	background: #eee;
 	cursor: not-allowed;
 }
-.lzy-editable-inactive * {
+#lzy .lzy-editable-inactive .lzy-editable {
 	cursor: auto;
 	background: #f8f8f8;
 	background: var(--lzy-editable-bg-inactive, #f8f8f8);
 }
-
 
 .lzy-editable-row-nr,
 .lzy-editable-col {
@@ -74,7 +86,7 @@
 .lzy-editable-cancel-button,
 .lzy-editable-submit-button {
 	position: absolute;
-	top: 1px;
+	top: 0;
 	right: 0;
 	z-index: 0;
 	text-align: center;
@@ -82,18 +94,18 @@
 	padding: 0;
 	margin: 0;
 	width: 2.2em;
+	line-height: 1em !important;
 	height: calc(100% - 2px);
 	display: inline-block;
 	margin: 1px 1px 0 0;
 	font-size: 14pt;
 }
-.lzy-editable-show-buttons .lzy-editable-submit-button,
-.touchevents .lzy-editable-submit-button,
-.touch .lzy-editable-submit-button {
+.lzy-editable-show-buttons .lzy-editable-submit-button {
 	right: 2.2em;
 }
 
-.lzy-editable-active .lzy-wait {
+.lzy-editable.lzy-wait,
+.lzy-editable-active.lzy-wait {
 	cursor: wait!important;
 }
 
@@ -111,18 +123,36 @@
 }
 
 
+.lzy-editable-multiline.lzy-editable-active,
+.lzy-editable-multiline.lzy-editable,
 .lzy-editable-multiline .lzy-editable-active,
 .lzy-editable-multiline .lzy-editable {
-	min-height: 4.5em;
+	min-height: 2.5em;
 	white-space: pre;
 	overflow: auto;
-	font-family: "Lucida Grande", "Lucida Sans Unicode", Arial, sans-serif;
-	font-size: 90%;
 	line-height: 1em;
-	padding: 5px;
 }
-
+.lzy-editable-multiline.lzy-editable-active,
+.lzy-editable-multiline .lzy-editable-active,
+.lzy-editable-multiline.lzy-editable-active textarea,
+.lzy-editable-multiline .lzy-editable-active textarea {
+	min-height: 3.7em;
+}
+td.lzy-editable-multiline.lzy-editable-active,
+td.lzy-editable-multiline.lzy-editable,
+.lzy-editable-multiline td.lzy-editable-active,
+.lzy-editable-multiline td.lzy-editable {
+	height: 2.5em;
+}
+.lzy-editable-multiline.lzy-editable-active,
 .lzy-editable-multiline .lzy-editable-active {
 	padding: 0;
+}
+#lzy .lzy-editable-multiline button {
+	height: 1.6em;
+	right: 0;
+}
+.lzy-editable-multiline button.lzy-editable-cancel-button {
+	top: calc( 1.6em + 2px );
 }
 
