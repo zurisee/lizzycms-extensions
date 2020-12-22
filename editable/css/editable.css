@@ -1,14 +1,22 @@
 /* Editable.css */
+/*
+	CSS Variables:
+	--lzy-editable-padding-x
+	--lzy-editable-padding-y
+	--lzy-editable-bg
+	--lzy-editable-bg-active
+	--lzy-editable-bg-inactive
+*/
 
 .lzy-editable-active,
 .lzy-editable.lzy-editable {
 	position: relative;
 	overflow: hidden;
-	width: 16em;
+	min-width: 8em;
 	white-space: pre-wrap;
 	min-height: 1.7em;
 	background: #eff;
-	background: var(--lzy-editable-bg, #eff);
+	background: var(--lzy-editable-bg, transparent);
 	border: 1px solid #ddd;
 	padding: 4px 8px;
 	padding-left: var(--lzy-editable-padding-x, 8px);

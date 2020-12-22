@@ -194,7 +194,7 @@ class Editable extends LiveData
             }
         }
         if (!isset($args['targetSelector'])) {
-            if ($args['nCols'] > 1) {
+            if (($args['nCols'] > 1) || ($args['nRows'] > 1)) {
                 if ($args['nRows'] > 1) {
                     $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-row-* .lzy-col-*";
                 } else {
@@ -279,7 +279,7 @@ class Editable extends LiveData
 
 
 
-
+/*
 //    private function prepareProtectedCellsArray($args)
 //    {
 //        $protectedCells = [];
@@ -321,5 +321,5 @@ class Editable extends LiveData
 //        $args['protectedCells'] = $protectedCells;
 //        return $args;
 //    } // prepareProtectedCellsArray
-
+*/
 } // class Editable

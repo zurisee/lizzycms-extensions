@@ -157,7 +157,7 @@ var edObj = new Object({
         // make sure element has an id, apply one if not:
         if (typeof id === 'undefined') {
             const x = $elem[0].cellIndex;
-            const y = $elem[0].parentNode.rowIndex;
+            const y = parseInt( $elem.closest('tr').attr('class').replace(/\D/g, '') ) - 1;
             id = 'lzy-elem-' + y + '-' + x;
             $elem.attr('id', id);
         }
