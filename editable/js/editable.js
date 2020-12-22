@@ -152,6 +152,9 @@ var edObj = new Object({
             return;
         }
 
+        // make sure field has fixed width (not only min/max-width):
+        $elem.css('width', $elem.width() + 'px');
+
         var id = $elem.attr('id');
 
         // make sure element has an id, apply one if not:
