@@ -108,7 +108,7 @@ td.lzy-editable.lzy-editable {
 	margin: 1px 1px 0 0;
 	font-size: 14pt;
 }
-.lzy-editable-show-buttons .lzy-editable-submit-button {
+.lzy-editable-active .lzy-editable-submit-button {
 	right: 2.2em;
 }
 
