@@ -4,7 +4,7 @@
 
 "use strict";
 
-var edObj = new Object({
+var Editable = new Object({
     backend: systemPath+'extensions/editable/backend/_editable_backend.php',
     dataRef: '',
     ignoreBlur: [],
@@ -18,7 +18,7 @@ var edObj = new Object({
     timeoutTimer: false,
     doubleClick: [],
 
-    initEditable: function() {
+    init: function() {
         // determine global state:
         this.showAllButtons = $('body').hasClass('touch') ||
             $('html').hasClass('touchevents') ||
@@ -35,8 +35,8 @@ var edObj = new Object({
 
         this.initializeConnection();
 
-        this.initEditingHandlers();
-    }, // initEditable
+        this.initEditingHandlers( $edElem );
+    }, // init
 
 
 
@@ -57,10 +57,14 @@ var edObj = new Object({
 
 
 
-    initEditingHandlers: function() {
+    initEditingHandlers: function( $edElem ) {
         var rootObj = this;
-        $('.lzy-editable')
+        $edElem
             .focus(function () {
+                const on = $(this).hasClass('lzy-editable');
+                if (!on) {
+                    return;
+                }
                 var id = $(this).attr('id');
                 rootObj.doubleClick[ id ] = false;
                 rootObj.makeEditable( this );
@@ -109,7 +113,8 @@ var edObj = new Object({
             });
 
         if (this.showCancelButton) {
-            $('.lzy-editable').on('click', '.lzy-editable-cancel-button', function (e) {
+            $edElem.on('click', '.lzy-editable-cancel-button', function (e) {
+            // $('.lzy-editable').on('click', '.lzy-editable-cancel-button', function (e) {
                 e.stopPropagation();
                 const $el = $(this).parent();
                 const id = $el.attr('id');
@@ -376,7 +381,7 @@ var edObj = new Object({
     saveAndUnlockField: function(id) {
         var rootObj = this;
         var $elem = $('#' + id);
-        var newValue = edObj.newValue[ id ];
+        var newValue = rootObj.newValue[ id ];
         if (typeof newValue === 'undefined') {
             newValue = $('input', $elem).val();
         }
@@ -604,9 +609,9 @@ var edObj = new Object({
 }); // Object
 
 
-(function ( $ ) {
-    edObj.initEditable();
-}( jQuery ));
+// (function ( $ ) {
+//     Editable.init();
+// }( jQuery ));
 
 
 

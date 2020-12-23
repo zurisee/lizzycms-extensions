@@ -51,6 +51,9 @@ class Editable extends LiveData
         } else {
             $out = $this->renderTable();
         }
+        if (!isset($args['init']) || ($args['init'] !== false)) {
+            $this->lzy->page->addJq("\nEditable.init();\n");
+        }
         return $out;
     } // render
 
