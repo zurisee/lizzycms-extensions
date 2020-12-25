@@ -232,7 +232,7 @@ class EditableBackend
         $dataKey = $this->getDataSelector( $id );
         $set = $this->getSet( $id );
         $db = $set['_db'];
-        $res = $db->writeElement($dataKey, $text, false, false);
+        $res = $db->writeElement($dataKey, $text, true, true, true);
 
         if (!$res) {
             mylog("### save failed!: $id -> [$text]");

@@ -97,7 +97,6 @@ var Editable = new Object({
                             return;
 
                         } else {                            // only ok button -> cancel
-                            // rootObj.newValue[id] = rootObj.origValue[id];
                             rootObj.terminateEditable($this, false);
                         }
                     }
@@ -114,7 +113,6 @@ var Editable = new Object({
 
         if (this.showCancelButton) {
             $edElem.on('click', '.lzy-editable-cancel-button', function (e) {
-            // $('.lzy-editable').on('click', '.lzy-editable-cancel-button', function (e) {
                 e.stopPropagation();
                 const $el = $(this).parent();
                 const id = $el.attr('id');
@@ -235,14 +233,11 @@ var Editable = new Object({
                 $innerEl = $('input', $elem);
             }
 
-            rootObj.revealButtons($elem);
-
-            var fldLength= $innerEl.val().length;
-            $innerEl.focus();
-            $innerEl[0].setSelectionRange(fldLength, fldLength);
-
             // set up timeout on editable field:
             rootObj.resetEditableTimeout();
+
+            rootObj.revealButtons($elem);
+            rootObj.putFocus( $innerEl );
         });
     }, // makeEditable
 
@@ -470,7 +465,6 @@ var Editable = new Object({
                 $('input, textarea', $elem).blur();
             }
         });
-
     }, // terminateEditable
 
 
@@ -556,17 +550,47 @@ var Editable = new Object({
 
     updateUi: function(data) {
         var txt = '';
+        var x, y, c1, inx, cls, $tmp, $dataTable = null;
+        var isDataTable = null;
         const data1 = data.data;
         if (typeof data1 === 'object') {
             for (var tSel in data1) {
                 txt = data1[ tSel ];
-                const c1 = tSel.substr(0,1);
+                if (isDataTable === null) {
+                    $tmp = $(tSel);
+                    $dataTable = $(tSel).closest('table');
+                    cls = $dataTable.attr('class');
+                    let m = cls.match(/lzy-table-(\d+)/);
+                    if ( m !== null ) {
+                        inx = parseInt(m[1]);
+                    } else {
+                        cls = $dataTable.attr('id');
+                        m = cls.match(/lzy-table(\d+)/);
+                        if (m !== null) {
+                            inx = parseInt(m[1]);
+                        }
+                    }
+                    if ( inx !== null) {
+                        isDataTable = $(tSel).closest('table').hasClass('lzy-datatable') && (typeof lzyTable[inx] !== 'undefined');
+                    }
+                }
+                c1 = tSel.substr(0,1);
                 if ((c1 !== '#') && (c1 !== '.')) {
                     tSel = '#' + tSel;
                 }
                 if (!$( tSel ).hasClass('lzy-editable-active')) {
-                    $(tSel).text(txt);
+                    if (isDataTable) {
+                        y = parseInt( (tSel.match(/.lzy-row-(\d+)/))[1] ) - 1;
+                        x = parseInt( (tSel.match(/.lzy-col-(\d+)/))[1] ) - 1;
+                        lzyTable[ inx ].cell(y,x).data( txt );
+
+                    } else {
+                        $(tSel).text(txt);
+                    }
                 }
+            }
+            if (isDataTable) {
+                lzyTable[ inx ].draw();
             }
         }
     }, // updateUi
@@ -597,6 +621,16 @@ var Editable = new Object({
 
 
 
+    putFocus: function( $elem ) {
+        setTimeout(function () {
+            var fldLength= $elem.val().length;
+            $elem.focus();
+            $elem[0].setSelectionRange(fldLength, fldLength);
+        }, 150);
+    }, // putFocus
+
+
+
     isMultiLineElement: function( $elem ) {
         const m1 = $('.lzy-editable-multiline', $elem).length;
         const m2 = $elem.closest('.lzy-editable-multiline').length;
@@ -607,18 +641,3 @@ var Editable = new Object({
     }, // isMultiLineElement
 
 }); // Object
-
-
-// (function ( $ ) {
-//     Editable.init();
-// }( jQuery ));
-
-
-
-
-
-
-
-
-
-
