@@ -31,51 +31,19 @@ $this->addMacro($macroName, function () {
 
         //        $this->getArg($macroName, 'protectedCells', '(optional) E.g. ""', '');
 
-        $this->getArg($macroName, 'nCols', '[number] If set, creates a table with N columns <br /><strong>Note</strong>: If using nCols or nRows, any arguments of table() macro may be applied in addition to the list here.', 1);
-        $this->getArg($macroName, 'nRows', '[number] If set, creates a table with N rows, rather than just one field', 1);
-        $this->getArg($macroName, 'headers', 'A list of headers (sep. by "|")  used as header column, e.g. "[Aa|Bb|Cc]"', '');
-        $this->getArg($macroName, 'showRowNumbers', '[true|false] Adds an index number to every row (default: true)', true);
+        $this->getArg($macroName, 'nFields', '[number] If set, creates multiple editable elements.', 1);
         $this->getArg($macroName, 'useRecycleBin', '[true|false] If true, previous values will be saved in a recycle bin rather than discared (default: false)', false);
         $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
-        $this->getArg($macroName, 'permission', '[true|false|loggedin|privileged|admins] If set, defines who can edit values.', true);
-        $this->getArg($macroName, 'multiline', 'If true, .', false);
-        $this->getArg($macroName, 'output', 'If true, .', false);
+        $this->getArg($macroName, 'editableBy', '[true|false|loggedin|privileged|admins] If set, defines who can edit values.', true);
+        $this->getArg($macroName, 'multiline', 'If true, the editable input element allows users to enter multiple lines (-> textarea).', false);
+        $this->getArg($macroName, 'output', 'If false, no editable fields will be rendered. Instead, a data-reference is returned. Thus, some other module such as Table() can render the fields autonomiously.', false);
         $this->getArg($macroName, 'liveData', 'If true, data values are immediately updated if the database on the host is modified.', false);
         $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
         return '';
     }
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
-    // check editing permission:
-    $permission = $this->getArg($macroName, 'permission', '.', true);
-    if ($permission && ($permission !== true)) {
-        $permission = $this->lzy->auth->checkPrivilege($permission);
-    }
-
-    // load modules on first run only:
-    if ($this->invocationCounter[$macroName] === 0) {
-        $this->page->addModules('~sys/extensions/editable/css/editable.css');
-        if ($permission) {
-            $this->page->addModules('~sys/extensions/editable/js/editable.js');
-        }
-    }
-
-    // option liveData:
-    $liveData = $this->getArg($macroName, 'liveData', '', false);
-    if ($liveData && !$GLOBALS['lizzy']['editableLiveDataInitialized']) {
-        $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
-        $jq = <<<EOT
-if ($('[data-lzy-data-ref]').length) {
-    initLiveData();
-}
-
-EOT;
-        $this->page->addJq($jq);
-        $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
-    }
-
     $args = $this->getArgsArray($macroName); // get all args, some of which are passed through to htmltable.class
-    $args['permission'] = $permission;
     $edbl = new Editable( $this->lzy, $args );
     $out = $edbl->render();
 

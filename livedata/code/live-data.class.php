@@ -2,7 +2,7 @@
 
 define('DEFAULT_POLLING_TIME', 60);
 
-$GLOBALS['lizzy']['liveDataInx'][ $GLOBALS["globalParams"]["pagePath"] ] = 0;
+$GLOBALS['lizzy']['liveDataInx'] = 0;
 
 class LiveData
 {
@@ -13,9 +13,8 @@ class LiveData
     public function __construct($lzy, $args = [])
     {
         $this->lzy = $lzy;
-        $pagePath = $GLOBALS["globalParams"]["pagePath"];
-        $GLOBALS['lizzy']['liveDataInx'][ $pagePath ]++;
-        $this->setInx = $GLOBALS['lizzy']['liveDataInx'][ $pagePath ];
+        $GLOBALS['lizzy']['liveDataInx']++;
+        $this->setInx = $GLOBALS['lizzy']['liveDataInx'];
         $this->inx = 1;
         $this->args = $args;
     } // __construct
@@ -41,7 +40,7 @@ class LiveData
             if ($nT === 0) {
                 $targetSelectors[0] = "lzy-live-data-$this->setInx";
             }
-            $this->addTicketRec($targetSelectors[0], $dataSelectors[0], $this->polltime, $tickRec);
+            $this->addTicketRec($targetSelectors[0], $dataSelectors[0], $tickRec);
             if ($dataSelectors[0] === '*') {
                 $values[0] = $this->db->read();
             } else {
@@ -55,7 +54,7 @@ class LiveData
 
             foreach ($dataSelectors as $i => $dataSelector) {
                 $targetSelector = isset($targetSelectors[$i])? $targetSelectors[$i]: "lzy-live-data-$this->setInx-$this->inx";
-                $this->addTicketRec($targetSelector, $dataSelector, $this->polltime, $tickRec, $i);
+                $this->addTicketRec($targetSelector, $dataSelector, $tickRec);
                 $values[] = $this->db->readElement($dataSelector);
                 $this->inx++;
             }
@@ -133,16 +132,16 @@ class LiveData
 
 
 
-    private function addTicketRec($targetSelector, $dataSelector, $pollTime, &$tickRec, $inx = 0)
+    private function addTicketRec($targetSelector, $dataSelector, &$tickRec)
     {
         $targetSelector = $this->deriveTargetSelector($targetSelector, $dataSelector, $tickRec);
         $this->targetSelector = $targetSelector;
-        $recInx = "e$this->inx";
+        $recInx = "fld$this->inx";
         $tickRec["set$this->setInx"][$recInx] = [
             'dataSource' => $this->dataSource,
             'dataSelector' => $dataSelector,
             'targetSelector' => $targetSelector,
-            'pollingTime' => intval($pollTime),
+            'pollingTime' => intval($this->polltime),
         ];
     } // addTicketRec
 

@@ -1,6 +1,7 @@
 <?php
 
-$GLOBALS['globalParams']['editableInx'] = 0;
+$GLOBALS['globalParams']['editaleSetInx'] = 0;
+$GLOBALS['globalParams']['editableInitialized'] = false;
 
 $page->addModules('JS_POPUPS');
 
@@ -30,29 +31,82 @@ class Editable extends LiveData
             $args['dataSource'] = DEFAULT_EDITABLE_DATA_FILE;
         }
         parent::__construct($lzy, $args);
+        $this->page = $lzy->page;
+        $args = &$this->args;
+
+        // check permission:
+        $args['editableBy'] = $editableBy = isset($args['editableBy']) ? $args['editableBy'] : true;
+        $args['edEnabled'] = false;
+        if ($editableBy) {
+            if ($editableBy === true) {
+                $args['edEnabled'] = true;
+            } else {
+                $args['edEnabled'] = $this->lzy->auth->checkPrivilege($editableBy);
+            }
+        }
+
+        // initialize Editable mechanism:
+        if (!$GLOBALS['globalParams']['editableInitialized']) {
+            $this->page->addModules('~sys/extensions/editable/css/editable.css');
+            if ($args['edEnabled']) {
+                $this->page->addModules('~sys/extensions/editable/js/editable.js');
+                $jq = <<<EOT
+
+if (typeof Editable !== 'undefined') {
+    Editable.init();
+}
+
+EOT;
+                $this->page->addJq( $jq );
+            } else {
+                $this->page->addJq('mylog("Editable feature disabled - insufficient privilege.");');
+            }
+
+            if (isset($args['enableDoubleClick']) && $args['enableDoubleClick']) {
+                $this->page->addJs("\nconst lzyEnableEditableDoubleClick = true;\n");
+            } else {
+                $this->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
+            }
+
+            $GLOBALS['globalParams']['editableInitialized'] = true;
+        }
+
+        // option liveData:
+        $liveData = @$args['liveData'];
+        if ($liveData) {
+            $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
+            $jq = <<<EOT
+
+if ($('[data-lzy-data-ref]').length) {
+    LiveData.init();
+}
+
+EOT;
+            $this->page->addJq($jq);
+            $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
+        }
+        $this->editaleFldInx = 1;
+
     } // __construct
 
 
 
     public function render( $args = [], $returnAttrib = false )
     {
-        $GLOBALS['globalParams']['editableInx']++;
-        $this->editaleSetInx = $GLOBALS['globalParams']['editableInx'];
+        $GLOBALS['globalParams']['editaleSetInx']++;
+        $this->editaleSetInx = $GLOBALS['globalParams']['editaleSetInx'];
 
         $args = $this->prepareArguments( $args );
 
         if (isset($args['output']) && ($args['output'] === false)) {
             $args = $this->args;
-            $args['dataSource'] = '~/'.$args['dataSource'];
-            $dataRef = parent::render( $args, true );
+            $args['dataSource'] = '~/' . $args['dataSource'];
+            $dataRef = parent::render($args, true);
             $out = "\t<div class='lzy-data-ref'$dataRef></div>\n";
-        } elseif (($args['nCols'] === 1) && ($args['nRows'] === 1)) {
-            $out = $this->renderEditableFields();
+            $this->initDataRef($args); // add 'editableBy' to ticket
+
         } else {
-            $out = $this->renderTable();
-        }
-        if (!isset($args['init']) || ($args['init'] !== false)) {
-            $this->lzy->page->addJq("\nEditable.init();\n");
+            $out = $this->renderEditableFieldSet();
         }
         return $out;
     } // render
@@ -60,20 +114,14 @@ class Editable extends LiveData
 
 
 
-    private function renderEditableFields()
+    private function renderEditableFieldSet()
     {
         $args = &$this->args;
         $args['mode'] = 'array';    // to get back an array of elements instead of a string
         $args['tag'] = 'div';
         $args['dataSource'] = '~/'.$args['dataSource'];
 
-        $tickRecCustomFields = [
-            'useRecycleBin' => @$args['useRecycleBin'],
-            'freezeFieldAfter' => @$args['freezeFieldAfter'],
-        ];
-        $args['tickRecCustomFields'] = $tickRecCustomFields;
-
-        $dataRef = parent::render( $args, true );
+        $dataRef = $this->initDataRef($args);
 
         $data = $this->db->read();
 
@@ -85,7 +133,7 @@ class Editable extends LiveData
         }
 
         $class = trim("lzy-editable-wrapper {$args['showButtonClass']}{$args['wrapperClass']}");
-        if (!$args['permission']) {
+        if (!$args['edEnabled']) {
             $class .= ' lzy-editable-inactive';
         }
 
@@ -120,46 +168,7 @@ class Editable extends LiveData
         $out = "\t<div$id class='$class'$dataRef>\n$out";
         $out .= "\t</div><!-- /lzy-editable-wrapper -->\n";
         return $out;
-    } // renderEditableFields
-
-
-
-    //---------------------------------------------------------------
-    private function renderTable()
-    {
-        require_once SYSTEM_PATH.'htmltable.class.php';
-
-        $dataSource = $this->args['dataSource'];
-        $this->args['dataSource'] = '~/'.$this->args['dataSource'];
-        $dataRef = parent::render( $this->args, true );
-
-        $options = $this->args;
-        $options['id'] = '';
-        $options['cellClass'] = 'lzy-editable';
-        if ($options['class']) {
-            $options['cellClass'] = $options['class'];
-            $options['class'] = '';
-        }
-        $wrapperClass = 'lzy-editable-wrapper';
-        if (!$options['permission']) {
-            $wrapperClass .= ' lzy-editable-inactive';
-        }
-        if (@$options['multiline']) {
-            $wrapperClass .= ' lzy-editable-multiline';
-            $this->lzy->page->addModules('MAC_KEYS');
-        }
-
-        $options['class'] = $options['tableClass'] = trim("$wrapperClass {$this->args['showButtonClass']}");
-        $options['tableDataAttr'] = $dataRef;
-        //    $options['cellMask'] = $args['protectedCells'];
-        //    $options['cellMaskedClass'] = 'lzy-non-editable';
-        $options['dataSource'] = $dataSource;
-        $options['tableClass'] = "lzy-table lzy-editable-table lzy-editable-table-$this->editaleSetInx";
-
-        $tbl = new HtmlTable($this->lzy, $this->editaleSetInx, $options);
-        $out = $tbl->render();
-        return $out;
-    } // renderTable
+    } // renderEditableFieldSet
 
 
 
@@ -172,19 +181,10 @@ class Editable extends LiveData
         } else {
             $args = $this->args;
         }
-        $args['inx'] = $this->editaleSetInx;
-        if (!isset($args['nCols'])) {
-            $args['nCols'] = 1;
-        } else {
-            $args['nCols'] = max(1, intval($args['nCols']));
-        }
-        if (!isset($args['nRows'])) {
-            $args['nRows'] = 1;
-        } else {
-            $args['nRows'] = max(1, intval($args['nRows']));
-        }
+        $args['nCols'] = isset($args['nCols']) ? $args['nCols'] : 1;
+        $args['nRows'] = isset($args['nRows']) ? $args['nRows'] : 1;
 
-
+        $setInx = $this->setInx;
         if (!isset($args['dataSelector'])) {
             if ($args['nCols'] > 1) {
                 if ($args['nRows'] > 1) {
@@ -193,7 +193,15 @@ class Editable extends LiveData
                     $args['dataSelector'] = '*';
                 }
             } else {
-                $args['dataSelector'] = 'elem-' . $this->editaleSetInx;
+                $editaleFldInx1 = $this->editaleFldInx;
+                $args['dataSelector'] = "elem-$setInx-$this->editaleFldInx";
+                if (@$args['nFields']) {
+                    $n = intval($args['nFields']);
+                    for ($i=1; $i<$n; $i++) {
+                        $this->editaleFldInx++;
+                        $args['dataSelector'] .= "|elem-$setInx-$this->editaleFldInx";
+                    }
+                }
             }
         }
         if (!isset($args['targetSelector'])) {
@@ -204,13 +212,19 @@ class Editable extends LiveData
                     $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-col-*";
                 }
             } else {
-                $args['targetSelector'] = '#lzy-editable-' . $this->editaleSetInx;
+                $args['targetSelector'] = "#lzy-editable-$setInx-$editaleFldInx1";
+                if (@$args['nFields']) {
+                    $n = intval($args['nFields']);
+                    for ($i=1; $i<$n; $i++) {
+                        $editaleFldInx1++;
+                        $args['targetSelector'] .= "|#lzy-editable-$setInx-$editaleFldInx1";
+                    }
+                }
             }
         }
 
         $args['id'] = @$args['id']? translateToClassName($args['id']) : '';
         $args['wrapperClass'] = @$args['class'] ? " {$args['class']}" : '';
-        $args['class'] = @$args['class']? trim("lzy-editable {$args['class']}"): 'lzy-editable';
 
         if (@$args['freezeFieldAfter']) {
             $args['freezeThreshold'] = time() - intval($args['freezeFieldAfter']);
@@ -236,14 +250,13 @@ class Editable extends LiveData
             $args['showButtonClass'] = ' lzy-editable-show-buttons';
         }
 
-        if ($GLOBALS['globalParams']['editableInx'] === 1) {
-            if (isset($args['enableDoubleClick']) && $args['enableDoubleClick']) {
-                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = true;\n");
-            } else {
-                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
-            }
-        }
-
+//        if ($GLOBALS['globalParams']['editableInx'] === 1) {
+//            if (isset($args['enableDoubleClick']) && $args['enableDoubleClick']) {
+//                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = true;\n");
+//            } else {
+//                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
+//            }
+//        }
         // dataFile synonyme for dataSource for backward compatibility:
         if (!isset($args['dataSource']) && @$args['dataFile']) {
             $args['dataSource'] = $args['dataFile'];
@@ -325,4 +338,20 @@ class Editable extends LiveData
 //        return $args;
 //    } // prepareProtectedCellsArray
 */
+
+
+
+
+    private function initDataRef($args)
+    {
+        $tickRecCustomFields = [
+            'useRecycleBin'    => @$args['useRecycleBin'],
+            'freezeFieldAfter' => @$args['freezeFieldAfter'],
+            'editableBy'       => $args['editableBy'],
+        ];
+        $args['tickRecCustomFields'] = $tickRecCustomFields;
+
+        return parent::render($args, true);
+    } // initDataRef
+
 } // class Editable

@@ -156,7 +156,7 @@ var Editable = new Object({
         }
 
         // make sure field has fixed width (not only min/max-width):
-        $elem.css('width', $elem.width() + 'px');
+        $elem.css('width', $elem.outerWidth() + 'px');
 
         var id = $elem.attr('id');
 
@@ -174,7 +174,6 @@ var Editable = new Object({
         this.lockField(id, function(id, json) {
             var _id = '_' + id;
             var $elem = $('#' + id);
-            $elem.removeClass('lzy-wait');
             var origValue = $elem.text();
             rootObj.ignoreBlur[ id ] = false;
             rootObj.origValue[ id ] = origValue;
@@ -520,8 +519,8 @@ var Editable = new Object({
 
 
 
-    handleResponse: function(json, id, msgId, errorHandler) {
-        json = json.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
+    handleResponse: function(json0, id, msgId, errorHandler) {
+        const json = json0.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
         if (!json) {
             return;
         }
@@ -559,6 +558,9 @@ var Editable = new Object({
                 if (isDataTable === null) {
                     $tmp = $(tSel);
                     $dataTable = $(tSel).closest('table');
+                    if ( !$dataTable.length ) {
+                        continue;
+                    }
                     cls = $dataTable.attr('class');
                     let m = cls.match(/lzy-table-(\d+)/);
                     if ( m !== null ) {

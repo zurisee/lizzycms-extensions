@@ -59,7 +59,7 @@ class EditableBackend
 
         if (!isset($_SESSION['lizzy']['userAgent'])) {
             mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
-            $this->sendResponse('restart');
+            $this->sendResponse([],'restart');
         }
 
 		$this->sessionId = session_id();
@@ -104,7 +104,7 @@ class EditableBackend
         if (!$this->openDB()) {
             $cmd = str_replace(['ds', '_', 'ref'], '', implode('', array_keys($_GET)));
             mylog("### openDB -> failed: $cmd");
-            $this->sendResponse("failed#openDB:$cmd");
+            $this->sendResponse([], "failed#openDB:$cmd");
         }
 
         if ($id = $this->getRequestData('get')) {     // get value(s)
@@ -135,7 +135,7 @@ class EditableBackend
         }
         $this->clear_duplicate_cookies();		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
             mylog("### Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
-            $this->sendResponse('failed#conn');
+            $this->sendResponse([],'failed#conn');
         }
 
         $ok = $this->openDB();
@@ -151,7 +151,7 @@ class EditableBackend
             $this->sendResponse($this->assembleResponse(), 'ok#conn');
         } else {
             mylog("### conn -> failed");
-            $this->sendResponse('failed#conn');
+            $this->sendResponse([],'failed#conn');
         }
 	} // initConnection
 
@@ -161,7 +161,7 @@ class EditableBackend
 	private function lock($id) {
 		if (!$id) {
 			mylog("### lock: Error -> id not defined");
-            $this->sendResponse("failed#lock (id not defined)");
+            $this->sendResponse([],"failed#lock (id not defined)");
 		}
 
 		$set = $this->getSet( $id );
@@ -192,7 +192,7 @@ class EditableBackend
 	private function unlock($id) {
 		if (!$id) {
 			mylog("### unlock: Error -> id not defined");
-            $this->sendResponse("failed#unlock (id not defined)");
+            $this->sendResponse([],"failed#unlock (id not defined)");
 		}
         $set = $this->getSet( $id );
         $dataKey = $this->getDataSelector( $id );
@@ -220,23 +220,30 @@ class EditableBackend
 	private function save($id) {
 		if (!$id) {
 			mylog("### save & unlock: Error -> id not defined");
-            $this->sendResponse("failed#save (id not defined)");
+            $this->sendResponse([],"failed#save (id not defined)");
 		}
 		$text = $this->getRequestData('text');
 		$text = urldecode($text);
 		if ($text === 'undefined') {
             mylog("### save: $id -> failed (text not defined)");
-            $this->sendResponse("failed#save (text not defined)");
+            $this->sendResponse([],"failed#save (text not defined)");
         }
 
         $dataKey = $this->getDataSelector( $id );
         $set = $this->getSet( $id );
         $db = $set['_db'];
+
+        $permission = $this->ticketRec['editableBy'];
+        if (!checkPermission( $permission )) {
+            mylog("### save: $id -> failed (no permission)");
+            $this->sendResponse([],"failed#save (no permission)");
+        }
+
         $res = $db->writeElement($dataKey, $text, true, true, true);
 
         if (!$res) {
             mylog("### save failed!: $id -> [$text]");
-            $this->sendResponse("failed#save (locked)");
+            $this->sendResponse([],"failed#save (locked)");
         }
 		$db->unlockRec($dataKey, true); // unlock all owner's locks
 
@@ -266,17 +273,11 @@ class EditableBackend
 
     private function sendResponse( $out, $result = null )
     {
-        $outData = [];
-        $outData['result'] = 'error';
-        if (is_string($out)) {
-            $outData['result'] = $out;
-        } else {
-            $outData = $out;
-            if ($result !== null) {
-                $outData['result'] = $result;
-            } elseif (!isset($outData['result'])) {
-                $outData['result'] = 'ok';
-            }
+        $outData = $out;
+        if ($result !== null) {
+            $outData['result'] = $result;
+        } elseif (!isset($outData['result'])) {
+            $outData['result'] = 'ok';
         }
         lzyExit( json_encode( $outData ) );
     } // sendResponse
@@ -384,7 +385,7 @@ class EditableBackend
                 }
             }
         }
-        $this->sendResponse("Error: unidentified ID '$id' in getSet()");
+        $this->sendResponse([],"Error: unidentified ID '$id' in getSet()");
     } // getSet
 
 
@@ -414,7 +415,7 @@ class EditableBackend
                 }
             }
         }
-        $this->sendResponse("Error: unidentified ID '$id' in getDataSelector()");
+        $this->sendResponse([],"Error: unidentified ID '$id' in getDataSelector()");
         return false;
     } // getDataSelector
 
@@ -448,7 +449,7 @@ class EditableBackend
                 continue;
             }
             for ($i=1; $i<99; $i++) {
-                $recInx = "e$i";
+                $recInx = "fld$i";
                 if ($recInx && isset($tRec[$recInx])) {
                     $rec = $tRec[$recInx];
                     $this->sets[$setInx]['_tickRec'] = $rec;
@@ -570,7 +571,7 @@ class EditableBackend
         if (isset($_GET['log'])) {                                // remote log, write to backend's log
             $msg = $this->getRequestData('text');
             mylog("Client: $msg");
-            $this->sendResponse('ok');
+            $this->sendResponse([],'ok');
         }
         if ($this->getRequestData('info') !== null) {    // respond with info-msg
             $this->info();
