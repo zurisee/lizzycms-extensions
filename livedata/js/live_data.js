@@ -192,6 +192,11 @@ var LiveData = new Object({
             }
         }
         $('.live-data-update-time').text( timeStamp() );
+
+        if ( $('body').hasClass('debug') ) {
+            this.dumpDB();
+        }
+
         this.updateLiveData();
     }, // handleAjaxResponse
 
@@ -204,7 +209,7 @@ var LiveData = new Object({
         if (this.paramName) {
             var paramValue = $( this.paramSource ).text();
             url = appendToUrl(url, 'dynDataSel=' + this.paramName + ':' + paramValue);
-            if (paramValue !== prevParamValue) {
+            if (paramValue !== this.prevParamValue) {
                 this.lastUpdated = 0;
                 this.prevParamValue = paramValue;
             }
@@ -224,6 +229,31 @@ var LiveData = new Object({
         });
     }, // updateLiveData
 
+
+
+
+    dumpDB: function () {
+        var rootObj = this;
+        var url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
+        $.ajax({
+            url: url + "?dumpDB=true",
+            type: 'POST',
+            data: { ref: rootObj.refs },
+            cache: false,
+        }).done(function ( json ) {
+            var res = null;
+            try {
+                res = JSON.parse( json );
+            } catch (e) {
+                console.log('Error condition detected - terminating live-data');
+                console.log(json);
+                return false;
+            }
+            const text = atob( res.data );
+            console.log( text );
+        });
+
+    },
 
 
 
