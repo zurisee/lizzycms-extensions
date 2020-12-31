@@ -23,6 +23,7 @@ class LiveDataService
         $this->lastUpdate = isset($_POST['last']) ? $_POST['last'] : false;
         $requestedDataSelector = isset($_GET['dynDataSel']) ? $_GET['dynDataSel'] : false;
         $this->requestedDataSelector = $requestedDataSelector;
+
         $dynDataSelector = [];
         if ($requestedDataSelector && preg_match('/(.*):(.*)/', $requestedDataSelector, $m)) {
             $dynDataSelector[ 'name' ] = $m[1];
@@ -31,6 +32,11 @@ class LiveDataService
         $this->dynDataSelector = $dynDataSelector;
 
         $this->openDataSrcs();
+
+        $dumpDB = isset($_GET['dumpDB']) ? $_GET['dumpDB'] : false;
+        if ($dumpDB) {
+            $this->dumpDB();
+        }
 
         if ($this->lastUpdate == -1) { // means "skip initial update"
             $this->lastUpdated = microtime(true) - 0.1;
@@ -100,15 +106,14 @@ class LiveDataService
                     continue;
                 }
                 if ($set) {
-                    $rec = reset($set);
                     $db = new DataStorage2([
-                        'dataFile' => PATH_TO_APP_ROOT . $rec['dataSource'],
+                        'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
                         'logModifTimes' => true,
                     ]);
                     $this->sets[$setName]['_db'] = $db;
 
-                    if (isset($rec['pollingTime']) && ($rec['pollingTime'] > 2)) {
-                        $this->pollingTime = $rec['pollingTime'];
+                    if (isset($set['_pollingTime']) && ($set['_pollingTime'] > 2)) {
+                        $this->pollingTime = $set['_pollingTime'];
                     } else {
                         $this->pollingTime = DEFAULT_POLLING_TIME;
                     }
@@ -197,7 +202,7 @@ class LiveDataService
         $frozenElements = [];
         $tmp = [];
         foreach ($set as $k => $elem) {
-            if ($k[0] === '_') {
+            if ($k[0] === '_') {    // skip meta elements
                 continue;
             }
             $dataKey = $elem["dataSelector"];
@@ -295,36 +300,44 @@ class LiveDataService
             }
         }
 
-        $tmp = [];
-        $data = $set['_db']->readModified( $this->lastUpdate );
-        $r = 1;
+        $outData = [];
+        $data = $set['_db']->read();
+        $dataChanged = $set['_db']->readModified( $this->lastUpdate );
+        $r = 0;
+        if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
+            list($s, $s1, $s2, $s3) = $m;
+        } elseif (preg_match('/^ (.*?) \* (.*?) $/x', $targetSelector, $m)) {
+            list($s, $s1, $s2) = $m;
+            $s3 = '';
+        } else {
+            die("Error in targetSelector '$targetSelector' -> '*' missing");
+        }
+
         foreach ($data as $key => $rec) {
-            if (is_int($key)) {
-                $r = $key + 1;
-            }
             if (is_array($rec)) {
-                $c = 1;
+                $c = 0;
                 foreach ($rec as $k => $v) {
-                    if (preg_match('/(.*?) \* (.*?) \* (.*?) /x', $targetSelector, $m)) {
-                        $targSel = "{$m[1]}$r{$m[2]}$c{$m[3]}";
-                        $tmp[$targSel] = $v;
+                    if (isset($dataChanged[$key][$k])) {
+                        $targSel = "$s1$r$s2$c$s3";
+                        $targSel = str_replace(['&#34;', '&#39;'], ['"', "'"], $targSel);
+                        $outData[$targSel] = $v;
                         $c++;
-                    } else {
-                        die("Error in targetSelector '$targetSelector' -> '*' missing");
                     }
                 }
+
             } else {
-                if (preg_match('/(.*?) \* (.*?)/x', $targetSelector, $m)) {
-                    $targSel = "{$m[1]}$r{$m[2]}";
-                    $tmp[$targSel] = $rec;
-                } else {
-                    die("Error in targetSelector '$targetSelector' -> '*' missing");
+                if (isset($dataChanged[$key])) {
+                    $targSel = "$s1$r$s2";
+                    $targSel = str_replace(['&#34;', '&#39;'], ['"', "'"], $targSel);
+                    $outData[$targSel] = $rec;
                 }
             }
             $r++;
         }
-        return $tmp;
+
+        return $outData;
     } // getValueArray
+
 
 
     private function checkAbort()
@@ -349,5 +362,21 @@ class LiveDataService
         }
         session_abort();
     } // checkAbort
+
+
+
+    private function dumpDB()
+    {
+        $out = "My SessionID: ".session_id()."\n";
+        foreach ($this->sets as $setName => $set) {
+            $db = $set['_db'];
+            $s = $db->dumpDb( true, false );
+            $out .= $s;
+        }
+        $returnData['result'] = 'info';
+        $returnData['data'] = base64_encode($out);
+        $json = json_encode($returnData);
+        lzyExit($json);
+    } // dumpDB
 
 } // LiveDataService
