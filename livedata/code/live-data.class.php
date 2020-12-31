@@ -15,6 +15,17 @@ class LiveData
         $this->lzy = $lzy;
         $GLOBALS['lizzy']['liveDataInx']++;
         $this->setInx = $GLOBALS['lizzy']['liveDataInx'];
+        if ($this->setInx === 1) {
+            $jq = <<<EOT
+
+if ($('[data-lzy-data-ref]').length) {
+    LiveData.init();
+}
+
+EOT;
+            $lzy->page->addJq($jq);
+        }
+
         $this->inx = 1;
         $this->args = $args;
     } // __construct
@@ -34,6 +45,7 @@ class LiveData
 
         $tickRec = @$args['tickRecCustomFields']? $args['tickRecCustomFields'] : [];
         $values = [];
+        $setId = "set$this->setInx";
 
         // dataSelector can be scalar or array:
         if (sizeof($dataSelectors) === 1) {                  // scalar value:
@@ -41,6 +53,9 @@ class LiveData
                 $targetSelectors[0] = "lzy-live-data-$this->setInx";
             }
             $this->addTicketRec($targetSelectors[0], $dataSelectors[0], $tickRec);
+            $tickRec[ $setId ]['_dataSource'] = $this->dataSource;
+            $tickRec[ $setId ]['_pollingTime'] = intval($this->polltime);
+
             if ($dataSelectors[0] === '*') {
                 $values[0] = $this->db->read();
             } else {
@@ -58,6 +73,8 @@ class LiveData
                 $values[] = $this->db->readElement($dataSelector);
                 $this->inx++;
             }
+            $tickRec[ $setId ]['_dataSource'] = $this->dataSource;
+            $tickRec[ $setId ]['_pollingTime'] = intval($this->polltime);
         }
 
         $this->dataSelectors = $dataSelectors;
@@ -138,10 +155,8 @@ class LiveData
         $this->targetSelector = $targetSelector;
         $recInx = "fld$this->inx";
         $tickRec["set$this->setInx"][$recInx] = [
-            'dataSource' => $this->dataSource,
             'dataSelector' => $dataSelector,
             'targetSelector' => $targetSelector,
-            'pollingTime' => intval($this->polltime),
         ];
     } // addTicketRec
 
