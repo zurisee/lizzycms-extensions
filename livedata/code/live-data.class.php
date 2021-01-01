@@ -18,7 +18,7 @@ class LiveData
         if ($this->setInx === 1) {
             $jq = <<<EOT
 
-if ($('[data-lzy-data-ref]').length) {
+if ($('[data-lzy-data-ref]').length && (typeof LiveData !== 'undefined')) {
     LiveData.init();
 }
 
