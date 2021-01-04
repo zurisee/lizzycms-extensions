@@ -204,28 +204,31 @@ var LiveData = new Object({
 
 
     updateLiveData: function() {
-        var rootObj = this;
-        var url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
+        const rootObj = this;
+        const url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
+        var data = {
+            ref: rootObj.refs,
+            lastUpdated: rootObj.lastUpdated
+        };
+
         if (this.paramName) {
             var paramValue = $( this.paramSource ).text();
-            url = appendToUrl(url, 'dynDataSel=' + this.paramName + ':' + paramValue);
+            data.dynDataSel = this.paramName + ':' + paramValue;
             if (paramValue !== this.prevParamValue) {
-                this.lastUpdated = 0;
                 this.prevParamValue = paramValue;
+                data.lastUpdated = 0;
             }
         }
-
         if (this.ajaxHndl !== null){
             this.ajaxHndl.abort();
         }
         this.ajaxHndl = $.ajax({
             url: url,
             type: 'POST',
-            data: { ref: rootObj.refs, last: rootObj.lastUpdated },
-            async: true,
-            cache: false,
-        }).done(function ( json ) {
-            return rootObj.handleAjaxResponse(json);
+            data: data,
+            success: function (json) {
+                return rootObj.handleAjaxResponse(json);
+            }
         });
     }, // updateLiveData
 
@@ -239,20 +242,19 @@ var LiveData = new Object({
             url: url + "?dumpDB=true",
             type: 'POST',
             data: { ref: rootObj.refs },
-            cache: false,
-        }).done(function ( json ) {
-            var res = null;
-            try {
-                res = JSON.parse( json );
-            } catch (e) {
-                console.log('Error condition detected - terminating live-data');
-                console.log(json);
-                return false;
+            success: function (json) {
+                var res = null;
+                try {
+                    res = JSON.parse( json );
+                } catch (e) {
+                    console.log('Error condition detected - terminating live-data');
+                    console.log(json);
+                    return false;
+                }
+                const text = atob( res.data );
+                console.log( text );
             }
-            const text = atob( res.data );
-            console.log( text );
         });
-
     },
 
 
@@ -267,8 +269,9 @@ var LiveData = new Object({
             url: appRoot + "_lizzy/_ajax_server.php?abort=true",
             type: 'GET',
             cache: false,
-        }).done(function () {
-            console.log('live-data: server process aborted');
+            success: function (json) {
+                console.log('live-data: server process aborted');
+            }
         });
     } // abortAjax
 

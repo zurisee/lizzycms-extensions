@@ -33,32 +33,15 @@ var Editable = new Object({
         // make all editable elements reachable by kbd:
         $edElem.attr('tabindex', 0);
 
-        this.initializeConnection();
-
         this.initEditingHandlers( $edElem );
     }, // init
-
-
-
-    initializeConnection: function() {
-        const url = this.backend + '?conn&ds=' + this.getDataRef();
-        var rootObj = this;
-        $.ajax({
-            url: url,
-            type: 'get',
-            cache: false,
-            success: function (json) {
-                rootObj.handleResponse(json,  null,'#lzy-conn-error');
-            }
-        });
-    }, // initializeConnection
-
 
 
 
 
     initEditingHandlers: function( $edElem ) {
         var rootObj = this;
+
         $edElem
             .focus(function () {
                 const on = $(this).hasClass('lzy-editable');
@@ -66,12 +49,8 @@ var Editable = new Object({
                     return;
                 }
                 var id = $(this).attr('id');
-                rootObj.doubleClick[ id ] = false;
+                // rootObj.doubleClick[ id ] = macKeys.cmdKey;
                 rootObj.makeEditable( this );
-            })
-            .dblclick(function () {
-                var id = $(this).attr('id');
-                rootObj.doubleClick[ id ] = true;
             })
             .on('click', 'input, textarea', function (e) {
                 e.stopImmediatePropagation();
@@ -131,6 +110,10 @@ var Editable = new Object({
         var rootObj = this;
         const $elem = $( that );
 
+        if ($elem.closest('.lzy-editable-inactive').length) {
+            return;
+        }
+
         // check for already active fields, close others:
         $('.lzy-editable-active').each(function () {
             if (rootObj !== that) {
@@ -177,6 +160,7 @@ var Editable = new Object({
             var origValue = $elem.text();
             rootObj.ignoreBlur[ id ] = false;
             rootObj.origValue[ id ] = origValue;
+            $elem.removeClass('lzy-wait');
 
             // evaluate lock request's response:
             json = json.replace(/(.*[\]}])#.*/, '$1');    // remove trailing #comment
@@ -191,6 +175,7 @@ var Editable = new Object({
                 } else if (data.result.match(/^ok/)) {
                     rootObj.updateUi(data);
                 } else {
+                    mylog(data.result);
                     $elem.addClass('lzy-element-locked');
                     lzyPopup({
                         contentFrom: '#lzy-error-locked',
@@ -206,7 +191,7 @@ var Editable = new Object({
                 }
             }
 
-            $elem.removeClass('lzy-editable lzy-wait').addClass('lzy-editable-active');
+            $elem.removeClass('lzy-editable').addClass('lzy-editable-active');
 
             // on touch devices: always show buttons
             if (!rootObj.showAllButtons) {
@@ -253,6 +238,7 @@ var Editable = new Object({
 
         $elem.on('keydown', 'input, textarea', function(e) {
             const key = e.which;
+            const meta = macKeys.cmdKey;
             var $el = $(this).parent();
             if (key === 9) {                  // Tab
                 rootObj.onKeyTab(e, $el);
@@ -261,12 +247,12 @@ var Editable = new Object({
 
         $elem.on('keyup', 'input', function(e) {
             const key = e.which;
+            const meta = macKeys.cmdKey;
             var $el = $(this).parent();
             e.preventDefault();
             if ((key === 13) || // Enter
                 ((key === 13) && event.ctrlKey) ||      // Win: ctrl-enter
-                ((key === 91) && macKeys.cmdKey) ||     // Mac: cmd-enter
-                ((key === 93) && macKeys.cmdKey)) {     // Mac: cmd(right)-enter
+                ((key === 13) && macKeys.cmdKey)) {     // Mac: cmd-enter
                 rootObj.onKeyEnter(e, $el);
 
             } else if(key === 27) {                // ESC
@@ -279,11 +265,11 @@ var Editable = new Object({
         });
         $elem.on('keyup', 'textarea', function(e) {
             const key = e.which;
+            const meta = macKeys.cmdKey;
             var $el = $(this).parent();
             e.preventDefault();
             if (((key === 13) && event.ctrlKey) ||      // Win: ctrl-enter
-                ((key === 91) && macKeys.cmdKey) ||     // Mac: cmd-enter
-                ((key === 93) && macKeys.cmdKey)) {     // Mac: cmd(right)-enter
+                ((key === 13) && macKeys.cmdKey)) {     // Mac: cmd-enter
                 rootObj.onKeyEnter(e, $el);
 
             } else if(key === 27) {                // ESC
@@ -331,22 +317,32 @@ var Editable = new Object({
 
     lockField: function(id, callback) {
         mylog( 'lockField: '+id );
-        var url = this.backend + '?lock=' + id + '&ds=' + this.getDataRef(id);
+        const url = this.backend;
         var $inputField = $('#_' + id);
-
         $inputField.addClass('lzy-wait');
+        var data = {
+            cmd: 'lock',
+            id: id,
+            ref: this.getDataRef(id),
+        };
+        var dSel = $( '#' + id ).attr('data-ref');
+        if (typeof dSel !== 'undefined') {
+            data.dataRef = dSel;
+        }
 
         $.ajax({
             url: url,
-            type: 'get',
+            type: 'POST',
+            data: data,
             cache: false,
-        })
-            .done(function( json ) {
+            success: function (json) {
                 callback(id, json);
-            })
-            .fail(function () {
+            },
+            error: function(xhr, status, error) {
+                mylog( 'lockField: failed -> ' + error );
                 $('#' + id).removeClass('lzy-wait').addClass('lzy-locked');
-            });
+            }
+        });
     }, // lockField
 
 
@@ -355,13 +351,27 @@ var Editable = new Object({
     unlockField: function(id) {
         mylog( 'unlockField: '+id );
         var rootObj = this;
-        var url = this.backend + '?unlock=' + id + '&ds=' + this.getDataRef(id);
+        const url = this.backend;
+        var data = {
+            cmd: 'unlock',
+            id: id,
+            ref: this.getDataRef(id),
+        };
+        var dSel = $( '#' + id ).attr('data-ref');
+        if (typeof dSel !== 'undefined') {
+            data.dataRef = dSel;
+        }
         $.ajax({
             url: url,
-            type: 'get',
+            type: 'POST',
+            data: data,
             cache: false,
             success: function (json) {
                 rootObj.handleResponse(json, id, false);
+            },
+            error: function(xhr, status, error) {
+                mylog( 'unlockField: failed -> ' + error );
+                $('#' + id).removeClass('lzy-wait').addClass('lzy-locked');
             }
         });
         return true;
@@ -395,16 +405,30 @@ var Editable = new Object({
             return;
         }
         mylog( 'save: '+id + ' => ' + newValue );
-        const url = this.backend + '?save=' + id + '&ds=' + this.getDataRef(id);
         const text = encodeURI( newValue );   // -> php urldecode() to decode
+        const url = this.backend;
+        var data = {
+            cmd: 'save',
+            id: id,
+            text: text,
+            ref: this.getDataRef(id),
+        };
+        var dSel = $( '#' + id ).attr('data-ref');
+        if (typeof dSel !== 'undefined') {
+            data.dataRef = dSel;
+        }
 
         $.ajax({
             url: url,
             type: 'post',
-            data: { text: text },
+            data: data,
             cache: false,
             success: function (json) {
                 rootObj.handleResponse(json, id, '#lzy-db-error');
+            },
+            error: function(xhr, status, error) {
+                mylog( 'save: failed -> ' + error );
+                $('#' + id).removeClass('lzy-wait').addClass('lzy-locked');
             }
         });
         return true;
@@ -555,41 +579,33 @@ var Editable = new Object({
         if (typeof data1 === 'object') {
             for (var tSel in data1) {
                 txt = data1[ tSel ];
-                if (isDataTable === null) {
-                    $tmp = $(tSel);
-                    $dataTable = $(tSel).closest('table');
-                    if ( !$dataTable.length ) {
-                        continue;
-                    }
-                    cls = $dataTable.attr('class');
-                    let m = cls.match(/lzy-table-(\d+)/);
-                    if ( m !== null ) {
-                        inx = parseInt(m[1]);
-                    } else {
-                        cls = $dataTable.attr('id');
-                        m = cls.match(/lzy-table(\d+)/);
-                        if (m !== null) {
-                            inx = parseInt(m[1]);
-                        }
-                    }
-                    if ( inx !== null) {
-                        isDataTable = $(tSel).closest('table').hasClass('lzy-datatable') && (typeof lzyTable[inx] !== 'undefined');
-                    }
-                }
+                // if (isDataTable === null) {
+                //     $tmp = $(tSel);
+                //     $dataTable = $(tSel).closest('table');
+                //     if ( !$dataTable.length ) {
+                //         continue;
+                //     }
+                //     cls = $dataTable.attr('class');
+                //     let m = cls.match(/lzy-table-(\d+)/);
+                //     if ( m !== null ) {
+                //         inx = parseInt(m[1]);
+                //     } else {
+                //         cls = $dataTable.attr('id');
+                //         m = cls.match(/lzy-table(\d+)/);
+                //         if (m !== null) {
+                //             inx = parseInt(m[1]);
+                //         }
+                //     }
+                //     if ( inx !== null) {
+                //         isDataTable = $(tSel).closest('table').hasClass('lzy-datatable') && (typeof lzyTable[inx] !== 'undefined');
+                //     }
+                // }
                 c1 = tSel.substr(0,1);
-                if ((c1 !== '#') && (c1 !== '.')) {
-                    tSel = '#' + tSel;
-                }
-                if (!$( tSel ).hasClass('lzy-editable-active')) {
-                    if (isDataTable) {
-                        y = parseInt( (tSel.match(/.lzy-row-(\d+)/))[1] ) - 1;
-                        x = parseInt( (tSel.match(/.lzy-col-(\d+)/))[1] ) - 1;
-                        lzyTable[ inx ].cell(y,x).data( txt );
-
-                    } else {
+                $( tSel ).each(function() {
+                    if (!$(this).hasClass('lzy-editable-active')) {
                         $(tSel).text(txt);
                     }
-                }
+                });
             }
             if (isDataTable) {
                 lzyTable[ inx ].draw();

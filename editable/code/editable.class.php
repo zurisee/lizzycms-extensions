@@ -12,7 +12,7 @@ $textResources = <<<EOT
 <div style="display: none">
     <div id='lzy-db-error' style="display: none">{{ lzy-editable-db-error }}</div>
     <div id='lzy-error-locked' style="display: none">{{ lzy-editable-db-locked }}</div>
-    <div id='lzy-info-frozen' style="display: none">{{ lzy-editable-elem-frozen }}</div>
+    <div id='lzy-info-frozen' style="display: none">{{ lzy-editable-element-frozen }}</div>
     <div id='lzy-conn-error' style="display: none">{{ lzy-editable-conn-error }}</div>
     <div id='lzy-editable-ok-text' style="display: none"><button class='lzy-editable-submit-button lzy-button' title='{{ lzy-editable-ok-text }}'>$okSymbol<span class='invisible'> {{ lzy-editable-ok-text }}</span></button></div>
     <div id='lzy-editable-cancel-text' style="display: none"><button class='lzy-editable-cancel-button lzy-button' title='{{ lzy-editable-cancel-text }}'>$cancelSymbol<span class='invisible'> {{ lzy-editable-cancel-text }}</span></button></div>
@@ -33,6 +33,20 @@ class Editable extends LiveData
         parent::__construct($lzy, $args);
         $this->page = $lzy->page;
         $args = &$this->args;
+
+        // handle case liveData enabled:
+        $liveData =  isset($args['liveData']) ? $args['liveData'] : false;
+        if ($liveData) {
+            $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
+//            $jq = <<<EOT
+//
+//if (typeof LiveData !== 'undefined') {
+//    LiveData.init();
+//}
+//
+//EOT;
+//            $this->page->addJq( $jq );
+        }
 
         // check permission:
         $args['editableBy'] = $editableBy = isset($args['editableBy']) ? $args['editableBy'] : true;
@@ -68,6 +82,19 @@ EOT;
                 $this->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
             }
 
+            $jq = <<<EOT
+$('.lzy-editable').tooltipster({
+    animation: 'fade',
+    delay: 200,
+    animation: 'grow',
+    maxWidth: 420,
+});
+
+EOT;
+            $this->page->addJq( $jq );
+            $this->page->addModules( 'TOOLTIPSTER' );
+
+
             $GLOBALS['globalParams']['editableInitialized'] = true;
         }
 
@@ -75,16 +102,16 @@ EOT;
         $liveData = @$args['liveData'];
         if ($liveData) {
             $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
-            $jq = <<<EOT
-
-if ($('[data-lzy-data-ref]').length) {
-    LiveData.init();
-}
-
-EOT;
-            $this->page->addJq($jq);
-            $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
+//            $jq = <<<EOT
+//
+//if ($('[data-lzy-data-ref]').length) {
+//    LiveData.init();
+//}
+//
+//EOT;
+//            $this->page->addJq($jq);
         }
+        $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
         $this->editaleFldInx = 1;
 
     } // __construct
@@ -145,23 +172,27 @@ EOT;
                 $eClass = '';
             } elseif ($eId[0] === '.') {
                 $eClass = substr($eId, 1);
-                $eId = "lzy-editable-$this->editaleSetInx-1";
+                $eId = "lzy-editable-$this->editaleSetInx-". ($i + 1);
             }
             $value = '';
+            $title = '';
             if (isset( $data[ $this->dataSelectors[$i] ]) ) {
                 if ($this->db->isRecLocked($this->dataSelectors[$i])) {
                     $eClass .= ' lzy-element-locked';
+                    $title = ' title="{{ lzy-editable-element-locked }}"';
                 }
                 $value = $data[ $this->dataSelectors[$i] ];
                 if ($value && $this->freezeFieldAfter) {
                     $lastModif = $this->db->lastModifiedElement($this->dataSelectors[$i]);
                     if ($lastModif < (time() - $this->freezeFieldAfter)) {
                         $eClass .= ' lzy-element-frozen';
+                        $title = ' title="{{ lzy-editable-element-frozen }}"';
                     }
                 }
             }
             $eClass = $eClass? ' '.trim($eClass): '';
-            $out .= "\t\t<div id='$eId' class='lzy-editable$eClass'>$value</div>\n";
+            $dRef = " data-ref='{$this->dataSelectors[$i]}'";
+            $out .= "\t\t<div id='$eId' class='lzy-editable$eClass'$dRef$title>$value</div>\n";
         }
 
         $class = $class? str_replace('  ', ' ', $class): '';
@@ -344,12 +375,12 @@ EOT;
 
     private function initDataRef($args)
     {
-        $tickRecCustomFields = [
-            'useRecycleBin'    => @$args['useRecycleBin'],
-            'freezeFieldAfter' => @$args['freezeFieldAfter'],
-            'editableBy'       => $args['editableBy'],
+        $args['tickRecCustomFields'] = [
+            '_useRecycleBin'    => @$args['useRecycleBin'],
+            '_freezeFieldAfter' => @$args['freezeFieldAfter'],
+            '_editableBy'       => @$args['editableBy'],
+            '_multiline'        => @$args['multiline'],
         ];
-        $args['tickRecCustomFields'] = $tickRecCustomFields;
 
         return parent::render($args, true);
     } // initDataRef

@@ -1,72 +1,27 @@
 <?php
-/*
- *	Lizzy - small and fast web-page rendering engine
- *
- *	Ajax Service for dynamic data, in particular 'editable' data
- * http://localhost/Lizzy/_lizzy/_ajax_server.php?lock=ed1
- *
- *  Protocol:
 
-conn
-	GET:	?conn=list-of-editable-fields
-
-upd
-	GET:	?upd=time
-
-lock
-	GET:	?lock=id
-
-unlock
-	GET:	?unlock=id
-
-save
-	GET:	?save=id
-    POST:   text => data
-
-get
-	GET:	?get=id
-
-log
-	GET:	?log=message
-
-info
-	GET:	?info
-
-getfile
-	GET:	?getfile=filename
-
-*/
+require_once '../../livedata/backend/live_data_service.class.php';
 
 
-class EditableBackend
+class EditableBackend extends LiveDataService
 {
     private $dynDataSelector = null;
 
 	public function __construct()
 	{
-        $this->terminatePolling = false;
-		if (sizeof($_GET) < 1) {
+		if (sizeof($_POST) < 1) {
 			lzyExit('Hello, this is '.basename(__FILE__));
 		}
-        if (!session_start()) {
-            mylog("ERROR in __construct(): failed to start session");
-        }
-        $this->clear_duplicate_cookies();
 
-        $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'CET';
-        date_default_timezone_set($timezone);
-
+        parent::__construct();
 
         if (!isset($_SESSION['lizzy']['userAgent'])) {
             mylog("*** Fishy request from {$_SERVER['HTTP_USER_AGENT']} (no valid session)");
-            $this->sendResponse([],'restart');
+            $this->sendResponse( false,'restart');
         }
 
 		$this->sessionId = session_id();
         $this->clientID = substr($this->sessionId, 0, 4);
-		if (!isset($_SESSION['lizzy']['hash'])) {
-			$_SESSION['lizzy']['hash'] = '#';
-		}
 		if (!isset($_SESSION['lizzy']['lastUpdated'])) {
 			$_SESSION['lizzy']['lastUpdated'] = 0;
 		}
@@ -84,95 +39,78 @@ class EditableBackend
 
         }
 
-		$this->hash = $_SESSION['lizzy']['hash'];
-		session_write_close();
+        if (!isset($_SESSION['lizzy']['hash'])) {
+            $_SESSION['lizzy']['hash'] = '#';
+        }
+        $this->hash = $_SESSION['lizzy']['hash'];
+        $this->pageName = isset($_SESSION['lizzy']['pageName']) ? $_SESSION['lizzy']['pagePath']: false;
+        $this->pagePath = $_SESSION["lizzy"]["pageFolder"];
+
         preparePath(DATA_PATH);
 
 		$this->remoteAddress = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : 'REMOTE_ADDR';
 		$this->userAgent = isset($_SESSION['lizzy']['userAgent']) ? $_SESSION['lizzy']['userAgent'] : $_SERVER["HTTP_USER_AGENT"];
 		$this->isLocalhost = (($this->remoteAddress == 'localhost') || (strpos($this->remoteAddress, '192.') === 0) || ($this->remoteAddress == '::1'));
-	} // __construct
+
+        session_write_close();
+
+    } // __construct
 
 
 
 	public function execute()
 	{
-        if (isset($_GET['conn'])) {                                // conn  initial interaction with client, defines used ids
-            $this->initConnection();
-        }
-
         if (!$this->openDB()) {
             $cmd = str_replace(['ds', '_', 'ref'], '', implode('', array_keys($_GET)));
             mylog("### openDB -> failed: $cmd");
-            $this->sendResponse([], "failed#openDB:$cmd");
+            $this->sendResponse( false, "failed#openDB:$cmd");
         }
 
-        if ($id = $this->getRequestData('get')) {     // get value(s)
-            $this->get($id);
+        $cmd = isset($_POST['cmd']) ? $_POST['cmd'] : false;
+        $cmd = ",$cmd";
+        $this->id = isset($_POST['id']) ? $_POST['id'] : false;
+        $this->dataRef = isset($_POST['dataRef']) ? $_POST['dataRef'] : false;
+
+        if (strpos($cmd, ',get') !== false) {     // get value(s)
+            $this->get();
         }
 
-        if ($id = $this->getRequestData('lock')) {    // lock an editable field
-            $this->lock($id);
+        if (strpos($cmd, ',lock') !== false) {    // lock an editable field
+            $this->lock();
         }
 
-        if ($id = $this->getRequestData('unlock')) {    // unlock an editable field
-            $this->unlock($id);
+        if (strpos($cmd, ',unlock') !== false) {    // unlock an editable field
+            $this->unlock();
         }
 
-        if ($id = $this->getRequestData('save')) {    // save data & unlock
-            $this->save($id);
+        if (strpos($cmd, ',save') !== false) {    // save data & unlock
+            $this->save();
         }
 
-        $this->handleGenericRequests();     // log, info
-
+        $this->handleGenericRequests( $cmd );     // log, info
     } // handleUrlArguments
 
 
 
-	private function initConnection() {
-        if (!session_start()) {
-            mylog("ERROR in initConnection(): failed to start session");
-        }
-        $this->clear_duplicate_cookies();		if (!isset($_SESSION['lizzy']['pageName']) || !isset($_SESSION['lizzy']['pagePath'])) {
-            mylog("### Client connection failed: [{$this->remoteAddress}] {$this->userAgent}");
-            $this->sendResponse([],'failed#conn');
-        }
-
-        $ok = $this->openDB();
-
-        $pagePath = $_SESSION["lizzy"]["pageFolder"];
-        mylog("Client connected: [{$this->remoteAddress}] {$this->userAgent} (pagePath: $pagePath)");
-
-		$_SESSION['lizzy']['lastSentData'] = '';
-		session_write_close();
-
-		if ($ok) {
-            mylog("conn -> ok");
-            $this->sendResponse($this->assembleResponse(), 'ok#conn');
-        } else {
-            mylog("### conn -> failed");
-            $this->sendResponse([],'failed#conn');
-        }
-	} // initConnection
-
-
-
-
-	private function lock($id) {
+	private function lock() {
+	    $id = $this->id;
 		if (!$id) {
 			mylog("### lock: Error -> id not defined");
-            $this->sendResponse([],"failed#lock (id not defined)");
+            $this->sendResponse( false,"failed#lock (id not defined)");
 		}
 
 		$set = $this->getSet( $id );
         $dataKey = $this->getDataSelector( $id );
         $db = $set['_db'];
-        if ($this->ticketRec['freezeFieldAfter']) {
-            $feezeFieldAfter = intval($this->ticketRec['freezeFieldAfter']);
-            $lastModif = $db->lastModifiedElement( $dataKey );
-            if ($lastModif < (time() - $feezeFieldAfter)) {
-                mylog("### lock: '$dataKey' -> failed:frozen");
-                $this->sendResponse(['id' => $id], "failed#lockFrozen '$dataKey'");
+        if ($set['_freezeFieldAfter']) {
+            $feezeFieldAfter = intval($set['_freezeFieldAfter']);
+            $val = $db->readElement( $dataKey );
+            if ($val) {
+                $lastModif = $db->lastModifiedElement($dataKey);
+                if ($lastModif < (time() - $feezeFieldAfter)) {
+                    mylog("### lock: '$dataKey' -> failed:frozen");
+                    $this->sendResponse(['id' => $id], "failed#lockFrozen '$dataKey'");
+                }
             }
         }
         $res = $db->lockRec( $dataKey );
@@ -182,17 +120,17 @@ class EditableBackend
 
 		} else {
             mylog("lock: $dataKey -> ok");
-            $this->sendResponse( $this->assembleResponse($id), 'ok#lock');
+            $this->sendResponse( $id, 'ok#lock');
 		}
 	} // lock
 
 
 
-
-	private function unlock($id) {
-		if (!$id) {
+	private function unlock() {
+        $id = $this->id;
+        if (!$id) {
 			mylog("### unlock: Error -> id not defined");
-            $this->sendResponse([],"failed#unlock (id not defined)");
+            $this->sendResponse( false,"failed#unlock (id not defined)");
 		}
         $set = $this->getSet( $id );
         $dataKey = $this->getDataSelector( $id );
@@ -200,70 +138,105 @@ class EditableBackend
         $res = $db->unlockRec($dataKey);
         if ($res) {
 			mylog("unlock: $dataKey -> ok");
-            $this->sendResponse($this->assembleResponse($id), 'ok#unlock');
+            $this->sendResponse( $id, 'ok#unlock');
         }
         mylog("### unlock: $dataKey -> failed: '$dataKey'");
-        $this->sendResponse(['id' => $id], "failed#unlock '$dataKey'");
+        $this->sendResponse( false, "failed#unlock '$dataKey'");
 	} // unlock
 
 
 
-
-	private function get($id) {
-        mylog("get: $id -> ok");
-        $this->sendResponse($this->assembleResponse($id),'ok#get');
+	private function get() {
+        mylog("get: $this->id -> ok");
+        $this->sendResponse($this->id,'ok#get');
 	} // get
 
 
 
-
-	private function save($id) {
-		if (!$id) {
+	private function save() {
+        $id = $this->id;
+        if (!$id) {
 			mylog("### save & unlock: Error -> id not defined");
-            $this->sendResponse([],"failed#save (id not defined)");
+            $this->sendResponse( false,"failed#save (id not defined)");
 		}
+
 		$text = $this->getRequestData('text');
 		$text = urldecode($text);
 		if ($text === 'undefined') {
             mylog("### save: $id -> failed (text not defined)");
-            $this->sendResponse([],"failed#save (text not defined)");
+            $this->sendResponse( false,"failed#save (text not defined)");
         }
 
         $dataKey = $this->getDataSelector( $id );
         $set = $this->getSet( $id );
         $db = $set['_db'];
 
-        $permission = $this->ticketRec['editableBy'];
-        if (!checkPermission( $permission )) {
+        if (!checkPermission( $set['_editableBy'] )) {
             mylog("### save: $id -> failed (no permission)");
-            $this->sendResponse([],"failed#save (no permission)");
+            $this->sendResponse( false,"failed#save (no permission)");
         }
 
         $res = $db->writeElement($dataKey, $text, true, true, true);
 
         if (!$res) {
             mylog("### save failed!: $id -> [$text]");
-            $this->sendResponse([],"failed#save (locked)");
+            $this->sendResponse( false,"failed#save (locked)");
         }
 		$db->unlockRec($dataKey, true); // unlock all owner's locks
 
         mylog("save: $id => '$text' -> ok");
-        $this->sendResponse($this->assembleResponse($id), 'ok#save');
+        $this->sendResponse( $id, 'ok#save');
 	} // save
 
 
 
-
-    private function assembleResponse()
+    private function sendResponse( $sendData, $result = null )
     {
         $outData = [];
+        if ( $sendData ) {
+            $outData = $this->assembleResponse( $sendData );
+        }
+        if ($result !== null) {
+            $outData['result'] = $result;
+        } elseif (!isset($outData['result'])) {
+            $outData['result'] = 'ok';
+        }
+        $json = json_encode( $outData );
+        lzyExit( $json );
+    } // sendResponse
+
+
+
+    private function assembleResponse( $id = false )
+    {
+        $outData = [];
+        if ($id && ($id[0] !== '#') && ($id[0] !== '.')) {
+            $id = "#$id";
+        }
         foreach ($this->sets as $setName => $set) {
-            $outRec = $this->getData( $setName );
-            if (!$outData) {
-                $outData = $outRec;
+            $outRec = $this->getData($setName);
+            if ($id === true) {
+                if (!$outData) {
+                    $outData = $outRec;
+                } else {
+                    $outData['data'] = array_merge($outData['data'], $outRec['data']);
+                    $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
+                }
+
+            } elseif ($this->dataRef && ($tSel = $this->getTSell( $this->dataRef ))) {
+                $outData['data'][$tSel] = $outRec['data'][$tSel];
+                return $outData;
+
             } else {
-                $outData['data'] = array_merge($outData['data'], $outRec['data']);
-                $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
+                foreach ($outRec['data'] as $key => $val) {
+                    if ($key === $id) {
+                        $outData['data'][$key] = $val;
+                        if (isset($outData['locked'][$key])) {
+                            $outData['locked'][$key] = true;
+                        }
+                        break 2;
+                    }
+                }
             }
         }
         return $outData;
@@ -271,16 +244,16 @@ class EditableBackend
 
 
 
-    private function sendResponse( $out, $result = null )
+
+    private function getTSell( $dSel )
     {
-        $outData = $out;
-        if ($result !== null) {
-            $outData['result'] = $result;
-        } elseif (!isset($outData['result'])) {
-            $outData['result'] = 'ok';
+        foreach ($this->editableElements as $tSel => $rec) {
+            if ($rec[0] === $dSel) {
+                return $tSel;
+            }
         }
-        lzyExit( json_encode( $outData ) );
-    } // sendResponse
+        return false;
+    } // getTSell
 
 
 
@@ -370,22 +343,26 @@ class EditableBackend
 
 
 
-
     private function getSet( $id )
     {
-        if ($id && ($id[0] !== '#')&& ($id[0] !== '.')) {
+        if ($id && ($id[0] !== '#') && ($id[0] !== '.')) {
             $id = "#$id";
         }
         if (isset($this->editableElements[$id])) {
             return $this->sets[ $this->editableElements[$id][1] ];
+
         } else {
             foreach ($this->editableElements as $k => $rec) {
+                if ( $this->dataRef && ($rec[0] === $this->dataRef) ) {
+                    return $this->sets[ $rec[1] ];
+                }
+
                 if (strpos($k,'*') !== false) {
                     return $this->sets[ $this->editableElements[$k][1] ];
                 }
             }
         }
-        $this->sendResponse([],"Error: unidentified ID '$id' in getSet()");
+        $this->sendResponse( false,"Error: unidentified ID '$id' in getSet()");
     } // getSet
 
 
@@ -398,27 +375,31 @@ class EditableBackend
         if (isset($this->editableElements[$id])) {
             return $this->editableElements[$id][0];
         } else {
-            $targs = array_keys($this->editableElements);
-            foreach ($targs as $targ) {
-                if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m)) {
-                    if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
-                        $row = intval($mm[1]);
-                        $col = intval($mm[2]);
-                        return "$row,$col";
-                    }
+            if (isset($_POST['dataRef'])) {
+                return $_POST['dataRef'];
 
-                } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m)) {
-                    if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
-                        $col = intval($mm[1]) - 1;
-                        return $col;
+            } else {
+                $targs = array_keys($this->editableElements);
+                foreach ($targs as $targ) {
+                    if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m)) {
+                        if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
+                            $row = intval($mm[1]);
+                            $col = intval($mm[2]);
+                            return "$row,$col";
+                        }
+
+                    } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m)) {
+                        if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
+                            $col = intval($mm[1]) - 1;
+                            return $col;
+                        }
                     }
                 }
             }
         }
-        $this->sendResponse([],"Error: unidentified ID '$id' in getDataSelector()");
+        $this->sendResponse( false,"Error: unidentified ID '$id' in getDataSelector()");
         return false;
     } // getDataSelector
-
 
 
 
@@ -428,7 +409,7 @@ class EditableBackend
         }
 
 	    $useRecycleBin = false;
-        $dataRef = $this->getRequestData('ds');
+        $dataRef = $this->getRequestData('ref');
         if (!$dataRef || !preg_match('/^[A-Z][A-Z0-9]{4,20}/', $dataRef)) {   // dataRef missing
             return false;
         }
@@ -444,25 +425,31 @@ class EditableBackend
         $ticketRec = $tick->consumeTicket($dataRef);
         $this->ticketRec = $ticketRec;
 
-        foreach ($ticketRec as $setInx => $tRec) {
+        // loop over sets:
+        foreach ($ticketRec as $setInx => $set) {
             if (strpos($setInx, 'set') === false) {
                 continue;
             }
+
+            // open DB:
+            $useRecycleBin1 = $useRecycleBin || @$set['_useRecycleBin'];
+            $this->sets[$setInx]['_db'] = new DataStorage2([
+                'dataFile' => PATH_TO_APP_ROOT.$set['_dataSource'],
+                'sid' => $this->sessionId,
+                'lockDB' => false,
+                'useRecycleBin' => $useRecycleBin1,
+                'lockTimeout' => false,
+                'logModifTimes' => true,
+            ]);
+            $this->sets[$setInx]['_editableBy'] = @$set['_editableBy'];
+            $this->sets[$setInx]['_freezeFieldAfter'] = @$set['_freezeFieldAfter'];
+
+            // loop over fields in set, extract editableElements:
             for ($i=1; $i<99; $i++) {
                 $recInx = "fld$i";
-                if ($recInx && isset($tRec[$recInx])) {
-                    $rec = $tRec[$recInx];
+                if (isset($set[$recInx])) {
+                    $rec = $set[$recInx];
                     $this->sets[$setInx]['_tickRec'] = $rec;
-                    $this->freezeFieldAfter = intval($rec['freezeFieldAfter']);
-                    $useRecycleBin |= $rec['useRecycleBin'];
-                    $this->sets[$setInx]['_db'] = new DataStorage2([
-                        'dataFile' => PATH_TO_APP_ROOT.$rec['dataSource'],
-                        'sid' => $this->sessionId,
-                        'lockDB' => false,
-                        'useRecycleBin' => $useRecycleBin,
-                        'lockTimeout' => false,
-                        'logModifTimes' => true,
-                    ]);
                     $tSel = $rec['targetSelector'];
                     $this->sets[$setInx][ $tSel ] = $rec['dataSelector'];
                     $this->editableElements[ $tSel ][0] = $rec['dataSelector'];
@@ -477,14 +464,12 @@ class EditableBackend
 
 
 
-
-
 	private function getRequestData($varName) {
 		global $argv;
 
 		$out = null;
 		if (isset($_GET[$varName])) {
-			$out = $this->safeStr($_GET[$varName]);
+			$out = safeStr($_GET[$varName]);
 
 		} elseif (isset($_POST[$varName])) {
 			$out = $_POST[$varName];
@@ -505,94 +490,25 @@ class EditableBackend
 
 
 
-
-
-	private function var_r($data, $varName = false)
-	{
-		$out = var_export($data, true);
-		if ($varName) {
-		    $out = "$varName: ".$out;
-        }
-		return str_replace("\n", '', $out);
-	} // var_r
-
-
-
-
-    //---------------------------------------------------------------------------
-	/**
-     * http://php.net/manual/de/function.session-start.php
-     * Every time you call session_start(), PHP adds another
-     * identical session cookie to the response header. Do this
-     * enough times, and your response header becomes big enough
-     * to choke the web server.
-     *
-     * This method clears out the duplicate session cookies. You can
-     * call it after each time you've called session_start(), or call it
-     * just before you send your headers.
-     */
-    private function clear_duplicate_cookies() {
-        // If headers have already been sent, there's nothing we can do
-        if (headers_sent()) {
-            return;
-        }
-        $cookies = array();
-        foreach (headers_list() as $header) {
-            // Identify cookie headers
-            if (strpos($header, 'Set-Cookie:') === 0) {
-                $cookies[] = $header;
-            }
-        }
-        // Removes all cookie headers, including duplicates
-        header_remove('Set-Cookie');
-
-        // Restore one copy of each cookie
-        foreach(array_unique($cookies) as $cookie) {
-            header($cookie, false);
-        }
-    } // clear_duplicate_cookies
-
-
-
-
-	function safeStr($str) {
-		if (preg_match('/^\s*$/', $str)) {
-			return '';
-		}
-		$str = substr($str, 0, MAX_URL_ARG_SIZE);	// restrict size to safe value
-		return $str;
-	} // safe_str
-
-
-
-
-    private function handleGenericRequests()
+    private function handleGenericRequests( $cmd )
     {
-        if (isset($_GET['log'])) {                                // remote log, write to backend's log
+        if (strpos($cmd, ',log') !== false) {                                // remote log, write to backend's log
             $msg = $this->getRequestData('text');
             mylog("Client: $msg");
-            $this->sendResponse([],'ok');
+            $this->sendResponse( false,'ok');
         }
-        if ($this->getRequestData('info') !== null) {    // respond with info-msg
+
+        if (strpos($cmd, ',info') !== false) {    // respond with info-msg
             $this->info();
         }
     } // handleGenericRequests
 
 
 
-
-    private function getRef()
-    {
-        return $this->getRequestData('ref');
-    } // getRef
-
-
-
-
     private function info()
     {
         $localhost = ($this->isLocalhost) ? 'yes':'no';
-        $dbs = $this->var_r($_SESSION['lizzy']['db']);
+        $dbs = var_r($_SESSION['lizzy']['db']);
         $msg = <<<EOT
 	<pre>
 	Page:		{$_SESSION['lizzy']['pagePath']}

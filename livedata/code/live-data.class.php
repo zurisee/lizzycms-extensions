@@ -43,9 +43,13 @@ EOT;
         $targetSelectors = explodeTrim('|', $this->targetSelector);
         $nT = sizeof($targetSelectors);
 
-        $tickRec = @$args['tickRecCustomFields']? $args['tickRecCustomFields'] : [];
         $values = [];
         $setId = "set$this->setInx";
+
+        $tickRec = [];
+        if (@$args['tickRecCustomFields']) {
+            $tickRec["set$this->setInx"] = $args['tickRecCustomFields'];
+        }
 
         // dataSelector can be scalar or array:
         if (sizeof($dataSelectors) === 1) {                  // scalar value:

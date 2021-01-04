@@ -2,26 +2,30 @@
 
 class LiveDataService
 {
+    private $dynDataSelector = null;
+
     public function __construct()
     {
-        session_start();
+        if (!session_start()) {
+            mylog("ERROR in __construct(): failed to start session");
+        }
         $this->session = isset($_SESSION['lizzy']) ? $_SESSION['lizzy'] : [];
         $timezone = isset($session['systemTimeZone']) && $this->session['systemTimeZone'] ? $this->session['systemTimeZone'] : 'CET';
         date_default_timezone_set($timezone);
 
         $this->lastModif = 0;
-        $this->lastUpdate = 0;
+        $this->lastUpdated = 0;
         $this->pollingTime = DEFAULT_POLLING_TIME;
-        session_abort();
     } // __construct
 
 
 
 
-    public function execute()
+    public function getChangedData()
     {
-        $this->lastUpdate = isset($_POST['last']) ? $_POST['last'] : false;
-        $requestedDataSelector = isset($_GET['dynDataSel']) ? $_GET['dynDataSel'] : false;
+        session_abort();
+        $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
+        $requestedDataSelector = isset($_POST['dynDataSel']) ? $_POST['dynDataSel'] : false;
         $this->requestedDataSelector = $requestedDataSelector;
 
         $dynDataSelector = [];
@@ -38,10 +42,10 @@ class LiveDataService
             $this->dumpDB();
         }
 
-        if ($this->lastUpdate == -1) { // means "skip initial update"
+        if ($this->lastUpdated == -1) { // means "skip initial update"
             $this->lastUpdated = microtime(true) - 0.1;
         }
-        if (!$this->lastUpdate) {
+        if (!$this->lastUpdated) {
             $this->lastUpdated = microtime( true );
             $returnData = $this->assembleResponse();
             $returnData['result'] = 'Ok';
@@ -58,7 +62,7 @@ class LiveDataService
         $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001 );
         $json = json_encode($returnData);
         lzyExit($json);
-    } // execute
+    } // getChangedData
 
 
 
@@ -69,7 +73,6 @@ class LiveDataService
             lzyExit('Error: "ref" missing in call to _live_data_service.php');
         }
         $ref = $_POST['ref'];
-        $this->lastUpdated = floatval($_POST['last']);
 
         $tickets = explode(',', $ref);
         $ticketList = [];
@@ -270,7 +273,7 @@ class LiveDataService
         // in case client sent a dyn data selector: modify data- and target selectors accordingly:
         if ($this->dynDataSelector) {
             list($dataKey, $targetSelector) = $this->handleDynamicDataSelector($dataKey, $targetSelector);
-            
+
             // try to retrieve requested record using compiled dataKey:
             $rec = $set['_db']->readRecord( $dataKey );
             if ($rec) {
@@ -292,7 +295,7 @@ class LiveDataService
 
         $outData = [];
         $data = $set['_db']->read();
-        $dataChanged = $set['_db']->readModified( $this->lastUpdate );
+        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
         $r = 0;
         if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2, $s3) = $m;
