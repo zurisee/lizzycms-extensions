@@ -323,11 +323,11 @@ var Editable = new Object({
         var data = {
             cmd: 'lock',
             id: id,
-            ref: this.getDataRef(id),
+            srcRef: this.getDatasrcRef(id),
         };
         var dSel = $( '#' + id ).attr('data-ref');
         if (typeof dSel !== 'undefined') {
-            data.dataRef = dSel;
+            data.elemRef = dSel;
         }
 
         $.ajax({
@@ -355,11 +355,11 @@ var Editable = new Object({
         var data = {
             cmd: 'unlock',
             id: id,
-            ref: this.getDataRef(id),
+            srcRef: this.getDatasrcRef(id),
         };
         var dSel = $( '#' + id ).attr('data-ref');
         if (typeof dSel !== 'undefined') {
-            data.dataRef = dSel;
+            data.elemRef = dSel;
         }
         $.ajax({
             url: url,
@@ -411,11 +411,11 @@ var Editable = new Object({
             cmd: 'save',
             id: id,
             text: text,
-            ref: this.getDataRef(id),
+            srcRef: this.getDatasrcRef(id),
         };
         var dSel = $( '#' + id ).attr('data-ref');
         if (typeof dSel !== 'undefined') {
-            data.dataRef = dSel;
+            data.elemRef = dSel;
         }
 
         $.ajax({
@@ -525,21 +525,21 @@ var Editable = new Object({
 
 
 
-    getDataRef: function(id) {
+    getDatasrcRef: function(id) {
         var dataRef = '';
         if (typeof id !== 'undefined') {
-            dataRef = $('#' + id).attr('data-lzy-data-ref');
+            dataRef = $('#' + id).attr('data-lzy-datasrc-ref');
         } else {
-            dataRef = $('.lzy-editable-wrapper').attr('data-lzy-data-ref');
+            dataRef = $('.lzy-editable-wrapper').attr('data-lzy-datasrc-ref');
         }
         if ((typeof dataRef === 'undefined') && (typeof id !== 'undefined')) {
-            dataRef = $('#' + id).closest('[data-lzy-data-ref]').attr('data-lzy-data-ref');
+            dataRef = $('#' + id).closest('[data-lzy-datasrc-ref]').attr('data-lzy-datasrc-ref');
         }
         if (typeof dataRef === 'undefined') {
-            dataRef = $('.lzy-data-ref').attr('data-lzy-data-ref');
+            dataRef = $('.lzy-data-ref').attr('data-lzy-datasrc-ref');
         }
         return dataRef;
-    }, // getDataRef
+    }, // getDatasrcRef
 
 
 
@@ -579,27 +579,6 @@ var Editable = new Object({
         if (typeof data1 === 'object') {
             for (var tSel in data1) {
                 txt = data1[ tSel ];
-                // if (isDataTable === null) {
-                //     $tmp = $(tSel);
-                //     $dataTable = $(tSel).closest('table');
-                //     if ( !$dataTable.length ) {
-                //         continue;
-                //     }
-                //     cls = $dataTable.attr('class');
-                //     let m = cls.match(/lzy-table-(\d+)/);
-                //     if ( m !== null ) {
-                //         inx = parseInt(m[1]);
-                //     } else {
-                //         cls = $dataTable.attr('id');
-                //         m = cls.match(/lzy-table(\d+)/);
-                //         if (m !== null) {
-                //             inx = parseInt(m[1]);
-                //         }
-                //     }
-                //     if ( inx !== null) {
-                //         isDataTable = $(tSel).closest('table').hasClass('lzy-datatable') && (typeof lzyTable[inx] !== 'undefined');
-                //     }
-                // }
                 c1 = tSel.substr(0,1);
                 $( tSel ).each(function() {
                     if (!$(this).hasClass('lzy-editable-active')) {

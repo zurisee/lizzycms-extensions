@@ -18,7 +18,7 @@ class LiveData
         if ($this->setInx === 1) {
             $jq = <<<EOT
 
-if ($('[data-lzy-data-ref]').length && (typeof LiveData !== 'undefined')) {
+if ($('[data-lzy-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
     LiveData.init();
 }
 
@@ -89,7 +89,7 @@ EOT;
         $ticket .= ":set$this->setInx";
 
         if ($returnAttrib) {
-            $str = " data-lzy-data-ref='$ticket'";
+            $str = " data-lzy-datasrc-ref='$ticket'";
         } else {
             $str = $this->renderHTML($ticket, $values);
         }
@@ -215,7 +215,7 @@ EOT;
         if ($this->manual) {
             $comment = ($this->manual === 'silent') ?'' : '<!-- live-data manual mode -->';
             $str = <<<EOT
-<span class='lzy-live-data disp-no' data-lzy-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>$comment</span>
+<span class='lzy-live-data disp-no' data-lzy-datasrc-ref="$ticket"$dynamicArg$callback$postUpdateCallback>$comment</span>
 EOT;
 
         } else {
@@ -229,7 +229,7 @@ EOT;
                     $selector = "id='$targetSelector' class='lzy-live-data'";
                 }
                 $str .= <<<EOT
-    <span $selector data-lzy-data-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
+    <span $selector data-lzy-datasrc-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
 
 EOT;
             }

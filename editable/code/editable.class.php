@@ -38,14 +38,6 @@ class Editable extends LiveData
         $liveData =  isset($args['liveData']) ? $args['liveData'] : false;
         if ($liveData) {
             $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
-//            $jq = <<<EOT
-//
-//if (typeof LiveData !== 'undefined') {
-//    LiveData.init();
-//}
-//
-//EOT;
-//            $this->page->addJq( $jq );
         }
 
         // check permission:
@@ -83,7 +75,7 @@ EOT;
             }
 
             $jq = <<<EOT
-$('.lzy-editable').tooltipster({
+$('.lzy-editable[title]').tooltipster({
     animation: 'fade',
     delay: 200,
     animation: 'grow',
@@ -102,14 +94,6 @@ EOT;
         $liveData = @$args['liveData'];
         if ($liveData) {
             $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
-//            $jq = <<<EOT
-//
-//if ($('[data-lzy-data-ref]').length) {
-//    LiveData.init();
-//}
-//
-//EOT;
-//            $this->page->addJq($jq);
         }
         $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
         $this->editaleFldInx = 1;
@@ -281,13 +265,6 @@ EOT;
             $args['showButtonClass'] = ' lzy-editable-show-buttons';
         }
 
-//        if ($GLOBALS['globalParams']['editableInx'] === 1) {
-//            if (isset($args['enableDoubleClick']) && $args['enableDoubleClick']) {
-//                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = true;\n");
-//            } else {
-//                $this->lzy->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
-//            }
-//        }
         // dataFile synonyme for dataSource for backward compatibility:
         if (!isset($args['dataSource']) && @$args['dataFile']) {
             $args['dataSource'] = $args['dataFile'];

@@ -61,7 +61,7 @@ class EditableBackend extends LiveDataService
 	public function execute()
 	{
         if (!$this->openDB()) {
-            $cmd = str_replace(['ds', '_', 'ref'], '', implode('', array_keys($_GET)));
+            $cmd = str_replace(['ds', '_', 'srcRef'], '', implode('', array_keys($_GET)));
             mylog("### openDB -> failed: $cmd");
             $this->sendResponse( false, "failed#openDB:$cmd");
         }
@@ -69,7 +69,7 @@ class EditableBackend extends LiveDataService
         $cmd = isset($_POST['cmd']) ? $_POST['cmd'] : false;
         $cmd = ",$cmd";
         $this->id = isset($_POST['id']) ? $_POST['id'] : false;
-        $this->dataRef = isset($_POST['dataRef']) ? $_POST['dataRef'] : false;
+        $this->elemRef = isset($_POST['elemRef']) ? $_POST['elemRef'] : false;
 
         if (strpos($cmd, ',get') !== false) {     // get value(s)
             $this->get();
@@ -223,7 +223,7 @@ class EditableBackend extends LiveDataService
                     $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
                 }
 
-            } elseif ($this->dataRef && ($tSel = $this->getTSell( $this->dataRef ))) {
+            } elseif ($this->elemRef && ($tSel = $this->getTSel( $this->elemRef ))) {
                 $outData['data'][$tSel] = $outRec['data'][$tSel];
                 return $outData;
 
@@ -245,7 +245,7 @@ class EditableBackend extends LiveDataService
 
 
 
-    private function getTSell( $dSel )
+    private function getTSel( $dSel )
     {
         foreach ($this->editableElements as $tSel => $rec) {
             if ($rec[0] === $dSel) {
@@ -253,7 +253,7 @@ class EditableBackend extends LiveDataService
             }
         }
         return false;
-    } // getTSell
+    } // getTSel
 
 
 
@@ -353,7 +353,7 @@ class EditableBackend extends LiveDataService
 
         } else {
             foreach ($this->editableElements as $k => $rec) {
-                if ( $this->dataRef && ($rec[0] === $this->dataRef) ) {
+                if ( $this->elemRef && ($rec[0] === $this->elemRef) ) {
                     return $this->sets[ $rec[1] ];
                 }
 
@@ -369,14 +369,14 @@ class EditableBackend extends LiveDataService
 
     private function getDataSelector( $id )
     {
-        if ($id && ($id[0] !== '#')&& ($id[0] !== '.')) {
+        if ($id && ($id[0] !== '#') && ($id[0] !== '.')) {
             $id = "#$id";
         }
         if (isset($this->editableElements[$id])) {
             return $this->editableElements[$id][0];
         } else {
-            if (isset($_POST['dataRef'])) {
-                return $_POST['dataRef'];
+            if (isset($_POST['elemRef'])) {
+                return $_POST['elemRef'];
 
             } else {
                 $targs = array_keys($this->editableElements);
@@ -409,12 +409,12 @@ class EditableBackend extends LiveDataService
         }
 
 	    $useRecycleBin = false;
-        $dataRef = $this->getRequestData('ref');
-        if (!$dataRef || !preg_match('/^[A-Z][A-Z0-9]{4,20}/', $dataRef)) {   // dataRef missing
+        $srcRef = $this->getRequestData('srcRef');
+        if (!$srcRef || !preg_match('/^[A-Z][A-Z0-9]{4,20}/', $srcRef)) {   // elemRef missing
             return false;
         }
-        if (preg_match('/^([A-Z0-9]{4,20})\:(.+)$/', $dataRef, $m)) {
-            $dataRef = $m[1];
+        if (preg_match('/^([A-Z0-9]{4,20})\:(.+)$/', $srcRef, $m)) {
+            $srcRef = $m[1];
             $this->setInx = $m[2];
         } else {
             $this->setInx = false;
@@ -422,7 +422,7 @@ class EditableBackend extends LiveDataService
         }
         require_once SYSTEM_PATH . 'ticketing.class.php';
         $tick = new Ticketing();
-        $ticketRec = $tick->consumeTicket($dataRef);
+        $ticketRec = $tick->consumeTicket($srcRef);
         $this->ticketRec = $ticketRec;
 
         // loop over sets:

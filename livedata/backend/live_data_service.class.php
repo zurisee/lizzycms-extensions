@@ -43,7 +43,7 @@ class LiveDataService
         }
 
         if ($this->lastUpdated == -1) { // means "skip initial update"
-            $this->lastUpdated = microtime(true) - 0.1;
+            $this->lastUpdated = microtime(true);
         }
         if (!$this->lastUpdated) {
             $this->lastUpdated = microtime( true );
@@ -148,7 +148,8 @@ class LiveDataService
                     if ($k[0] === '_') {
                         continue;
                     }
-                    $this->lastModif = $set['_db']->lastModifiedElement( $k );
+                    $recId = $elem["dataSelector"];
+                    $this->lastModif = $set['_db']->lastModifiedElement( $recId );
                     if ($this->lastUpdated < $this->lastModif) {
                         $this->lastUpdated = $this->lastModif;
                         return true;

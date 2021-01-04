@@ -15,8 +15,8 @@ var LiveData = new Object({
     init: function( execInitialUpdate ) {
         var rootObj = this;
         // collect all references within page:
-        $('[data-lzy-data-ref]').each(function () {
-            var ref = $( this ).attr('data-lzy-data-ref');
+        $('[data-lzy-datasrc-ref]').each(function () {
+            var ref = $( this ).attr('data-lzy-datasrc-ref');
             rootObj.refs = rootObj.refs + ref + ',';
         });
         this.refs = this.refs.replace(/,+$/, '');
