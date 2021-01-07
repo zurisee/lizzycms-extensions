@@ -417,6 +417,10 @@ var Editable = new Object({
         if (typeof dSel !== 'undefined') {
             data.elemRef = dSel;
         }
+        const recKey = $elem.parent().attr('data-reckey');
+        if (typeof recKey !== false) {
+            data.recKey = recKey;
+        }
 
         $.ajax({
             url: url,

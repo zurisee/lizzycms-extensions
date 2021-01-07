@@ -176,13 +176,30 @@ class EditableBackend extends LiveDataService
             $this->sendResponse( false,"failed#save (no permission)");
         }
 
-        $res = $db->writeElement($dataKey, $text, true, true, true);
+        if (strpos($dataKey, '#') !== false) {
+            $oldRecKey = @$_POST['recKey'];
+            if ($oldRecKey) {
+                $newRecKey = $text;
+                $rec = $db->readRecord( $oldRecKey );
+                if ($rec) {
+                    $db->deleteRecord( $oldRecKey );
+                    $rec['_key'] = $newRecKey;
+                    $res = $db->writeRecord($newRecKey, $rec);
+                    if (!$res) {
+                        mylog("### save failed!: $id -> [$text]");
+                        $this->sendResponse( false,"failed#save under new key");
+                    }
+                }
+            }
 
-        if (!$res) {
-            mylog("### save failed!: $id -> [$text]");
-            $this->sendResponse( false,"failed#save (locked)");
+        } else {
+            $res = $db->writeElement($dataKey, $text, true, true, true);
+            if (!$res) {
+                mylog("### save failed!: $id -> [$text]");
+                $this->sendResponse( false,"failed#save (locked)");
+            }
+            $db->unlockRec($dataKey, true); // unlock all owner's locks
         }
-		$db->unlockRec($dataKey, true); // unlock all owner's locks
 
         mylog("save: $id => '$text' -> ok");
         $this->sendResponse( $id, 'ok#save');
