@@ -1,3 +1,13 @@
+/*
+        calendar.js
+
+        Custom callback functions:
+            openCalPopupHandler( inx, event, isNewEvent )
+            openPostCalPopupHandler( inx, event, isNewEvent )
+            customOpenNewCalPopup( event )
+            customOpenCalPopup( event )
+ */
+
 
 var fcStdElems = ['allDay','className','end','i','source','start','title','_id','__proto__','event'];
 var inx = 0;
@@ -77,20 +87,10 @@ $( document ).ready(function() {
             viewDidMount: onViewReady,
 
             dateClick: function (e) {
-                if (typeof openCalPopupHandler !== 'undefined') {
-                    openCalPopupHandler(inx, e);
-                } else {
-                    defaultOpenCalPopup(inx, e);
-                    setupTriggers();
-                }
+                openCalPopup(inx, e, true);
             },
             eventClick: function (e) {
-                if (typeof openCalPopupHandler !== 'undefined') {
-                    openCalPopupHandler(inx, e);
-                } else {
-                    defaultOpenCalPopup(inx, e);
-                    setupTriggers();
-                }
+                openCalPopup(inx, e, false);
             },
             eventDrop: function (e) {
                 return calEventChanged(inx, e);
@@ -333,7 +333,25 @@ function saveCurrDate( arg ) {
 
 
 
-function defaultOpenCalPopup(inx, event0) {
+
+function openCalPopup(inx, event, isNewEvent) {
+    var runDefault = true;
+    if (typeof openCalPopupHandler !== 'undefined') {
+        runDefault = openCalPopupHandler(inx, event, isNewEvent);
+    }
+    if (runDefault) {
+        defaultOpenCalPopup(inx, event, isNewEvent);
+        setupTriggers();
+    }
+    if (typeof openPostCalPopupHandler !== 'undefined') {
+        openPostCalPopupHandler(inx, event, isNewEvent);
+    }
+} // openCalPopup
+
+
+
+
+function defaultOpenCalPopup(inx, event0, isNewEvent) {
     var thisCal = lzyCal[ inx ];
     if (!thisCal.editingPermission) {
         return;
@@ -376,7 +394,7 @@ function defaultOpenCalPopup(inx, event0) {
 
     applyCatRestrictions();
 
-    if (typeof event === 'undefined') {                          // new entry
+    if ( isNewEvent ) {                                       // new entry
         if (typeof customOpenNewCalPopup === 'function') {
             res = customOpenNewCalPopup( event0 );
             if (res) {
@@ -388,6 +406,7 @@ function defaultOpenCalPopup(inx, event0) {
 
         start = moment( event0.date ).utc();
         dateStr = start.format('YYYY-MM-DD');
+
         if (defaultEventDuration === 'allday') {
             event0.allDay = true;
 

@@ -306,3 +306,7 @@ $color-light8: #ffebffff;
 .qtip-content .lzy-cal-custom *, .fc-list-event-title .lzy-cal-custom *, .qtip-content > div *, .fc-list-event-title > div * {
 	text-indent: 0em; }
 
+/* === small screen ======= */
+#lzy.lzy-small-screen .lzy-cal-popup-template_wrapper {
+	width: 100vh;
+}

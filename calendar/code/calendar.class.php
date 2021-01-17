@@ -52,6 +52,24 @@ class LzyCalendar
         $this->category = isset($args['categories']) ? $args['categories']: '';
         $this->categories = $categories = explodeTrim(',', $this->category);
         $this->showCategories = isset($args['showCategories']) ? $args['showCategories']: '';
+
+        // special case '_users_' for categories:
+        if ($this->category === '<em>users</em>') {
+            $this->category = $this->lzy->auth->getListOfUsers(['exclude' => '\badmin\b']);
+            $this->categories = $categories = explodeTrim(',', $this->category);
+            $args['categoryPrefixes'] = $this->category;
+            $js = <<<EOT
+
+const lzyLoggedinUser = '{{ user }}';
+function openPostCalPopupHandler() {
+    $('#lzy-calendar-default-form [value="' + lzyLoggedinUser + '"]').prop('selected', true);
+}
+
+EOT;
+
+            $this->page->addJs( $js );
+        }
+
         $this->domain = isset($args['domain']) ? $args['domain']: $_SERVER["HTTP_HOST"];
         $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired']: true;
 
@@ -425,7 +443,7 @@ EOT;
 
         $categoryCombo = '';
         if ($category) {
-            $categories = explode(',', $category);
+            $categories = $this->categories;
             if (sizeof($categories) > 1) {
                 foreach ($categories as $cat) {
                     $catVal = $cat = trim($cat);
