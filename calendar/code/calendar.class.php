@@ -54,8 +54,13 @@ class LzyCalendar
         $this->showCategories = isset($args['showCategories']) ? $args['showCategories']: '';
 
         // special case '_users_' for categories:
-        if ($this->category === '<em>users</em>') {
-            $this->category = $this->lzy->auth->getListOfUsers(['exclude' => '\badmin\b']);
+        if (preg_match('|<em>(.*)</em>|', $this->category, $m)) {
+            if ($this->category === '<em>users</em>') {
+                $this->category = $this->lzy->auth->getListOfUsers(['exclude' => '\badmin\b']);
+            } else {
+                $group = $m[1];
+                $this->category = $this->lzy->auth->getListOfUsers(['exclude' => '\badmin\b', 'group' => $group]);
+            }
             $this->categories = $categories = explodeTrim(',', $this->category);
             $args['categoryPrefixes'] = $this->category;
             $js = <<<EOT
