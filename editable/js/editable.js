@@ -413,11 +413,14 @@ var Editable = new Object({
             text: text,
             srcRef: this.getDatasrcRef(id),
         };
-        var dSel = $( '#' + id ).attr('data-ref');
+        var dSel = $elem.attr('data-ref');
+        const recKey = $elem.parent().attr('data-reckey');
         if (typeof dSel !== 'undefined') {
+            if (typeof recKey !== 'undefined') {
+                dSel = dSel.replace(/^(\d+)/, recKey);
+            }
             data.elemRef = dSel;
         }
-        const recKey = $elem.parent().attr('data-reckey');
         if (typeof recKey !== false) {
             data.recKey = recKey;
         }
