@@ -330,14 +330,17 @@ EOT;
                 loadCustomCalPopup($inx, $this->lzy, $popupForm, $this->edPermitted);
 
             } else {
-                $this->loadDefaultPopup();
-                $str .= <<<EOT
+                $this->lzy->page->addModules( 'POPUPS' );
+                $popup = <<<EOT
 
-    <div id='lzy-cal-popup-template'>
+    <div id='lzy-cal-popup-template-$inx' class='lzy-cal-popup-template' style="display: none">
+        <div>
 $popupForm
+        </div>
     </div><!-- /lzy-cal-popup-template -->
 
 EOT;
+                $this->page->addBodyEndInjections( $popup );
             }
         }
 
@@ -378,7 +381,6 @@ EOT;
         // render default popup-form:
         $popupForm = <<<EOT
     
-        <h1><span id="lzy-cal-new-event-header">{{ lzy-cal-new-entry }}</span><span id="lzy-cal-modify-event-header">{{ lzy-cal-modif-entry }}</span></h1>
         <form id='lzy-calendar-default-form' method='post' action="$backend">
             <input type='hidden' id='lzy-inx' name='inx' value='$inx' />
             <input type='hidden' id='lzy-cal-ref' name='lzy-cal-ref' value='$this->tickHash' />
@@ -434,6 +436,10 @@ $customFields
             </div>
         
         </form>
+        <div style="display: none;">
+            <span id="lzy-cal-new-event-header">{{ lzy-cal-new-entry }}</span>
+            <span id="lzy-cal-modify-event-header">{{ lzy-cal-modif-entry }}</span>
+        </div>
 
 EOT;
         return $popupForm;
@@ -532,17 +538,17 @@ EOT;
     private function loadDefaultPopup()
     {
         // render popup related arguments:
-        $args = [
-            'contentFrom' => '#lzy-cal-popup-template',
-            'class' => 'lzy-cal-popup',
-            'draggable' => true,
-            'triggerSource' => 'none',
-            'triggerEvent' => 'none',
-            'closeOnBgClick' => true,
-            'width' => '20em',
-        ];
-
-        $this->lzy->page->addPopup($args);
+        $jq = <<<EOT
+lzyPopup({
+    contentRef: '#lzy-cal-popup-template',
+    class: 'lzy-cal-popup',
+    draggable: true,
+    header: true,
+    closeOnBgClick: true,
+});
+EOT;
+        $this->lzy->page->addModules( 'POPUPS' );
+        $this->lzy->page->addJq( $jq );
     } // renderDefaultPopup
 
 

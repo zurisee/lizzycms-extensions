@@ -3,7 +3,7 @@
 $GLOBALS['globalParams']['editaleSetInx'] = 0;
 $GLOBALS['globalParams']['editableInitialized'] = false;
 
-$page->addModules('JS_POPUPS');
+$page->addModules('POPUPS');
 
 $okSymbol = true? '&#10003;': '&radic;';
 $cancelSymbol = '&times;';
