@@ -58,9 +58,9 @@ class Editable extends LiveData
                 $this->page->addModules('~sys/extensions/editable/js/editable.js');
                 $jq = <<<EOT
 
-if (typeof Editable !== 'undefined') {
-    Editable.init();
-}
+editables[ editableInx ] = new Editable( this );
+editables[ editableInx ].init();
+editableInx++;
 
 EOT;
                 $this->page->addJq( $jq );
@@ -158,8 +158,8 @@ EOT;
                 $eClass = substr($eId, 1);
                 $eId = "lzy-editable-$this->editaleSetInx-". ($i + 1);
             }
-            $value = '';
             $title = '';
+            $value = $this->db->readElement($this->dataSelectors[$i]);
             if (isset( $data[ $this->dataSelectors[$i] ]) ) {
                 if ($this->db->isRecLocked($this->dataSelectors[$i])) {
                     $eClass .= ' lzy-element-locked';
@@ -304,47 +304,47 @@ EOT;
 
 
 /*
-//    private function prepareProtectedCellsArray($args)
-//    {
-//        $protectedCells = [];
-//        if ($args['protectedCells']) {
-//            $protCells = $args['protectedCells'];
-//            $delim = (substr_count($protCells, ',') > substr_count($protCells, '|')) ? ',' : '|';
-//            $elems = parseArgumentStr($protCells, $delim);
-//            $protectedCells = array_fill(0, $args['nRows'], array_fill(0, $args['nCols'], false));;
-//            foreach ($elems as $elem) {
-//                if (!trim($elem)) {
-//                    continue;
-//                }
-//                $param = substr($elem, 1);
-//                $paramArr = parseNumbersetDescriptor($param);
-//                switch ($elem[0]) {
-//                    case 'r':
-//                        while ($r = array_shift($paramArr)) {
-//                            $r = intval($param) - 1;
-//                            $protectedCells[$r] = array_fill(0, $args['nCols'], true);
-//                        }
-//                        break;
-//                    case 'c':
-//                        while ($c = array_shift($paramArr)) {
-//                            $c = intval($c) - 1;
-//                            for ($r = 0; $r < $args['nRows']; $r++) {
-//                                $protectedCells[$r][$c] = true;
-//                            }
-//                        }
-//                        break;
-//                    case 'e':
-//                        list($c, $r) = preg_split('/\D/', $param);
-//                        $r = intval($r) - 1;
-//                        $c = intval($c) - 1;
-//                        $protectedCells[$r][$c] = true;
-//                        break;
-//                }
-//            }
-//        }
-//        $args['protectedCells'] = $protectedCells;
-//        return $args;
-//    } // prepareProtectedCellsArray
+    private function prepareProtectedCellsArray($args)
+    {
+        $protectedCells = [];
+        if ($args['protectedCells']) {
+            $protCells = $args['protectedCells'];
+            $delim = (substr_count($protCells, ',') > substr_count($protCells, '|')) ? ',' : '|';
+            $elems = parseArgumentStr($protCells, $delim);
+            $protectedCells = array_fill(0, $args['nRows'], array_fill(0, $args['nCols'], false));;
+            foreach ($elems as $elem) {
+                if (!trim($elem)) {
+                    continue;
+                }
+                $param = substr($elem, 1);
+                $paramArr = parseNumbersetDescriptor($param);
+                switch ($elem[0]) {
+                    case 'r':
+                        while ($r = array_shift($paramArr)) {
+                            $r = intval($param) - 1;
+                            $protectedCells[$r] = array_fill(0, $args['nCols'], true);
+                        }
+                        break;
+                    case 'c':
+                        while ($c = array_shift($paramArr)) {
+                            $c = intval($c) - 1;
+                            for ($r = 0; $r < $args['nRows']; $r++) {
+                                $protectedCells[$r][$c] = true;
+                            }
+                        }
+                        break;
+                    case 'e':
+                        list($c, $r) = preg_split('/\D/', $param);
+                        $r = intval($r) - 1;
+                        $c = intval($c) - 1;
+                        $protectedCells[$r][$c] = true;
+                        break;
+                }
+            }
+        }
+        $args['protectedCells'] = $protectedCells;
+        return $args;
+    } // prepareProtectedCellsArray
 */
 
 

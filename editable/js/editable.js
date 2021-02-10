@@ -4,21 +4,28 @@
 
 "use strict";
 
-var Editable = new Object({
-    backend: systemPath+'extensions/editable/backend/_editable_backend.php',
-    dataRef: '',
-    ignoreBlur: [],
-    origValue: [],
-    newValue:  [],
-    editingTimeout: 60, // sec
+var editableInx = 0;
+var editables = [];
 
-    showAllButtons: false,
-    showOkButton: false,
-    showCancelButton: false,
-    timeoutTimer: false,
-    doubleClick: [],
 
-    init: function() {
+
+function Editable( options ) {
+    this.options = options;
+    this.backend = systemPath+'extensions/editable/backend/_editable_backend.php';
+    this.dataRef = '';
+    this.ignoreBlur = [];
+    this.origValue = [];
+    this.newValue = [];
+    this.editingTimeout = 60; // sec
+
+    this.showAllButtons = false;
+    this.showOkButton = false;
+    this.showCancelButton = false;
+    this.timeoutTimer = false;
+    this.doubleClick = [];
+
+
+    this.init = function() {
         // determine global state:
         this.showAllButtons = $('body').hasClass('touch') ||
             $('html').hasClass('touchevents') ||
@@ -34,13 +41,12 @@ var Editable = new Object({
         $edElem.attr('tabindex', 0);
 
         this.initEditingHandlers( $edElem );
-    }, // init
+    }; // init
 
 
 
-
-    initEditingHandlers: function( $edElem ) {
-        var rootObj = this;
+    this.initEditingHandlers = function( $edElem ) {
+        var parent = this;
 
         $edElem
             .focus(function () {
@@ -49,8 +55,7 @@ var Editable = new Object({
                     return;
                 }
                 var id = $(this).attr('id');
-                // rootObj.doubleClick[ id ] = macKeys.cmdKey;
-                rootObj.makeEditable( this );
+                parent.makeEditable( this );
             })
             .on('click', 'input, textarea', function (e) {
                 e.stopImmediatePropagation();
@@ -58,25 +63,25 @@ var Editable = new Object({
             .on('blur', 'input, textarea', function () {
                 var $this = $(this).parent();
                 var id = $this.attr('id');
-                if (rootObj.timeoutTimer) {
-                    clearTimeout(rootObj.timeoutTimer);
-                    rootObj.timeoutTimer = false;
+                if (parent.timeoutTimer) {
+                    clearTimeout(parent.timeoutTimer);
+                    parent.timeoutTimer = false;
                 }
 
                 // wait a moment to make sure key and button handlers fire first:
                 setTimeout(function () {
-                    if (!rootObj.ignoreBlur[id]) {
+                    if (!parent.ignoreBlur[id]) {
                         // if this point reached: no button or key became active.
-                        rootObj.ignoreBlur[id] = true;
+                        parent.ignoreBlur[id] = true;
 
-                        if (!rootObj.showOkButton) {           // no buttons -> save
-                            rootObj.terminateEditable($this, true);
+                        if (!parent.showOkButton) {           // no buttons -> save
+                            parent.terminateEditable($this, true);
 
-                        } else if (rootObj.showCancelButton) { // ok&cancel -> ignore
+                        } else if (parent.showCancelButton) { // ok&cancel -> ignore
                             return;
 
                         } else {                            // only ok button -> cancel
-                            rootObj.terminateEditable($this, false);
+                            parent.terminateEditable($this, false);
                         }
                     }
                 }, 100);
@@ -85,9 +90,9 @@ var Editable = new Object({
                 e.stopPropagation();
                 const $el = $(this).parent();
                 const id = $el.attr('id');
-                rootObj.newValue[ id ] = $('input, textarea', $el).val();
-                rootObj.ignoreBlur[ id ] = true;
-                rootObj.terminateEditable($el, true);
+                parent.newValue[ id ] = $('input, textarea', $el).val();
+                parent.ignoreBlur[ id ] = true;
+                parent.terminateEditable($el, true);
             });
 
         if (this.showCancelButton) {
@@ -95,19 +100,19 @@ var Editable = new Object({
                 e.stopPropagation();
                 const $el = $(this).parent();
                 const id = $el.attr('id');
-                rootObj.newValue[ id ] = rootObj.origValue[ id ];
-                rootObj.ignoreBlur[ id ] = true;
-                rootObj.terminateEditable($el, false);
+                parent.newValue[ id ] = parent.origValue[ id ];
+                parent.ignoreBlur[ id ] = true;
+                parent.terminateEditable($el, false);
             });
         }
 
         this.setupKeyHandlers();
-        }, // initEditingHandlers
+    }; // initEditingHandlers
 
 
 
-    makeEditable: function( that ) {
-        var rootObj = this;
+    this.makeEditable = function( that ) {
+        var parent = this;
         const $elem = $( that );
 
         if ($elem.closest('.lzy-editable-inactive').length) {
@@ -116,11 +121,11 @@ var Editable = new Object({
 
         // check for already active fields, close others:
         $('.lzy-editable-active').each(function () {
-            if (rootObj !== that) {
+            if (parent !== that) {
                 if ($elem.closest('.lzy-editable-show-button,.lzy-editable-show-buttons').length) {
-                    rootObj.terminateEditable( $(this), false );
+                    parent.terminateEditable( $(this), false );
                 } else {
-                    rootObj.terminateEditable( $(this), true );
+                    parent.terminateEditable( $(this), true );
                 }
             }
         });
@@ -157,9 +162,7 @@ var Editable = new Object({
         this.lockField(id, function(id, json) {
             var _id = '_' + id;
             var $elem = $('#' + id);
-            var origValue = $elem.text();
-            rootObj.ignoreBlur[ id ] = false;
-            rootObj.origValue[ id ] = origValue;
+            parent.ignoreBlur[ id ] = false;
             $elem.removeClass('lzy-wait');
 
             // evaluate lock request's response:
@@ -173,7 +176,7 @@ var Editable = new Object({
                     });
                     return;
                 } else if (data.result.match(/^ok/)) {
-                    rootObj.updateUi(data);
+                    parent.updateUi(data);
                 } else {
                     mylog(data.result);
                     $elem.addClass('lzy-element-locked');
@@ -186,54 +189,55 @@ var Editable = new Object({
 
             // if it was a double click: treat as a multiline textarea:
             if (lzyEnableEditableDoubleClick) {
-                if ((typeof rootObj.doubleClick[id] !== 'undefined') && rootObj.doubleClick[id]) {
-                    rootObj.doubleClick[ id ] = true;
+                if ((typeof parent.doubleClick[id] !== 'undefined') && parent.doubleClick[id]) {
+                    parent.doubleClick[ id ] = true;
                 }
             }
 
             $elem.removeClass('lzy-editable').addClass('lzy-editable-active');
 
             // on touch devices: always show buttons
-            if (!rootObj.showAllButtons) {
-                rootObj.showOkButton = ( $elem.hasClass('lzy-editable-show-button') ||
+            if (!parent.showAllButtons) {
+                parent.showOkButton = ( $elem.hasClass('lzy-editable-show-button') ||
                     $elem.closest('.lzy-editable-wrapper').hasClass('lzy-editable-show-button'));
             }
             var buttons = '';
-            if (rootObj.showOkButton) {
-                buttons = rootObj.renderOkButton();
-                if (rootObj.showCancelButton) {
-                    buttons = buttons + rootObj.renderCancelButton();
+            if (parent.showOkButton) {
+                buttons = parent.renderOkButton();
+                if (parent.showCancelButton) {
+                    buttons = buttons + parent.renderCancelButton();
                 }
             }
 
             // now inject input/textarea element and buttons:
             var $innerEl = null;
-            if (rootObj.isMultiLineElement( $elem )) {
-                $elem.html(buttons+'<textarea id="' + _id + '" aria-live="polite" aria-relevant="all">' + rootObj.origValue[id] + '</textarea>');
+            var val = $elem.text();
+            parent.origValue[id] = val;
+            if (parent.isMultiLineElement( $elem )) {
+                $elem.html(buttons+'<textarea id="' + _id + '" aria-live="polite" aria-relevant="all">' + val + '</textarea>');
                 $elem.addClass('lzy-editable-multiline');
                 $innerEl = $('textarea', $elem);
             } else {
-                $elem.html(buttons+'<input id="' + _id + '" aria-live="polite" aria-relevant="all" value="' + rootObj.origValue[id] + '"/>');
+                $elem.html(buttons+'<input id="' + _id + '" aria-live="polite" aria-relevant="all" value="' + val + '"/>');
                 $innerEl = $('input', $elem);
             }
 
             // set up timeout on editable field:
-            rootObj.resetEditableTimeout();
+            parent.resetEditableTimeout();
 
-            rootObj.revealButtons($elem);
-            rootObj.putFocus( $innerEl );
+            parent.revealButtons($elem);
+            parent.putFocus( $innerEl );
         });
-    }, // makeEditable
+    }; // makeEditable
 
 
 
-
-    setupKeyHandlers: function() {
+    this.setupKeyHandlers = function() {
         // Enter: save and close
         // ESC:     close and restore initial value
         // Tab:  save, close and jump to next tabstop (incl. next editable)
 
-        var rootObj = this;
+        var parent = this;
         var $elem = $('.lzy-editable');
 
         $elem.on('keydown', 'input, textarea', function(e) {
@@ -241,7 +245,7 @@ var Editable = new Object({
             const meta = macKeys.cmdKey;
             var $el = $(this).parent();
             if (key === 9) {                  // Tab
-                rootObj.onKeyTab(e, $el);
+                parent.onKeyTab(e, $el);
             }
         });
 
@@ -253,14 +257,14 @@ var Editable = new Object({
             if ((key === 13) || // Enter
                 ((key === 13) && event.ctrlKey) ||      // Win: ctrl-enter
                 ((key === 13) && macKeys.cmdKey)) {     // Mac: cmd-enter
-                rootObj.onKeyEnter(e, $el);
+                parent.onKeyEnter(e, $el);
 
             } else if(key === 27) {                // ESC
-                rootObj.onKeyEsc(e, $el);
+                parent.onKeyEsc(e, $el);
 
             } else {
                 const id = $el.attr('id');
-                rootObj.newValue[ id ] = $('input, textarea', $el).val();
+                parent.newValue[ id ] = $('input, textarea', $el).val();
             }
         });
         $elem.on('keyup', 'textarea', function(e) {
@@ -270,52 +274,52 @@ var Editable = new Object({
             e.preventDefault();
             if (((key === 13) && event.ctrlKey) ||      // Win: ctrl-enter
                 ((key === 13) && macKeys.cmdKey)) {     // Mac: cmd-enter
-                rootObj.onKeyEnter(e, $el);
+                parent.onKeyEnter(e, $el);
 
             } else if(key === 27) {                // ESC
-                rootObj.onKeyEsc(e, $el);
+                parent.onKeyEsc(e, $el);
 
             } else {
                 const id = $el.attr('id');
-                rootObj.newValue[ id ] = $('input, textarea', $el).val();
+                parent.newValue[ id ] = $('input, textarea', $el).val();
             }
         });
 
-    }, // setupKeyHandler
+    }; // setupKeyHandler
 
 
 
-    onKeyEnter: function( e, $elem ) {
+    this.onKeyEnter = function( e, $elem ) {
         e.stopImmediatePropagation();
         const id = $elem.attr('id');
         this.newValue[ id ] = $('input, textarea', '#' + id).val();
         this.ignoreBlur[ id ] = true;
         this.terminateEditable($elem, true);
-    }, // onKeyEnter
+    }; // onKeyEnter
 
 
 
-    onKeyTab: function( e, $elem ) {
+    this.onKeyTab = function( e, $elem ) {
         e.stopImmediatePropagation();
         const id = $elem.attr('id');
         this.newValue[ id ] = $('input, textarea', '#' + id).val();
         this.ignoreBlur[ id ] = true;
         this.terminateEditable( $elem,true);
-    }, // onKeyTab
+    }; // onKeyTab
 
 
 
-    onKeyEsc: function( e, $elem ) {
+    this.onKeyEsc = function( e, $elem ) {
         e.stopImmediatePropagation();
         const id = $elem.attr('id');
         this.newValue[ id ] = this.origValue[ id ];
         this.ignoreBlur[ id ] = true;
         this.terminateEditable($elem, false);
-    }, // onKeyEsc
+    }; // onKeyEsc
 
 
 
-    lockField: function(id, callback) {
+    this.lockField = function(id, callback) {
         mylog( 'lockField: '+id );
         const url = this.backend;
         var $inputField = $('#_' + id);
@@ -343,14 +347,13 @@ var Editable = new Object({
                 $('#' + id).removeClass('lzy-wait').addClass('lzy-locked');
             }
         });
-    }, // lockField
+    }; // lockField
 
 
 
-
-    unlockField: function(id) {
+    this.unlockField = function(id) {
         mylog( 'unlockField: '+id );
-        var rootObj = this;
+        var parent = this;
         const url = this.backend;
         var data = {
             cmd: 'unlock',
@@ -367,7 +370,7 @@ var Editable = new Object({
             data: data,
             cache: false,
             success: function (json) {
-                rootObj.handleResponse(json, id, false);
+                parent.handleResponse(json, id, false);
             },
             error: function(xhr, status, error) {
                 mylog( 'unlockField: failed -> ' + error );
@@ -375,17 +378,14 @@ var Editable = new Object({
             }
         });
         return true;
-    }, // unlockField
+    }; // unlockField
 
 
 
-
-
-
-    saveAndUnlockField: function(id) {
-        var rootObj = this;
+    this.saveAndUnlockField = function(id) {
+        var parent = this;
         var $elem = $('#' + id);
-        var newValue = rootObj.newValue[ id ];
+        var newValue = parent.newValue[ id ];
         if (typeof newValue === 'undefined') {
             newValue = $('input', $elem).val();
         }
@@ -395,8 +395,8 @@ var Editable = new Object({
             if (this.showOkButton) {
                 this.hideButtons($elem);
                 setTimeout(function(){ // wait for buttons to disappear
-                    $elem.text(rootObj.origValue[ id ]).removeClass('lzy-editable-active').addClass('lzy-editable');
-                    rootObj.unlockField(id);
+                    $elem.text(parent.origValue[ id ]).removeClass('lzy-editable-active').addClass('lzy-editable');
+                    parent.unlockField(id);
                 }, 150);
             } else {
                 $elem.text(this.origValue[ id ]).removeClass('lzy-editable-active').addClass('lzy-editable');
@@ -431,7 +431,7 @@ var Editable = new Object({
             data: data,
             cache: false,
             success: function (json) {
-                rootObj.handleResponse(json, id, '#lzy-db-error');
+                parent.handleResponse(json, id, '#lzy-db-error');
             },
             error: function(xhr, status, error) {
                 mylog( 'save: failed -> ' + error );
@@ -439,13 +439,12 @@ var Editable = new Object({
             }
         });
         return true;
-    }, // saveAndUnlockField
+    }; // saveAndUnlockField
 
 
 
-
-    terminateEditable: function($this, save) {
-        var rootObj = this;
+    this.terminateEditable = function($this, save) {
+        var parent = this;
         var $elems, $elem = null;
         var id = null;
 
@@ -458,9 +457,9 @@ var Editable = new Object({
         }
 
         // clear the editable field timeout:
-        if (rootObj.timeoutTimer) {
-            clearTimeout(rootObj.timeoutTimer);
-            rootObj.timeoutTimer = false;
+        if (parent.timeoutTimer) {
+            clearTimeout(parent.timeoutTimer);
+            parent.timeoutTimer = false;
         }
 
         $elems.each(function () {
@@ -470,69 +469,66 @@ var Editable = new Object({
             id = $elem.attr('id');
             if ( id ) {
                 if (save) {
-                    rootObj.saveAndUnlockField(id);
+                    parent.saveAndUnlockField(id);
                 } else {
-                    rootObj.unlockField(id);
-                    rootObj.newValue[id] = rootObj.origValue[id];
+                    parent.unlockField(id);
+                    parent.newValue[id] = parent.origValue[id];
                 }
             }
 
-            if (rootObj.showOkButton) {
-                rootObj.hideButtons($elem);
+            if (parent.showOkButton) {
+                parent.hideButtons($elem);
                 setTimeout(function(){ // wait for buttons to disappear
                     if ( id ) {
-                        $elem.text( rootObj.newValue[id] );
+                        $elem.text( parent.newValue[id] );
                         $elem.removeClass('lzy-editable-active').addClass('lzy-editable');
-                        rootObj.ignoreBlur[id] = true;
+                        parent.ignoreBlur[id] = true;
                     }
                     $('input, textarea', $elem).blur();
                 }, 150);
             } else {
                 if ( id ) {
-                    $elem.text(rootObj.newValue[id]).removeClass('lzy-editable-active').addClass('lzy-editable');
-                    rootObj.ignoreBlur[id] = true;
+                    $elem.text(parent.newValue[id]).removeClass('lzy-editable-active').addClass('lzy-editable');
+                    parent.ignoreBlur[id] = true;
                 }
                 $('input, textarea', $elem).blur();
             }
         });
-    }, // terminateEditable
+    }; // terminateEditable
 
 
 
-
-    renderOkButton: function() {
+    this.renderOkButton = function() {
         return $('#lzy-editable-ok-text').html();
-    }, // renderOkButton
+    }; // renderOkButton
 
 
 
-    renderCancelButton: function() {
+    this.renderCancelButton = function() {
         return $('#lzy-editable-cancel-text').html();
-    }, // renderCancelButton
+    }; // renderCancelButton
 
 
 
-    revealButtons: function($elem) {
+    this.revealButtons = function($elem) {
         const $inp = $('input, textarea', $elem);
         const $btn = $('.lzy-editable-submit-button', $elem);
         if ($btn.length) {
             const w = $btn[0].offsetLeft - 2;
-            $inp.animate({width: w + 'px'}, 150);
+            $inp.animate({width: w + 'px'}, 100);
         }
-    }, // revealButtons
+    }; // revealButtons
 
 
 
-
-    hideButtons: function($elem) {
+    this.hideButtons = function($elem) {
         const $inp = $('input, textarea', $elem);
-        $inp.animate({width: '100%'}, 150);
-    }, // hideButtons
+        $inp.animate({width: '100%'}, 100);
+    }; // hideButtons
 
 
 
-
-    getDatasrcRef: function(id) {
+    this.getDatasrcRef = function(id) {
         var dataRef = '';
         if (typeof id !== 'undefined') {
             dataRef = $('#' + id).attr('data-lzy-datasrc-ref');
@@ -546,11 +542,11 @@ var Editable = new Object({
             dataRef = $('.lzy-data-ref').attr('data-lzy-datasrc-ref');
         }
         return dataRef;
-    }, // getDatasrcRef
+    }; // getDatasrcRef
 
 
 
-    handleResponse: function(json0, id, msgId, errorHandler) {
+    this.handleResponse = function(json0, id, msgId, errorHandler) {
         const json = json0.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
         if (!json) {
             return;
@@ -573,15 +569,16 @@ var Editable = new Object({
                 errorHandler(data);
             }
         }
-    }, // handleResponse
+    }; // handleResponse
 
 
 
-
-    updateUi: function(data) {
+    this.updateUi = function(data) {
         var txt = '';
         var x, y, c1, inx, cls, $tmp, $dataTable = null;
         var isDataTable = null;
+        var id;
+        const parent = this;
         const data1 = data.data;
         if (typeof data1 === 'object') {
             for (var tSel in data1) {
@@ -589,7 +586,12 @@ var Editable = new Object({
                 c1 = tSel.substr(0,1);
                 $( tSel ).each(function() {
                     if (!$(this).hasClass('lzy-editable-active')) {
-                        $(tSel).text(txt);
+                        $( this ).text( txt );
+                        //mylog( tSel + ' <= ' + txt);
+                        id = tSel.substr(1);
+                        if (typeof parent.origValue !== 'undefined') {
+                            parent.origValue[id] = txt;
+                        }
                     }
                 });
             }
@@ -597,51 +599,49 @@ var Editable = new Object({
                 lzyTable[ inx ].draw();
             }
         }
-    }, // updateUi
+    }; // updateUi
 
 
 
-
-
-    resetEditableTimeout: function() {
-        var rootObj = this;
+    this.resetEditableTimeout = function() {
+        var parent = this;
         if (this.timeoutTimer) {
             clearTimeout(this.timeoutTimer);
             this.timeoutTimer = false;
         }
         this.timeoutTimer = setTimeout(function () {
-            rootObj.onEditableTimedOut();
+            parent.onEditableTimedOut();
         }, this.editingTimeout * 1000);
-    }, // resetEditableTimeout
+    }; // resetEditableTimeout
 
 
 
-    onEditableTimedOut: function() {
+    this.onEditableTimedOut = function() {
         mylog('editable mode timed out');
         var $elem = $('.lzy-editable-active');
         this.terminateEditable($elem, false);
-    }, // onEditableTimedOut
+    }; // onEditableTimedOut
 
 
 
-
-    putFocus: function( $elem ) {
+    this.putFocus = function( $elem ) {
         setTimeout(function () {
             var fldLength= $elem.val().length;
             $elem.focus();
             $elem[0].setSelectionRange(fldLength, fldLength);
         }, 150);
-    }, // putFocus
+    }; // putFocus
 
 
 
-    isMultiLineElement: function( $elem ) {
+    this.isMultiLineElement = function( $elem ) {
         const m1 = $('.lzy-editable-multiline', $elem).length;
         const m2 = $elem.closest('.lzy-editable-multiline').length;
         const id = $elem.attr('id');
         var m3 = this.doubleClick[ id ];
         m3 = (typeof m3 !== 'undefined') ? lzyEnableEditableDoubleClick && m3 : false;
         return (m1 || m2 || m3);
-    }, // isMultiLineElement
+    }; // isMultiLineElement
 
-}); // Object
+} // Editable
+

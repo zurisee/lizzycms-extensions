@@ -232,28 +232,11 @@ class EditableBackend extends LiveDataService
         }
         foreach ($this->sets as $setName => $set) {
             $outRec = $this->getData($setName);
-            if ($id === true) {
-                if (!$outData) {
-                    $outData = $outRec;
-                } else {
-                    $outData['data'] = array_merge($outData['data'], $outRec['data']);
-                    $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
-                }
-
-            } elseif ($this->elemRef && ($tSel = $this->getTSel( $this->elemRef ))) {
-                $outData['data'][$tSel] = $outRec['data'][$tSel];
-                return $outData;
-
+            if (!$outData) {
+                $outData = $outRec;
             } else {
-                foreach ($outRec['data'] as $key => $val) {
-                    if ($key === $id) {
-                        $outData['data'][$key] = $val;
-                        if (isset($outData['locked'][$key])) {
-                            $outData['locked'][$key] = true;
-                        }
-                        break 2;
-                    }
-                }
+                $outData['data'] = array_merge($outData['data'], $outRec['data']);
+                $outData['locked'] = array_merge($outData['locked'], $outRec['locked']);
             }
         }
         return $outData;
@@ -265,8 +248,14 @@ class EditableBackend extends LiveDataService
     private function getTSel( $dSel )
     {
         foreach ($this->editableElements as $tSel => $rec) {
+            if ($rec[1] !== $this->setInx) { continue; }
             if ($rec[0] === $dSel) {
                 return $tSel;
+            } elseif ((strpos($tSel, '*,*') !== false) &&
+                preg_match('/(\d+),(\d+)/', $dSel, $m) &&
+                preg_match('/^ (.*?) (\*) (.*?) (\*) (.*?) $/x', $tSel, $mm)) {
+                    $tSel = "{$mm[1]}{$m[1]}{$mm[3]}{$m[2]}{$mm[5]}";
+                    return $tSel;
             }
         }
         return false;
@@ -281,10 +270,12 @@ class EditableBackend extends LiveDataService
         $dbIsLocked = $setDb->isDbLocked( false );
         $lockedElements = [];
         $tmp = [];
-        foreach ($this->sets[ $setName ] as $targetSelector => $dataKey) {
+        $set = $this->sets[ $setName ];
+        foreach ($set as $targetSelector => $dataKey) {
             if ($targetSelector[0] === '_') {
                 continue;
             }
+
             $data = $setDb->read();
             if (strpos($dataKey, '*,*') !== false) {
                 if ($data) {
@@ -292,10 +283,12 @@ class EditableBackend extends LiveDataService
                     foreach ($data as $rec) {
                         $r++;
                         // at this point we address data by position, not labels -> remove elem-labels:
+                        $keys = array_keys($rec);
                         $rec = array_values($rec);
                         foreach ($rec as $c => $value) {
-                            if (preg_match('/(.*? ) \* (.*? ) \* (.*? )/x', $targetSelector, $m)) {
-                                $tSel = $m[1] . ($r+1) . $m[2] . ($c+1) . $m[3];
+                            if ($keys[$c][0] === '_') { continue; }
+                            if (preg_match('/(.*? ) \* (.*? ) \* (.* )/x', $targetSelector, $m)) {
+                                $tSel = $m[1] . ($r) . $m[2] . ($c) . $m[3];
                             }
                             $tmp[ $tSel ] = $value;
                         }
