@@ -19,7 +19,7 @@ class LiveData
             $jq = <<<EOT
 
 if ($('[data-lzy-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
-    LiveData.init();
+    liveDataInit();
 }
 
 EOT;
@@ -169,7 +169,7 @@ EOT;
     private function deriveTargetSelector($targetSelector, $dataSelector, $tickRec)
     {
         if (!$targetSelector) {
-            $targetSelector = preg_replace('/\{(.*?)\},/', "$1", $dataSelector);
+            $targetSelector = preg_replace('/{(.*?)},/', "$1", $dataSelector);
             $targetSelector = str_replace([',','][', '[', ']'], ['-','-','',''], $targetSelector);
             $targetSelector = '#liv-'.strtolower(str_replace(' ', '-', $targetSelector));
             if ($tickRec) {

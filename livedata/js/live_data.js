@@ -3,21 +3,26 @@
 
 "use strict";
 
-var LiveData = new Object({
-    ajaxHndl: null,
-    lastUpdated: 0,
-    paramName: '',
-    paramSource: '',
-    prevParamValue: '',
-    refs: '',
-    debugOutput: false,
+var liveData = null;
 
-    init: function( execInitialUpdate ) {
-        var rootObj = this;
+
+
+function LiveData() {
+    this.ajaxHndl = null;
+    this.lastUpdated = 0;
+    this.paramName = '';
+    this.paramSource = ''; 
+    this.prevParamValue = '';
+    this.refs = '';
+    this.debugOutput = false;
+
+
+    this.init = function( execInitialUpdate ) {
+        var parent = this;
         // collect all references within page:
         $('[data-lzy-datasrc-ref]').each(function () {
             var ref = $( this ).attr('data-lzy-datasrc-ref');
-            rootObj.refs = rootObj.refs + ref + ',';
+            parent.refs = parent.refs + ref + ',';
         });
         this.refs = this.refs.replace(/,+$/, '');
 
@@ -26,9 +31,9 @@ var LiveData = new Object({
         $('[data-live-data-param]').each(function () {
             var paramDef = $( this ).attr('data-live-data-param');
             paramDef = paramDef.split('=');
-            rootObj.paramName = paramDef[0];
-            rootObj.paramSource = paramDef[1];
-            console.log('custom param: ' + rootObj.paramSource + ' => ' + rootObj.paramName);
+            parent.paramName = paramDef[0];
+            parent.paramSource = paramDef[1];
+            console.log('custom param: ' + parent.paramSource + ' => ' + parent.paramName);
             return false;
         });
 
@@ -38,13 +43,16 @@ var LiveData = new Object({
             this.lastUpdated = -1;
         }
 
-        this.updateLiveData(  );
-    }, // init
+        this.updateLiveData();
+    }; // init
 
 
 
+    this.markLockedFields = function( lockedElements ) {
+        if (typeof lockedElements === 'undefined') {
+            return;
+        }
 
-    markLockedFields: function( lockedElements ) {
         $('.lzy-element-locked').removeClass('lzy-element-locked');
 
         if (typeof lockedElements !== 'object') {
@@ -58,12 +66,15 @@ var LiveData = new Object({
                 $(targSel).addClass('lzy-element-locked');
             }
         }
-    }, // markLockedFields
+    }; // markLockedFields
 
 
 
+    this.markFrozenFields = function( frozenElements ) {
+        if (typeof frozenElements === 'undefined') {
+            return;
+        }
 
-    markFrozenFields: function( frozenElements ) {
         $('.lzy-element-locked').removeClass('lzy-element-locked');
 
         if (typeof frozenElements !== 'object') {
@@ -77,23 +88,17 @@ var LiveData = new Object({
                 $(targSel).addClass('lzy-element-frozen');
             }
         }
-    }, // markFrozenFields
+    }; // markFrozenFields
 
 
 
-
-    updateDOM: function( data ) {
-        if (typeof data.locked !== 'undefined') {
-            this.markLockedFields(data.locked);
-        }
-
-        if (typeof data.frozen !== 'undefined') {
-            this.markFrozenFields(data.frozen);
-        }
-
+    this.updateDOM = function( data ) {
+        this.markLockedFields(data.locked);
+        this.markFrozenFields(data.frozen);
         if (typeof data.data !== 'object') {
             return;
         }
+
         var $targ = null;
         for (var targSel in data.data) {
             var val = data.data[targSel];
@@ -128,7 +133,7 @@ var LiveData = new Object({
             if (this.debugOutput) {
                 console.log(targSel + ' -> ' + val);
             }
-        }
+        } // for
 
         if ($targ) {
             var postCallback = $targ.attr('data-live-post-update-callback');
@@ -142,19 +147,19 @@ var LiveData = new Object({
                 window[postCallback]( data.data );
             }
         }
-    }, // updateDOM
+    }; // updateDOM
 
 
 
-
-    handleAjaxResponse: function( json ) {
+    this.handleAjaxResponse = function( json ) {
         this.ajaxHndl = null;
         var data = null;
-        console.log('ajax: ' + json);
+        console.log('live-update: ' + json);
         if (!json) {
             console.log('No data received - terminating live-data');
             return;
         }
+
         json = json.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
         try {
             data = JSON.parse( json );
@@ -197,18 +202,18 @@ var LiveData = new Object({
             this.dumpDB();
         }
 
+        // restart update cycle:
         this.updateLiveData();
-    }, // handleAjaxResponse
+    }; // handleAjaxResponse
 
 
 
-
-    updateLiveData: function() {
-        const rootObj = this;
+    this.updateLiveData = function() {
+        const parent = this;
         const url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
         var data = {
-            ref: rootObj.refs,
-            lastUpdated: rootObj.lastUpdated
+            ref: parent.refs,
+            lastUpdated: parent.lastUpdated
         };
 
         if (this.paramName) {
@@ -227,21 +232,20 @@ var LiveData = new Object({
             type: 'POST',
             data: data,
             success: function (json) {
-                return rootObj.handleAjaxResponse(json);
+                return parent.handleAjaxResponse(json);
             }
         });
-    }, // updateLiveData
+    }; // updateLiveData
 
 
 
-
-    dumpDB: function () {
-        var rootObj = this;
+    this.dumpDB = function () {
+        var parent = this;
         var url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
         $.ajax({
             url: url + "?dumpDB=true",
             type: 'POST',
-            data: { ref: rootObj.refs },
+            data: { ref: parent.refs },
             success: function (json) {
                 var res = null;
                 try {
@@ -255,11 +259,11 @@ var LiveData = new Object({
                 console.log( text );
             }
         });
-    },
+    };
 
 
 
-    abortAjax: function() {
+    this.abortAjax = function() {
         if (this.ajaxHndl !== null){
             this.ajaxHndl.abort();
             this.ajaxHndl = null;
@@ -273,15 +277,29 @@ var LiveData = new Object({
                 console.log('live-data: server process aborted');
             }
         });
-    } // abortAjax
+    }; // abortAjax
 
-}); // Object LiveData
+} // LiveData
+
+
+
+
+
+function liveDataInit( execInitialUpdate ) {
+    if (!liveData) {
+        liveData = new LiveData();
+    }
+    liveData.init( execInitialUpdate );
+} // liveDataInit
+
 
 
 
 
 $(window).bind('beforeunload', function() {
-    LiveData.abortAjax();
+    if (liveData) {
+        liveData.abortAjax();
+    }
 });
 
 
