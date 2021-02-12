@@ -21,52 +21,6 @@ class LiveDataService
 
 
 
-    public function getChangedData()
-    {
-        session_abort();
-        $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
-        $requestedDataSelector = isset($_POST['dynDataSel']) ? $_POST['dynDataSel'] : false;
-        $this->requestedDataSelector = $requestedDataSelector;
-
-        $dynDataSelector = [];
-        if ($requestedDataSelector && preg_match('/(.*):(.*)/', $requestedDataSelector, $m)) {
-            $dynDataSelector[ 'name' ] = $m[1];
-            $dynDataSelector[ 'value' ] = $m[2];
-        }
-        $this->dynDataSelector = $dynDataSelector;
-
-        $this->openDataSrcs();
-
-        $dumpDB = isset($_GET['dumpDB']) ? $_GET['dumpDB'] : false;
-        if ($dumpDB) {
-            $this->dumpDB();
-        }
-
-        if ($this->lastUpdated == -1) { // means "skip initial update"
-            $this->lastUpdated = microtime(true);
-        }
-        if (!$this->lastUpdated) {
-            $this->lastUpdated = microtime( true );
-            $returnData = $this->assembleResponse();
-            $returnData['result'] = 'Ok';
-
-        } else {
-            if ($this->awaitDataChange()) {
-                $returnData = $this->assembleResponse();
-                $returnData['result'] = 'Ok';
-            } else {
-                $returnData['result'] = 'None';
-            }
-        }
-
-        $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001 );
-        $json = json_encode($returnData);
-        lzyExit($json);
-    } // getChangedData
-
-
-
-
     private function getListOfTickets()
     {
         if (!isset($_POST['ref'])) {
@@ -194,6 +148,52 @@ class LiveDataService
 
 
 
+    public function getChangedData()
+    {
+        session_abort();
+        $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
+        $requestedDataSelector = isset($_POST['dynDataSel']) ? $_POST['dynDataSel'] : false;
+        $this->requestedDataSelector = $requestedDataSelector;
+
+        $dynDataSelector = [];
+        if ($requestedDataSelector && preg_match('/(.*):(.*)/', $requestedDataSelector, $m)) {
+            $dynDataSelector[ 'name' ] = $m[1];
+            $dynDataSelector[ 'value' ] = $m[2];
+        }
+        $this->dynDataSelector = $dynDataSelector;
+
+        $this->openDataSrcs();
+
+        $dumpDB = isset($_GET['dumpDB']) ? $_GET['dumpDB'] : false;
+        if ($dumpDB) {
+            $this->dumpDB();
+        }
+
+        if ($this->lastUpdated == -1) { // means "skip initial update"
+            $this->lastUpdated = microtime(true);
+        }
+        if (!$this->lastUpdated) {
+            $this->lastUpdated = microtime( true );
+            $returnData = $this->assembleResponse();
+            $returnData['result'] = 'Ok';
+
+        } else {
+            if ($this->awaitDataChange()) {
+                $returnData = $this->assembleResponse();
+                $returnData['result'] = 'Ok';
+            } else {
+                $returnData['result'] = 'None';
+            }
+        }
+
+        $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001 );
+        $json = json_encode($returnData);
+        lzyExit($json);
+    } // getChangedData
+
+
+
+
     private function getData( $set, $freezeFieldAfter = false )
     {
         if (!$set) {
@@ -202,7 +202,8 @@ class LiveDataService
         $db = $set['_db'];
 
         $dbIsLocked = $db->isDbLocked( false );
-        $lockedElements = [];
+//        $lockedElements = [];
+        $lockedElements = $db->getLockedRecords();
         $frozenElements = [];
         $tmp = [];
 
@@ -217,6 +218,7 @@ class LiveDataService
 
             // field can contain wild-card - if so, render entire data array:
             if (strpos($dataKey, '*') !== false) {
+//if (true) {
                 $tmp = $this->getValueArray($set, $fldName);
                 continue;
 
@@ -226,7 +228,7 @@ class LiveDataService
 
                 $elemIsLocked = false;
                 if ($dbIsLocked || $db->isRecLocked( $dataKey )) {
-                    $lockedElements[] = $targetSelector;
+//                    $lockedElements[] = $targetSelector;
                     $elemIsLocked = true;
                 }
                 if ($value = $db->readElement( $dataKey )) {
@@ -249,17 +251,18 @@ class LiveDataService
         $outData['data'] = $tmp;
 
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        if ($lockedElements !== $_SESSION['lizzy']['hasLockedElements']) {
-            $outData['locked'] = $lockedElements;
-            $_SESSION['lizzy']['hasLockedElements'] = $lockedElements;
-        }
+//        if (session_status() === PHP_SESSION_NONE) {
+//            session_start();
+//        }
+//        if ($lockedElements !== $_SESSION['lizzy']['hasLockedElements']) {
+//            $outData['locked'] = $lockedElements;
+//            $_SESSION['lizzy']['hasLockedElements'] = $lockedElements;
+//        }
+        $outData['locked'] = $lockedElements;
         if ($frozenElements) {
             $outData['frozen'] = $frozenElements;
         }
-        session_abort();
+//        session_abort();
         return $outData;
     } // getData
 
@@ -296,7 +299,7 @@ class LiveDataService
 
         $outData = [];
         $data = $set['_db']->read();
-        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
+//        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
         $r = 0;
         if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2, $s3) = $m;
@@ -311,7 +314,8 @@ class LiveDataService
             if (is_array($rec)) {
                 $c = 0;
                 foreach ($rec as $k => $v) {
-                    if (isset($dataChanged[$key][$k])) {
+//                    if (isset($dataChanged[$key][$k])) {
+if (true) {
                         $targSel = "$s1$r$s2$c$s3";
                         $targSel = str_replace(['&#34;', '&#39;'], ['"', "'"], $targSel);
                         $outData[$targSel] = $v;

@@ -58,12 +58,23 @@ function LiveData() {
         if (typeof lockedElements !== 'object') {
             return;
         }
+        var targSel = null, $rec = null;
         for (var i in lockedElements) {
-            var targSel = lockedElements[i];
-            if (targSel === '*') {
-                $('.lzy-live-data').addClass('lzy-element-locked');
+            $rec = $('[data-reckey="' + i + '"]');
+            if ($rec.length) {
+                $rec.addClass('lzy-element-locked');
             } else {
-                $(targSel).addClass('lzy-element-locked');
+                targSel = lockedElements[i];
+                if (targSel === '*') {
+                    $('.lzy-live-data').addClass('lzy-element-locked');
+                } else {
+                    $rec = $(targSel).closest('[data-reckey]');
+                    if ($rec.length) {
+                        $rec.addClass('lzy-element-locked');
+                    } else {
+                        $(targSel).addClass('lzy-element-locked');
+                    }
+                }
             }
         }
     }; // markLockedFields
@@ -210,7 +221,7 @@ function LiveData() {
 
     this.updateLiveData = function() {
         const parent = this;
-        const url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
+        const url = appRoot + '_lizzy/extensions/livedata/backend/_live_data_service.php';
         var data = {
             ref: parent.refs,
             lastUpdated: parent.lastUpdated

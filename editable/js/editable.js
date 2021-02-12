@@ -179,7 +179,12 @@ function Editable( options ) {
                     parent.updateUi(data);
                 } else {
                     mylog(data.result);
-                    $elem.addClass('lzy-element-locked');
+                    const $row = $elem.closest('tr');
+                    if ($row.length) {
+                        $row.addClass('lzy-element-locked');
+                    } else {
+                        $elem.addClass('lzy-element-locked');
+                    }
                     lzyPopup({
                         contentFrom: '#lzy-error-locked',
                     });
