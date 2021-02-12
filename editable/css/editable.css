@@ -61,17 +61,10 @@ td.lzy-editable.lzy-editable {
 }
 
 
-.lzy-element-locked,
-.lzy-editable.lzy-element-locked {
-	background: #dceeee;
-	background: repeating-linear-gradient(-55deg, #eeffff,#eeffff 10px,#edf8f8 10px,#edf8f8 15px);
-	cursor: not-allowed;
-}
-.lzy-element-frozen,
-.lzy-editable.lzy-element-frozen {
-	background: #eee;
-	cursor: not-allowed;
-}
+/*.lzy-element-locked,.lzy-element-frozen => _lizzy_misc.css */
+
+
+
 #lzy .lzy-editable-inactive .lzy-editable {
 	cursor: auto;
 	background: #f8f8f8;
