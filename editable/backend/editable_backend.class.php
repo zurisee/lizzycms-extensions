@@ -5,8 +5,6 @@ require_once '../../livedata/backend/live_data_service.class.php';
 
 class EditableBackend extends LiveDataService
 {
-    private $dynDataSelector = null;
-
 	public function __construct()
 	{
 		if (sizeof($_POST) < 1) {
@@ -60,50 +58,52 @@ class EditableBackend extends LiveDataService
 
 	public function execute()
 	{
+	    $cmd = $this->init();
+        if ($cmd === 'lock') {
+            $this->lock();
+        }
+
+        if ($cmd === 'unlock') {
+            $this->unlock();
+        }
+
+        if ($cmd === 'save') {
+            $this->save();
+        }
+	} // handleUrlArguments
+
+
+
+    private function init()
+    {
+        $this->id = $this->getRequestData('id');
+        if (!$this->id) {
+            mylog("### lock: Error -> id not defined");
+            $this->sendResponse( false,"failed#lock (id not defined)");
+        }
+        $this->dataRef = $this->getRequestData('dataRef');
+
         if (!$this->openDB()) {
             $cmd = str_replace(['ds', '_', 'srcRef'], '', implode('', array_keys($_GET)));
             mylog("### openDB -> failed: $cmd");
             $this->sendResponse( false, "failed#openDB:$cmd");
         }
 
-        $cmd = isset($_POST['cmd']) ? $_POST['cmd'] : false;
-        $cmd = ",$cmd";
-        $this->id = isset($_POST['id']) ? $_POST['id'] : false;
-        $this->elemRef = isset($_POST['elemRef']) ? $_POST['elemRef'] : false;
-
-        if (strpos($cmd, ',get') !== false) {     // get value(s)
-            $this->get();
+        if (!isset($_POST['cmd'])) { // cmd missing:
+            lzyExit('Hello, this is '.basename(__FILE__));
         }
-
-        if (strpos($cmd, ',lock') !== false) {    // lock an editable field
-            $this->lock();
-        }
-
-        if (strpos($cmd, ',unlock') !== false) {    // unlock an editable field
-            $this->unlock();
-        }
-
-        if (strpos($cmd, ',save') !== false) {    // save data & unlock
-            $this->save();
-        }
-
-        $this->handleGenericRequests( $cmd );     // log, info
-    } // handleUrlArguments
+        return $this->getRequestData('cmd');
+    } // init
 
 
 
 	private function lock() {
 	    $id = $this->id;
-		if (!$id) {
-			mylog("### lock: Error -> id not defined");
-            $this->sendResponse( false,"failed#lock (id not defined)");
-		}
 
-		$set = $this->getSet( $id );
-        $dataKey = $this->getDataSelector( $id );
-        $db = $set['_db'];
-        if ($set['_freezeFieldAfter']) {
-            $feezeFieldAfter = intval($set['_freezeFieldAfter']);
+        $dataKey = $this->dataRef;
+        $db = $this->set['_db'];
+        if ($this->set['_freezeFieldAfter']) {
+            $feezeFieldAfter = intval($this->set['_freezeFieldAfter']);
             $val = $db->readElement( $dataKey );
             if ($val) {
                 $lastModif = $db->lastModifiedElement($dataKey);
@@ -120,36 +120,24 @@ class EditableBackend extends LiveDataService
 
 		} else {
             mylog("lock: $dataKey -> ok");
-            $this->sendResponse( $id, 'ok#lock');
+            $this->sendResponse( $dataKey, 'ok#lock');
 		}
 	} // lock
 
 
 
 	private function unlock() {
-        $id = $this->id;
-        if (!$id) {
-			mylog("### unlock: Error -> id not defined");
-            $this->sendResponse( false,"failed#unlock (id not defined)");
-		}
-        $set = $this->getSet( $id );
-        $dataKey = $this->getDataSelector( $id );
+        $set = $this->set;
+        $dataKey = $this->dataRef? $this->dataRef: '*';
         $db = $set['_db'];
         $res = $db->unlockRec($dataKey);
         if ($res) {
 			mylog("unlock: $dataKey -> ok");
-            $this->sendResponse( $id, 'ok#unlock');
+            $this->sendResponse( $dataKey, 'ok#unlock');
         }
         mylog("### unlock: $dataKey -> failed: '$dataKey'");
         $this->sendResponse( false, "failed#unlock '$dataKey'");
 	} // unlock
-
-
-
-	private function get() {
-        mylog("get: $this->id -> ok");
-        $this->sendResponse($this->id,'ok#get');
-	} // get
 
 
 
@@ -167,8 +155,8 @@ class EditableBackend extends LiveDataService
             $this->sendResponse( false,"failed#save (text not defined)");
         }
 
-        $dataKey = $this->getDataSelector( $id );
-        $set = $this->getSet( $id );
+        $dataKey = $this->dataRef;
+        $set = $this->set;
         $db = $set['_db'];
 
         if (!checkPermission( $set['_editableBy'] )) {
@@ -177,7 +165,7 @@ class EditableBackend extends LiveDataService
         }
 
         if (strpos($dataKey, '#') !== false) {
-            $oldRecKey = @$_POST['recKey'];
+            $oldRecKey = $this->getRequestData('recKey');
             if ($oldRecKey) {
                 $newRecKey = $text;
                 $rec = $db->readRecord( $oldRecKey );
@@ -202,16 +190,20 @@ class EditableBackend extends LiveDataService
         }
 
         mylog("save: $id => '$text' -> ok");
-        $this->sendResponse( $id, 'ok#save');
+        $this->sendResponse( $dataKey, 'ok#save');
 	} // save
 
 
 
-    private function sendResponse( $sendData, $result = null )
+    private function sendResponse( $what, $result = null )
     {
         $outData = [];
-        if ( $sendData ) {
-            $outData = $this->assembleResponse( $sendData );
+        if ( $what && is_string($what) ) {
+            if ($what !== '*') {
+                $outData = $this->assembleResponse($what);
+            }
+        } elseif (is_array($what)) {
+            $outData = $what;
         }
         if ($result !== null) {
             $outData['result'] = $result;
@@ -224,14 +216,11 @@ class EditableBackend extends LiveDataService
 
 
 
-    private function assembleResponse( $id = false )
+    private function assembleResponse( $what = false )
     {
         $outData = [];
-        if ($id && ($id[0] !== '#') && ($id[0] !== '.')) {
-            $id = "#$id";
-        }
-        foreach ($this->sets as $setName => $set) {
-            $outRec = $this->getData($setName);
+        foreach ($this->sets as $set) {
+            $outRec = $this->getData($set, $what);
             if (!$outData) {
                 $outData = $outRec;
             } else {
@@ -244,96 +233,75 @@ class EditableBackend extends LiveDataService
 
 
 
-
-    private function getTSel( $dSel )
+    private function getData( $set, $what = false )
     {
-        foreach ($this->editableElements as $tSel => $rec) {
-            if ($rec[1] !== $this->setInx) { continue; }
-            if ($rec[0] === $dSel) {
-                return $tSel;
-            } elseif ((strpos($tSel, '*,*') !== false) &&
-                preg_match('/(\d+),(\d+)/', $dSel, $m) &&
-                preg_match('/^ (.*?) (\*) (.*?) (\*) (.*?) $/x', $tSel, $mm)) {
-                    $tSel = "{$mm[1]}{$m[1]}{$mm[3]}{$m[2]}{$mm[5]}";
-                    return $tSel;
-            }
-        }
-        return false;
-    } // getTSel
-
-
-
-
-    private function getData( $setName )
-    {
-        $setDb = $this->sets[ $setName ]['_db'];
+        $setDb = $set['_db'];
         $dbIsLocked = $setDb->isDbLocked( false );
         $lockedElements = [];
         $tmp = [];
-        $set = $this->sets[ $setName ];
-        foreach ($set as $targetSelector => $dataKey) {
-            if ($targetSelector[0] === '_') {
-                continue;
+
+        if ($what) {
+            $value = $setDb->readElement( $what );
+            if ($value !== null) {
+                $tmp[ "[data-ref='$what']" ] = $value;
             }
 
+        } else {
             $data = $setDb->read();
-            if (strpos($dataKey, '*,*') !== false) {
-                if ($data) {
-                    $r = -1 ;
-                    foreach ($data as $rec) {
-                        $r++;
-                        // at this point we address data by position, not labels -> remove elem-labels:
-                        $keys = array_keys($rec);
-                        $rec = array_values($rec);
-                        foreach ($rec as $c => $value) {
-                            if ($keys[$c][0] === '_') { continue; }
-                            if (preg_match('/(.*? ) \* (.*? ) \* (.* )/x', $targetSelector, $m)) {
-                                $tSel = $m[1] . ($r) . $m[2] . ($c) . $m[3];
+            foreach ($set as $key => $dataKey) {
+                if ($key[0] === '_') {
+                    continue;
+                }
+
+                if (strpos($dataKey, '*,*') !== false) {
+                    if ($data) {
+                        $r = -1;
+                        foreach ($data as $rec) {
+                            $r++;
+                            // at this point we address data by position, not labels -> remove elem-labels:
+                            $keys = array_keys($rec);
+                            $rec = array_values($rec);
+                            foreach ($rec as $c => $value) {
+                                if ($keys[$c][0] === '_') {
+                                    continue;
+                                }
+                                if (preg_match('/(.*? ) \* (.*? ) \* (.* )/x', $dataKey, $m)) {
+                                    $tSel = $m[1] . ($r) . $m[2] . ($c) . $m[3];
+                                }
+                                $tmp[ "[data-ref='$tSel']" ] = $value;
                             }
-                            $tmp[ $tSel ] = $value;
                         }
+                    } else {
+                        $tmp = [];
                     }
-                } else {
-                    $tmp = [];
-                }
-                continue;
+                    continue;
 
-            } elseif (strpos($dataKey, '*') !== false) {
-                if ($data) {
-                    foreach ($data as $i => $value) {
-                        if (is_int($i)) {
-                            $tSel = preg_replace('/\*/', $i + 1, $targetSelector);
-                        } else {
-                            $tSel = $i;
+                } elseif (strpos($dataKey, '*') !== false) {
+                    if ($data) {
+                        foreach ($data as $i => $value) {
+                            if (is_int($i)) {
+                                $tSel = preg_replace('/\*/', $i + 1, $dataKey);
+                            } else {
+                                $tSel = $i;
+                            }
+                            $tmp[ "[data-ref='$tSel']" ] = $value;
                         }
-                        $tmp[ $tSel ] = $value;
+                    } else {
+                        $tmp = [];
                     }
-                } else {
-                    $tmp = [];
-                }
-                continue;
+                    continue;
 
-            } else {
-//ToDo: dynDataSelector for editable
-//                if ($this->dynDataSelector) {
-//                    if (strpos($dataKey, '{') !== false) {
-//                        $dataKey = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $dataKey);
-//                    }
-//
-//                    if (strpos($targetSelector, '{') !== false) {
-//                        $targetSelector = preg_replace('/{' . $this->dynDataSelector['name'] . '}/', $this->dynDataSelector['value'], $targetSelector);
-//                    }
-//                }
-
-                if ($dbIsLocked || $setDb->isRecLocked( $dataKey )) {
-                    $lockedElements[] = $targetSelector;
-                }
-                if (isset($data[ $dataKey ])) {
-                    $value = $data[ $dataKey ];
                 } else {
-                    $value = '';
+                    if ($dbIsLocked || $setDb->isRecLocked($dataKey)) {
+                        $lockedElements[] = "[data-ref='$dataKey']";
+                    }
+                    if (isset($data[$dataKey])) {
+                        $value = $data[$dataKey];
+                    } else {
+                        $value = '';
+                    }
+                    $tmp[$dataKey] = $value;
                 }
-                $tmp[$targetSelector] = $value;
             }
         }
         ksort($tmp);
@@ -353,74 +321,15 @@ class EditableBackend extends LiveDataService
 
 
 
-    private function getSet( $id )
-    {
-        if ($id && ($id[0] !== '#') && ($id[0] !== '.')) {
-            $id = "#$id";
-        }
-        if (isset($this->editableElements[$id])) {
-            return $this->sets[ $this->editableElements[$id][1] ];
 
-        } else {
-            foreach ($this->editableElements as $k => $rec) {
-                if ( $this->elemRef && ($rec[0] === $this->elemRef) ) {
-                    return $this->sets[ $rec[1] ];
-                }
-
-                if (strpos($k,'*') !== false) {
-                    return $this->sets[ $this->editableElements[$k][1] ];
-                }
-            }
-        }
-        $this->sendResponse( false,"Error: unidentified ID '$id' in getSet()");
-    } // getSet
-
-
-
-    private function getDataSelector( $id )
-    {
-        if ($id && ($id[0] !== '#') && ($id[0] !== '.')) {
-            $id = "#$id";
-        }
-        if (isset($this->editableElements[$id])) {
-            return $this->editableElements[$id][0];
-        } else {
-            if (isset($_POST['elemRef'])) {
-                return $_POST['elemRef'];
-
-            } else {
-                $targs = array_keys($this->editableElements);
-                foreach ($targs as $targ) {
-                    if (preg_match('/(.*?) \* (.*?) \* (.*?)/x', $targ, $m)) {
-                        if (preg_match('/lzy-elem-(\d+)-(\d+)/', $id, $mm)) {
-                            $row = intval($mm[1]);
-                            $col = intval($mm[2]);
-                            return "$row,$col";
-                        }
-
-                    } elseif (preg_match('/(.*?) \* (.*?)/x', $targ, $m)) {
-                        if (preg_match('/lzy-elem-\d+-(\d+)/', $id, $mm)) {
-                            $col = intval($mm[1]) - 1;
-                            return $col;
-                        }
-                    }
-                }
-            }
-        }
-        $this->sendResponse( false,"Error: unidentified ID '$id' in getDataSelector()");
-        return false;
-    } // getDataSelector
-
-
-
-    private function openDB() {
+    private function openDB( $getValues = false ) {
 	    if ($this->sets) {
 	        return true;
         }
 
 	    $useRecycleBin = false;
         $srcRef = $this->getRequestData('srcRef');
-        if (!$srcRef || !preg_match('/^[A-Z][A-Z0-9]{4,20}/', $srcRef)) {   // elemRef missing
+        if (!$srcRef || !preg_match('/^[A-Z][A-Z0-9]{4,20}/', $srcRef)) {   // dataRef missing
             return false;
         }
         if (preg_match('/^([A-Z0-9]{4,20})\:(.+)$/', $srcRef, $m)) {
@@ -440,34 +349,23 @@ class EditableBackend extends LiveDataService
             if (strpos($setInx, 'set') === false) {
                 continue;
             }
+            $this->sets[$setInx] = $set;
 
             // open DB:
             $useRecycleBin1 = $useRecycleBin || @$set['_useRecycleBin'];
             $this->sets[$setInx]['_db'] = new DataStorage2([
-                'dataFile' => PATH_TO_APP_ROOT.$set['_dataSource'],
+                'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
                 'sid' => $this->sessionId,
                 'lockDB' => false,
                 'useRecycleBin' => $useRecycleBin1,
                 'lockTimeout' => false,
                 'logModifTimes' => true,
             ]);
-            $this->sets[$setInx]['_editableBy'] = @$set['_editableBy'];
-            $this->sets[$setInx]['_freezeFieldAfter'] = @$set['_freezeFieldAfter'];
-
-            // loop over fields in set, extract editableElements:
-            for ($i=1; $i<99; $i++) {
-                $recInx = "fld$i";
-                if (isset($set[$recInx])) {
-                    $rec = $set[$recInx];
-                    $this->sets[$setInx]['_tickRec'] = $rec;
-                    $tSel = $rec['targetSelector'];
-                    $this->sets[$setInx][ $tSel ] = $rec['dataSelector'];
-                    $this->editableElements[ $tSel ][0] = $rec['dataSelector'];
-                    $this->editableElements[ $tSel ][1] = $setInx;
-                } else {
-                    break;
-                }
-            }
+        }
+        $this->set = &$this->sets[ $this->setInx ];
+        if (!in_array($this->dataRef, array_values($this->set))) {
+            mylog("### openDB -> failed: dataRef '$this->dataRef' unknown");
+            $this->sendResponse( false, "failed#openDB: dataRef unknown");
         }
         return true;
     } // openDB
@@ -497,41 +395,6 @@ class EditableBackend extends LiveDataService
         }
 		return $out;
 	} // getRequestData
-
-
-
-    private function handleGenericRequests( $cmd )
-    {
-        if (strpos($cmd, ',log') !== false) {                                // remote log, write to backend's log
-            $msg = $this->getRequestData('text');
-            mylog("Client: $msg");
-            $this->sendResponse( false,'ok');
-        }
-
-        if (strpos($cmd, ',info') !== false) {    // respond with info-msg
-            $this->info();
-        }
-    } // handleGenericRequests
-
-
-
-    private function info()
-    {
-        $localhost = ($this->isLocalhost) ? 'yes':'no';
-        $dbs = var_r($_SESSION['lizzy']['db']);
-        $msg = <<<EOT
-	<pre>
-	Page:		{$_SESSION['lizzy']['pagePath']}
-	DB:		$dbs
-	Hash:		{$this->hash}
-	Remote Addr:	{$this->remoteAddress}
-	UA:		{$this->userAgent}
-	isLocalhost:	{$localhost}
-	ClientID:	{$this->clientID}
-	</pre>
-EOT;
-        $this->sendResponse(['text' => $msg], 'ok');
-    } // info
 
 } // EditingService
 

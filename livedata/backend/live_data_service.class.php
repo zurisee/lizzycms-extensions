@@ -2,8 +2,6 @@
 
 class LiveDataService
 {
-    private $dynDataSelector = null;
-
     public function __construct()
     {
         if (!session_start()) {
@@ -20,62 +18,47 @@ class LiveDataService
 
 
 
-
-    private function getListOfTickets()
+    private function getLiveElements()
     {
         if (!isset($_POST['ref'])) {
             lzyExit('Error: "ref" missing in call to _live_data_service.php');
         }
         $ref = $_POST['ref'];
-
-        $tickets = explode(',', $ref);
-        $ticketList = [];
-        $setList = [];
-        foreach ($tickets as $ticket) {
-            $set = '';
-            if (preg_match('/(.*?):(.*)/', $ticket, $m)) {
-                $ticket = $m[1];
-                $set = $m[2];
-            }
-            if (in_array($ticket, $ticketList) === false) {
-                $ticketList[] = $ticket;
-            }
-            $setList[$set] = $ticket;
-        }
-        return $ticketList;
-    } // getListOfTickets
+        $this->liveElements = json_decode($ref);
+        return $this->liveElements;
+    } // getLiveElements
 
 
 
 
     private function openDataSrcs()
     {
-        $ticketList = $this->getListOfTickets();
+        $this->sets = [];
+        $elementRefs = $this->getLiveElements();
+        foreach ($elementRefs as $i => $ref) {
+            if ($ref->srcRef) {
+                $setName = preg_replace('/.*?:/', '', $ref->srcRef);;
+            } else {
+                $setName = 'set1';
+            }
+            $this->sets[ $setName ][] = $ref;
+        }
 
+        $rec0 = reset($elementRefs);
+        $tickHash = preg_replace('/:.*/', '', $rec0->srcRef);
         $tick = new Ticketing();
-        foreach ($ticketList as $ticket) {
-            $this->sets = $tick->consumeTicket($ticket);
-            if (!is_array($this->sets)) {
-                continue;
-            }
-            foreach ($this->sets as $setName => $set) {
-                if (strpos($setName, 'set') !== 0) {
-                    continue;
-                }
-                if ($set) {
-                    $db = new DataStorage2([
-                        'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
-                        'logModifTimes' => true,
-                    ]);
-                    $this->sets[$setName]['_db'] = $db;
+        $ticketRec = $tick->consumeTicket($tickHash);
 
-                    if (isset($set['_pollingTime']) && ($set['_pollingTime'] > 2)) {
-                        $this->pollingTime = $set['_pollingTime'];
-                    } else {
-                        $this->pollingTime = DEFAULT_POLLING_TIME;
-                    }
-                }
+        foreach ($ticketRec as $setName => $set) {
+            if (isset($set['_pollingTime']) && ($set['_pollingTime'] > 2)) {
+                $this->pollingTime = $set['_pollingTime'];
             }
+
+            $db = new DataStorage2([
+                'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
+                'logModifTimes' => true,
+            ]);
+            $this->sets[$setName]['_db'] = $db;
         }
     } // openDataSrcs
 
@@ -102,7 +85,7 @@ class LiveDataService
                     if ($k[0] === '_') {
                         continue;
                     }
-                    $recId = $elem["dataSelector"];
+                    $recId = $elem->dataRef;
                     $this->lastModif = $set['_db']->lastModifiedElement( $recId );
                     if ($this->lastUpdated < $this->lastModif) {
                         $this->lastUpdated = $this->lastModif;
@@ -152,15 +135,6 @@ class LiveDataService
     {
         session_abort();
         $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
-        $requestedDataSelector = isset($_POST['dynDataSel']) ? $_POST['dynDataSel'] : false;
-        $this->requestedDataSelector = $requestedDataSelector;
-
-        $dynDataSelector = [];
-        if ($requestedDataSelector && preg_match('/(.*):(.*)/', $requestedDataSelector, $m)) {
-            $dynDataSelector[ 'name' ] = $m[1];
-            $dynDataSelector[ 'value' ] = $m[2];
-        }
-        $this->dynDataSelector = $dynDataSelector;
 
         $this->openDataSrcs();
 
@@ -202,40 +176,36 @@ class LiveDataService
         $db = $set['_db'];
 
         $dbIsLocked = $db->isDbLocked( false );
-//        $lockedElements = [];
-        $lockedElements = $db->getLockedRecords();
+        $lockedElements = [];
         $frozenElements = [];
         $tmp = [];
 
         // loop over fields in set:
-        foreach ($set as $fldName => $fldRec) {
-            if ($fldName[0] === '_') {    // skip meta elements
+        foreach ($set as $i => $rec) {
+            if (is_string($i) && ($i[0] === '_')) {    // skip meta elements
                 continue;
             }
 
-            $dataKey = $fldRec["dataSelector"];
-            $targetSelector = $fldRec['targetSelector'];
+            $dataKey = $rec->dataRef;
 
             // field can contain wild-card - if so, render entire data array:
             if (strpos($dataKey, '*') !== false) {
-//if (true) {
-                $tmp = $this->getValueArray($set, $fldName);
+                $tmp = $this->getValueArray($set, $dataKey);
                 continue;
 
             } else {
-                // in case client sent a dyn data selector: modify data- and target selectors accordingly:
-                list($dataKey, $targetSelector) = $this->handleDynamicDataSelector($dataKey, $targetSelector);
-
                 $elemIsLocked = false;
                 if ($dbIsLocked || $db->isRecLocked( $dataKey )) {
-//                    $lockedElements[] = $targetSelector;
+                    $lockedElements[] = "[data-ref='$dataKey']";
                     $elemIsLocked = true;
                 }
                 if ($value = $db->readElement( $dataKey )) {
+
+                    // check freeze:
                     if ($freezeFieldAfter && $value) {
                         $lastModif = $db->lastModifiedElement($dataKey);
                         if ($lastModif < (time() - $freezeFieldAfter)) {
-                            $frozenElements[] = $targetSelector;
+                            $frozenElements[] = "[data-ref='$dataKey']";
                             if (!$elemIsLocked) {
                                 $db->lockRec($dataKey, false, true);
                             }
@@ -244,62 +214,28 @@ class LiveDataService
                 } else {
                     $value = '';
                 }
-                $tmp[$targetSelector] = $value;
+                $tmp["[data-ref='$dataKey']"] = $value;
             }
         }
         ksort($tmp);
         $outData['data'] = $tmp;
 
-
-//        if (session_status() === PHP_SESSION_NONE) {
-//            session_start();
-//        }
-//        if ($lockedElements !== $_SESSION['lizzy']['hasLockedElements']) {
-//            $outData['locked'] = $lockedElements;
-//            $_SESSION['lizzy']['hasLockedElements'] = $lockedElements;
-//        }
         $outData['locked'] = $lockedElements;
         if ($frozenElements) {
             $outData['frozen'] = $frozenElements;
         }
-//        session_abort();
         return $outData;
     } // getData
 
 
 
-    public function getValueArray($set, $fldName)
+    public function getValueArray($set, $dataKey)
     {
-        $fldRec = $set[ $fldName ];
-        $dataKey = $fldRec["dataSelector"];
-        $targetSelector = $fldRec['targetSelector'];
 
-        // in case client sent a dyn data selector: modify data- and target selectors accordingly:
-        if ($this->dynDataSelector) {
-            list($dataKey, $targetSelector) = $this->handleDynamicDataSelector($dataKey, $targetSelector);
-
-            // try to retrieve requested record using compiled dataKey:
-            $rec = $set['_db']->readRecord( $dataKey );
-            if ($rec) {
-                $c = 1;
-                foreach ($rec as $k => $v) {
-                    if (preg_match('/(.*?) \* (.*?)/x', $targetSelector, $m)) {
-                        $targSel = "{$m[1]}$c{$m[2]}";
-                        $tmp[$targSel] = $v;
-                        $c++;
-                    } else {
-                        die("Error in targetSelector '$targetSelector' -> '*' missing");
-                    }
-                }
-                return $tmp;
-            } else {
-                return [];
-            }
-        }
-
+        // $targetSelector = '.lzy-row-* .lzy-col-*'; // for testing
         $outData = [];
         $data = $set['_db']->read();
-//        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
+    //        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
         $r = 0;
         if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2, $s3) = $m;
@@ -353,10 +289,7 @@ if (true) {
             writeLog("live-data ajax-server aborting (\$_SESSION['lizzy']['ajaxServerAbort'] = {$_SESSION['lizzy']['ajaxServerAbort']})");
             $_SESSION['lizzy']['ajaxServerAbort'] = false;
             session_write_close();
-            $returnData['result'] = 'None';
-            $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001);
-            $json = json_encode($returnData);
-            lzyExit($json);
+            exit('abort');
         }
         session_abort();
     } // checkAbort
@@ -376,24 +309,5 @@ if (true) {
         $json = json_encode($returnData);
         lzyExit($json);
     } // dumpDB
-
-
-
-
-    private function handleDynamicDataSelector($dataKey, $targetSelector): array
-    {
-        if ($this->dynDataSelector) {
-            // check for '{r}' pattern in dataKey and replace it value in client request:
-            if (strpos($dataKey, '{') !== false) {
-                $dataKey = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $dataKey);
-            }
-
-            // check for '{r}' pattern in targetSelector and replace it value in client request:
-            if (strpos($targetSelector, '{') !== false) {
-                $targetSelector = preg_replace('/\{' . $this->dynDataSelector['name'] . '\}/', $this->dynDataSelector['value'], $targetSelector);
-            }
-        }
-        return array($dataKey, $targetSelector);
-    } // handleDynamicDataSelector
 
 } // LiveDataService

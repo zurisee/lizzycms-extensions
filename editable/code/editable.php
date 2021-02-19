@@ -2,8 +2,6 @@
 
 // @info: Renders a field that can be modified by the user. Changes are persistent and can immediately be seen by other visitors.
 
-define('DEFAULT_EDITABLE_DATA_FILE', 'editable.yaml');
-
 $macroName = basename(__FILE__, '.php');
 
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
@@ -25,8 +23,6 @@ $this->addMacro($macroName, function () {
         $this->getArg($macroName, 'dataSource', '<code>path</code> (optional) defines path&filename where to store data (default: page folder)', '');
 
         $this->getArg($macroName, 'dataSelector', 'Name of the element(s) to be visualized. Use format "A|B|C" to specify a list of names.', false);
-        $this->getArg($macroName, 'dynamicArg', '[r=#recId] If defined, permits to let an element in the page select dynamically select data. '.
-            'In this case elementName would be defined as "{r},status", "r" being the placeholder of a value retrieved from "#recId"', false);
         $this->getArg($macroName, 'targetSelector', '(optional) Id of DOM element(s). If not specified, id will be derived from elementName.  Use format "A|B|C" to specify a list of ids.', false);
 
         //        $this->getArg($macroName, 'protectedCells', '(optional) E.g. ""', '');
@@ -36,6 +32,7 @@ $this->addMacro($macroName, function () {
         $this->getArg($macroName, 'freezeFieldAfter', '[seconds] If set, non-empty fields will be frozen after given number of seconds', '');
         $this->getArg($macroName, 'editableBy', '[true|false|loggedin|privileged|admins] If set, defines who can edit values.', true);
         $this->getArg($macroName, 'multiline', 'If true, the editable input element allows users to enter multiple lines (-> textarea).', false);
+        $this->getArg($macroName, 'allowMultiLine', 'If true, user can invoke multi-line editing by double-clicking the editable field.', false);
         $this->getArg($macroName, 'output', 'If false, no editable fields will be rendered. Instead, a data-reference is returned. Thus, some other module such as Table() can render the fields autonomiously.', false);
         $this->getArg($macroName, 'liveData', 'If true, data values are immediately updated if the database on the host is modified.', false);
         $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);

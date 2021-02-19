@@ -3,6 +3,7 @@
 define('DEFAULT_POLLING_TIME', 60);
 
 $GLOBALS['lizzy']['liveDataInx'] = 0;
+$GLOBALS['lizzy']['liveDataInitialized'] = false;
 
 class LiveData
 {
@@ -15,18 +16,7 @@ class LiveData
         $this->lzy = $lzy;
         $GLOBALS['lizzy']['liveDataInx']++;
         $this->setInx = $GLOBALS['lizzy']['liveDataInx'];
-        if ($this->setInx === 1) {
-            $jq = <<<EOT
-
-if ($('[data-lzy-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
-    liveDataInit();
-}
-
-EOT;
-            $lzy->page->addJq($jq);
-        }
-
-        $this->inx = 1;
+        $this->inx = 0; // index per set
         $this->args = $args;
     } // __construct
 
@@ -56,7 +46,8 @@ EOT;
             if ($nT === 0) {
                 $targetSelectors[0] = "lzy-live-data-$this->setInx";
             }
-            $this->addTicketRec($targetSelectors[0], $dataSelectors[0], $tickRec);
+            $tickRec[ "set$this->setInx" ][ $this->inx ] = $dataSelectors[0];
+
             $tickRec[ $setId ]['_dataSource'] = $this->dataSource;
             $tickRec[ $setId ]['_pollingTime'] = intval($this->polltime);
 
@@ -71,9 +62,8 @@ EOT;
                 $targetSelectors[$i] = "lzy-live-data-$this->setInx-" . ($i+1);
             }
 
-            foreach ($dataSelectors as $i => $dataSelector) {
-                $targetSelector = isset($targetSelectors[$i])? $targetSelectors[$i]: "lzy-live-data-$this->setInx-$this->inx";
-                $this->addTicketRec($targetSelector, $dataSelector, $tickRec);
+            foreach ($dataSelectors as $dataSelector) {
+                $tickRec[ "set$this->setInx" ][ $this->inx ] = $dataSelector;
                 $values[] = $this->db->readElement($dataSelector);
                 $this->inx++;
             }
@@ -84,18 +74,40 @@ EOT;
         $this->dataSelectors = $dataSelectors;
         $this->targetSelectors = $targetSelectors;
 
-        $tick = new Ticketing(['defaultType' => 'live-data']);
-        $ticket = $tick->createTicket($tickRec, 99, 86400);
-        $ticket .= ":set$this->setInx";
+        $tck = new Ticketing(['defaultType' => 'live-data']);
+        if ($this->ticketHash && $tck->ticketExists($this->ticketHash)) {
+            $ticketHash = $tck->createHash(true);
+            $tck->updateTicket($this->ticketHash, $tickRec);
+        } else {
+            $ticketHash = $tck->createTicket($tickRec, 99, 86400);
+        }
+        $dataSrcRef = "$ticketHash:set$this->setInx";
 
         if ($returnAttrib) {
-            $str = " data-lzy-datasrc-ref='$ticket'";
+            $str = " data-datasrc-ref='$dataSrcRef'";
         } else {
-            $str = $this->renderHTML($ticket, $values);
+            $str = $this->renderHTML($dataSrcRef, $values);
         }
         return $str;
     } // render
 
+
+
+    public function renderJs( $inject = true, $execInitialDataUpload = true ) {
+        $execInitialDataUpload = $execInitialDataUpload? 'true': 'false';
+        $jq = <<<EOT
+
+if ($('[data-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
+    liveData = liveDataInit( $execInitialDataUpload );
+}
+
+EOT;
+            if ($inject && !$GLOBALS['lizzy']['liveDataInitialized']) {
+                $this->lzy->page->addJq( $jq );
+            $GLOBALS['lizzy']['liveDataInitialized'] = true;
+        }
+        return $jq;
+    } // renderJs
 
 
 
@@ -117,8 +129,10 @@ EOT;
         if (isset($args['dataSelector'])) {
             $this->dataSelector = $args['dataSelector'];
         } else {
-            $this->dataSelector = (isset($args['dataSel'])) ? $args['dataSel'] : false;
+            $this->dataSelector = (isset($args['dataSel'])) ? $args['dataSel'] : '*,*';
         }
+
+        $this->ticketHash = (isset($args['ticketHash'])) ? $args['ticketHash'] : false;
 
         $this->dynamicArg = (isset($args['dynamicArg'])) ? $args['dynamicArg'] : false;
 
@@ -133,6 +147,8 @@ EOT;
         $this->output = (isset($args['output'])) ? $args['output'] : true;
         $this->mode = (isset($args['mode'])) ? $args['mode'] : false;
         $this->manual = (isset($args['manual'])) ? $args['manual'] : false;
+        $this->initJs = (isset($args['initJs'])) ? $args['initJs'] : true;
+        $this->execInitialDataUpload = (isset($args['execInitialDataUpload'])) ? $args['execInitialDataUpload'] : true;
 
         if ($this->manual !== 'silent') {
             $this->manual = !$this->output || (strpos($this->mode, 'manual') !== false);
@@ -140,10 +156,8 @@ EOT;
         $this->callback = (isset($args['callback'])) ? $args['callback'] : false;
         $this->postUpdateCallback = (isset($args['postUpdateCallback'])) ? $args['postUpdateCallback'] : false;
 
-        if ($this->manual) {
-            if (($this->dataSelector === false) || ($this->dataSelector === '')) {
-                exit( "Error: argument ``dataSelector`` not specified.");
-            }
+        if ($this->initJs) {
+            $this->renderJs( true, $this->execInitialDataUpload);
         }
 
         $this->db = new DataStorage2([ 'dataFile' => $this->dataSource ]);
@@ -153,53 +167,18 @@ EOT;
 
 
 
-    private function addTicketRec($targetSelector, $dataSelector, &$tickRec)
+
+    private function renderHTML($ticketHash, $values)
     {
-        $targetSelector = $this->deriveTargetSelector($targetSelector, $dataSelector, $tickRec);
-        $this->targetSelector = $targetSelector;
-        $recInx = "fld$this->inx";
-        $tickRec["set$this->setInx"][$recInx] = [
-            'dataSelector' => $dataSelector,
-            'targetSelector' => $targetSelector,
-        ];
-    } // addTicketRec
-
-
-
-    private function deriveTargetSelector($targetSelector, $dataSelector, $tickRec)
-    {
-        if (!$targetSelector) {
-            $targetSelector = preg_replace('/{(.*?)},/', "$1", $dataSelector);
-            $targetSelector = str_replace([',','][', '[', ']'], ['-','-','',''], $targetSelector);
-            $targetSelector = '#liv-'.strtolower(str_replace(' ', '-', $targetSelector));
-            if ($tickRec) {
-                $existingIds = array_map(function ($e) { return $e['targetSelector']; }, $tickRec);
-                if (in_array($targetSelector, $existingIds)) {
-                    if ($this->setInx > 1) {
-                        $targetSelector .= "-$this->setInx";
-                    }
-                    $targetSelector .= "-$this->inx";
-                }
-            }
+        if ($this->manual) {
+            return " data-datasrc-ref='$ticketHash'";
+            $str = <<<EOT
+<div class='lzy-live-data-placeholder lzy-dispno' data-datasrc-ref="$ticketHash"></div>
+EOT;
+            return $str;
         }
-        $c0 = $targetSelector[0];
-        if (($c0 !== '#') && ($c0 !== '.')) {
-            $targetSelector = "#$targetSelector";
-        }
-        return $targetSelector;
-    } // deriveTargetSelector
-
-
-
-
-    private function renderHTML($ticket, $values)
-    {
+        
         $str = '';
-        $dynamicArg = '';
-        if ($this->dynamicArg) {
-            $dynamicArg = " data-live-data-param='$this->dynamicArg'";
-        }
-
         $callback = '';
         if ($this->callback) {
             $callback = " data-live-callback='$this->callback'";
@@ -208,32 +187,24 @@ EOT;
         if ($this->postUpdateCallback) {
             $postUpdateCallback = " data-live-post-update-callback='$this->postUpdateCallback'";
         }
-
-        // normally, this macro renders visible output directly.
-        // 'mode: manual' overrides this -> just renders infrastructure, you place the visible code manually into your page
-        // e.g. <span id="my-id""></span>
-        if ($this->manual) {
-            $comment = ($this->manual === 'silent') ?'' : '<!-- live-data manual mode -->';
-            $str = <<<EOT
-<span class='lzy-live-data disp-no' data-lzy-datasrc-ref="$ticket"$dynamicArg$callback$postUpdateCallback>$comment</span>
-EOT;
-
-        } else {
-            foreach ($this->targetSelectors as $i => $targetSelector) {
-                $selector = ltrim($targetSelector, '#');
-                if ($targetSelector[0] === '#') {
-                    $selector = "id='$selector' class='lzy-live-data'";
-                } elseif ($targetSelector[0] === '.') {
-                    $selector = "class='lzy-live-data $selector'";
-                } else {
-                    $selector = "id='$targetSelector' class='lzy-live-data'";
-                }
-                $str .= <<<EOT
-    <span $selector data-lzy-datasrc-ref="$ticket"$dynamicArg$callback$postUpdateCallback>{$values[$i]}</span>
+        // render data elements:
+        foreach ($this->dataSelectors as $i => $dataSelector) {
+            $k = $i + 1;
+            $id = "id='lzy-live-data-$this->setInx-$k'";
+            $class = "class='lzy-live-data'";
+            $value = $values[$i];
+            $str .= <<<EOT
+<span $id $class data-ref="$dataSelector"$callback$postUpdateCallback>$value</span>
 
 EOT;
-            }
         }
+
+        // render data-datasrc-ref element:
+        $str = <<<EOT
+    <div class='lzy-live-data-wrapper' data-datasrc-ref="$ticketHash"$callback$postUpdateCallback>
+$str
+    </div>
+EOT;
         return $str;
     } // renderHTML
 

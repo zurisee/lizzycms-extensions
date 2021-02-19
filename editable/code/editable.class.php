@@ -1,8 +1,13 @@
 <?php
 
+define('DEFAULT_EDITABLE_DATA_FILE', 'editable.yaml');
+
 $GLOBALS['globalParams']['editaleSetInx'] = 0;
 $GLOBALS['globalParams']['editableInitialized'] = false;
 
+if (isset($this->page)) {
+    $page = $this->page;
+}
 $page->addModules('POPUPS');
 
 $okSymbol = true? '&#10003;': '&radic;';
@@ -34,12 +39,6 @@ class Editable extends LiveData
         $this->page = $lzy->page;
         $args = &$this->args;
 
-        // handle case liveData enabled:
-        $liveData =  isset($args['liveData']) ? $args['liveData'] : false;
-        if ($liveData) {
-            $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
-        }
-
         // check permission:
         $args['editableBy'] = $editableBy = isset($args['editableBy']) ? $args['editableBy'] : true;
         $args['edEnabled'] = false;
@@ -68,12 +67,6 @@ EOT;
                 $this->page->addJq('mylog("Editable feature disabled - insufficient privilege.");');
             }
 
-            if (isset($args['enableDoubleClick']) && $args['enableDoubleClick']) {
-                $this->page->addJs("\nconst lzyEnableEditableDoubleClick = true;\n");
-            } else {
-                $this->page->addJs("\nconst lzyEnableEditableDoubleClick = false;\n");
-            }
-
             $jq = <<<EOT
 $('.lzy-editable[title]').tooltipster({
     animation: 'fade',
@@ -90,12 +83,23 @@ EOT;
             $GLOBALS['globalParams']['editableInitialized'] = true;
         }
 
-        // option liveData:
-        $liveData = @$args['liveData'];
-        if ($liveData) {
-            $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
+        if (isset($args['allowMultiLine']) && $args['allowMultiLine']) {
+            $this->multilineEnabled = true;
+            if (isset($args['class'])) {
+                $args['class'] .= ' lzy-multiline-enabled';
+            } else {
+                $args['class'] = 'lzy-multiline-enabled';
+            }
         }
-        $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
+
+        // option liveData:
+        if (!$GLOBALS['lizzy']['editableLiveDataInitialized']) {
+            $liveData = @$args['liveData'];
+            if ($liveData) {
+                $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
+            }
+            $GLOBALS['lizzy']['editableLiveDataInitialized'] = true;
+        }
         $this->editaleFldInx = 1;
 
     } // __construct
@@ -110,11 +114,8 @@ EOT;
         $args = $this->prepareArguments( $args );
 
         if (isset($args['output']) && ($args['output'] === false)) {
-            $args = $this->args;
             $args['dataSource'] = '~/' . $args['dataSource'];
-            $dataRef = parent::render($args, true);
-            $out = "\t<div class='lzy-data-ref'$dataRef></div>\n";
-            $this->initDataRef($args); // add 'editableBy' to ticket
+            $out = $this->initDataRef( $args ); // returns $dataRef
 
         } else {
             $out = $this->renderEditableFieldSet();
@@ -134,10 +135,7 @@ EOT;
 
         $dataRef = $this->initDataRef($args);
 
-        $data = $this->db->read();
-
         $id = $args['id'] ? " id='{$args['id']}'" : '';
-        $eClass = '';
 
         if (@$args['multiline']) {
             $args['wrapperClass'] .= ' lzy-editable-multiline';
@@ -150,32 +148,41 @@ EOT;
 
         $out = '';
 
-        foreach ($this->targetSelectors as $i => $eId) {
-            if ($eId[0] === '#') {
-                $eId = substr($eId, 1);
-                $eClass = '';
-            } elseif ($eId[0] === '.') {
-                $eClass = substr($eId, 1);
+        foreach ($this->dataSelectors as $i => $dataKey) {
+            // prepare element Class and Id:
+            $eClass = '';
+            if (isset($this->targetSelectors[ $i ])) {
+                $eId = $this->targetSelectors[ $i ];
+                if ($eId[0] === '#') {
+                    $eId = substr($eId, 1);
+                } elseif ($eId[0] === '.') {
+                    $eClass = substr($eId, 1);
+                    $eId = "lzy-editable-$this->editaleSetInx-". ($i + 1);
+                }
+            } else {
                 $eId = "lzy-editable-$this->editaleSetInx-". ($i + 1);
             }
+
             $title = '';
-            $value = $this->db->readElement($this->dataSelectors[$i]);
-            if (isset( $data[ $this->dataSelectors[$i] ]) ) {
-                if ($this->db->isRecLocked($this->dataSelectors[$i])) {
-                    $eClass .= ' lzy-element-locked';
-                    $title = ' title="{{ lzy-editable-element-locked }}"';
-                }
-                $value = $data[ $this->dataSelectors[$i] ];
-                if ($value && $this->freezeFieldAfter) {
-                    $lastModif = $this->db->lastModifiedElement($this->dataSelectors[$i]);
-                    if ($lastModif < (time() - $this->freezeFieldAfter)) {
-                        $eClass .= ' lzy-element-frozen';
-                        $title = ' title="{{ lzy-editable-element-frozen }}"';
-                    }
+            $value = $this->db->readElement( $dataKey );
+            if ($this->db->isRecLocked( $dataKey )) {
+                $eClass .= ' lzy-element-locked';
+                $title = ' title="{{ lzy-editable-element-locked }}"';
+            }
+            if ($value && $this->freezeFieldAfter) {
+                $lastModif = $this->db->lastModifiedElement( $dataKey );
+                if ($lastModif < (time() - $this->freezeFieldAfter)) {
+                    $eClass .= ' lzy-element-frozen';
+                    $title = ' title="{{ lzy-editable-element-frozen }}"';
                 }
             }
+
+            if (strpos($value, "\n") !== false) {
+                $eClass .= ' lzy-editable-multiline';
+            }
+
             $eClass = $eClass? ' '.trim($eClass): '';
-            $dRef = " data-ref='{$this->dataSelectors[$i]}'";
+            $dRef = " data-ref='$dataKey'";
             $out .= "\t\t<div id='$eId' class='lzy-editable$eClass'$dRef$title>$value</div>\n";
         }
 
@@ -188,7 +195,6 @@ EOT;
 
 
 
-    //---------------------------------------------------------------
     private function prepareArguments( $args )
     {
         if ($args) {
@@ -215,24 +221,6 @@ EOT;
                     for ($i=1; $i<$n; $i++) {
                         $this->editaleFldInx++;
                         $args['dataSelector'] .= "|elem-$setInx-$this->editaleFldInx";
-                    }
-                }
-            }
-        }
-        if (!isset($args['targetSelector'])) {
-            if (($args['nCols'] > 1) || ($args['nRows'] > 1)) {
-                if ($args['nRows'] > 1) {
-                    $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-row-* .lzy-col-*";
-                } else {
-                    $args['targetSelector'] = "#lzy-table{$this->setInx} .lzy-col-*";
-                }
-            } else {
-                $args['targetSelector'] = "#lzy-editable-$setInx-$editaleFldInx1";
-                if (@$args['nFields']) {
-                    $n = intval($args['nFields']);
-                    for ($i=1; $i<$n; $i++) {
-                        $editaleFldInx1++;
-                        $args['targetSelector'] .= "|#lzy-editable-$setInx-$editaleFldInx1";
                     }
                 }
             }
@@ -300,52 +288,6 @@ EOT;
         $this->args = $args;
         return $args;
     } // prepareArguments
-
-
-
-/*
-    private function prepareProtectedCellsArray($args)
-    {
-        $protectedCells = [];
-        if ($args['protectedCells']) {
-            $protCells = $args['protectedCells'];
-            $delim = (substr_count($protCells, ',') > substr_count($protCells, '|')) ? ',' : '|';
-            $elems = parseArgumentStr($protCells, $delim);
-            $protectedCells = array_fill(0, $args['nRows'], array_fill(0, $args['nCols'], false));;
-            foreach ($elems as $elem) {
-                if (!trim($elem)) {
-                    continue;
-                }
-                $param = substr($elem, 1);
-                $paramArr = parseNumbersetDescriptor($param);
-                switch ($elem[0]) {
-                    case 'r':
-                        while ($r = array_shift($paramArr)) {
-                            $r = intval($param) - 1;
-                            $protectedCells[$r] = array_fill(0, $args['nCols'], true);
-                        }
-                        break;
-                    case 'c':
-                        while ($c = array_shift($paramArr)) {
-                            $c = intval($c) - 1;
-                            for ($r = 0; $r < $args['nRows']; $r++) {
-                                $protectedCells[$r][$c] = true;
-                            }
-                        }
-                        break;
-                    case 'e':
-                        list($c, $r) = preg_split('/\D/', $param);
-                        $r = intval($r) - 1;
-                        $c = intval($c) - 1;
-                        $protectedCells[$r][$c] = true;
-                        break;
-                }
-            }
-        }
-        $args['protectedCells'] = $protectedCells;
-        return $args;
-    } // prepareProtectedCellsArray
-*/
 
 
 
