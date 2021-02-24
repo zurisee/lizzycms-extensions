@@ -6,12 +6,12 @@
 var liveData = null;
 
 
-
 function LiveData() {
     this.ajaxHndl = null;
     this.lastUpdated = 0;
     this.refs = '';
     this.elemInx = 0;
+    this.liveDataUpdatingIsFine = true;
 
 
     this.init = function( execInitialDataUpload ) {
@@ -28,6 +28,7 @@ function LiveData() {
 
             parent.elemInx++;
 
+            // check dataRef for '=' -> indirect addressing of data element:
             var m = dataRef.match(/=([-\w]*)/);
             if (m) {
                 var patt = m[1]? m[1]: 'data-reckey';
@@ -48,11 +49,10 @@ function LiveData() {
                 targSel = 'lzy-livedata-0' + parent.elemInx;
                 $this.attr('id', targSel);
             }
-            parent.refs.push({ srcRef: srcRef, dataRef: dataRef, targSel: targSel });
-            // parent.refs.push({ dataRef: dataRef, srcRef: srcRef, targSel: targSel });
-        });
 
-        // this.debugOutput = ($('.debug').length !== 0);
+            var compileMd = Boolean( $this.closest('.lzy-compile-md').length );
+            parent.refs.push({ srcRef: srcRef, dataRef: dataRef, targSel: targSel, md: compileMd });
+        });
 
         if ((typeof execInitialDataUpload !== 'undefined') && !execInitialDataUpload) {
             this.lastUpdated = -1;
@@ -140,7 +140,7 @@ function LiveData() {
             var val = data.data[targSel];
 
             // targSel can address multiple instances, therefore '.each()':
-            $( targSel ).each(function() {
+            $( targSel ).each( function() {
                 $targ = $( this );
 
                 // skip element if it's in active editable mode:
@@ -152,6 +152,7 @@ function LiveData() {
                 var goOn = true;
                 var callback = $targ.attr('data-live-callback');
                 if (typeof window[callback] === 'function') {
+                    mylog('livedata callback: ' + targSel + ' <= ' + val, false);
                     goOn = window[callback]( targSel, val );
                 }
 
@@ -163,10 +164,9 @@ function LiveData() {
                     } else {
                         $targ.html(val);
                     }
+                    mylog('livedata updateDOM: ' + targSel + ' <= ' + val, false);
                 }
             });
-
-            mylog('livedata updateDOM: ' + targSel + ' <= ' + val, false);
         } // for
 
         updatedElems = updatedElems.replace(/\[data-ref=/g, '');
@@ -221,6 +221,11 @@ function LiveData() {
             var goOn = true;
             if (typeof liveDataCallback === 'function') {
                 goOn = liveDataCallback( data.data );
+            } else {
+                var preCallback = $('[data-live-pre-update-callback]').attr('data-live-pre-update-callback');
+                if ((typeof preCallback !== 'undefined') && (typeof window[preCallback] === 'function')) {
+                    goOn = window[preCallback]( data.data );
+                }
             }
             if (goOn) {
                 this.updateDOM(data);
@@ -230,10 +235,6 @@ function LiveData() {
             }
         }
         $('.live-data-update-time').text( timeStamp() );
-
-        if ( $('body').hasClass('debug') ) {
-            this.dumpDB();
-        }
 
         // restart update cycle:
         this.updateLiveData();
@@ -275,10 +276,12 @@ function LiveData() {
                     } else {
                         s = $elem.text();
                     }
-                    ref.dataRef = s + ',' + m[2];
+                    ref.dataRef = s.trim() + ',' + m[2];
                 } else {
-                    ref.dataRef = $( dataRef );
+                    ref.dataRef = dataRef;
                 }
+                $elem = $( '[data-ref="'+dataRef+'"]' );
+                ref.id = '#' + $elem.attr('id');
             }
             refs[ i ] = ref;
         }
@@ -297,6 +300,8 @@ function LiveData() {
                 lastUpdated: parent.lastUpdated
             },
             success: function (json) {
+                parent.liveDataUpdatingIsFine = true; // signal 'still alive'
+                mylog("-- signaling 'liveData still alive' " + timeStamp(true));
                 parent.ajaxHndl = null;
                 if (json !== 'abort') {
                     return parent.handleAjaxResponse(json);
@@ -328,12 +333,29 @@ function LiveData() {
                 mylog( 'livedata ajax response: ' + text, false );
             }
         });
-    };
+    }; // dumpDB
+    
+    
+    
+    this.startWatchdog = function() {
+        const parent = this;
+        setTimeout(function () {
+            if (!parent.liveDataUpdatingIsFine) {
+                if (parent.ajaxHndl === null) {
+                    mylog('#### watchdog restarts liveData update cycle');
+                    parent.updateLiveData();
+                }
+            }
+            mylog('-- restarting liveData watchdog ' + timeStamp(true));
+            parent.liveDataUpdatingIsFine = false;
+            parent.startWatchdog();
+        }, 120000); // 2 minutes
+    }; // startWatchdog
 
 
 
     this.abortAjax = function() {
-        if (this.ajaxHndl !== null){
+        if (this.ajaxHndl !== null) {
             this.ajaxHndl.abort();
             this.ajaxHndl = null;
             mylog('livedata: last ajax call aborted');
@@ -342,7 +364,7 @@ function LiveData() {
             url: appRoot + "_lizzy/_ajax_server.php?abort=true",
             type: 'GET',
             cache: false,
-            success: function (json) {
+            success: function () {
                 mylog('livedata: server process aborted');
             }
         });
@@ -354,14 +376,18 @@ function LiveData() {
 
 
 
-function liveDataInit( execInitialDataUpload ) {
+function liveDataInit( execInitialDataUpload, activateWatchdog ) {
     if (!liveData) {
         liveData = new LiveData();
     }
     liveData.init( execInitialDataUpload );
+    
+    if (typeof activateWatchdog !== 'undefined' && activateWatchdog) {
+        mylog('-- starting liveData watchdog ' + timeStamp(true));
+        liveData.startWatchdog();
+    }
     return liveData;
 } // liveDataInit
-
 
 
 

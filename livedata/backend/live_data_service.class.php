@@ -18,6 +18,7 @@ class LiveDataService
 
 
 
+
     private function getLiveElements()
     {
         if (!isset($_POST['ref'])) {
@@ -214,7 +215,14 @@ class LiveDataService
                 } else {
                     $value = '';
                 }
-                $tmp["[data-ref='$dataKey']"] = $value;
+                if (isset($rec->md) && $rec->md) {
+                    $value = compileMarkdownStr( $value );
+                }
+                if (isset( $rec->id )) {
+                    $tmp[ $rec->id ] = $value;
+                } else {
+                    $tmp["[data-ref='$dataKey']"] = $value;
+                }
             }
         }
         ksort($tmp);

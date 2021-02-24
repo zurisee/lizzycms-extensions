@@ -164,6 +164,7 @@ EOT;
             }
 
             $title = '';
+//??? #.= indirect addressing:
             $value = $this->db->readElement( $dataKey );
             if ($this->db->isRecLocked( $dataKey )) {
                 $eClass .= ' lzy-element-locked';

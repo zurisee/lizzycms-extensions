@@ -95,19 +95,21 @@ class LiveData
 
     public function renderJs( $inject = true, $execInitialDataUpload = true ) {
         $execInitialDataUpload = $execInitialDataUpload? 'true': 'false';
+        $activateWatchdog = $this->watchdog? 'true': 'false';
         $jq = <<<EOT
 
 if ($('[data-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
-    liveData = liveDataInit( $execInitialDataUpload );
+    liveData = liveDataInit( $execInitialDataUpload, $activateWatchdog );
 }
 
 EOT;
-            if ($inject && !$GLOBALS['lizzy']['liveDataInitialized']) {
-                $this->lzy->page->addJq( $jq );
+        if ($inject && !$GLOBALS['lizzy']['liveDataInitialized']) {
+            $this->lzy->page->addJq( $jq );
             $GLOBALS['lizzy']['liveDataInitialized'] = true;
         }
         return $jq;
     } // renderJs
+
 
 
 
@@ -149,6 +151,8 @@ EOT;
         $this->manual = (isset($args['manual'])) ? $args['manual'] : false;
         $this->initJs = (isset($args['initJs'])) ? $args['initJs'] : true;
         $this->execInitialDataUpload = (isset($args['execInitialDataUpload'])) ? $args['execInitialDataUpload'] : true;
+
+        $this->watchdog = (isset($args['watchdog'])) ? $args['watchdog'] : false;
 
         if ($this->manual !== 'silent') {
             $this->manual = !$this->output || (strpos($this->mode, 'manual') !== false);
