@@ -68,6 +68,7 @@ class LiveData
                 $this->inx++;
             }
             $tickRec[ $setId ]['_dataSource'] = $this->dataSource;
+            $tickRec[ $setId ]['_supportBlobType'] = @$this->supportBlobType;
             $tickRec[ $setId ]['_pollingTime'] = intval($this->polltime);
         }
 
@@ -164,7 +165,10 @@ EOT;
             $this->renderJs( true, $this->execInitialDataUpload);
         }
 
-        $this->db = new DataStorage2([ 'dataFile' => $this->dataSource ]);
+        $this->db = new DataStorage2([
+            'dataFile' => $this->dataSource,
+            'supportBlobType' => @$this->supportBlobType,
+        ]);
 
         $_SESSION['lizzy']['hasLockedElements'] = false;
     } // init

@@ -57,6 +57,7 @@ class LiveDataService
 
             $db = new DataStorage2([
                 'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
+                'supportBlobType' => @$set['_supportBlobType'],
                 'logModifTimes' => true,
             ]);
             $this->sets[$setName]['_db'] = $db;
@@ -245,9 +246,11 @@ class LiveDataService
         $data = $set['_db']->read();
     //        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
         $r = 0;
-        if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
+        if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $dataKey, $m)) {
+//        if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2, $s3) = $m;
-        } elseif (preg_match('/^ (.*?) \* (.*?) $/x', $targetSelector, $m)) {
+        } elseif (preg_match('/^ (.*?) \* (.*?) $/x', $dataKey, $m)) {
+//        } elseif (preg_match('/^ (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2) = $m;
             $s3 = '';
         } else {
