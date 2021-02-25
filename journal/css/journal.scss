@@ -1,0 +1,137 @@
+// journal.scss
+
+// General
+.lzy-journal {
+	.lzy-wait {
+		cursor: wait!important;
+	}
+	.lzy-journal-presentation-wrapper,
+	.lzy-journal-entry {
+		border: 1px solid gray;
+		font-size: 10pt;
+	}
+	.lzy-journal-presentation > div,
+	textarea.lzy-journal-entry {
+		padding: 10px;
+	}
+
+}
+
+
+// Wrapper
+#lzy .lzy-journal-presentation-wrapper {
+	overflow-y: scroll;
+	max-height: 10em;
+	width: 100%;
+	height: 100%;
+	margin-bottom: 5px;
+	h1 {
+		margin: 0;
+		padding: 0;
+	}
+	::-webkit-scrollbar {
+		-webkit-appearance: none;
+		width: 7px;
+	}
+	::-webkit-scrollbar-thumb {
+		border-radius: 4px;
+		background-color: rgba(0, 0, 0, .5);
+		-webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+	}
+	.lzy-journal-presentation-pre {
+		white-space: pre-line;
+	}
+}
+
+
+
+// Presentation box
+#lzy .lzy-journal-presentation {
+	min-height: 10em;
+	padding: 0.7em 10px 0.7em 10px;
+	background: var( --lzy-chronical-presentation-bg, rgba(250,250,100,0.1));
+	h1 {
+		font-size: 14pt;
+	}
+	h4 {
+		margin-bottom: 0.4em;
+	}
+	p, div {
+		padding: 0;
+		margin: 0 0 0.4em 0;
+		line-height: 1.2em;
+	}
+	ul, ol {
+		margin: 0 0 0.4em 0;
+	}
+}
+
+
+
+
+//### Entry Box
+.lzy-journal-entry-wrapper {
+	min-height: 3.5em;
+}
+
+.lzy-journal-entry {
+	background: #eff9ff;
+	background: var(--lzy-journal-entry-bg, #eff9ff);
+}
+
+//## Multiline / Textarea
+textarea.lzy-journal-entry {
+	width: calc(100% - 5px);
+	height: 100%;
+	white-space: pre-wrap;
+}
+//.lzy-journal-entry {
+//	white-space: pre-wrap;
+//}
+
+// Autogrow mechanism for textarea:
+.lzy-textarea-autogrow {
+	// Reference: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/?mc_cid=dc1f45ab23&mc_eid=25d6a6e323
+	display: grid;
+	&::after {
+		content: attr(data-replicated-value) " ";
+		white-space: pre-wrap;
+		visibility: hidden;
+	}
+	& > textarea {
+		resize: none;
+		overflow: hidden;
+	}
+	& > textarea,
+	&::after {
+		border: 1px solid black;
+		padding: 0.5rem;
+		font: inherit;
+		grid-area: #{ 1 } / #{ 1 } / #{ 2 } / #{ 2 };
+	}
+}
+
+
+
+//## Singleline / Input
+.lzy-journal-entry-singleline {
+	width: calc(100% - 3em);
+	height: 2.7em;
+	padding: 10px;
+}
+
+
+
+//### Send button
+.lzy-journal-send {
+	float: right;
+	button {
+		padding: 0;
+		width: 2em;
+		height: 2em;
+	}
+}
+
+
+
+

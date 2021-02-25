@@ -1,24 +1,24 @@
 <?php
-define('DEFAULT_CHRONICLE_DATA_FILE', '~page/chronicle.yaml');
+define('DEFAULT_JOURNAL_DATA_FILE', '~page/journal.yaml');
 define('ENTRY_MARKER_TEMPLATE',         '#### %ts %un');
 
-$GLOBALS['lizzy']['chronicleLiveDataInitialized'] = false;
+$GLOBALS['lizzy']['journalLiveDataInitialized'] = false;
 
-$response = getCliArg('chronicle');
+$response = getCliArg('journal');
 if ($response) {
-    $bEnd = new ChronicleBackend();
+    $bEnd = new JournalBackend();
     $bEnd->handleResponse( $response );
 }
 
 
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
 
-$this->page->addModules('~/css/_chronicle.css,~sys/extensions/chronicle/js/chronicle.js');
+$this->page->addModules('~sys/extensions/journal/css/_journal.css,~sys/extensions/journal/js/journal.js,POPUPS');
 //$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
-$GLOBALS['lizzy']['chronicleCount'] = 0;
+$GLOBALS['lizzy']['journalCount'] = 0;
 
-$page->addJq( "initChronicle();" );
+$page->addJq( "initJournal();" );
 
 $macroName = basename(__FILE__, '.php');
 $this->addMacro($macroName, function () {
@@ -30,7 +30,8 @@ $this->addMacro($macroName, function () {
 
 	if ($dataSource === 'help') {
         $this->getArg($macroName, 'dataSelector', '(optional) If set, defines the dataKey into the DB.', '');
-        $this->getArg($macroName, 'editableBy', '[true|false|loggedin|privileged|admins] If set, defines who can enter data.', '');
+        $this->getArg($macroName, 'writePermission', '[true|false|loggedin|privileged|admins] defines who can enter text. (Default: true = all)', '');
+        $this->getArg($macroName, 'editableBy', '[true|false|loggedin|privileged|admins] If set, defines who can modify previously entered text. (Default: false = nobody)', '');
         $this->getArg($macroName, 'id', '(optional) Id applied to the widget wrapper.', '');
         $this->getArg($macroName, 'class', '(optional) Class applied to the widget wrapper.', '');
         $this->getArg($macroName, 'liveData', 'If true, data values are immediately updated if the database on the host is modified.', '');
@@ -48,7 +49,7 @@ $this->addMacro($macroName, function () {
         unset($args['disableCaching']);
     }
 
-    $chron = new Chronicle($this->lzy, $args);
+    $chron = new Journal($this->lzy, $args);
     $out = $chron->render();
 
     return $out;
@@ -58,7 +59,7 @@ $this->addMacro($macroName, function () {
 
 
 
-class Chronicle extends LiveData
+class Journal extends LiveData
 {
     public function __construct($lzy, $args)
     {
@@ -74,8 +75,8 @@ class Chronicle extends LiveData
         if (isset($_SESSION['lizzy']['ajaxServerAbort'])) {
             unset( $_SESSION['lizzy']['ajaxServerAbort'] );
         }
-        $GLOBALS['lizzy']['chronicleCount']++;
-        $inx = $this->inx = $GLOBALS['lizzy']['chronicleCount'];
+        $GLOBALS['lizzy']['journalCount']++;
+        $inx = $this->inx = $GLOBALS['lizzy']['journalCount'];
 
         $args = $this->parseArgs( $args );
         $args['tickRecCustomFields'] = [
@@ -86,53 +87,57 @@ class Chronicle extends LiveData
         $dataSrcRef = $this->initDataRef( $args );
         $dataRef = "data-ref='$this->dataSelector'";
 
-        $db = new DataStorage2( $args['dataSource'] );
+        $db = new DataStorage2([
+            'dataSource' => $args['dataSource'],
+            'supportBlobType' => $this->supportBlobType,
+        ]);
         if (!$db) {
-            die("chronicle DB not found");
+            die("journal DB not found");
         }
 
         // check dataRef for indirect addressing of data element:
         if (strpos('=.#', $this->dataSelector[0]) !== false) {
             $text = '⌛';
         } else {
-            $text = $db->readElement($this->dataSelector);
+            $dataSelector = ltrim($this->dataSelector, '\\');
+            $text = $db->readElement( $dataSelector );
         }
 
         $callbackAttr = '';
         if ($this->liveData) {
-            $callbackAttr = ' data-live-pre-update-callback="chronicleLiveDataCallback"';
+            $callbackAttr = ' data-live-pre-update-callback="journalLiveDataCallback"';
         }
 
         $pre = '';
-        if ($this->compileMd) {
+        if ($this->renderAsMd) {
             $text = compileMarkdownStr($text);
             $this->class .= ' lzy-compile-md';
         } else {
-            $pre = ' lzy-chronicle-presentation-pre';
+            $pre = ' lzy-journal-presentation-pre';
         }
 
         $html = <<<EOT
     <div id="$this->id" class="$this->class" $dataSrcRef $callbackAttr>
-		<div class="lzy-chronicle-presentation-wrapper lzy-scroll-hints">
-		    <div class=" lzy-chronicle-presentation$pre" $dataRef aria-live="polite">
+		<div class="lzy-journal-presentation-wrapper lzy-scroll-hints">
+		    <div class=" lzy-journal-presentation$pre" $dataRef aria-live="polite">
 $text
             </div>
 		</div>
 EOT;
-        if ($this->editableBy) {
+        if ($this->writePermission) {
             $html .= <<<EOT
 
-		<div  class="lzy-chronicle-send">
-        	<button id='lzy-chronicle-send-btn-$inx' class='lzy-button'><span class='lzy-icon lzy-icon-send'></span></button>
-		</div><!-- /.lzy-chronicle-send -->
+		<div  class="lzy-journal-send">
+        	<button id='lzy-journal-send-btn-$inx' class='lzy-button'><span class='lzy-icon lzy-icon-send'></span></button>
+		</div><!-- /.lzy-journal-send -->
 
 EOT;
 
             if ($this->multiline) {
                 $html .= <<<EOT
-        <div class="lzy-chronicle-entry-wrapper">
+        <div class="lzy-journal-entry-wrapper">
             <div class='lzy-textarea-autogrow'>
-                <textarea class="lzy-chronicle-entry lzy-chronicle-entry-multiline" onInput='this.parentNode.dataset.replicatedValue = this.value'></textarea>
+                <textarea class="lzy-journal-entry lzy-journal-entry-multiline" onInput='this.parentNode.dataset.replicatedValue = this.value'></textarea>
             </div>
 		</div>
     </div>
@@ -140,14 +145,14 @@ EOT;
 EOT;
             } else {
                 $html .= <<<EOT
-        <div class="lzy-chronicle-entry-wrapper">
-            <input class="lzy-chronicle-entry lzy-chronicle-entry-singleline" />
+        <div class="lzy-journal-entry-wrapper">
+            <input class="lzy-journal-entry lzy-journal-entry-singleline" />
 		</div>
     </div>
 
 EOT;
             }
-        } // editableBy
+        } // writePermission
 
         return $html;
     } // render
@@ -161,19 +166,25 @@ EOT;
         } else {
             $args = $this->args;
         }
-        $this->dataSource = $args['dataSource'] = (isset($args['dataSource']) && $args['dataSource']) ? $args['dataSource'] : DEFAULT_CHRONICLE_DATA_FILE;
-        $this->dataSelector = $args['dataSelector'] = isset($args['dataSelector']) ? $args['dataSelector'] : "chronicle-$this->inx";
-        $this->id = $args['id'] = isset($args['id']) ? $args['id'] : "lzy-chronicle-$this->inx";
-        $this->class = $args['class'] = isset($args['class']) ? $args['class'] : "lzy-chronicle lzy-chronicle-$this->inx";
+        $this->dataSource = $args['dataSource'] = (isset($args['dataSource']) && $args['dataSource']) ? $args['dataSource'] : DEFAULT_JOURNAL_DATA_FILE;
+        $this->dataSelector = $args['dataSelector'] = isset($args['dataSelector']) ? $args['dataSelector'] : "journal-$this->inx";
+        $this->id = $args['id'] = isset($args['id']) ? $args['id'] : "lzy-journal-$this->inx";
+        $this->class = $args['class'] = isset($args['class']) ? $args['class'] : "lzy-journal lzy-journal-$this->inx";
         $this->liveData = $args['liveData'] = isset($args['liveData']) ? $args['liveData'] : false;
         $this->watchdog = $args['watchdog'] = isset($args['watchdog']) ? $args['watchdog'] : false;
-        $this->editableBy = $args['editableBy'] = isset($args['editableBy']) ? $args['editableBy'] : true;
+        $this->writePermission = $args['writePermission'] = isset($args['writePermission']) ? $args['writePermission'] : true;
+        $this->editableBy = $args['editableBy'] = isset($args['editableBy']) ? $args['editableBy'] : false;
         $this->useRecycleBin = $args['useRecycleBin'] = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
         $this->entryMarkerTemplate = $args['entryMarkerTemplate'] = isset($args['entryMarkerTemplate']) ? $args['entryMarkerTemplate'] : ENTRY_MARKER_TEMPLATE;
         $this->entryAggregationPeriod = $args['entryAggregationPeriod'] = isset($args['entryAggregationPeriod']) ? $args['entryAggregationPeriod'] : 300; // seconds
         $mode = isset($args['mode']) ? $args['mode'] : 'markdown';
+
+        $this->supportBlobType = $args['supportBlobType'] = (strpos($this->dataSelector, '~') !== false);
+
+        $this->renderAsMd =  true;
+        $this->multiline =  true;
         if ($mode) {
-            $this->compileMd =  (strpos($mode, 'mark') !== false) || (strpos($mode, 'md') !== false);
+            $this->renderAsMd =  (strpos($mode, 'mark') !== false) || (strpos($mode, 'md') !== false);
             $this->multiline =  (strpos($mode, 'sing') === false);
 
         }
@@ -183,12 +194,17 @@ EOT;
         $this->sendCallback = isset($args['sendCallback']) ? $args['sendCallback'] : false;
 
         if ($this->liveData) {
-            if (!$GLOBALS['lizzy']['chronicleLiveDataInitialized']) {
+            if (!$GLOBALS['lizzy']['journalLiveDataInitialized']) {
                 $liveData = @$args['liveData'];
                 if ($liveData) {
                     $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
                 }
-                $GLOBALS['lizzy']['chronicleLiveDataInitialized'] = true;
+                $GLOBALS['lizzy']['journalLiveDataInitialized'] = true;
+            }
+        }
+        if ($this->writePermission) {
+            if ($this->writePermission !== true) {
+                $this->writePermission = $this->lzy->auth->checkPrivilege( $this->writePermission );
             }
         }
         if ($this->editableBy) {
@@ -196,7 +212,6 @@ EOT;
                 $this->editableBy = $this->lzy->auth->checkPrivilege( $this->editableBy );
             }
         }
-
         return $args;
     } // parseArgs
 
@@ -205,24 +220,26 @@ EOT;
     private function initDataRef( $args )
     {
         $args['tickRecCustomFields'] = [
-            '_entryMarkerTemplate'    => $this->entryMarkerTemplate,
-            '_entryAggregationPeriod'    => $this->entryAggregationPeriod,
-            '_saveAsMd'    => $this->compileMd,
-            '_useRecycleBin'    => $this->useRecycleBin,
-            '_editableBy'       => $this->editableBy,
-            '_entryAggregationPeriod'=> $this->entryAggregationPeriod,
-            '_dataRef'          => $this->dataSelector,
+            '_entryMarkerTemplate'      => $this->entryMarkerTemplate,
+            '_entryAggregationPeriod'   => $this->entryAggregationPeriod,
+            '_renderAsMd'               => $this->renderAsMd,
+            '_useRecycleBin'            => $this->useRecycleBin,
+            '_writePermission'          => $this->writePermission,
+            '_editableBy'               => $this->editableBy,
+            '_entryAggregationPeriod'   => $this->entryAggregationPeriod,
+            '_dataRef'                  => $this->dataSelector,
+            '_supportBlobType'          => $this->supportBlobType,
         ];
 
         return parent::render($args, true);
     } // initDataRef
 
-} // Chronicle
+} // Journal
 
 
 
 
-class ChronicleBackend
+class JournalBackend
 {
     public function __construct()
     {
@@ -234,36 +251,40 @@ class ChronicleBackend
     public function handleResponse( $response )
     {
         if ($response === 'save') {
-            $this->saveChronicleResponse();
+            $this->saveJournalResponse();
         }
-    } // handleChronicleResponse
+    } // handleJournalResponse
 
 
 
-    private function saveChronicleResponse()
+    private function saveJournalResponse()
     {
         $text = getCliArg('text');
         $db = $this->openDB();
 
-        if (!$this->editableBy) {
-            $this->sendResponse( '', 'failed#Error: insufficient permission');
+        if (!$this->writePermission) {
+            $this->sendResponse( '', 'failed#Error in Journal: insufficient permission');
         }
 
         $dataKey = get_post_data('dataRef');
+        $dataKey = ltrim($dataKey, '\\');
         if (!$dataKey) {
-            $this->sendResponse( '', 'failed#Error: dataRef missing');
+            $this->sendResponse( '', 'failed#Error in Journal: dataRef missing');
         }
         if (!$db->lockRec( $dataKey, true )) {
-            $this->sendResponse( '', 'failed#Error: db locked');
+            $this->sendResponse( '', 'failed#Error in Journal: db locked');
         }
-        $origValue = $db->readElement( $dataKey );
+
+        $origValue = $db->readElement($dataKey);
 
         $newValue = $this->injectEntryMarker( $origValue, $text );
 
         $db->writeElement( $dataKey, $newValue );
+
         $db->unlockRec( $dataKey);
 
-            if ($this->saveAsMd) {
+        if ($this->renderAsMd) {
+            $newValue = preg_replace('/\b\n\b/', '<br>', $newValue);
             $out = compileMarkdownStr($newValue);
         } else {
             $out = $newValue;
@@ -271,7 +292,7 @@ class ChronicleBackend
         mylog("save: $dataKey => '$text' -> ok");
 
         $this->sendResponse( $out);
-    } // saveChronicleResponse
+    } // saveJournalResponse
 
 
 
@@ -279,28 +300,31 @@ class ChronicleBackend
     {
         $tooFresh = false;
         $lastUn = '';
-        $nl = $this->saveAsMd? "\n\n": "\n";
+        $nl = $this->renderAsMd? "\n\n": "\n";
 
         $text = urldecode($text);
-        $text = preg_replace('/\b\n\b/', '<br>', $text);
 
-        $p = strrpos($origValue, '####');
-        if ($p !== false) {
-            $str = substr($origValue, $p);
-            if (preg_match('/ (\d+-\d+-\d+\s\d+:\d+:\d+) \s+ (\w+) /x', $str, $m)) {
-                $ts = $m[1];
-                $lastUn = $m[2];
-                $lastT = strtotime( $ts );
-                $tooFresh = ($lastT > (time() - $this->entryAggregationPeriod));
+        if ($this->entryMarkerTemplate) {
+            $p = strrpos($origValue, '####');
+            if ($p !== false) {
+                $str = substr($origValue, $p);
+                if (preg_match('/ (\d+-\d+-\d+\s\d+:\d+:\d+) \s+ (\w+) /x', $str, $m)) {
+                    $ts = $m[1];
+                    $lastUn = $m[2];
+                    $lastT = strtotime($ts);
+                    $tooFresh = ($lastT > (time() - $this->entryAggregationPeriod));
+                }
             }
-        }
-        $un = $_SESSION["lizzy"]["user"] ? $_SESSION["lizzy"]["user"] : 'anon';
-        if (!$tooFresh || ($un !== $lastUn)) {
-            $ts = timestamp();
-            $text = str_replace(['%ts', '%un'], [$ts, $un], $this->entryMarkerTemplate) . "$nl$text";
-        }
-        if ($origValue) {
-            $text = "$origValue$nl$text";
+            $un = $_SESSION["lizzy"]["user"] ? $_SESSION["lizzy"]["user"] : 'anon';
+            if (!$tooFresh || ($un !== $lastUn)) {
+                $ts = timestamp();
+                $text = str_replace(['%ts', '%un'], [$ts, $un], $this->entryMarkerTemplate) . "$nl$text";
+            }
+            if ($origValue) {
+                $text = "$origValue$nl$text";
+            }
+        } elseif ($origValue) {
+            $text = "$origValue\n$text";
         }
         return $text;
     } // injectEntryMarker
@@ -331,16 +355,21 @@ class ChronicleBackend
             if ($setInx !== $setInx0) {
                 continue;
             }
+            
+            // get parameters from ticket:
+            $this->writePermission = @$set['_writePermission'];
+            $this->editableBy = @$set['_editableBy'];
+            $this->renderAsMd = @$set['_renderAsMd'];
+            $this->entryMarkerTemplate = @$set['_entryMarkerTemplate'];
+            $this->entryAggregationPeriod = @$set['_entryAggregationPeriod'];
+            $supportBlobType = @$set['_supportBlobType'];
 
             // open DB:
             $useRecycleBin1 = $useRecycleBin || @$set['_useRecycleBin'];
-            $this->entryMarkerTemplate = @$set['_entryMarkerTemplate'];
-            $this->entryAggregationPeriod = @$set['_entryAggregationPeriod'];
-            $this->editableBy = @$set['_editableBy'];
-            $this->saveAsMd = @$set['_saveAsMd'];
 
             $db = new DataStorage2([
                 'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
+                'supportBlobType' => $supportBlobType,
                 'sid' => $this->sessionId,
                 'lockDB' => false,
                 'useRecycleBin' => $useRecycleBin1,
@@ -363,7 +392,7 @@ class ChronicleBackend
     } // sendResponse
 
 
-} // ChronicleBackend
+} // JournalBackend
 
 
 

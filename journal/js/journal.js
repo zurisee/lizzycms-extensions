@@ -1,12 +1,12 @@
-// Chronicle
+// Journal
 
 "use strict";
 
-var chronicle = null;
+var journal = null;
 
 
 
-function Chronicle() {
+function Journal() {
     this.ajaxHndl = null;
     this.lastUpdated = 0;
     this.refs = '';
@@ -27,7 +27,7 @@ function Chronicle() {
 
     this.setupEventHandlers = function() {
         const parent = this;
-        $('.lzy-chronicle-send button').click(function () {
+        $('.lzy-journal-send button').click(function () {
             parent.handleUserInput( this );
         });
 
@@ -80,15 +80,15 @@ function Chronicle() {
 
     this.handleUserInput = function( that ) {
         if ( typeof that[0] !== 'undefined') {
-            this.$elem = that.closest('.lzy-chronicle');
+            this.$elem = that.closest('.lzy-journal');
         } else {
-            this.$elem = $(that).closest('.lzy-chronicle');
+            this.$elem = $(that).closest('.lzy-journal');
         }
         this.srcRef = this.$elem.attr('data-datasrc-ref');
         this.dataRef = this.getDataRef();
         const $entryField = $('textarea,input', this.$elem);
         var text = $entryField.val();
-        $('.lzy-chronicle-entry', this.$elem).addClass('lzy-wait');
+        $('.lzy-journal-entry', this.$elem).addClass('lzy-wait');
         this.saveValue( text );
     }; // handleUserInput
 
@@ -99,9 +99,9 @@ function Chronicle() {
         text = encodeURI( text );
         var parent = this;
         const id = $('[data-ref]', this.$elem).attr('id');
-        mylog('chronicle saveValue ' + text, false);
+        mylog('journal saveValue ' + text, false);
         var data = {
-            chronicle: 'save',
+            journal: 'save',
             text: text,
             srcRef: this.srcRef,
             dataRef: this.dataRef,
@@ -116,11 +116,11 @@ function Chronicle() {
             cache: false,
             success: function (json) {
                 $('.lzy-wait', parent.$elem).removeClass('lzy-wait');
-                mylog( 'chronicle saveValue success: ' + json, false );
+                mylog( 'journal saveValue success: ' + json, false );
                 parent.handleResponse( json );
             },
             error: function(xhr, status, error) {
-                mylog( 'chronicle lockField: failed -> ' + error );
+                mylog( 'journal lockField: failed -> ' + error );
                 $('.lzy-wait', parent.$elem).removeClass('lzy-wait');
             }
         });
@@ -129,8 +129,14 @@ function Chronicle() {
 
 
     this.handleResponse = function(json0) {
-        const json = json0.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
+        var json = json0.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
         if (!json) {
+            return;
+        }
+
+        if (json.match(/xdebug-error/)) {
+            json = json.replace(/<[^>]*>?/gm, '');
+            mylog( json );
             return;
         }
 
@@ -138,12 +144,26 @@ function Chronicle() {
         const result = data.result;
         if (result.match(/^ok/)) {
             const html = data.data;
-            $('.lzy-chronicle-presentation', this.$elem).html( html );
+            $('.lzy-journal-presentation', this.$elem).html( html );
             this.scrollToBottom();
 
-            $('.lzy-chronicle-entry', this.$elem).val( '' ).focus();
+            $('.lzy-journal-entry', this.$elem).val( '' ).focus();
             $('.lzy-textarea-autogrow', this.$elem).attr('data-replicated-value','');
+        } else {
+            var errMsg = json0.replace(/.*\#(.*)"}/, '$1');
+            if (errMsg.match(/xdebug-error/)) {
+            // if (errMsg.charAt(0) === '<') {
+                errMsg = errMsg.replace(/<[^>]*>?/gm, '');
+            }
+            mylog( errMsg );
+            lzyPopup({
+                content: errMsg,
+            });
+            if (typeof journalErrorHandler === 'function') {
+                journalErrorHandler(data);
+            }
         }
+
     }; // handleResponse
 
 
@@ -174,7 +194,7 @@ function Chronicle() {
 
 
     this.scrollToBottom = function() {
-        var $elem = $( '.lzy-chronicle-presentation-wrapper', this.$elem );
+        var $elem = $( '.lzy-journal-presentation-wrapper', this.$elem );
         var h, $el = null;
         $elem.each(function () {
             $el = $( this );
@@ -182,47 +202,47 @@ function Chronicle() {
             $el.animate({ scrollTop: h }, 500);
         });
     }; // scrollToBottom
-} // Chronicle
+} // Journal
 
 
 
-function chronicleLiveDataCallback( data )
+function journalLiveDataCallback( data )
 {
-    // updates content of chronicle presentation box.
+    // updates content of journal presentation box.
     // callback invoked via attribute 'data-live-pre-update-callback' in HTML.
     var val = null;
-    var $chronicle = null;
+    var $journal = null;
     var $presentationBox = null;
     for (var targSel in data) {
         val = data[ targSel ];
-        mylog('chronicle live updating: ' + targSel + ' val: ' + val, false);
+        mylog('journal live updating: ' + targSel + ' val: ' + val, false);
         $( targSel ).html( val );
     }
 
-    chronicle.scrollToBottom();
+    journal.scrollToBottom();
     return false;
-} // chronicleLiveDataCallback
+} // journalLiveDataCallback
 
 
 
 
-function initChronicle() {
-    if (!chronicle) {
-        chronicle = new Chronicle();
+function initJournal() {
+    if (!journal) {
+        journal = new Journal();
     }
-    chronicle.init();
-    return chronicle;
-} // liveChronicle
+    journal.init();
+    return journal;
+} // liveJournal
 
 
 
 
-// $.fn.chronicle = function () {
+// $.fn.journal = function () {
 //     // initialize:
 //     $( this ).each( function() {
 //         var $this = $(this);
-//         chronicle = new Chronicle( $this );
-//         chronicle.init();
+//         journal = new Journal( $this );
+//         journal.init();
 //     });
-// } // $.fn.chronicle
+// } // $.fn.journal
 
