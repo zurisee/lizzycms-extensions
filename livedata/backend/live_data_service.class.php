@@ -4,6 +4,11 @@ class LiveDataService
 {
     public function __construct()
     {
+        // prevent "PHPSESSID"-Cookie warning:
+        session_set_cookie_params(["SameSite" => "Strict"]); //none, lax, strict
+        session_set_cookie_params(["Secure" => "true"]); //false, true
+        session_set_cookie_params(["HttpOnly" => "true"]); //false, true
+
         if (!session_start()) {
             mylog("ERROR in __construct(): failed to start session");
         }
@@ -254,7 +259,8 @@ class LiveDataService
             list($dummy, $s1, $s2) = $m;
             $s3 = '';
         } else {
-            die("Error in targetSelector '$targetSelector' -> '*' missing");
+            die("Error in targetSelector '$dataKey' -> '*' missing");
+//            die("Error in targetSelector '$targetSelector' -> '*' missing");
         }
 
         foreach ($data as $key => $rec) {
