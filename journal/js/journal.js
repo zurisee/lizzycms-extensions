@@ -12,6 +12,7 @@ function Journal() {
     this.refs = '';
     this.elemInx = 0;
     this.backend = './';
+    this.journalLocked = false;
 
 
     this.init = function() {
@@ -29,6 +30,23 @@ function Journal() {
         const parent = this;
         $('.lzy-journal-send button').click(function () {
             parent.handleUserInput( this );
+        });
+
+        $('.lzy-journal-edit-btn').click(function () {
+            const $journalElem = $(this).closest('.lzy-journal');
+            parent.srcRef = $journalElem.attr('data-datasrc-ref');
+            parent.dataRef = $('[data-ref]', $journalElem).attr('data-ref');
+
+            execAjaxPromise('lock-rec', {ds: parent.srcRef, dataRef: parent.dataRef})
+                .then(function() {
+                    parent.journalLocked = true;
+                    initLzyEditor({
+                        srcRef: parent.srcRef,
+                        dataRef: parent.dataRef,
+                        postSaveCallback: 'journalSaveDataCallback',
+                        postCancelCallback: 'journalCancelCallback',
+                    });
+                }); // done
         });
 
         this.setupKeyHandlers();
@@ -77,7 +95,6 @@ function Journal() {
 
 
 
-
     this.handleUserInput = function( that ) {
         if ( typeof that[0] !== 'undefined') {
             this.$elem = that.closest('.lzy-journal');
@@ -91,7 +108,6 @@ function Journal() {
         $('.lzy-journal-entry', this.$elem).addClass('lzy-wait');
         this.saveValue( text );
     }; // handleUserInput
-
 
 
 
@@ -152,7 +168,6 @@ function Journal() {
         } else {
             var errMsg = json0.replace(/.*\#(.*)"}/, '$1');
             if (errMsg.match(/xdebug-error/)) {
-            // if (errMsg.charAt(0) === '<') {
                 errMsg = errMsg.replace(/<[^>]*>?/gm, '');
             }
             mylog( errMsg );
@@ -168,8 +183,6 @@ function Journal() {
 
 
 
-
-    // this.resolveIndirectRef = function( dataRef ) {
     this.getDataRef = function() {
         var m,s,$elem, tagName;
         var dataRef = $('[data-ref]', this.$elem).attr('data-ref');
@@ -193,6 +206,13 @@ function Journal() {
 
 
 
+    this.unlockRec = function () {
+        this.journalLocked = false;
+        execAjax({ds: this.srcRef, dataRef: this.dataRef}, 'unlock-rec');
+    }; // unlock
+
+
+
     this.scrollToBottom = function() {
         var $elem = $( '.lzy-journal-presentation-wrapper', this.$elem );
         var h, $el = null;
@@ -206,23 +226,35 @@ function Journal() {
 
 
 
-function journalLiveDataCallback( data )
+function journalSaveDataCallback( data )
 {
     // updates content of journal presentation box.
     // callback invoked via attribute 'data-live-pre-update-callback' in HTML.
+
+    journal.unlockRec();
+
     var val = null;
-    var $journal = null;
-    var $presentationBox = null;
     for (var targSel in data) {
         val = data[ targSel ];
         mylog('journal live updating: ' + targSel + ' val: ' + val, false);
+        const ch1 = targSel.charAt(0);
+        if ((ch1 !== '#') && (ch1 !== '#')) {
+            targSel = '#' + targSel;
+        }
+        targSel = targSel +' .lzy-journal-presentation';
+        const $elem = $( targSel );
         $( targSel ).html( val );
     }
 
     journal.scrollToBottom();
     return false;
-} // journalLiveDataCallback
+} // journalSaveDataCallback
 
+
+
+function journalCancelCallback() {
+    journal.unlockRec();
+} // journalCancelCallback
 
 
 
@@ -234,6 +266,13 @@ function initJournal() {
     return journal;
 } // liveJournal
 
+
+
+$(window).bind('beforeunload', function() {
+    if (journal.journalLocked) {
+        journal.unlockRec();
+    }
+});
 
 
 

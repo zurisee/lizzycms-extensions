@@ -1,5 +1,6 @@
-/**** auto-created from 'css/scss/journal.scss' - do not modify! ****/
-
+.lzy-journal {
+  position: relative;
+}
 .lzy-journal .lzy-wait {
   cursor: wait !important; }
 .lzy-journal .lzy-journal-presentation-wrapper, .lzy-journal .lzy-journal-entry {
@@ -80,3 +81,36 @@ textarea.lzy-journal-entry {
     padding: 0;
     width: 2em;
     height: 2em; }
+
+.lzy-journal-edit-btn {
+  font-size: 12pt;
+  border-radius: 50%;
+  width: 2.2em;
+  height: 2.2em;
+  position: absolute;
+  top: -1em;
+  right: -1em;
+  padding: 0;
+  border: 1px solid #bcbcbc;
+  -webkit-box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  background: -webkit-linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
+  background: -ms-linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
+  background: linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
+  cursor: pointer;
+  z-index: 2;
+}
+
+#lzy .CodeMirror-wrap .CodeMirror-line {
+  font-size: 10pt;
+}
+.lzy-popup-buttons {
+  margin-top: 0;
+}
+.lzy-journal-padded {
+  max-width: 40em;
+  padding: 1em 1em 0 0;
+}
+.lzy-journal > div {
+  position: relative;
+}

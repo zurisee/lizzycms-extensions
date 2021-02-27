@@ -13,7 +13,13 @@ if ($response) {
 
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
 
-$this->page->addModules('~sys/extensions/journal/css/_journal.css,~sys/extensions/journal/js/journal.js,POPUPS');
+$this->page->addModules(
+    '~sys/extensions/journal/css/_journal.css,'.
+    '~sys/extensions/journal/js/journal.js,'.
+    'POPUPS,'.
+    '~sys/js/editor.js,'.
+    '~sys/third-party/simplemde/simplemde.min.js,~sys/third-party/simplemde/simplemde.min.css',
+);
 //$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
 $GLOBALS['lizzy']['journalCount'] = 0;
@@ -108,6 +114,11 @@ class Journal extends LiveData
             $callbackAttr = ' data-live-pre-update-callback="journalLiveDataCallback"';
         }
 
+        $editButton = '';
+        if ($this->editableBy) {
+            $editButton = "<button id='lzy-journal-edit-btn-$this->inx' class='lzy-journal-edit-btn'><span class='lzy-icon lzy-icon-edit'></span>{{^ lzy-journal-edit-btn }}</button>\n";
+        }
+
         $pre = '';
         if ($this->renderAsMd) {
             $text = compileMarkdownStr($text);
@@ -118,17 +129,19 @@ class Journal extends LiveData
 
         $html = <<<EOT
     <div id="$this->id" class="$this->class" $dataSrcRef $callbackAttr>
-		<div class="lzy-journal-presentation-wrapper lzy-scroll-hints">
+        <div>$editButton
+		  <div class="lzy-journal-presentation-wrapper lzy-scroll-hints">
 		    <div class=" lzy-journal-presentation$pre" $dataRef aria-live="polite">
 $text
             </div>
+          </div>
 		</div>
 EOT;
         if ($this->writePermission) {
             $html .= <<<EOT
 
 		<div  class="lzy-journal-send">
-        	<button id='lzy-journal-send-btn-$inx' class='lzy-button'><span class='lzy-icon lzy-icon-send'></span></button>
+        	<button id='lzy-journal-send-btn-$inx' class='lzy-button' title="{{ lzy-journal-send-btn }}"><span class='lzy-icon lzy-icon-send'></span></button>
 		</div><!-- /.lzy-journal-send -->
 
 EOT;
@@ -228,6 +241,7 @@ EOT;
             '_editableBy'               => $this->editableBy,
             '_entryAggregationPeriod'   => $this->entryAggregationPeriod,
             '_dataRef'                  => $this->dataSelector,
+            '_id'                       => $this->id,
             '_supportBlobType'          => $this->supportBlobType,
         ];
 
