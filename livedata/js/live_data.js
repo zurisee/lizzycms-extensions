@@ -171,7 +171,7 @@ function LiveData() {
 
         updatedElems = updatedElems.replace(/\[data-ref=/g, '');
         updatedElems = updatedElems.replace(/]/g, '');
-        mylog('livedata updated: ' + updatedElems);
+        mylog('livedata updated: ' + updatedElems, false);
 
         if ($targ) {
             var postCallback = $targ.attr('data-live-post-update-callback');
@@ -301,7 +301,7 @@ function LiveData() {
             },
             success: function (json) {
                 parent.liveDataUpdatingIsFine = true; // signal 'still alive'
-                mylog("-- signaling 'liveData still alive' " + timeStamp(true));
+                mylog("-- signaling 'liveData still alive' " + timeStamp(true), false);
                 parent.ajaxHndl = null;
                 if (json !== 'abort') {
                     return parent.handleAjaxResponse(json);
