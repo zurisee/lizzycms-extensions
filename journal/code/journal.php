@@ -3,6 +3,7 @@ define('DEFAULT_JOURNAL_DATA_FILE', '~page/journal.yaml');
 define('ENTRY_MARKER_TEMPLATE',         '#### %ts %un');
 
 $GLOBALS['lizzy']['journalLiveDataInitialized'] = false;
+$macroName = basename(__FILE__, '.php');
 
 $response = getCliArg('journal');
 if ($response) {
@@ -20,13 +21,12 @@ $this->page->addModules(
     '~sys/js/editor.js,'.
     '~sys/third-party/simplemde/simplemde.min.js,~sys/third-party/simplemde/simplemde.min.css',
 );
-//$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
 
 $GLOBALS['lizzy']['journalCount'] = 0;
 
 $page->addJq( "initJournal();" );
 
-$macroName = basename(__FILE__, '.php');
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
 	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
@@ -116,7 +116,14 @@ class Journal extends LiveData
 
         $editButton = '';
         if ($this->editableBy) {
-            $editButton = "<button id='lzy-journal-edit-btn-$this->inx' class='lzy-journal-edit-btn'><span class='lzy-icon lzy-icon-edit'></span>{{^ lzy-journal-edit-btn }}</button>\n";
+            $editButton = <<<EOT
+
+          <button id='lzy-journal-edit-btn-$this->inx' class='lzy-journal-edit-btn' title="{{^ lzy-journal-edit-btn }}">
+            <span class='lzy-icon lzy-icon-edit'></span>
+            <span class="lzy-invisible">{{^ lzy-journal-edit-btn }}</span>
+          </button>
+          
+EOT;
         }
 
         $pre = '';
@@ -129,44 +136,52 @@ class Journal extends LiveData
 
         $html = <<<EOT
     <div id="$this->id" class="$this->class" $dataSrcRef $callbackAttr>
-        <div>$editButton
+        <div>
 		  <div class="lzy-journal-presentation-wrapper lzy-scroll-hints">
-		    <div class=" lzy-journal-presentation$pre" $dataRef aria-live="polite">
+		    <div id="lzy-journal-presentation-$inx" class="lzy-journal-presentation$pre" $dataRef aria-live="polite">
 $text
-            </div>
-          </div>
-		</div>
+            </div><!-- /lzy-journal-presentation -->
+          </div><!-- /lzy-journal-presentation-wrapper -->$editButton
+		</div><!-- /div -->
+
 EOT;
         if ($this->writePermission) {
-            $html .= <<<EOT
-
-		<div  class="lzy-journal-send">
-        	<button id='lzy-journal-send-btn-$inx' class='lzy-button' title="{{ lzy-journal-send-btn }}"><span class='lzy-icon lzy-icon-send'></span></button>
-		</div><!-- /.lzy-journal-send -->
-
-EOT;
-
             if ($this->multiline) {
                 $html .= <<<EOT
+
         <div class="lzy-journal-entry-wrapper">
             <div class='lzy-textarea-autogrow'>
-                <textarea class="lzy-journal-entry lzy-journal-entry-multiline" onInput='this.parentNode.dataset.replicatedValue = this.value'></textarea>
-            </div>
-		</div>
-    </div>
+                <label for="lzy-journal-multiline-input-$inx" class="lzy-invisible">{{ lzy-journal-multiline-input-label }}</label>
+                <textarea id="lzy-journal-multiline-input-$inx" class="lzy-journal-entry lzy-journal-entry-multiline" 
+                onInput='this.parentNode.dataset.replicatedValue = this.value'
+                aria-controls="lzy-journal-presentation-$inx"></textarea>
+           </div><!-- /lzy-textarea-autogrow-->
 
 EOT;
             } else {
                 $html .= <<<EOT
+
         <div class="lzy-journal-entry-wrapper">
-            <input class="lzy-journal-entry lzy-journal-entry-singleline" />
-		</div>
-    </div>
+            <label for="lzy-journal-input-$inx" class="lzy-invisible">{{ lzy-journal-input-label }}</label>
+            <input id='lzy-journal-input-$inx' class="lzy-journal-entry lzy-journal-entry-singleline" />
 
 EOT;
             }
+
+            $html .= <<<EOT
+
+            <div  class="lzy-journal-send">
+                <button class='lzy-button' title="{{ lzy-journal-send-btn }}">
+                    <span class='lzy-icon lzy-icon-send'></span>
+                    <span class="lzy-invisible">{{ lzy-journal-send-btn }}</span>
+                </button>
+            </div><!-- /.lzy-journal-send -->
+		</div><!-- /lzy-journal-entry-wrapper-->
+
+EOT;
         } // writePermission
 
+        $html .= "\t</div><!-- /lzy-journal -->\n";
         return $html;
     } // render
 

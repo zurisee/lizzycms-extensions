@@ -1,0 +1,29 @@
+
+lzy-journal-input-label:
+  de: 'Der eingegebene Text wird dem Journal hinzugfügt.'
+  _:  'Text that you enter will be appended to the journal text.'
+
+lzy-journal-multiline-input-label:
+  de: 'Neuen Text eingeben, dieser wird dem Journal hinzugfügt. Mehrzeilige Eingaben sind möglich.'
+  _:  'Enter new text, which will be appended to the journal. Entry of multiple lines is possible.'
+
+lzy-journal-edit-btn:
+  de: 'Journal-Text Bearbeiten'
+  _:  'Edit journal text'
+
+lzy-journal-send-btn:
+  de: 'Absenden'
+  _:  'Send'
+
+Save:
+  de: 'Speichern'
+  _:  'Save'
+
+Exit:
+  de: 'Speichern und Editor schliessen'
+  _:  'Save and close editor'
+
+Close:
+  de: 'Editor schliessen ohne zu speichern'
+  _:  'Close editor without saving data'
+

@@ -1,3 +1,5 @@
+/* Journal.css */
+
 .lzy-journal {
   position: relative;
 }
@@ -9,12 +11,15 @@
 .lzy-journal .lzy-journal-presentation > div, .lzy-journal textarea.lzy-journal-entry {
   padding: 10px; }
 
+#lzy .lzy-journal > div:first-child {
+  margin-bottom: 4px;
+}
 #lzy .lzy-journal-presentation-wrapper {
   overflow-y: scroll;
   max-height: 10em;
   width: 100%;
   height: 100%;
-  margin-bottom: 5px; }
+}
   #lzy .lzy-journal-presentation-wrapper h1 {
     margin: 0;
     padding: 0; }
@@ -44,16 +49,25 @@
     margin: 0 0 0.4em 0; }
 
 .lzy-journal-entry-wrapper {
-  min-height: 3.5em; }
-
+  min-height: 3.5em;
+  display: grid;
+  grid-template-columns: auto 2em;
+}
 .lzy-journal-entry {
   background: #eff9ff;
-  background: var(--lzy-journal-entry-bg, #eff9ff); }
+  background: var(--lzy-journal-entry-bg, #eff9ff);
+  margin-right: 4px;}
 
 textarea.lzy-journal-entry {
   width: calc(100% - 5px);
   height: 100%;
   white-space: pre-wrap; }
+
+/* prevent zooming input/textarea on iOS: */
+.lzy-small-screen input.lzy-journal-entry,
+.lzy-small-screen textarea.lzy-journal-entry {
+  font-size: 16px;
+}
 
 .lzy-textarea-autogrow {
   display: grid; }
@@ -71,12 +85,8 @@ textarea.lzy-journal-entry {
     grid-area:  1  /  1  /  2  /  2 ; }
 
 .lzy-journal-entry-singleline {
-  width: calc(100% - 3em);
   height: 2.7em;
   padding: 10px; }
-
-.lzy-journal-send {
-  float: right; }
   .lzy-journal-send button {
     padding: 0;
     width: 2em;
@@ -99,6 +109,12 @@ textarea.lzy-journal-entry {
   background: linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
   cursor: pointer;
   z-index: 2;
+  -webkit-transform: translate3d(0,0,0);
+}
+.editor-toolbar a:nth-last-child(3),
+.editor-toolbar a:nth-last-child(2),
+.editor-toolbar a:last-child {
+  float: right;
 }
 
 #lzy .CodeMirror-wrap .CodeMirror-line {
