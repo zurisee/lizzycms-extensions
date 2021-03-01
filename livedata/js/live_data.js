@@ -249,7 +249,6 @@ function LiveData() {
         if ((typeof immediately !== 'undefined') && immediately) {
             this.lastUpdated = 0;
         }
-
         var dataRef = null,
             refs = [],
             ref = null,

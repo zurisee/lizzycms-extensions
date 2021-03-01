@@ -1,6 +1,6 @@
 
 lzy-journal-input-label:
-  de: 'Der eingegebene Text wird dem Journal hinzugfügt.'
+  de: 'Der eingegebene Text wird dem Journal hinzugefügt.'
   _:  'Text that you enter will be appended to the journal text.'
 
 lzy-journal-multiline-input-label:

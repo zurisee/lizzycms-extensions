@@ -119,7 +119,7 @@ class Journal extends LiveData
             $editButton = <<<EOT
 
           <button id='lzy-journal-edit-btn-$this->inx' class='lzy-journal-edit-btn' title="{{^ lzy-journal-edit-btn }}">
-            <span class='lzy-icon lzy-icon-edit'></span>
+            <span class='lzy-icon lzy-icon-edit' aria-hidden="true"></span>
             <span class="lzy-invisible">{{^ lzy-journal-edit-btn }}</span>
           </button>
           
@@ -172,7 +172,7 @@ EOT;
 
             <div  class="lzy-journal-send">
                 <button class='lzy-button' title="{{ lzy-journal-send-btn }}">
-                    <span class='lzy-icon lzy-icon-send'></span>
+                    <span class='lzy-icon lzy-icon-send' aria-hidden="true"></span>
                     <span class="lzy-invisible">{{ lzy-journal-send-btn }}</span>
                 </button>
             </div><!-- /.lzy-journal-send -->
@@ -291,17 +291,17 @@ class JournalBackend
         $text = getCliArg('text');
         $db = $this->openDB();
 
-        if (!$this->writePermission) {
-            $this->sendResponse( '', 'failed#Error in Journal: insufficient permission');
+        if (!@$this->writePermission) {
+            $this->sendResponse( '', 'failed#Error in Journal-module: insufficient permission');
         }
 
         $dataKey = get_post_data('dataRef');
         $dataKey = ltrim($dataKey, '\\');
         if (!$dataKey) {
-            $this->sendResponse( '', 'failed#Error in Journal: dataRef missing');
+            $this->sendResponse( '', 'failed#Error in Journal-module: dataRef missing');
         }
         if (!$db->lockRec( $dataKey, true )) {
-            $this->sendResponse( '', 'failed#Error in Journal: db locked');
+            $this->sendResponse( '', 'failed#Sorry, database is currently locked');
         }
 
         $origValue = $db->readElement($dataKey);
@@ -375,6 +375,10 @@ class JournalBackend
         $tick = new Ticketing();
         $ticketRec = $tick->consumeTicket($srcRef);
         $this->ticketRec = $ticketRec;
+        if (!is_array($ticketRec)) {
+            mylog("Error in openDB(): ticketRec emply ($ticketRec)");
+            return false;
+        }
 
         // loop over sets:
         foreach ($ticketRec as $setInx => $set) {

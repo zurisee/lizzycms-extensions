@@ -214,7 +214,7 @@ function Journal() {
 
 
     this.scrollToBottom = function() {
-        var $elem = $( '.lzy-journal-presentation-wrapper', this.$elem );
+        var $elem = $( '.lzy-journal-presentation-wrapper' );
         var h, $el = null;
         $elem.each(function () {
             $el = $( this );
@@ -226,29 +226,30 @@ function Journal() {
 
 
 
-function journalSaveDataCallback( data )
+function journalLiveDataCallback( data )
 {
     // updates content of journal presentation box.
     // callback invoked via attribute 'data-live-pre-update-callback' in HTML.
 
-    journal.unlockRec();
+    if (journal.journalLocked) {
+        journal.unlockRec();
+    }
 
     var val = null;
     for (var targSel in data) {
         val = data[ targSel ];
-        mylog('journal live updating: ' + targSel + ' val: ' + val, false);
         const ch1 = targSel.charAt(0);
-        if ((ch1 !== '#') && (ch1 !== '#')) {
+        if ((ch1 !== '#') && (ch1 !== '#') && (ch1 !== '[')) {
             targSel = '#' + targSel;
         }
-        targSel = targSel +' .lzy-journal-presentation';
+        mylog('journal live updating: ' + targSel + ' val: ' + val, false);
         const $elem = $( targSel );
         $( targSel ).html( val );
     }
 
     journal.scrollToBottom();
     return false;
-} // journalSaveDataCallback
+} // journalLiveDataCallback
 
 
 
