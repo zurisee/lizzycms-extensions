@@ -27,3 +27,6 @@ Close:
   de: 'Editor schliessen ohne zu speichern'
   _:  'Close editor without saving data'
 
+Sorry, Database is currently locked:
+  de: 'Sorry, die Datenbank ist momentan gesperrt.'
+  _:  'Sorry, Database is currently locked.'

@@ -7,7 +7,6 @@ var journal = null;
 
 
 function Journal() {
-    this.ajaxHndl = null;
     this.lastUpdated = 0;
     this.refs = '';
     this.elemInx = 0;
@@ -15,13 +14,11 @@ function Journal() {
     this.journalLocked = false;
 
 
+
     this.init = function() {
         this.setupEventHandlers();
-
         this.lastUpdated = -1;
-
         this.scrollToBottom();
-
     }; // init
 
 
@@ -33,18 +30,37 @@ function Journal() {
         });
 
         $('.lzy-journal-edit-btn').click(function () {
+            if ($(this).hasClass('lzy-activated')) {
+                return;
+            }
+            $(this).addClass('lzy-activated');
             const $journalElem = $(this).closest('.lzy-journal');
             parent.srcRef = $journalElem.attr('data-datasrc-ref');
             parent.dataRef = $('[data-ref]', $journalElem).attr('data-ref');
 
             execAjaxPromise('lock-rec', {ds: parent.srcRef, dataRef: parent.dataRef})
-                .then(function() {
+                .then(function( json ) {
+                    var data = null;
+                    try {
+                        data = JSON.parse( json );
+                    }
+                    catch (e) {
+                        mylog('Journal Error: ' + json);
+                        return;
+                    }
+                    if (data.res.match(/failed/)) {
+                        $('.lzy-journal .lzy-activated').removeClass('lzy-activated');
+                        mylog('Journal: DB locked');
+                        lzyPopup('{{ Sorry, Database is currently locked }}');
+                        return;
+                    }
+
                     parent.journalLocked = true;
                     initLzyEditor({
                         srcRef: parent.srcRef,
                         dataRef: parent.dataRef,
-                        postSaveCallback: 'journalSaveDataCallback',
-                        postCancelCallback: 'journalCancelCallback',
+                        postSaveCallback: 'journalOnCloseCallback',
+                        postCancelCallback: 'journalOnCloseCallback',
                     });
                 }); // done
         });
@@ -156,7 +172,15 @@ function Journal() {
             return;
         }
 
-        const data = JSON.parse(json);
+        var data = null;
+        try {
+            data = JSON.parse( json );
+        }
+        catch (e) {
+            mylog('Journal Error: ' + json);
+            return;
+        }
+
         const result = data.result;
         if (result.match(/^ok/)) {
             const html = data.data;
@@ -171,14 +195,11 @@ function Journal() {
                 errMsg = errMsg.replace(/<[^>]*>?/gm, '');
             }
             mylog( errMsg );
-            lzyPopup({
-                content: errMsg,
-            });
+            lzyPopup('{{ Sorry, Database is currently locked }}');
             if (typeof journalErrorHandler === 'function') {
                 journalErrorHandler(data);
             }
         }
-
     }; // handleResponse
 
 
@@ -207,8 +228,10 @@ function Journal() {
 
 
     this.unlockRec = function () {
+        if (this.journalLocked) {
+            execAjax({ds: this.srcRef, dataRef: this.dataRef}, 'unlock-rec');
+        }
         this.journalLocked = false;
-        execAjax({ds: this.srcRef, dataRef: this.dataRef}, 'unlock-rec');
     }; // unlock
 
 
@@ -230,11 +253,6 @@ function journalLiveDataCallback( data )
 {
     // updates content of journal presentation box.
     // callback invoked via attribute 'data-live-pre-update-callback' in HTML.
-
-    if (journal.journalLocked) {
-        journal.unlockRec();
-    }
-
     var val = null;
     for (var targSel in data) {
         val = data[ targSel ];
@@ -243,7 +261,6 @@ function journalLiveDataCallback( data )
             targSel = '#' + targSel;
         }
         mylog('journal live updating: ' + targSel + ' val: ' + val, false);
-        const $elem = $( targSel );
         $( targSel ).html( val );
     }
 
@@ -253,9 +270,13 @@ function journalLiveDataCallback( data )
 
 
 
-function journalCancelCallback() {
-    journal.unlockRec();
-} // journalCancelCallback
+function journalOnCloseCallback()
+{
+    $('.lzy-journal .lzy-activated').removeClass('lzy-activated');
+    if (journal.journalLocked) {
+        journal.unlockRec();
+    }
+} // journalOnCloseCallback
 
 
 
