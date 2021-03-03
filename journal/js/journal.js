@@ -214,6 +214,9 @@ function Journal() {
     this.getDataRef = function() {
         var m,s,$elem, tagName;
         var dataRef = $('[data-ref]', this.$elem).attr('data-ref');
+        if ((typeof dataRef !== 'string') || !dataRef) {
+            return '';
+        }
         if ((dataRef.charAt(0) === '#') || (dataRef.charAt(0) === '.')) {
             m = dataRef.match( /(.*?),(.*)/ );
             if (m) {
