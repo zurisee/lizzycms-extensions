@@ -37,6 +37,7 @@ function Journal() {
             const $journalElem = $(this).closest('.lzy-journal');
             parent.srcRef = $journalElem.attr('data-datasrc-ref');
             parent.dataRef = $('[data-ref]', $journalElem).attr('data-ref');
+            parent.useRichEditor = $journalElem.hasClass('lzy-editor-rich');
 
             execAjaxPromise('lock-rec', {ds: parent.srcRef, dataRef: parent.dataRef})
                 .then(function( json ) {
@@ -48,17 +49,23 @@ function Journal() {
                         mylog('Journal Error: ' + json);
                         return;
                     }
-                    if (data.res.match(/failed/)) {
-                        $('.lzy-journal .lzy-activated').removeClass('lzy-activated');
-                        mylog('Journal: DB locked');
-                        lzyPopup('{{ Sorry, Database is currently locked }}');
-                        return;
+                    if (!data.res.match(/ok/i)) {
+                        if (data.res.match(/restart/i)) {
+                            lzyReload();
+                            return;
+                        } else {
+                            $('.lzy-journal .lzy-activated').removeClass('lzy-activated');
+                            mylog('Journal: DB locked');
+                            lzyPopup('{{ Sorry, Database is currently locked }}');
+                            return;
+                        }
                     }
 
                     parent.journalLocked = true;
                     initLzyEditor({
                         srcRef: parent.srcRef,
                         dataRef: parent.dataRef,
+                        useRichEditor: parent.useRichEditor,
                         postSaveCallback: 'journalOnCloseCallback',
                         postCancelCallback: 'journalOnCloseCallback',
                     });

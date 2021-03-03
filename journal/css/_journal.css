@@ -130,3 +130,15 @@ textarea.lzy-journal-entry {
 .lzy-journal > div {
   position: relative;
 }
+.lzy-editor {
+  height: calc(100% - 2em);
+  width: 100%; }
+
+.lzy-popup-wrapper.lzy-editor-rich {
+  height: 100vh; }
+.lzy-popup-wrapper.lzy-editor-rich .CodeMirror-wrap {
+  min-height: 50vh;
+  height: calc(80vh - 5rem); }
+
+.lzy-popup-wrapper.lzy-editor:not(.lzy-editor-rich) .lzy-popup-container {
+  height: 90vh; }

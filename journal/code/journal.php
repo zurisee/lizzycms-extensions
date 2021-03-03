@@ -38,6 +38,7 @@ $this->addMacro($macroName, function () {
         $this->getArg($macroName, 'dataSelector', '(optional) If set, defines the dataKey into the DB.', '');
         $this->getArg($macroName, 'writePermission', '[true|false|loggedin|privileged|admins] defines who can enter text. (Default: true = all)', '');
         $this->getArg($macroName, 'editableBy', '[true|false|loggedin|privileged|admins] If set, defines who can modify previously entered text. (Default: false = nobody)', '');
+        $this->getArg($macroName, 'editorType', '[plain|rich] If set to "rich", a rich text editor is invoked. By default it\'s a plain-text editor.', '');
         $this->getArg($macroName, 'id', '(optional) Id applied to the widget wrapper.', '');
         $this->getArg($macroName, 'class', '(optional) Class applied to the widget wrapper.', '');
         $this->getArg($macroName, 'liveData', 'If true, data values are immediately updated if the database on the host is modified.', '');
@@ -124,6 +125,9 @@ class Journal extends LiveData
           </button>
           
 EOT;
+            if ($this->args['editorType'][0] === 'r') {
+                $this->class .= ' lzy-editor-rich';
+            }
         }
 
         $pre = '';
@@ -202,6 +206,7 @@ EOT;
         $this->watchdog = $args['watchdog'] = isset($args['watchdog']) ? $args['watchdog'] : false;
         $this->writePermission = $args['writePermission'] = isset($args['writePermission']) ? $args['writePermission'] : true;
         $this->editableBy = $args['editableBy'] = isset($args['editableBy']) ? $args['editableBy'] : false;
+        $this->editorType = $args['editorType'] = isset($args['editorType']) ? $args['editorType'] : 'plain';
         $this->useRecycleBin = $args['useRecycleBin'] = isset($args['useRecycleBin']) ? $args['useRecycleBin'] : false;
         $this->entryMarkerTemplate = $args['entryMarkerTemplate'] = isset($args['entryMarkerTemplate']) ? $args['entryMarkerTemplate'] : ENTRY_MARKER_TEMPLATE;
         $this->entryAggregationPeriod = $args['entryAggregationPeriod'] = isset($args['entryAggregationPeriod']) ? $args['entryAggregationPeriod'] : 300; // seconds
@@ -292,15 +297,18 @@ class JournalBackend
         $db = $this->openDB();
 
         if (!@$this->writePermission) {
+            mylog('### Journal: save -> insufficient permission');
             $this->sendResponse( '', 'failed#Error in Journal-module: insufficient permission');
         }
 
         $dataKey = get_post_data('dataRef');
         $dataKey = ltrim($dataKey, '\\');
         if (!$dataKey) {
+            mylog('### Journal: save -> dataRef missing');
             $this->sendResponse( '', 'failed#Error in Journal-module: dataRef missing');
         }
         if (!$db->lockRec( $dataKey, true )) {
+            mylog('### Journal: save -> database is currently locked');
             $this->sendResponse( '', 'failed#Sorry, database is currently locked');
         }
 
@@ -318,7 +326,7 @@ class JournalBackend
         } else {
             $out = $newValue;
         }
-        mylog("save: $dataKey => '$text' -> ok");
+        mylog("Journal: save -> $dataKey => '$text' -> ok", 'backend-log.txt');
 
         $this->sendResponse( $out);
     } // saveJournalResponse
