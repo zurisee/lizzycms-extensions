@@ -137,8 +137,6 @@ EOT;
 
         $this->ticketHash = (isset($args['ticketHash'])) ? $args['ticketHash'] : false;
 
-        $this->dynamicArg = (isset($args['dynamicArg'])) ? $args['dynamicArg'] : false;
-
         if (isset($args['targetSelector'])) {
             $this->targetSelector = $args['targetSelector'];
         } else {
