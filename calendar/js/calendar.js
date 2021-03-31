@@ -23,10 +23,10 @@ $( document ).ready(function() {
         }
 
         // === initialize FullCalendar ============================================
-        var calDev = lzyCal[ inx ];
-        var calendarEl = $( this );
+        let calDev = lzyCal[ inx ];
+        let calendarEl = $( this );
         calendarEl = calendarEl[0];
-        var calendar = new FullCalendar.Calendar(calendarEl, {
+        let calendar = new FullCalendar.Calendar(calendarEl, {
             headerToolbar: {
                 left: calDev.headerLeftButtons,
                 center: 'title',
@@ -98,7 +98,6 @@ $( document ).ready(function() {
             eventResize: function (e) {
                 calEventChanged(inx, e);
             },
-
         });
         calendar.render();
     });
@@ -110,7 +109,7 @@ $( document ).ready(function() {
 
 function onViewReady( arg ) {
     // view changed, so update state on host:
-    var viewType = arg.view.type;
+    let viewType = arg.view.type;
     if (lzyCal[inx].initialView !== viewType) {
         storeViewMode(inx, viewType);
         lzyCal[inx].initialView = viewType;
@@ -122,7 +121,7 @@ function onViewReady( arg ) {
 
 function renderEvent( arg ) {
     if (typeof customRenderEvent === 'function') {
-        var res = customRenderEvent( arg );
+        let res = customRenderEvent( arg );
         if (res) {
             return res;
         }
@@ -135,18 +134,18 @@ function renderEvent( arg ) {
 
 
 function defaultRenderEvent( arg ) {
-    var calDef = lzyCal[ inx ];
+    let calDef = lzyCal[ inx ];
 
     // apply summary:
     let el = document.createElement('div');
     el.classList.add('lzy-cal-event-title');
-    var lbl = 'summary';
+    let lbl = 'summary';
     if (typeof calDef.fieldLabels.event !== 'undefined') {
         lbl = calDef.fieldLabels.event;
     }
 
     // apply  category:
-    var category = '';
+    let category = '';
     if (typeof arg.event._def.extendedProps.category !== 'undefined') {
         category = arg.event._def.extendedProps.category;
     }
@@ -157,15 +156,15 @@ function defaultRenderEvent( arg ) {
         elT.innerHTML = '';
 
     } else {
-        var start = moment( arg.event._instance.range.start ).utc();
-        var end = moment( arg.event._instance.range.end ).utc();
-        var t = start.format('HH:mm') + ' - ' + end.format('HH:mm');
+        let start = moment( arg.event._instance.range.start ).utc();
+        let end = moment( arg.event._instance.range.end ).utc();
+        let t = start.format('HH:mm') + ' - ' + end.format('HH:mm');
         elT.innerHTML = t;
     }
     elT.classList.add('lzy-cal-time');
 
     // prepare prefix:
-    var prefix = lzyCal[inx].catPrefixes[ category ];
+    let prefix = lzyCal[inx].catPrefixes[ category ];
     if (!prefix || (typeof prefix === 'undefined')) {
         prefix = lzyCal[inx].catDefaultPrefix;
     }
@@ -174,17 +173,19 @@ function defaultRenderEvent( arg ) {
     }
 
     // apply time, prefix and title:
-    var title = convertMD(arg.event._def.title);
+    let title = convertMD(arg.event._def.title);
     el.innerHTML = '<span class="lzy-cal-title-label">'+ lbl +':</span> <span class="lzy-cal-title-text">' + prefix + ' <span>' + title + '</span></span>';
-    var elements = [ elT, el ];
+    let elements = [ elT, el ];
+
+    mylog('defaultRenderEvent: ' + title, false);
 
     // apply custom properties:
     if (arg.event.extendedProps) {
-        for ( var cust in arg.event._def.extendedProps) {
+        for ( let cust in arg.event._def.extendedProps) {
             if ((cust[0] === '_') || (cust === 'i') || (cust === 'event')) {  // skip meta elements
                 continue;
             }
-            var s = arg.event._def.extendedProps[cust];
+            let s = arg.event._def.extendedProps[cust];
             if (!s) {
                 continue;
             }
@@ -215,7 +216,7 @@ function calEventChanged(inx, event0) {
     if (!lzyCal[ inx ].editingPermission) {
         return false;
     }
-    var event = event0.event;
+    let event = event0.event;
     if (!checkPermission( event )) {
         alert('You don\'t have permission to modify somebody else\'s event');
         event0.revert();
@@ -227,9 +228,9 @@ function calEventChanged(inx, event0) {
         return;
     }
 
-    var start = moment( event._instance.range.start ).utc();
-    var end = moment( event._instance.range.end ).utc();
-    var rec = {};
+    let start = moment( event._instance.range.start ).utc();
+    let end = moment( event._instance.range.end ).utc();
+    let rec = {};
     rec['rec-id'] = event._def.extendedProps.i;
     rec['title'] = event._def.title;
     rec['start-date'] = start.format('YYYY-MM-DD');
@@ -241,14 +242,14 @@ function calEventChanged(inx, event0) {
         rec['end-date'] = end.add('days', -1).format('YYYY-MM-DD');
     }
 
-    for (var e in event._def.extendedProps) {
+    for (let e in event._def.extendedProps) {
         if (e === 'i') {
             continue;
         }
         rec[e] = event._def.extendedProps[e];
     }
 
-    var json = JSON.stringify(rec);
+    let json = JSON.stringify(rec);
 
     $.ajax({
         url : calBackend + '?inx=' + inx + '&save' + '&ds=' + lzyCal[inx].ref,
@@ -269,7 +270,7 @@ function activateTooltips( viewType ) {
     setTimeout(function () {
         if (viewType === 'dayGridMonth') {
             $('.fc-daygrid-event').each(function () {
-                var $elem = $(this);
+                let $elem = $(this);
                 $elem.qtip({
                     content: $elem.html(),
                     position: {
@@ -286,7 +287,7 @@ function activateTooltips( viewType ) {
 
         } else if (viewType === 'timeGridWeek') {
             $('.fc-timegrid-event > div:first-child').each(function () {
-                var $elem = $(this);
+                let $elem = $(this);
                 $elem.qtip({
                     content: $elem.html(),
                     position: {
@@ -322,7 +323,7 @@ function storeViewMode(inx, viewName) {
 
 
 function saveCurrDate( arg ) {
-    var dateStr = moment( this.currentData.currentDate ).utc().format('YYYY-MM-DD');
+    let dateStr = moment( this.currentData.currentDate ).utc().format('YYYY-MM-DD');
     $.ajax({
         url : calBackend + '?inx=' + inx + '&date=' + dateStr + '&ds=' + lzyCal[inx].ref,
         type: 'get',
@@ -335,7 +336,7 @@ function saveCurrDate( arg ) {
 
 
 function openCalPopup(inx, event, isNewEvent) {
-    var runDefault = true;
+    let runDefault = true;
     if (typeof openCalPopupHandler !== 'undefined') {
         runDefault = openCalPopupHandler(inx, event, isNewEvent);
     }
@@ -352,12 +353,12 @@ function openCalPopup(inx, event, isNewEvent) {
 
 
 function defaultOpenCalPopup(inx, event0, isNewEvent) {
-    var thisCal = lzyCal[ inx ];
+    let thisCal = lzyCal[ inx ];
     if (!thisCal.editingPermission) {
         return;
     }
-    var catClass = '';
-    var event = event0.event;
+    let catClass = '';
+    let event = event0.event;
     if (!checkPermission( event )) {
         alert('You don\'t have permission to modify somebody else\'s event');
         event0.revert();
@@ -377,7 +378,7 @@ function defaultOpenCalPopup(inx, event0, isNewEvent) {
     $('#lzy-calendar-default-form').attr( 'class', '' );
 
 
-    var options = {};
+    let options = {};
     options.anker = false;
     $('.lzy-cal-popup input[type=text]').val('');
     $('.lzy-cal-popup textarea').text('');
@@ -385,13 +386,13 @@ function defaultOpenCalPopup(inx, event0, isNewEvent) {
     $('#lzy-inx').val(inx);
     $('#lzy-calendar-default-form').attr('data-cal-inx', inx);
 
-    var dateStr = '';
-    var timeStr = '';
-    var start = null;
-    var end = null;
-    var res = false;
-    var defaultEventDuration = thisCal.defaultEventDuration;
-    var header = '';
+    let dateStr = '';
+    let timeStr = '';
+    let start = null;
+    let end = null;
+    let res = false;
+    let defaultEventDuration = thisCal.defaultEventDuration;
+    let header = '';
 
     applyCatRestrictions();
 
@@ -439,10 +440,10 @@ function defaultOpenCalPopup(inx, event0, isNewEvent) {
             $('#lzy_cal_end_time').attr('type', 'hidden').val('11:00');
         }
 
-        var cat = thisCal.calCatPermission;
+        let cat = thisCal.calCatPermission;
         if ( cat ) {
             if (cat.indexOf(',') !== -1) {
-                var cats = cat.replace(' ', '').split(',');
+                let cats = cat.replace(' ', '').split(',');
                 cat = cats[0];
             }
             cat = cat.toLocaleLowerCase();
@@ -465,7 +466,8 @@ function defaultOpenCalPopup(inx, event0, isNewEvent) {
         header = $('#lzy-cal-modify-event-header').html();
 
         start = moment( event._instance.range.start ).utc();
-        end = moment( event._instance.range.end ).utc();
+        let tsDiff = moment( event._instance.range.start ).utcOffset() + 1; // timezone offset -> subtract from end
+        end = moment( event._instance.range.end ).subtract(tsDiff, 'minutes');
         dateStr = start.format('YYYY-MM-DD');
         $('#lzy_cal_start_date').val(dateStr).attr('data-prev-val', dateStr);
         if (event.allDay === false) {    // normal event
@@ -489,16 +491,16 @@ function defaultOpenCalPopup(inx, event0, isNewEvent) {
 
         $('#lzy_cal_event_name').val(event._def.title);
 
-        var $startTime = $('#lzy_cal_start_time');
-        var startTime = $startTime.val();
+        let $startTime = $('#lzy_cal_start_time');
+        let startTime = $startTime.val();
         $startTime.attr('data-prev-val', startTime);
 
         // populate custom fields:
-        var extendedProps = event._def.extendedProps;
+        let extendedProps = event._def.extendedProps;
         if (typeof extendedProps !== 'undefined') {
             $('#lzy_cal_comment').text(extendedProps.comment);
 
-            for (var fld in extendedProps) {
+            for (let fld in extendedProps) {
                 if (fcStdElems.indexOf(fld) === -1) {
                     $('#lzy_cal_event_' + fld).val(extendedProps[fld]);
                 }
@@ -571,9 +573,9 @@ function convertMD(text) {
     text = text.replace(/\\\\/, '\\'); // \\ -> \
 
     // links []():
-    var m = text.match(/(.*)\[(.+?)\]\((.+?)\)(.*)/);
+    let m = text.match(/(.*)\[(.+?)\]\((.+?)\)(.*)/);
     if ( m ) {
-        var href = m[3];
+        let href = m[3];
         if (!href.match(/^https?/)) {
             href = 'https://' + href;
         }
@@ -596,11 +598,11 @@ function setupTriggers() {
             return;
         }
         doSubmit = false;
-        var $this = $(this);
+        let $this = $(this);
 
-        var postUrl = $this.attr('action') + '?save' + '&ds=' + lzyCal[inx].ref;
-        var requestMethod = $this.attr('method');
-        var formData = $this.serialize();
+        let postUrl = $this.attr('action') + '?save' + '&ds=' + lzyCal[inx].ref;
+        let requestMethod = $this.attr('method');
+        let formData = $this.serialize();
 
         if ( deleteNotSubmit ) {    // delete:
             postUrl = $this.attr('action') + '?del' + '&ds=' + lzyCal[inx].ref;
@@ -625,8 +627,8 @@ function setupTriggers() {
 
     // All-day toggle:
     $('#lzy-cal-allday-event-checkbox').change(function () {
-        var $this = $( this );
-        var allday = $this.prop('checked');
+        let $this = $( this );
+        let allday = $this.prop('checked');
         if (allday) {
             $('#lzy-allday').val('true');
             $('#lzy_cal_start_time').attr('type', 'hidden');
@@ -641,36 +643,52 @@ function setupTriggers() {
     // Cancel button:
     $("#lzy-calendar-default-form input[type=reset]").click(function () {
         $("#lzy-cal-popup-template").lzyPopup('hide');  // close popup
-        // $("#lzy-cal-popup-template").popup('hide');  // close popup
     });
 
 
     // if start date changes, move end date accordingly:
     $('#lzy_cal_start_date').change(function () {
-        var $this = $( this );
-        var newDateStr = $this.val();
-        var newT = moment( newDateStr + ' ' + $('#lzy_cal_start_time').val() );
-        var prevT = moment( $this.attr('data-prev-val') + ' ' + $('#lzy_cal_start_time').val() );
-        var dT = moment.duration(newT.diff(prevT)).subtract(1, 's');
-        var endT = moment( $('#lzy_cal_end_date').val() + ' ' + $('#lzy_cal_end_time').val() );
+        let $this = $( this );
+        let newDateStr = $this.val();
+        newDateStr = newDateStr? newDateStr: '2000-01-01'; // avoid empty string
+        let newTimeStr = $('#lzy_cal_start_time').val();
+        newTimeStr = newTimeStr? newTimeStr: '08:00';
+        let newT = moment( newDateStr + ' ' + newTimeStr );
+        let prevT = moment( $this.attr('data-prev-val') + ' ' + $('#lzy_cal_start_time').val() );
+        let dT = moment.duration(newT.diff(prevT)).subtract(1, 's');
+        let endT = moment( $('#lzy_cal_end_date').val() + ' ' + $('#lzy_cal_end_time').val() );
         endT = endT.add( dT );
-        var newEndDateStr = endT.format('YYYY-MM-DD');
+        let newEndDateStr = endT.format('YYYY-MM-DD');
         $('#lzy_cal_end_date').val(newEndDateStr);
         $this.attr('data-prev-val', newDateStr);
     });
 
     // if start time changes, move end time accordingly:
     $('#lzy_cal_start_time').change(function () {
-        var $this = $( this );
-        var newTimeStr = $this.val();
-        var newT = moment( $('#lzy_cal_start_date').val() + ' ' + newTimeStr );
-        var prevT = moment( $('#lzy_cal_start_date').val() + ' ' + $this.attr('data-prev-val') );
-        var dT = moment.duration(newT.diff(prevT));
-        var endT = moment( $('#lzy_cal_end_date').val() + ' ' + $('#lzy_cal_end_time').val() );
+        let $this = $( this );
+        let newDateStr = $('#lzy_cal_start_date').val();
+        newDateStr = newDateStr? newDateStr: '2000-01-01'; // avoid empty string
+        let newTimeStr = $this.val();
+        newTimeStr = newTimeStr? newTimeStr: '08:00';
+        let newT = moment( newDateStr + ' ' + newTimeStr );
+        let prevT = moment( newDateStr + ' ' + $this.attr('data-prev-val') );
+        let dT = moment.duration(newT.diff(prevT));
+        let endT = moment( $('#lzy_cal_end_date').val() + ' ' + $('#lzy_cal_end_time').val() );
         endT = endT.add( dT );
-        var newEndTimeStr = endT.format('HH:mm');
+        let newEndTimeStr = endT.format('HH:mm');
         $('#lzy_cal_end_time').val(newEndTimeStr);
         $this.attr('data-prev-val', newTimeStr);
+    });
+
+    $('.lzy-calendar').resize(function (){
+        let $cal = $(this);
+        let w1 = $('.fc-header-toolbar', $cal).width();
+        let w2 = $('.fc-header-toolbar > div:first-child', $cal).width();
+        let w3 = $('.fc-header-toolbar > div:last-child', $cal).width();
+        let w4 = $('.fc-header-toolbar > div:nth-child(2)', $cal).width();
+        if (true) {
+            $('.fc-header-toolbar', $cal).addClass('lzy-cal-header-narrow');
+        }
     });
 } // setupTriggers
 
@@ -678,10 +696,10 @@ function setupTriggers() {
 
 
 function checkPermission(event) {
-    var creatorOnlyPermission = lzyCal[ inx ].creatorOnlyPermission;
+    let creatorOnlyPermission = lzyCal[ inx ].creatorOnlyPermission;
     if (creatorOnlyPermission) {
         try {
-            var creator = event._def.extendedProps._creator;
+            let creator = event._def.extendedProps._creator;
             if (creatorOnlyPermission !== creator) {
                 console.log(`Attempt to modify event created by other user ${creator} -> blocked.`);
                 return false;
@@ -690,10 +708,10 @@ function checkPermission(event) {
         }
     }
 
-    var calCatPermission = lzyCal[ inx ].calCatPermission;
+    let calCatPermission = lzyCal[ inx ].calCatPermission;
     if (calCatPermission) {
         try {
-            var category = event._def.extendedProps.category.toLowerCase();
+            let category = event._def.extendedProps.category.toLowerCase();
             if (calCatPermission.toLowerCase().indexOf(category) === -1) {
                 console.log(`Attempt to modify event of unauthorized category ${category} -> blocked.`);
                 return false;
@@ -707,20 +725,34 @@ function checkPermission(event) {
 
 
 function checkFreeze(event) {
-    var freeze = lzyCal[ inx ].freezePast;
+    let freeze = lzyCal[ inx ].freezePast;
     if (!freeze) {
         return true;
     }
-    var start = null;
+// let start = null;
+    let end = null;
     if (typeof event.date !== 'undefined') {
-        start = moment(event.date).utc();
+// start = moment(event.date).utc();
+        end = moment(event.date);
+// end = moment(event.date).local();
+// end = moment(event.date).utc();
+
     } else if (typeof event.event._instance.range.start !== 'undefined') {
-        start = moment( event.event._instance.range.start ).utc();
+// start = moment( event.event._instance.range.start ).utc();
+        end = moment( event.event._instance.range.end ).utc();
+
     } else {
         return false;
     }
-    var now = moment().utc();
-    var isAfter = start.isAfter( now );
+
+// let UTC = moment.utc();
+// let local = moment(UTC).local();
+// let ts = moment().format('Z');
+// let ts2 = moment().format('ZZ');
+
+    let now = moment().utc();
+// let isAfter = start.isAfter( now );
+    let isAfter = end.isAfter( now );
     return isAfter;
 } // checkFreeze
 
@@ -730,9 +762,9 @@ function checkFreeze(event) {
 function applyCatRestrictions() {
     if (lzyCal[ inx ].calCatPermission) {
         $('#lzy_cal_category option').hide();
-        var cats = lzyCal[ inx ].calCatPermission.split(',');
-        for (var i in cats) {
-            var cat = cats[i].trim();
+        let cats = lzyCal[ inx ].calCatPermission.split(',');
+        for (let i in cats) {
+            let cat = cats[i].trim();
             $('#lzy_cal_category option[value=' + cat + ']').show();
         }
     }

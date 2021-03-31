@@ -1,6 +1,18 @@
 // Calendar Styling
 //==================
 
+/*
+**	Variables:
+**		--lzy-cal-cat-label-width
+**		--lzy-cal-category-color-on-dark-bg
+**		--lzy-cal-category-bg-1 .. 16
+**		--lzy-cal-category-color-on-light-bg
+**		--lzy-cal-category-light-bg-1 .. 8
+**		--fc-event-bg-color
+**		--lzy-cal-tooltip-indent
+**
+ */
+
 // Colors
 
 $color1: #660000;
@@ -30,12 +42,26 @@ $color-light6: #c2d9ffff;
 $color-light7: #dcd6ffff;
 $color-light8: #ffebffff;
 
+#lzy.lzy-small-screen,
+.lzy-cal-header-narrow {
+	.fc-header-toolbar {
+		flex-wrap: wrap;
+	}
+
+	.fc-toolbar-chunk:nth-child(2) {
+		order: -1;
+		flex: 0 0 100%;
+		justify-content: center;
+		text-align: center;
+		padding-bottom: 0.5em;
+	}
+}
 
 .lzy-calendar {
 	.fc-timegrid,
 	.fc-daygrid {
 		.fc-event {
-		padding: 2px;
+			padding: 2px;
 		}
 		.fc-event div {
 			color: var(--lzy-cal-category-color-on-dark-bg, #fff);
@@ -114,28 +140,28 @@ $color-light8: #ffebffff;
 		.lzy-cal-category-8 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-8, $color2);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-9 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-9, $color9);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-10 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-10, $color10);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-11 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-11, $color11);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-12 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-12, $color12);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-13 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-13, $color13);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-14 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-14, $color14);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-15 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-15, $color15);
 		}
-		.lzy-cal-category-8 .fc-list-event-dot {
+		.lzy-cal-category-16 .fc-list-event-dot {
 			border-color: var(--lzy-cal-category-bg-16, $color16);
 		}
 	}
@@ -269,6 +295,18 @@ $color-light8: #ffebffff;
 	padding-bottom: 0.2em;
 	display: inline-block;}
 
+// Category selector:
+.lzy_cal_category-label,
+.lzy_cal_category {
+	display: inline-block;
+}
+.lzy_cal_category-label {
+	width: var(--lzy-cal-cat-label-width, 7em);
+}
+.lzy_cal_category {
+	width: calc(100% - var(--lzy-cal-cat-label-width, 7em) - 4px);
+}
+
 .field-wrapper:not(.lzy-field-type-date) {
 	margin: 10px 0; }
 
@@ -310,3 +348,5 @@ $color-light8: #ffebffff;
 #lzy.lzy-small-screen .lzy-cal-popup-template_wrapper {
 	width: 100vh;
 }
+
+

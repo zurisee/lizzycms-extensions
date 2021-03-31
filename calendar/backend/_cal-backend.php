@@ -32,7 +32,6 @@ session_set_cookie_params(["HttpOnly" => "true"]); //false, true
 
 session_start();
 
-
 $backend = new CalendarBackend();
 
 if (isset($_GET['save'])) {
@@ -58,6 +57,15 @@ class CalendarBackend {
     public function __construct()
     {
         $inx = $_REQUEST['inx'];
+
+        if (!isset($_SESSION['lizzy']['systemTimeZone'])) {
+            mylog('Error in CalendarBackend: systemTimeZone not defined');
+            die('Error in CalendarBackend: systemTimeZone not defined');
+        }
+        $timezoneStr = $_SESSION['lizzy']['systemTimeZone'];
+        $this->timezone = $timezone = new DateTimeZone( $timezoneStr );
+        date_default_timezone_set( $timezoneStr );
+
         $this->calSession = &$_SESSION['lizzy']['cal'][$inx];
 
         $this->tickHash = $_GET['ds'];
@@ -73,18 +81,20 @@ class CalendarBackend {
         } else {
             $rangeStart = date('Y-m-d', strtotime('+1 week'));
         }
-        $this->rangeStart = parseDateTime($rangeStart);
+        $this->rangeStart = parseDateTime($rangeStart, $timezone);
 
         if (isset($_GET['end'])) {
-            $this->rangeEnd = parseDateTime($_GET['end']);
+            $this->rangeEnd = parseDateTime($_GET['end'], $timezone);
         } else {
-            $this->rangeEnd = parseDateTime(date('Y-m-d', strtotime('-1 month')));
+            $this->rangeEnd = parseDateTime(date('Y-m-d', strtotime('-1 month')), $timezone);
         }
 
-        $this->timezone = new DateTimeZone($_SESSION['lizzy']['systemTimeZone']);
-
         $useRecycleBin = $calRec['useRecycleBin'];
-        $this->ds = new DataStorage2(['dataFile' => $dataSrc, 'useRecycleBin' => $useRecycleBin]);
+        $this->ds = new DataStorage2([
+            'dataFile' => $dataSrc,
+            'useRecycleBin' => $useRecycleBin,
+            'exportInternalFields' => true,
+            ]);
 
         $this->calCatPermission = @$calRec['calCatPermission'];
 
@@ -115,26 +125,28 @@ class CalendarBackend {
     //--------------------------------------------------------------
     public function saveData($post)
     {
-        global $inx;
-
-        $creator = '';
         if (isset($post['json'])) {
-            $rec0 = json_decode($post['json'], true);
+            $suppliedRec = json_decode($post['json'], true);
         } else {
-            $rec0 = $post;
+            $suppliedRec = $post;
         }
-        mylog( var_r($rec0) );
+        $suppliedRec['_user'] = @$_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: 'anon';
+        mylog( var_r($suppliedRec) );
 
         $freeze = false;
         // check freezePast:
         if ($this->calRec['freezePast']) {
             // End is in the past -> just reject:
-            $end = strtotime("{$rec0['end-date']} {$rec0['end-time']}");
+            $end = strtotime("{$suppliedRec['end-date']} {$suppliedRec['end-time']}");
+//$diff = ($end - $now);
+//$endStr = date('Y-m-d H:i:s', $end);
+//$nowStr = date('Y-m-d H:i:s');
+//$timeZone = date_default_timezone_get ( );
             if ($end < time()) {
-                $this->writeLogEntry("freezePast", $rec0);
+                $this->writeLogEntry("freezePast", $suppliedRec);
                 return 'Event in the past may not be created or modified';
             }
-            $start = strtotime("{$rec0['start-date']} {$rec0['start-time']}");
+            $start = strtotime("{$suppliedRec['start-date']} {$suppliedRec['start-time']}");
             if ($start < time()) {
                 $freeze = true;
             }
@@ -142,55 +154,36 @@ class CalendarBackend {
 
         $data = $this->ds->read();
 
-        if (isset($rec0['rec-id']) && ($rec0['rec-id'] !== '')) {    // Modify:
-            $recId = intval($rec0['rec-id']);
+        if ((@$suppliedRec['rec-id'] !== '') && (isset($data[$suppliedRec['rec-id']]))) {    // Modify:
+            $oldRecId = $suppliedRec['rec-id'];
+            $oldRec = $data[ $oldRecId ];
+            $isNewRec = false;
             $msg = 'Modified event';
-            if (isset($data[$recId])) {
-                $oldRec = $data[$recId];
-                if ($freeze) {
-                    $freeze = $oldRec['start']; // just freeze start, modify end
-                }
-                unset($data[$recId]);
-            } else {
-                $oldRec = false;
-            }
-
-            $creatorOnlyPermission = $this->calRec['creatorOnlyPermission'];
-            if (isset($oldRec['_creator'])) {
-                $creator = $oldRec['_creator'];
-
-                // enforce creator-only rule:
-                if ($creatorOnlyPermission && ($creatorOnlyPermission !== $creator)) {
-                    // Note: this case is already taken care of in the client,
-                    // so we probably have a hacking attempt here:
-                    lzyExit("Error: user {$creatorOnlyPermission} attempted to modify event created by $creator");
-                }
-            }
-            if (isset($oldRec['_uid'])) {
-                $uid = $oldRec['_uid'];
-            } else {
-                $uid = time();
-            }
+            $suppliedRec['_uid'] = $oldRec['_uid'];
+            $suppliedRec['_creator'] =  $oldRec['_creator'];
 
         } else {                // New Entry:
-            $uid = time();
+            $isNewRec = true;
             $msg = 'Created new event';
-            $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: false;
-            if ($user) {
-                $creator =  $user;
-            }
+            $suppliedRec['_uid'] = createHash(12);
+            $suppliedRec['_creator'] =  $suppliedRec['_user'];
         }
 
-        $rec = $this->prepareRecord($rec0);
-        if ($freeze) {
-            $rec['start'] = $freeze;
-        }
-        $this->writeLogEntry($msg, $rec);
+        $newRec = $this->prepareRecord($suppliedRec);
+//        if ($freeze) {
+//            $newRec['start'] = $freeze;
+//        }
+        $this->writeLogEntry($msg, $newRec);
 
-        $rec['_creator'] =  $creator;
-        $rec['_uid'] =  $uid;
-        $data[] = $rec;
-        $data = array_values($data);
+        if ($isNewRec) {
+            $data[] = $newRec;
+        } else {
+            $data[ $oldRecId ] = $newRec;
+        }
+
+        usort($data, function($a, $b) {
+            return ($a['start'] < $b['start']) ? -1 : 1;
+        });
         $this->ds->write( $data );
 
         return 'ok';
@@ -320,7 +313,7 @@ class CalendarBackend {
 
 
     //--------------------------------------------------------------
-    private function prepareRecord($rec)
+    private function prepareRecord( $rec )
     {
         if (!isset($rec['start-date']) || !isset($rec['end-date'])) {
             return [];
@@ -343,24 +336,23 @@ class CalendarBackend {
             $endTime = '';
             $endDate = date('Y-m-d', strtotime("+1 day", strtotime($endDate)));
         }
-        unset($rec['inx']);
-        unset($rec['rec-id']);
-        unset($rec['lzy-cal-ref']);
-        unset($rec['start-time']);
-        unset($rec['start-date']);
-        unset($rec['end-time']);
-        unset($rec['end-date']);
-        unset($rec['allday']);
-        unset($rec['_creator']);
-        $rec['start'] = trim($startDate . ' ' . $startTime);
-        $rec['end'] = trim($endDate . ' ' . $endTime);
-
-        $rec['_user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anonymous';
 
         if (function_exists('customPrepareData')) {
-            $rec = customPrepareData($rec);
+            $outRec = customPrepareData($rec);
+        } else {
+            $outRec = [];
+            $outRec['title'] = date('c', strtotime($startDate . ' ' . $startTime));
+            $outRec['start'] = trim("$startDate $startTime");
+            $outRec['end']   = trim("$endDate $endTime");
+            foreach ($rec as $key => $elem) {
+                if (strpos(',start,end,inx,rec-id,lzy-cal-ref,start-time,start-date,end-time,end-date,allday,_creator,', ",$key,") === false) {
+                    $outRec[$key] = $elem;
+                }
+            }
+            $outRec['_creator'] = @$rec['_creator'];
+            $outRec['_user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anon';
         }
-        return $rec;
+        return $outRec;
     } // prepareRecord
 
 

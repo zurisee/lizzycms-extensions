@@ -54,16 +54,31 @@ class LzyCalendar
         $this->showCategories = isset($args['showCategories']) ? $args['showCategories']: '';
 
         // special case '_users_' for categories:
-        if (preg_match('|<em>(.*)</em>|', $this->category, $m)) {
-            if ($this->category === '<em>users</em>') {
-                $this->category = $this->lzy->auth->getListOfUsers(['exclude' => '\badmin\b']);
-            } else {
-                $group = $m[1];
-                $this->category = $this->lzy->auth->getListOfUsers(['exclude' => '\badmin\b', 'group' => $group]);
+        $cats = $this->category;
+        if (preg_match_all('|<em>(.*?)</em>|', $cats, $m)) { // '_' translated to '<em>' by MD compiler
+            foreach ($m[1] as $i => $group) {
+                if (($group === 'all') || ($group === 'users')) {
+                    $group = '';
+                    $args['sort'] = 'a';
+                }
+                $users = $this->lzy->auth->getListOfUsers( $group );
+                $cats = str_replace($m[0][$i], $users, $cats);
             }
-            $this->categories = $categories = explodeTrim(',', $this->category);
+
+            $cats = rtrim(str_replace(',,', ',', $cats), ',');
+            $categories = explodeTrim(',', $cats);
+
+            if ($args['sort']) {
+                if (($args['sort'] === true) || ($args['sort'] && ($args['sort'][0] !== 'd'))) {
+                    sort($categories, SORT_NATURAL | SORT_FLAG_CASE);
+                } else {
+                    rsort($categories, SORT_NATURAL | SORT_FLAG_CASE);
+                }
+            }
+
+            $this->categories = $categories;
             $args['categoryPrefixes'] = $this->category;
-            $js = <<<EOT
+            $js = <<<'EOT'
 
 const lzyLoggedinUser = '{{ user }}';
 function openPostCalPopupHandler() {
@@ -71,7 +86,6 @@ function openPostCalPopupHandler() {
 }
 
 EOT;
-
             $this->page->addJs( $js );
         }
 
@@ -135,6 +149,7 @@ EOT;
         $this->dayEnd = @$args['dayEnd'] ? $args['dayEnd']: '20:00';
         $this->freezePast = @$args['freezePast'] ? $args['freezePast']: false;
 
+        $this->checkAndFixData();
     } // __construct
 
 
@@ -265,6 +280,7 @@ EOT;
             $this->tickHash = $hash;
 
             $js = <<<EOT
+
 var calBackend = '$backend';
 var calLang = '{$this->lang}';
 var calSubmitBtnLabel = ['{{ Save }}', '{{ lzy-cal-delete-entry-now }}'];
@@ -688,5 +704,47 @@ EOT;
         return $output_arrays;
     } // filterCalRecords
 
-} // class LzyCalendar
 
+
+
+    private function checkAndFixData()
+    {
+        $modify = false;
+        $db = new DataStorage2([
+            'dataFile' => $this->source,
+            'useRecycleBin' => $this->useRecycleBin,
+            'exportInternalFields' => true,
+        ]);
+        $data = $db->read();
+
+        // check whether _uid is defined:
+        foreach ($data as $key => $rec) {
+            if (!@$rec['_uid'] || !@$rec['_user'] || !@$rec['_creator']) {
+                $modify = true;
+            }
+
+            // drop badly formed records:
+            if (!@$rec['start'] || !@$rec['end']) {
+                unset($data[$key]);
+                $modify = true;
+                continue;
+            }
+        }
+        if (!$modify) {
+            return;
+        }
+        foreach ($data as $key => $rec) {
+            if (!isset($rec['_uid']) || !$rec['_uid']) {
+                $rec['_uid'] = createHash(12);
+            }
+            if (!isset($rec['_user']) || !$rec['_user']) {
+                $rec['_user'] = 'anon';
+            }
+            if (!isset($rec['_creator']) || !$rec['_creator']) {
+                $rec['_creator'] = 'anon';
+            }
+            $data[$key] = $rec;
+        }
+        $db->write( $data );
+    } // checkAndFixData
+} // class LzyCalendar
