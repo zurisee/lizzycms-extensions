@@ -352,7 +352,7 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
     }
 
     // update header:
-    $('.lzy-popup-header', this.$formWrapper).html( header );
+    $('.lzy-popup-header > div', this.$formWrapper).html( header );
     setTimeout( function() { $('.lzy-cal-event-name', parent.$form).focus(); }, 500);
 
 
