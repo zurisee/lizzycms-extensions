@@ -15,6 +15,11 @@ class LzyCalendar
         $this->tickHash = '';
         $this->lang = $this->lzy->config->lang;
         $this->source = $args['file'];
+        $this->calOptions = '';
+        $this->fullCalendarOptions = '';
+        if (isset($args['fullCalendarOptions'])) {
+            $this->fullCalendarOptions = "\t\t{$args['fullCalendarOptions']}\n";
+        }
         $this->editingPermission = isset($args['editingPermission']) ? $args['editingPermission'] : false;
 
         $this->fields = isset($args['fields']) ? $args['fields']: false;
@@ -45,8 +50,22 @@ class LzyCalendar
         }
 
         // Event overlap:
-        $this->eventOverlap = isset($args['eventOverlap']) ? $args['eventOverlap']: true;
-        $this->eventOverlap = $this->eventOverlap? 'true': 'false';
+        if (isset($args['eventOverlap'])) {
+            $this->fullCalendarOptions .= "\t\teventOverlap: ".($args['eventOverlap']?'true':'false').",\n";
+        }
+
+        // visible hours:
+        if (isset($args['visibleHours'])) {
+            list($bStart, $bEnd) = explodeTrim('-', $args['visibleHours']);
+            $this->fullCalendarOptions .= "\t\tslotMinTime: '$bStart',\n";
+            $this->fullCalendarOptions .= "\t\tslotMaxTime: '$bEnd',\n";
+        }
+
+        // business hours:
+        if (isset($args['businessHours'])) {
+            list($bStart, $bEnd) = explodeTrim('-', $args['businessHours']);
+            $this->fullCalendarOptions .= "\t\tbusinessHours: { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '$bStart', endTime: '$bEnd'},\n";
+        }
 
         // Categories:
         $this->category = isset($args['categories']) ? $args['categories']: '';
@@ -78,11 +97,11 @@ class LzyCalendar
 
             $this->categories = $categories;
             $args['categoryPrefixes'] = $this->category;
+            //???
             $js = <<<'EOT'
 
-const lzyLoggedinUser = '{{ user }}';
 function openPostCalPopupHandler() {
-    $('#lzy-calendar-default-form [value="' + lzyLoggedinUser + '"]').prop('selected', true);
+    $('#lzy-calendar-default-form-$inx [value="' + calUser + '"]').prop('selected', true);
 }
 
 EOT;
@@ -97,6 +116,7 @@ EOT;
         $defaultCatPrefix = isset($args['prefix']) ? $args['prefix']: '';
         $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix']: $defaultCatPrefix;
         $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes']: '';
+        $this->catPrefixesStr = '';
         if (strpos($catPrefixes, ',') !== false) {
             $categoryKeys = array_map(function($e) {
                 $e = preg_replace('/\s+/', '-', $e);
@@ -105,14 +125,13 @@ EOT;
             }, $categories);
             $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
             $catPrefixes = array_slice($catPrefixes, 0, $n);
-            $catPrefixAssoc = array_combine($categoryKeys, $catPrefixes);
-            $catPrefixAssoc[''] = '';
-            $this->categoryPrefixes = $catPrefixAssoc;
-            $this->prefixJson = json_encode($catPrefixAssoc);
+            foreach ($catPrefixes as $i =>$s) {
+                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '$s', ";
+            }
+            $this->catPrefixesStr = '{ '.rtrim($this->catPrefixesStr, ', ').'}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
         } else {
             $this->categoryPrefixes = [];
-            $this->prefixJson = '{}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
 
@@ -145,9 +164,19 @@ EOT;
         $this->headerLeftButtons = isset($args['headerLeftButtons']) ? $args['headerLeftButtons']: false;
         $this->headerRightButtons = isset($args['headerRightButtons']) ? $args['headerRightButtons']: false;
         $this->buttonLabels = isset($args['buttonLabels']) ? $args['buttonLabels']: false;
-        $this->dayStart = @$args['dayStart'] ? $args['dayStart']: '08:00';
-        $this->dayEnd = @$args['dayEnd'] ? $args['dayEnd']: '20:00';
+        $this->businessHours = @$args['businessHours'] ? $args['businessHours']: '08:00 - 17:00';
+        if ($this->businessHours) {
+            list($bStart, $bEnd) = explodeTrim('-', $this->businessHours);
+            $this->businessHours = "{ daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '$bStart', endTime: '$bEnd'}";
+        } else {
+            $this->businessHours = 'false';
+        }
+
+        // freezePast:
         $this->freezePast = @$args['freezePast'] ? $args['freezePast']: false;
+        if (is_string($this->freezePast)) {
+            $this->freezePast = checkPermission( $this->freezePast, $this->lzy );
+        }
 
         $this->checkAndFixData();
     } // __construct
@@ -260,6 +289,7 @@ EOT;
 
         // inject js code into page body:
         $js = '';
+        $calCatPermission = 'false';
         if (!$GLOBALS['lizzy']['calInitialized']) {
             $GLOBALS['lizzy']['calInitialized'] = true;
             $userRec = $this->lzy->auth->getUserRec();
@@ -267,10 +297,9 @@ EOT;
                 if (!$userRec['calCatetoryPermission'] || ($userRec['calCatetoryPermission'] === 'self')) {
                     $calCatPermission = $userRec['username'];
                 } else {
-                    $calCatPermission = $userRec['calCatetoryPermission'];
+                    $calCatPermission = str_replace(' ', '', $userRec['calCatetoryPermission']);
                 }
-            } else {
-                $calCatPermission = '';
+                $calCatPermission = "'$calCatPermission'";
             }
 
             $calRec['calCatPermission'] = $calCatPermission;
@@ -281,62 +310,23 @@ EOT;
 
             $js = <<<EOT
 
-var calBackend = '$backend';
-var calLang = '{$this->lang}';
-var calSubmitBtnLabel = ['{{ Save }}', '{{ lzy-cal-delete-entry-now }}'];
-var lzyCal = [];
+const calBackend = '$backend';
+const calLang = '{$this->lang}';
+const calUser = '{$_SESSION['lizzy']['user']}';
+const calSubmitBtnLabel = ['{{ Save }}', '{{ lzy-cal-delete-entry-now }}'];
 EOT;
         }
-        $categories = "['" . implode("','", $this->categories) . "']";
-        $js .= <<<EOT
-
-lzyCal[$inx] = {
-    ref: '$hash',
-    initialView: '$viewMode',
-    initialDate: '{$this->initialDate}',
-    editingPermission: $edPermStr,
-    creatorOnlyPermission: $creatorOnlyPermission,
-    categories: $categories,
-    calCatPermission: '$calCatPermission',
-    catPrefixes: {$this->prefixJson},
-    catDefaultPrefix: '{$this->defaultCatPrefix}',
-    calDayStart: '{$this->dayStart}',
-    calDayEnd: '{$this->dayEnd}',
-    freezePast: '{$this->freezePast}',
-    tooltips: {$this->tooltips},
-    eventOverlap: {$this->eventOverlap},
-    defaultEventDuration: $defaultEventDuration,
-    headerLeftButtons: '$headerLeftButtons',
-    headerRightButtons: '$headerRightButtons',
-    buttonLabels: {
-        prev: '{{ lzy-cal-label-prev }}',
-        next: '{{ lzy-cal-label-next }}',
-        prevYear: '{{ lzy-cal-label-prev-year }}',
-        nextYear: '{{ lzy-cal-label-next-year }}',
-        year: '{{ lzy-cal-label-year }}',
-        month: '{{ lzy-cal-label-month }}',
-        week: '{{ lzy-cal-label-week }}',
-        day: '{{ lzy-cal-label-day }}',
-        today: '{{ lzy-cal-label-today }}',
-        list: '{{ lzy-cal-label-list }}',
-    },
-    calLabels: {
-        weekText: '{{ lzy-cal-label-week-nr }}',
-        allDayText: '{{ lzy-cal-label-allday }}',
-        moreLinkText: '{{ lzy-cal-label-more-link }}',
-        noEventsText: '{{ lzy-cal-label-empty-list }}',
-    },
-};
-
-EOT;
         $this->page->addJs($js);
+
+        $categories = "['" . implode("','", $this->categories) . "']";
 
         $str = '';
 
         $class = $this->class? " {$this->class}": '';
         $edClass = $this->edPermitted ? ' lzy-cal-editing' : '';
+        $freezePast = $this->freezePast? 'true':'false';
 
-        $str .= "\t<div id='lzy-calendar$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx'></div>\n";
+        $str .= "\t<div id='lzy-calendar$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx' data-datasrc-ref='$this->tickHash'></div>\n";
         $this->renderFieldNames();
 
         // render edit form:
@@ -359,7 +349,51 @@ EOT;
                 $this->page->addBodyEndInjections( $popup );
             }
         }
-
+        $calOptions = <<<EOT
+    inx: $this->inx,
+    initialView: '$viewMode',
+    editingPermission: $edPermStr,
+    freezePast: $freezePast,
+    creatorOnlyPermission: $creatorOnlyPermission,
+    categories: $categories,
+    catPrefixes: $this->catPrefixesStr,
+    catDefaultPrefix: '{$this->defaultCatPrefix}',
+    calCatPermission: $calCatPermission,
+    tooltips: $this->tooltips,
+    defaultEventDuration: $defaultEventDuration,
+    headerLeftButtons: '$headerLeftButtons',
+    headerRightButtons: '$headerRightButtons',
+    fullCalendarOptions: {
+        initialView: '$viewMode',
+        initialDate: '{$this->initialDate}',
+        editable: $edPermStr,
+        buttonText: {
+            prev: '{{ lzy-cal-label-prev }}',
+            next: '{{ lzy-cal-label-next }}',
+            prevYear: '{{ lzy-cal-label-prev-year }}',
+            nextYear: '{{ lzy-cal-label-next-year }}',
+            year: '{{ lzy-cal-label-year }}',
+            month: '{{ lzy-cal-label-month }}',
+            week: '{{ lzy-cal-label-week }}',
+            day: '{{ lzy-cal-label-day }}',
+            today: '{{ lzy-cal-label-today }}',
+            list: '{{ lzy-cal-label-list }}',
+        },
+        weekText: '{{ lzy-cal-label-week-nr }}', // e.g. "KW"
+        allDayText: '{{ lzy-cal-label-allday }}',
+        moreLinkText: '{{ lzy-cal-label-more-link }}',
+        noEventsText: '{{ lzy-cal-label-empty-list }}',
+$this->fullCalendarOptions
+    },
+$this->calOptions
+EOT;
+        // append the call to invole lzyCalendar:
+        $jq = <<<EOT
+$('.lzy-calendar').lzyCalendar({
+$calOptions
+});
+EOT;
+        $this->lzy->page->addJq( $jq );
         return $str;
     } // render
 
@@ -379,8 +413,7 @@ EOT;
             $fieldNames .= "'$field':'$flabel', ";
         }
         $fieldNames = rtrim($fieldNames, ', ');
-        $js = "lzyCal[{$this->inx}]['fieldLabels'] = { $fieldNames };";
-        $this->page->addJs($js);
+        $this->calOptions .= "\tfieldLabels: { $fieldNames },\n";
     } // renderFieldNames
 
 
@@ -388,7 +421,6 @@ EOT;
 
     private function renderDefaultCalPopUpForm()
     {
-        $backend = CALENDAR_BACKEND;
         $inx = $this->inx;
         $categoryCombo = $this->prepareCategoryCombo();
         $customFields = $this->prepareCustomFields();
@@ -397,65 +429,64 @@ EOT;
         // render default popup-form:
         $popupForm = <<<EOT
     
-        <form id='lzy-calendar-default-form' method='post' action="$backend">
-            <input type='hidden' id='lzy-inx' name='inx' value='$inx' />
-            <input type='hidden' id='lzy-cal-ref' name='lzy-cal-ref' value='$this->tickHash' />
-            <input type='hidden' id='lzy-rec-id' name='rec-id' value='' />
-            <input type='hidden' id='lzy-allday' name='allday' value='' />
+        <form id='lzy-calendar-default-form-$inx' class="lzy-calendar-default-form">
+            <input type='hidden' class='lzy-inx' name='inx' value='$inx' />
+            <input type='hidden' class='lzy-cal-ref' name='lzy-cal-ref' value='$this->tickHash' />
+            <input type='hidden' class='lzy-rec-id' name='rec-id' value='' />
+            <input type='hidden' class='lzy-allday' name='allday' value='' />
 
 $categoryCombo
 
             <div class='lzy-field-wrapper lzy-field-type-text lzy-cal-event'>
-                <label for='lzy_cal_event_name' class="lzy-cal-label">{{ lzy-cal-event-title }}:</label>
-                <input type='text' id='lzy_cal_event_name' class="lzy-cal-field" name='title'$required placeholder='{{^ lzy-cal-event-placeholder }}' />
+                <label for='lzy-cal-event-name-$inx' class="lzy-cal-label">{{ lzy-cal-event-title }}:</label>
+                <input type='text' id='lzy-cal-event-name-$inx' class="lzy-cal-field lzy-cal-event-name" name='title'$required placeholder='{{^ lzy-cal-event-placeholder }}' />
             </div><!-- /lzy-field-wrapper -->
            
            
-            <div id="lzy_cal_allday_event" class='lzy-field-wrapper lzy_cal_allday_event'>
-                <label for="lzy-cal-allday-event-checkbox">{{ lzy-cal-allday-event }}:</label>
-                <input type='checkbox' id="lzy-cal-allday-event-checkbox" />
+            <div id="lzy-cal-allday-event" class='lzy-field-wrapper lzy-cal-allday-event'>
+                <label for="lzy-cal-allday-event-checkbox-$inx">{{ lzy-cal-allday-event }}:</label>
+                <input type='checkbox' id="lzy-cal-allday-event-checkbox-$inx" class="lzy-cal-allday-event-checkbox" />
             </div><!-- /lzy-field-wrapper -->
             
 
             <fieldset class="lzy-cal-fieldset">
                 <legend>{{ lzy-cal-legend-from }}</legend>
                 <div class='lzy-field-type-date lzy-cal-start-date'>
-                    <label for='lzy_cal_start_date' class="lzy-cal-label">{{ lzy-cal-start-date-label }}</label>
-                    <input type='date' id='lzy_cal_start_date' name='start-date' placeholder='{{^ lzy-cal-start-date-placeholder }}' value='' />
-                    <label for='lzy_cal_start_time' class="lzy-cal-label">{{ lzy-cal-start-time-label }}</label>
-                    <input type='time' id='lzy_cal_start_time' name='start-time' placeholder='{{^ lzy-cal-start-time-placeholder }}' value='' />
+                    <label for='lzy-cal-start-date-$inx' class="lzy-cal-label">{{ lzy-cal-start-date-label }}</label>
+                    <input type='date' id='lzy-cal-start-date-$inx' name='start-date' placeholder='{{^ lzy-cal-start-date-placeholder }}' value='' />
+                    <label for='lzy-cal-start-time-$inx' class="lzy-cal-label">{{ lzy-cal-start-time-label }}</label>
+                    <input type='time' id='lzy-cal-start-time-$inx' name='start-time' placeholder='{{^ lzy-cal-start-time-placeholder }}' value='' />
                 </div><!-- /lzy-field-wrapper -->
             </fieldset>
 
             <fieldset class="lzy-cal-fieldset">
                 <legend>{{ lzy-cal-legend-till }}</legend>
                 <div class='lzy-field-type-date lzy-cal-end-date'>
-                    <label for='lzy_cal_end_date' class="lzy-cal-label">{{ lzy-cal-end-date-label }}</label>
-                    <input type='date' id='lzy_cal_end_date' name='end-date' placeholder='{{^ lzy-cal-end-date-placeholder }}' value='' />
-                    <label for='lzy_cal_end_time' class="lzy-cal-label">{{ lzy-cal-end-time-label }}</label>
-                    <input type='time' id='lzy_cal_end_time' name='end-time' placeholder='{{^ lzy-cal-end-time-placeholder }}' value='' />
+                    <label for='lzy-cal-end-date-$inx' class="lzy-cal-label">{{ lzy-cal-end-date-label }}</label>
+                    <input type='date' id='lzy-cal-end-date-$inx' name='end-date' placeholder='{{^ lzy-cal-end-date-placeholder }}' value='' />
+                    <label for='lzy-cal-end-time-$inx' class="lzy-cal-label">{{ lzy-cal-end-time-label }}</label>
+                    <input type='time' id='lzy-cal-end-time-$inx' name='end-time' placeholder='{{^ lzy-cal-end-time-placeholder }}' value='' />
                 </div><!-- /lzy-field-wrapper -->
             </fieldset>
 
  
 $customFields
  
-            <div id="lzy_cal_delete_entry" class='lzy-field-wrapper lzy_cal_delete_entry' style="display:none">
-                <label for="lzy-cal-delete-entry-checkbox">
-                    <input type='checkbox' id="lzy-cal-delete-entry-checkbox" />
-                {{ lzy-cal-delete-entry }}</label>
+            <div id="lzy-cal-delete-entry-$inx" class='lzy-field-wrapper lzy-cal-delete-entry' style="display:none">
+                <label for="lzy-cal-delete-entry-checkbox-$inx">{{ lzy-cal-delete-entry }}</label>
+                <input type='checkbox' class="lzy-cal-delete-entry-checkbox" id="lzy-cal-delete-entry-checkbox-$inx" name="del"/>
             </div>
             
             <div class="lzy-cal-form-buttons">
-                <input type='submit' id='lzy-calendar-default-submit' value='{{ Save }}' class='lzy-button form-button' />
-                <input type='reset' id='lzy-calendar-default-cancel' value='{{ Cancel }}' class='lzy-button form-button' />
+                <input type='submit' id='lzy-calendar-default-submit-$inx' value='{{ Save }}' class='lzy-button form-button lzy-calendar-default-submit' />
+                <input type='reset' id='lzy-calendar-default-cancel-$inx' value='{{ Cancel }}' class='lzy-button form-button lzy-calendar-default-cancel' />
             </div>
         
+             <div style="display: none;">
+                <span class="lzy-cal-new-event-header">{{ lzy-cal-new-entry }}</span>
+                <span class="lzy-cal-modify-event-header">{{ lzy-cal-modif-entry }}</span>
+             </div>
         </form>
-        <div style="display: none;">
-            <span id="lzy-cal-new-event-header">{{ lzy-cal-new-entry }}</span>
-            <span id="lzy-cal-modify-event-header">{{ lzy-cal-modif-entry }}</span>
-        </div>
 
 EOT;
         return $popupForm;
@@ -466,38 +497,36 @@ EOT;
 
     private function prepareCategoryCombo()
     {
-        $category = $this->category;
+        $inx = $this->inx;
 
         $categoryCombo = '';
-        if ($category) {
+        if ($this->categories) {
             $categories = $this->categories;
             if (sizeof($categories) > 1) {
                 foreach ($categories as $cat) {
                     $catVal = $cat = trim($cat);
                     $catVal = preg_replace('/\s+/', '-', $catVal);
                     $catVal = preg_replace('/[^\w-]/', '', $catVal);
-                    $categoryCombo .= "\t\t<option value='$catVal'>$cat</option>\n";
+                    $categoryCombo .= "\t\t\t\t\t<option value='$catVal'>$cat</option>\n";
                 }
                 $categoryCombo = <<<EOT
-    <label for="lzy_cal_category" class="lzy_cal_category-label">{{ lzy-cal-category-label }}:</label>
-    <select id="lzy_cal_category" class="lzy_cal_category" name="category">
-        <option value="">{{ lzy-cal-category-all }}</option>
-$categoryCombo
-    </select>
-
+                <label for="lzy-cal-category-$inx" class="lzy-cal-category-label">{{ lzy-cal-category-label }}:</label>
+                <select id="lzy-cal-category-$inx" class="lzy-cal-category" name="category">
+                    <option value="">{{ lzy-cal-category-all }}</option>
+$categoryCombo                </select>
 EOT;
             } else {
-                $cat = trim($category);
+                $cat = trim($this->category);
                 $categoryCombo = <<<EOT
-    <div class="lzy_cal_category-field"><span class="lzy-cal-category-label">{{ lzy-cal-category-label }}: </span><span class="lzy-cal-category lzy-cal-category-value">$cat</span></div>
-    <input type="hidden" class="lzy_cal_category" name="category" value="{$categories[0]}" />
+      <div class="lzy-cal-category-field"><span class="lzy-cal-category-label">{{ lzy-cal-category-label }}: </span><span class="lzy-cal-category lzy-cal-category-value">$cat</span></div>
+        <input type="hidden" class="lzy-cal-category" name="category" value="{$categories[0]}" />
 EOT;
             }
         }
         $categoryCombo = <<<EOT
-    <div class='lzy-field-wrapper'>
+            <div class='lzy-field-wrapper'>
 $categoryCombo
-    </div><!-- /lzy-field-wrapper -->
+            </div><!-- /lzy-field-wrapper -->
 EOT;
 
         return $categoryCombo;
@@ -519,8 +548,8 @@ EOT;
                 $div = <<<EOT
 
             <div class='lzy-field-wrapper lzy-field-type-textarea'>
-                <label for='lzy_cal_comment' class="lzy-cal-label">{{ comment }}:</label>
-                <textarea id='lzy_cal_comment' class="lzy-cal-field" name='comment' placeholder='{{ lzy-cal-comment-placeholder }}'></textarea>
+                <label for='lzy-cal-comment' class="lzy-cal-label">{{ comment }}:</label>
+                <textarea id='lzy-cal-comment' class="lzy-cal-field" name='comment' placeholder='{{ lzy-cal-comment-placeholder }}'></textarea>
             </div><!-- /lzy-field-wrapper -->
 
 EOT;
@@ -529,8 +558,8 @@ EOT;
                 $div = <<<EOT
 
             <div class='lzy-field-wrapper lzy-field-type-text lzy-cal-$field'>
-                <label for='lzy_cal_event_$field' class="lzy-cal-label">{{ $field }}:</label>
-                <input type='text' id='lzy_cal_event_$field' class="lzy-cal-field" name='$field'  placeholder='{{^ lzy-cal-$field-placeholder }}' />
+                <label for='lzy-cal-event_$field' class="lzy-cal-label">{{ $field }}:</label>
+                <input type='text' id='lzy-cal-event_$field' class="lzy-cal-field" name='$field'  placeholder='{{^ lzy-cal-$field-placeholder }}' />
             </div><!-- /lzy-field-wrapper -->
 
 EOT;
@@ -728,6 +757,9 @@ EOT;
                 unset($data[$key]);
                 $modify = true;
                 continue;
+            }
+            if ($rec['start'] > $rec['end']) {
+                die("Error in Calendar Data (rec $key):<br>Start time ({$rec['start']}) after end time ({$rec['end']})");
             }
         }
         if (!$modify) {

@@ -37,7 +37,6 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'publishCallback', '[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);
     $this->getArg($macroName, 'tooltips', 'Name of event property that shall be shown in a tool-tip. If "true", all will be shown.', false);
-    $this->getArg($macroName, 'eventOverlap', '[true|false] Determines whether events are allowed to overlap (default: true).', true);
     $this->getArg($macroName, 'categories', '[comma-separated-list] A list of supported categories.', '');
     $this->getArg($macroName, 'showCategories', '[comma-separated-list] A comma separated list of categories - only events carrying that category will be presented.', '');
     $this->getArg($macroName, 'prefix', 'Prefix applied to event titles (if no category-specific prefix is defined). E.g. "[XY] ".', '');
@@ -45,11 +44,11 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'defaultView', '[week,month,year] Defines the initial view when the widget is presented for the very first time', '');
     $this->getArg($macroName, 'headerLeftButtons', '[next,prev,today] Defines which buttons (to select views) will be displayed and in which order (ltr)', 'prev,today,next');
     $this->getArg($macroName, 'headerRightButtons', '[day,week,month,year] Defines which buttons (to select views) will be displayed and in which order (ltr)', 'week,month,year');
-    $this->getArg($macroName, 'initialDate', '[ISO-Date] Defines the initial date, default: today', '');
-    $this->getArg($macroName, 'dayStart', '[hh:mm] Defines first visible hour, default: 08:00', '');
-    $this->getArg($macroName, 'dayEnd', '[hh:mm] Defines last visible hour, default: 20:00', '');
-    $this->getArg($macroName, 'freezePast', 'If true, events in the past can no longer be edited, default: false', false);
+    $this->getArg($macroName, 'businessHours', '[hh:mm - hh:mm] Defines business hours (white background), default: "08:00 - 17:00"', '');
+    $this->getArg($macroName, 'visibleHours', '[hh:mm - hh:mm] Defines hours shown in week view, default: "08:00 - 17:00"', '');
+    $this->getArg($macroName, 'freezePast', '[true,false,(!)group] If true, events in the past can no longer be edited, default: false', false);
     $this->getArg($macroName, 'eventTitleRequired', '[true,false] Defines whether title field a new event must be defined, default: true', true);
+    $this->getArg($macroName, 'fullCalendarOptions', '[string] Will be passed through to the FullCalendar object (see https://fullcalendar.io/docs#toc)', '');
     $this->getArg($macroName, 'useRecycleBin', '[true,false] If true, changes to calendar data (via editing mode) don\'t overrite old data but send a copy to a recycle bin. (Default: false)', false);
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 

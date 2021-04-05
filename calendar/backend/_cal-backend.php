@@ -97,7 +97,6 @@ class CalendarBackend {
             ]);
 
         $this->calCatPermission = @$calRec['calCatPermission'];
-
     } // __construct
 
 
@@ -133,22 +132,18 @@ class CalendarBackend {
         $suppliedRec['_user'] = @$_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: 'anon';
         mylog( var_r($suppliedRec) );
 
-        $freeze = false;
+        $freezePast = false;
         // check freezePast:
         if ($this->calRec['freezePast']) {
             // End is in the past -> just reject:
             $end = strtotime("{$suppliedRec['end-date']} {$suppliedRec['end-time']}");
-//$diff = ($end - $now);
-//$endStr = date('Y-m-d H:i:s', $end);
-//$nowStr = date('Y-m-d H:i:s');
-//$timeZone = date_default_timezone_get ( );
             if ($end < time()) {
                 $this->writeLogEntry("freezePast", $suppliedRec);
-                return 'Event in the past may not be created or modified';
+                return 'Event in the past may not be created or modified.';
             }
             $start = strtotime("{$suppliedRec['start-date']} {$suppliedRec['start-time']}");
             if ($start < time()) {
-                $freeze = true;
+                $freezePast = true;
             }
         }
 
@@ -161,18 +156,24 @@ class CalendarBackend {
             $msg = 'Modified event';
             $suppliedRec['_uid'] = $oldRec['_uid'];
             $suppliedRec['_creator'] =  $oldRec['_creator'];
+            if ($freezePast) {
+                $oldEnd = strtotime($oldRec['start']);
+                $suppliedRec['start-date'] = date('Y-m-d', $oldEnd);
+                $suppliedRec['start-time'] = date('H:i', $oldEnd);
+            }
 
         } else {                // New Entry:
             $isNewRec = true;
             $msg = 'Created new event';
             $suppliedRec['_uid'] = createHash(12);
             $suppliedRec['_creator'] =  $suppliedRec['_user'];
+            if ($freezePast) {
+                $this->writeLogEntry("freezePast", $suppliedRec);
+                return 'Events in the past may not be created or modified.';
+            }
         }
 
         $newRec = $this->prepareRecord($suppliedRec);
-//        if ($freeze) {
-//            $newRec['start'] = $freeze;
-//        }
         $this->writeLogEntry($msg, $newRec);
 
         if ($isNewRec) {
@@ -198,32 +199,44 @@ class CalendarBackend {
             return 'not ok';
         }
         $recId = $rec['rec-id'];
+        $msg = 'Deleted event';
+        $deletePast = true;
 
         // check freezePast:
         if ($this->calRec['freezePast']) {
+            $end = strtotime("{$rec['end-date']} {$rec['end-time']}");
+            if ($end < time()) {
+                return 'Events in the past may not be deleted.';
+            }
             $start = strtotime("{$rec['start-date']} {$rec['start-time']}");
             if ($start < time()) {
-                return 'Event in the past may not be deleted';
+                $msg = 'Event partially deleted.';
+                $deletePast = false;
             }
         }
 
         $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
         $rec['_user'] = $user;
-        $this->writeLogEntry("Deleted event", $this->prepareRecord($rec));
-        return $this->_deleteRec($recId);
+        $this->writeLogEntry($msg, $this->prepareRecord($rec));
+        $this->_deleteRec($recId, $deletePast);
+        return '';
     } // deleteRec
 
 
 
 
     //--------------------------------------------------------------
-    private function _deleteRec($recId)
+    private function _deleteRec($recId, $deletePast)
     {
         $data = $this->ds->read();
         if (isset($data[$recId])) {
-            unset($data[$recId]);
+            if ($deletePast) {
+                unset($data[$recId]);
+                $data = array_values($data);
+            } else {
+                $data[$recId]['end'] = date('Y-m-d H:i');
+            }
             // make sure index remains numeric:
-            $data = array_values($data);
             $this->ds->write( $data );
         } else {
             $this->writeLogEntry("Error deleting event '$recId'");

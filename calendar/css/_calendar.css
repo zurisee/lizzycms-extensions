@@ -1,6 +1,6 @@
 /**** auto-created from 'css/scss/calendar.scss' - do not modify! ****/
 
-#lzy.lzy-small-screen .fc-header-toolbar, .lzy-cal-header-narrow .fc-header-toolbar {
+#lzy.lzy-small-screen.fc-header-toolbar, .lzy-cal-header-narrow.fc-header-toolbar {
   flex-wrap: wrap; }
 #lzy.lzy-small-screen .fc-toolbar-chunk:nth-child(2), .lzy-cal-header-narrow .fc-toolbar-chunk:nth-child(2) {
   order: -1;
@@ -168,7 +168,7 @@
   position: absolute;
   right: -1000vh; }
 
-.lzy_cal_allday_event label {
+.lzy-cal-allday-event label {
   display: inline-block;
   width: auto;
   padding-right: 20px; }
@@ -177,19 +177,19 @@
   padding-bottom: 0.2em;
   display: inline-block; }
 
-.lzy_cal_category-label, .lzy_cal_category {
+.lzy-cal-category-label, .lzy-cal-category {
   display: inline-block; }
 
-.lzy_cal_category-label {
+.lzy-cal-category-label {
   width: var(--lzy-cal-cat-label-width, 7em); }
 
-.lzy_cal_category {
+.lzy-cal-category {
   width: calc(100% - var(--lzy-cal-cat-label-width, 7em) - 4px); }
 
 .field-wrapper:not(.lzy-field-type-date) {
   margin: 10px 0; }
 
-#lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-speaker, #lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-moderator {
+.lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-speaker, .lzy-calendar-default-form.lzy-cal-category-spiel .lzy-cal-moderator {
   display: none; }
 
 .fc-list-view .fc-list-item-title .fc-field-label {
@@ -206,6 +206,14 @@
   color: white;
   padding: 0.4em; }
 
+.lzy-cal-popup-template .lzy-popup-wrapper {
+  min-width: 18em; }
+
+.lzy-cal-form-buttons {
+  margin-top: 0.5em; }
+  .lzy-cal-form-buttons > input {
+    width: calc(50% - 3px); }
+
 .qtip-content .lzy-cal-title-text, .fc-list-event-title .lzy-cal-title-text, .qtip-content .lzy-cal-custom-label, .fc-list-event-title .lzy-cal-custom-label {
   font-weight: bold;
   color: black; }
@@ -219,6 +227,9 @@
 
 .qtip-content .lzy-cal-custom *, .fc-list-event-title .lzy-cal-custom *, .qtip-content > div *, .fc-list-event-title > div * {
   text-indent: 0em; }
+
+h2.fc-toolbar-title {
+  white-space: nowrap; }
 
 #lzy.lzy-small-screen .lzy-cal-popup-template_wrapper {
   width: 100vh; }
