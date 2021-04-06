@@ -55,16 +55,24 @@ class LzyCalendar
         }
 
         // visible hours:
-        if (isset($args['visibleHours'])) {
+        if (isset($args['visibleHours']) && $args['visibleHours']) {
             list($bStart, $bEnd) = explodeTrim('-', $args['visibleHours']);
-            $this->fullCalendarOptions .= "\t\tslotMinTime: '$bStart',\n";
-            $this->fullCalendarOptions .= "\t\tslotMaxTime: '$bEnd',\n";
+            if ($bStart && $bEnd) {
+                $this->fullCalendarOptions .= "\t\tslotMinTime: '$bStart',\n";
+                $this->fullCalendarOptions .= "\t\tslotMaxTime: '$bEnd',\n";
+            } else {
+                die("Calendar: error in option 'visibleHours' ({$args['visibleHours']})");
+            }
         }
 
         // business hours:
         if (isset($args['businessHours'])) {
             list($bStart, $bEnd) = explodeTrim('-', $args['businessHours']);
-            $this->fullCalendarOptions .= "\t\tbusinessHours: { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '$bStart', endTime: '$bEnd'},\n";
+            if ($bStart && $bEnd) {
+                $this->fullCalendarOptions .= "\t\tbusinessHours: { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '$bStart', endTime: '$bEnd'},\n";
+            } else {
+                die("Calendar: error in option 'businessHours' ({$args['businessHours']})");
+            }
         }
 
         // Categories:
@@ -134,6 +142,9 @@ EOT;
             $this->categoryPrefixes = [];
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
+        if (!$this->catPrefixesStr) {
+            $this->catPrefixesStr = "''";
+        }
 
 
         if (!isset($_SESSION['lizzy']['cal'][$inx]) || !is_array($_SESSION['lizzy']['cal'][$inx])) {
@@ -164,13 +175,6 @@ EOT;
         $this->headerLeftButtons = isset($args['headerLeftButtons']) ? $args['headerLeftButtons']: false;
         $this->headerRightButtons = isset($args['headerRightButtons']) ? $args['headerRightButtons']: false;
         $this->buttonLabels = isset($args['buttonLabels']) ? $args['buttonLabels']: false;
-        $this->businessHours = @$args['businessHours'] ? $args['businessHours']: '08:00 - 17:00';
-        if ($this->businessHours) {
-            list($bStart, $bEnd) = explodeTrim('-', $this->businessHours);
-            $this->businessHours = "{ daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '$bStart', endTime: '$bEnd'}";
-        } else {
-            $this->businessHours = 'false';
-        }
 
         // freezePast:
         $this->freezePast = @$args['freezePast'] ? $args['freezePast']: false;

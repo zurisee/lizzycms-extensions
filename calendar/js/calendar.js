@@ -54,13 +54,17 @@ LzyCalendar.prototype.init = function( $elem, options ) {
         timeZone: false,
         navLinks: true, // can click day/week names to navigate views
         height: 'auto',
-        editable: false,
         dayMaxEvents: true, // allow "more" link when too many events
         selectable: true,
-        eventOverlap: true,
         nowIndicator: true,
         weekNumbers: true,
         weekNumberCalculation: 'ISO',
+        buttonText: {
+            prev: '〈 ',
+            next: ' 〉',
+            prevYear: '《',
+            nextYear: '》',
+        },
         events: {
             url: this.backendUrl,
             success: function( args ) {
@@ -89,7 +93,7 @@ LzyCalendar.prototype.init = function( $elem, options ) {
         eventResize: function (e) {
             parent.calEventChanged(inx, e);
         },
-        windowResize: function(arg) {
+        windowResize: function() {
             parent.onResize();
         }
     }; // fullCalendarOptionDefaults
