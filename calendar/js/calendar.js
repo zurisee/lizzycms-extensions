@@ -59,6 +59,9 @@ LzyCalendar.prototype.init = function( $elem, options ) {
         nowIndicator: true,
         weekNumbers: true,
         weekNumberCalculation: 'ISO',
+        slotMinTime: '07:00',
+        slotMaxTime: '18:00',
+        businessHours: { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '08:00', endTime: '17:00'},
         buttonText: {
             prev: '〈 ',
             next: ' 〉',
@@ -66,9 +69,9 @@ LzyCalendar.prototype.init = function( $elem, options ) {
             nextYear: '》',
         },
         events: {
-            url: this.backendUrl,
+            url: this.backendUrl + '&get',
             success: function( args ) {
-                parent.saveCurrDate( this, args );
+                mylog('cal events fetched', false);
             },
             failure: function( events ) {
                 console.log('Error in calendar data:');
@@ -195,8 +198,6 @@ LzyCalendar.prototype.defaultRenderEvent = function( arg ) {
     el.innerHTML = '<span class="lzy-cal-title-label">'+ lbl +':</span> <span class="lzy-cal-title-text">' + prefix + ' <span>' + title + '</span></span>';
     let elements = [ elT, el ];
 
-    mylog('defaultRenderEvent: ' + title, false);
-
     // apply custom properties:
     if (arg.event.extendedProps) {
         for ( let cust in arg.event._def.extendedProps) {
@@ -307,6 +308,10 @@ LzyCalendar.prototype.openCalPopup = function( inx, event, isNewEvent ) {
 
 LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) {
     if (!this.options.editingPermission) {
+        mylog('User has insufficient privileges to edit calendar');
+        if (this.options.editingPermission === null) {
+            lzyPopup('{{ lzy-warning-insufficient-privileges }}');
+        }
         return;
     }
     let parent = this;
@@ -324,6 +329,7 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
     }
     this.$form = $('form', this.$formWrapper);
 
+    this.openPopup();
     this.resetForm();
 
     let dateStr = '';
@@ -400,6 +406,8 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
             $('#lzy-cal-end-time-' + this.inx).attr('type', 'hidden').val('11:00');
         }
         this.preselectCategory();
+
+        this.resetDeleteCheckbox( false );
     } // initNewEntryForm
 
     
@@ -458,23 +466,25 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
             $('.lzy-rec-id', this.$form).val(extendedProps.i);
         }
 
+        this.resetDeleteCheckbox();
 
-        $('#lzy-cal-delete-entry-' + this.inx).show();
-
-        // Delete Entry checkbox:
-        $('.lzy-cal-delete-entry-checkbox', this.$form).change(function (event) {
-            event.preventDefault();
-            if ($('.lzy-cal-delete-entry-checkbox', this.$form).prop('checked')) {
-                parent.deleteNotSave = true;
-                $('.lzy-calendar-default-submit', this.$form).val(calSubmitBtnLabel[1]);
-            } else {
-                parent.deleteNotSave = false;
-                $('.lzy-calendar-default-submit', this.$form).val(calSubmitBtnLabel[0]);
-            }
-        });
     } // initExistingEntryForm
     
 }; // defaultOpenCalPopup
+
+
+
+
+LzyCalendar.prototype.resetDeleteCheckbox = function( show = true ) {
+    $('.lzy-cal-delete-entry-checkbox', this.$form).prop('checked', false);
+    if (show) {
+        $('#lzy-cal-delete-entry-' + this.inx).show();
+    } else {
+        $('#lzy-cal-delete-entry-' + this.inx).hide();
+    }
+    $('.lzy-calendar-default-submit', this.$form).val(calSubmitBtnLabel[0]);
+    this.deleteNotSave = false;
+}; // resetDeleteCheckbox
 
 
 
@@ -579,40 +589,12 @@ LzyCalendar.prototype.convertMD = function( text ) {
 
 LzyCalendar.prototype.setupTriggers = function() {
     let parent = this;
-    // submit button:
     let $form = $('#lzy-cal-popup-template-' + this.inx + ' form');
+
+    // onSubmit:
     $form.submit(function (event) {
         event.preventDefault();
-
-        // prevent multiple calls (if user opend&closed popup multiple times):
-        if (!parent.doSubmit) {
-            return;
-        }
-        parent.doSubmit = false;
-        let postUrl = parent.backendUrl + '&save';
-        let formData = $form.serialize();
-
-        if ( parent.deleteNotSave ) {    // delete:
-            postUrl = parent.backendUrl + '&del';
-            mylog('deleting entry');
-        }
-
-        $.ajax({
-            url: postUrl,
-            type: 'post',
-            data: formData
-        }).done(function (response) {
-            lzyPopupClose();
-            if (isServerErrMsg(response)) {
-                // lzyReload();
-                return;
-            }
-            if (response && response !== 'ok') {
-                mylog(response, false);
-                lzyPopup(response);
-            }
-            parent.fullCal.refetchEvents();
-        });
+        parent.submitForm()
     });
 
     // All-day toggle:
@@ -621,18 +603,32 @@ LzyCalendar.prototype.setupTriggers = function() {
         let allday = $this.prop('checked');
         if (allday) {
             $('.lzy-allday', this.$form).val('true');
-            $('#lzy-cal-start-time-' + this.inx).attr('type', 'hidden');
-            $('#lzy-cal-end-time-' + this.inx).attr('type', 'hidden');
+            $('#lzy-cal-start-time-' + parent.inx).attr('type', 'hidden');
+            $('#lzy-cal-end-time-' + parent.inx).attr('type', 'hidden');
         } else {
             $('.lzy-allday', this.$form).val('false');
-            $('#lzy-cal-start-time-' + this.inx).attr('type', 'time');
-            $('#lzy-cal-end-time-' + this.inx).attr('type', 'time');
+            $('#lzy-cal-start-time-' + parent.inx).attr('type', 'time');
+            $('#lzy-cal-end-time-' + parent.inx).attr('type', 'time');
+        }
+    }); // All-day toggle
+
+
+    // Delete Entry checkbox:
+    $('.lzy-cal-delete-entry-checkbox', this.$form).change(function (event) {
+        event.preventDefault();
+        if ($('.lzy-cal-delete-entry-checkbox', parent.$form).prop('checked')) {
+            parent.deleteNotSave = true;
+            $('.lzy-calendar-default-submit', parent.$form).val(calSubmitBtnLabel[1]);
+        } else {
+            parent.deleteNotSave = false;
+            $('.lzy-calendar-default-submit', parent.$form).val(calSubmitBtnLabel[0]);
         }
     });
 
+
     // Cancel button:
     $("input[type=reset]", this.$form).click(function () {
-        $("#lzy-cal-popup-template").lzyPopup('hide');  // close popup
+        parent.closePopup();
     });
 
 
@@ -774,7 +770,7 @@ LzyCalendar.prototype.checkFreeze = function( event, checkAgainstEnd = false ) {
 
 
 
-LzyCalendar.prototype.resetForm = function() {
+LzyCalendar.prototype.openPopup = function() {
     this.$formWrapper.lzyPopup({
         contentRef: true,
         header: true,
@@ -782,12 +778,67 @@ LzyCalendar.prototype.resetForm = function() {
         closeButton: true,
         closeOnBgClick: false,
     }); // open popup
+}; // openPopup
 
+
+
+
+LzyCalendar.prototype.closePopup = function() {
+    lzyPopupClose( this.$formWrapper );
+}; // closePopup
+
+
+
+
+LzyCalendar.prototype.submitForm = function() {
+    let parent = this;
+    // prevent multiple calls (if user opend&closed popup multiple times):
+    if (!this.doSubmit) {
+        return;
+    }
+    this.doSubmit = false;
+
+    // if all-day: make sure time is nulled:
+    if ($('.lzy-cal-allday-event-checkbox', this.$form).prop('checked')) {
+        $('#lzy-cal-start-time-' + this.inx).val('');
+        $('#lzy-cal-end-time-' + this.inx).val('');
+    }
+    let postUrl = this.backendUrl + '&save';
+    let formData = this.$form.serialize();
+
+    if ( this.deleteNotSave ) {    // delete:
+        postUrl = this.backendUrl + '&del';
+        mylog('deleting entry', false);
+    }
+
+    $.ajax({
+        url: postUrl,
+        type: 'post',
+        data: formData
+    }).done(function (response) {
+        lzyPopupClose();
+        if (isServerErrMsg(response)) {
+            // lzyReload();
+            return;
+        }
+        if (response && response !== 'ok') {
+            mylog(response, false);
+            lzyPopup(response);
+        }
+        parent.fullCal.refetchEvents();
+    });
+}; // submitForm
+
+
+
+
+LzyCalendar.prototype.resetForm = function() {
     $('option', this.$form).prop('selected', false);
     $('input[type=text]', this.$form).val('');
     $('.lzy-rec-id', this.$form).val('');
     $('textarea', this.$form).text('');
-    $('.lzy-cal-delete-entry-checkbox', this.$form).prop('checked', false);
+    $('input[type=checkbox],input[type=radio]', this.$form).prop('checked', false)
+    $('.lzy-popup-header > div', this.$formWrapper).html( '-' );
 
     $('.lzy-inx', this.$form).val( this.inx );
     this.$form.attr('data-cal-inx', this.inx);

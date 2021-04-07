@@ -47,6 +47,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'businessHours', '[hh:mm - hh:mm] Defines business hours (white background), default: "08:00 - 17:00"', '');
     $this->getArg($macroName, 'visibleHours', '[hh:mm - hh:mm] Defines hours shown in week view, default: "08:00 - 17:00"', '');
     $this->getArg($macroName, 'freezePast', '[true,false,(!)group] If true, events in the past can no longer be edited, default: false', false);
+    $this->getArg($macroName, 'editPermissionWarning', '[true,false] If true, user sees warning if trying to edit calendar with insufficient permission, default: false', false);
     $this->getArg($macroName, 'eventTitleRequired', '[true,false] Defines whether title field a new event must be defined, default: true', true);
     $this->getArg($macroName, 'fullCalendarOptions', '[string] Will be passed through to the FullCalendar object (see https://fullcalendar.io/docs#toc)', '');
     $this->getArg($macroName, 'useRecycleBin', '[true,false] If true, changes to calendar data (via editing mode) don\'t overrite old data but send a copy to a recycle bin. (Default: false)', false);

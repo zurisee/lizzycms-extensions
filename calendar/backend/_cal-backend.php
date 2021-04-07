@@ -7,16 +7,16 @@ define('LOG_WIDTH', 80);
 
 ob_start();
 
-// Require Event class and datetime utilities
+ // Require Event class and datetime utilities
 require dirname(__FILE__) . '/../third-party/fullcalendar/php/utils.php';
 
-// Require Datastorage class:
+ // Require Datastorage class:
 require_once SYSTEM_PATH.'backend_aux.php';
 require_once SYSTEM_PATH.'datastorage2.class.php';
 require_once SYSTEM_PATH.'ticketing.class.php';
 
 
-// Check whether there is custome backend code 'code/_custom-cal-backend.php':
+ // Check whether there is custome backend code 'code/_custom-cal-backend.php':
 if (file_exists(CUSTOM_CAL_BACKEND)) {
     require_once CUSTOM_CAL_BACKEND;
 }
@@ -25,7 +25,7 @@ if (!isset($_REQUEST['inx'])) {
     lzyExit('error: inx missing in ajax request');
 }
 
-// prevent "PHPSESSID"-Cookie warning:
+ // prevent "PHPSESSID"-Cookie warning:
 session_set_cookie_params(["SameSite" => "Strict"]); //none, lax, strict
 session_set_cookie_params(["Secure" => "true"]); //false, true
 session_set_cookie_params(["HttpOnly" => "true"]); //false, true
@@ -33,6 +33,10 @@ session_set_cookie_params(["HttpOnly" => "true"]); //false, true
 session_start();
 
 $backend = new CalendarBackend();
+
+if (@$_SESSION['lizzy']['debug'] && @$_REQUEST) {
+    mylog( var_r($_REQUEST) );
+}
 
 if (isset($_GET['save'])) {
     lzyExit( $backend->saveData($_POST) );
@@ -42,9 +46,6 @@ if (isset($_GET['del'])) {
 }
 if (isset($_GET['mode'])) {
     lzyExit( $backend->saveMode($_GET['mode']) );
-}
-if (isset($_GET['date'])) {
-    lzyExit( $backend->saveCurrDate($_GET['date']) );
 }
 
 lzyExit( $backend->getData() );
@@ -81,6 +82,7 @@ class CalendarBackend {
         } else {
             $rangeStart = date('Y-m-d', strtotime('+1 week'));
         }
+        $this->rangeStartStr = $rangeStart;
         $this->rangeStart = parseDateTime($rangeStart, $timezone);
 
         if (isset($_GET['end'])) {
@@ -114,6 +116,10 @@ class CalendarBackend {
         $data1 = $this->filterCalRecords($categoriesToShow, $data);
         $data1 = $this->prepareDataForClient($data1);
 
+        $date = substr($this->rangeStartStr,0, 10);
+        $this->calSession['initialDate'] = $date;
+
+
         // Send JSON to the client.
         $json = json_encode($data1);
         return $json;
@@ -130,10 +136,9 @@ class CalendarBackend {
             $suppliedRec = $post;
         }
         $suppliedRec['_user'] = @$_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: 'anon';
-        mylog( var_r($suppliedRec) );
 
-        $freezePast = false;
         // check freezePast:
+        $freezePast = false;
         if ($this->calRec['freezePast']) {
             // End is in the past -> just reject:
             $end = strtotime("{$suppliedRec['end-date']} {$suppliedRec['end-time']}");
@@ -215,7 +220,7 @@ class CalendarBackend {
             }
         }
 
-        $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
+        $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anon';
         $rec['_user'] = $user;
         $this->writeLogEntry($msg, $this->prepareRecord($rec));
         $this->_deleteRec($recId, $deletePast);
@@ -253,15 +258,6 @@ class CalendarBackend {
         $this->calSession['calMode'] = $mode;
         return '';
     } // saveMode
-
-
-
-    //--------------------------------------------------------------
-    public function saveCurrDate($date)
-    {
-        $this->calSession['initialDate'] = $date;
-        return '';
-    } // saveCurrDate
 
 
 

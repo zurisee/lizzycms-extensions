@@ -5,6 +5,10 @@ define('DEFAULT_EVENT_DURATION', 120); // in minutes
 
 $GLOBALS['lizzy']['calInitialized'] = false;
 
+if (isset($page)) {
+    $page->addModules('POPUPS');
+}
+
 class LzyCalendar
 {
     public function __construct($lzy, $inx, $args)
@@ -21,6 +25,7 @@ class LzyCalendar
             $this->fullCalendarOptions = "\t\t{$args['fullCalendarOptions']}\n";
         }
         $this->editingPermission = isset($args['editingPermission']) ? $args['editingPermission'] : false;
+        $this->editPermissionWarning = isset($args['editPermissionWarning']) ? $args['editPermissionWarning'] : false;
 
         $this->fields = isset($args['fields']) ? $args['fields']: false;
         if ($this->fields) {
@@ -66,7 +71,7 @@ class LzyCalendar
         }
 
         // business hours:
-        if (isset($args['businessHours'])) {
+        if (isset($args['businessHours']) && $args['businessHours']) {
             list($bStart, $bEnd) = explodeTrim('-', $args['businessHours']);
             if ($bStart && $bEnd) {
                 $this->fullCalendarOptions .= "\t\tbusinessHours: { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: '$bStart', endTime: '$bEnd'},\n";
@@ -82,7 +87,8 @@ class LzyCalendar
 
         // special case '_users_' for categories:
         $cats = $this->category;
-        if (preg_match_all('|<em>(.*?)</em>|', $cats, $m)) { // '_' translated to '<em>' by MD compiler
+        $cats = preg_replace('|</?em>|','_', $cats);
+        if (preg_match_all('|_(.*?)_|', $cats, $m)) { // '_' translated to '<em>' by MD compiler
             foreach ($m[1] as $i => $group) {
                 if (($group === 'all') || ($group === 'users')) {
                     $group = '';
@@ -120,6 +126,7 @@ EOT;
         $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired']: true;
 
         // Prefixes:
+        $this->categoryPrefixes = [];
         $n = sizeof($categories);
         $defaultCatPrefix = isset($args['prefix']) ? $args['prefix']: '';
         $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix']: $defaultCatPrefix;
@@ -133,13 +140,13 @@ EOT;
             }, $categories);
             $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
             $catPrefixes = array_slice($catPrefixes, 0, $n);
-            foreach ($catPrefixes as $i =>$s) {
+            foreach ($catPrefixes as $i => $s) {
+                if (!$s) { continue; }
                 $this->catPrefixesStr .= "{$categoryKeys[$i]}: '$s', ";
             }
             $this->catPrefixesStr = '{ '.rtrim($this->catPrefixesStr, ', ').'}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
         } else {
-            $this->categoryPrefixes = [];
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
         if (!$this->catPrefixesStr) {
@@ -179,7 +186,7 @@ EOT;
         // freezePast:
         $this->freezePast = @$args['freezePast'] ? $args['freezePast']: false;
         if (is_string($this->freezePast)) {
-            $this->freezePast = checkPermission( $this->freezePast, $this->lzy );
+            $this->freezePast = checkPermission( $this->freezePast, $this->lzy, true );
         }
 
         $this->checkAndFixData();
@@ -252,11 +259,14 @@ EOT;
                 }
 
             } else {
-                $edPermitted = $this->lzy->auth->checkAdmission($edPermitted0);
+                $edPermitted = checkPermission( $edPermitted0, $this->lzy);
             }
         }
-        $edPermStr = $edPermitted? 'true': 'false';
+        $edPermStr2 = $edPermStr = $edPermitted? 'true': 'false';
         $this->edPermitted = $edPermitted;
+        if (!$edPermitted && $this->editPermissionWarning) {
+            $edPermStr = 'null';
+        }
 
         // Get Default Event Duration
         $defaultEventDuration = DEFAULT_EVENT_DURATION;
@@ -295,7 +305,6 @@ EOT;
         $js = '';
         $calCatPermission = 'false';
         if (!$GLOBALS['lizzy']['calInitialized']) {
-            $GLOBALS['lizzy']['calInitialized'] = true;
             $userRec = $this->lzy->auth->getUserRec();
             if (isset($userRec['calCatetoryPermission'])) {
                 if (!$userRec['calCatetoryPermission'] || ($userRec['calCatetoryPermission'] === 'self')) {
@@ -311,6 +320,7 @@ EOT;
             $tck = new Ticketing(['defaultType' => 'cal', 'defaultMaxConsumptionCount' => 99]);
             $hash = $tck->createTicket($calRec);
             $this->tickHash = $hash;
+            $GLOBALS['lizzy']['calInitialized'] = $hash;
 
             $js = <<<EOT
 
@@ -319,6 +329,8 @@ const calLang = '{$this->lang}';
 const calUser = '{$_SESSION['lizzy']['user']}';
 const calSubmitBtnLabel = ['{{ Save }}', '{{ lzy-cal-delete-entry-now }}'];
 EOT;
+        } else {
+            $this->tickHash = $GLOBALS['lizzy']['calInitialized'];
         }
         $this->page->addJs($js);
 
@@ -330,7 +342,7 @@ EOT;
         $edClass = $this->edPermitted ? ' lzy-cal-editing' : '';
         $freezePast = $this->freezePast? 'true':'false';
 
-        $str .= "\t<div id='lzy-calendar$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx' data-datasrc-ref='$this->tickHash'></div>\n";
+        $str .= "\t<div id='lzy-calendar-$inx' class='lzy-calendar$class$edClass' data-lzy-cal-inx='$inx' data-datasrc-ref='$this->tickHash'></div>\n";
         $this->renderFieldNames();
 
         // render edit form:
@@ -370,7 +382,7 @@ EOT;
     fullCalendarOptions: {
         initialView: '$viewMode',
         initialDate: '{$this->initialDate}',
-        editable: $edPermStr,
+        editable: $edPermStr2,
         buttonText: {
             prev: '{{ lzy-cal-label-prev }}',
             next: '{{ lzy-cal-label-next }}',
@@ -393,7 +405,7 @@ $this->calOptions
 EOT;
         // append the call to invole lzyCalendar:
         $jq = <<<EOT
-$('.lzy-calendar').lzyCalendar({
+$('#lzy-calendar-$this->inx').lzyCalendar({
 $calOptions
 });
 EOT;
