@@ -184,7 +184,7 @@
   width: var(--lzy-cal-cat-label-width, 7em); }
 
 .lzy-cal-category {
-  width: calc(100% - var(--lzy-cal-cat-label-width, 7em) - 4px); }
+  width: calc(100% - var(--lzy-cal-cat-label-width, 7em) - 6px); }
 
 .field-wrapper:not(.lzy-field-type-date) {
   margin: 10px 0; }
