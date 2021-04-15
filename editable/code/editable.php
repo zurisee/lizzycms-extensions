@@ -7,7 +7,7 @@ $macroName = basename(__FILE__, '.php');
 require_once SYSTEM_PATH.'extensions/livedata/code/live-data.class.php';
 require_once SYSTEM_PATH.'extensions/editable/code/editable.class.php';
 
-$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/" .LOCALES_PATH. "vars.yaml"), false, true);
 
 $GLOBALS['lizzy']['editableLiveDataInitialized'] = false;
 

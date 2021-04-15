@@ -19,7 +19,7 @@ if (file_exists(resolvePath($localeFile))) {
 $this->page->addJqFiles("~sys/extensions/calendar/js/calendar.js");
 $this->page->addCssFiles("~sys/extensions/calendar/css/_calendar.css");
 
-$this->readTransvarsFromFile(resolvePath("~ext/$macroName/config/vars.yaml"), true, true);
+$this->readTransvarsFromFile(resolvePath("~ext/$macroName/" .LOCALES_PATH. "vars.yaml"), true, true);
 
 
 $this->addMacro($macroName, function () {

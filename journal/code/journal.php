@@ -21,7 +21,7 @@ $this->page->addModules(
     '~sys/js/editor.js,'.
     '~sys/third-party/simplemde/simplemde.min.js,~sys/third-party/simplemde/simplemde.min.css',
 );
-$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml"), false, true);
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/" .LOCALES_PATH. "vars.yaml"), false, true);
 
 $GLOBALS['lizzy']['journalCount'] = 0;
 

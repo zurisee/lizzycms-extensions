@@ -7,7 +7,7 @@ define('RESERVATION_SPECIFIC_ELEMENTS', ',emailField,requireEmail,deadline,maxSe
 require_once SYSTEM_PATH.'forms.class.php';
 
 $macroName = basename(__FILE__, '.php');
-$this->readTransvarsFromFile( resolvePath("~ext/$macroName/config/vars.yaml", false), false, true );
+$this->readTransvarsFromFile( resolvePath("~ext/$macroName/" .LOCALES_PATH. "vars.yaml", false), false, true );
 
 define('RESERVATION_DATA_FILE','reservation.csv');
 define('RESERVATION_LOG_FILE', 'reservation.log.txt');
