@@ -40,7 +40,7 @@ $this->addMacro($macroName, function () {
 
 
 
-//=== class ====================================================================
+ //=== class ====================================================================
 class Reservation extends Forms
 {
     protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation;
@@ -50,13 +50,35 @@ class Reservation extends Forms
 
     public function __construct($lzy, $args)
     {
-        $this->args = $args;
+        $this->lzy = $lzy;
+        $this->args = &$args;
 
         $this->requireEmail =               isset($args['requireEmail'])? $args['requireEmail']: false;
         $this->dataFile =                   @$args['file'];
+        $this->timeDateFormat =             @$args['timeDateFormat']; // strftime
+        $this->eventDate =                  @$args['eventDate'];
         $this->deadline =                   @$args['deadline'];
+
+        if (!$this->timeDateFormat) {
+            $this->timeDateFormat = '%x'; // localized date representation, %c to include time
+        }
         if ($this->deadline && is_string($this->deadline)) {
-            $this->deadline = strtotime($this->deadline);
+            if ($this->eventDate) {
+                if (is_string($this->eventDate)) {
+                    $this->eventDate = strtotime($this->eventDate);
+                }
+                if ($this->deadline[0] === '-') {
+                    $this->deadline = strtotime($this->deadline, $this->eventDate);
+                }
+            } else {
+                $this->deadline = strtotime($this->deadline);
+            }
+            $eventDateStr = strftime($this->timeDateFormat, $this->eventDate);
+            $deadlineStr = strftime($this->timeDateFormat, $this->deadline);
+            if (@$args['formHeader']) {
+                $args['formHeader'] = str_replace('{lzy-event-date}', $eventDateStr, $args['formHeader']);
+                $args['formHeader'] = str_replace('{lzy-event-deadline}', $deadlineStr, $args['formHeader']);
+            }
         }
 
         $this->maxSeats =                   intval(isset($args['maxSeats']) ? $args['maxSeats']: 999 );
@@ -76,7 +98,7 @@ class Reservation extends Forms
         $this->reservationCallback = false;
     //        $this->logAgentData = $args['logAgentData'];
 
-        parent::__construct($lzy, true);
+        parent::__construct($lzy, false);
 
         $this->formHash = parent::getFormHash();
 
@@ -116,6 +138,7 @@ class Reservation extends Forms
             $args['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailableStr, $formHeader);
         }
         if (!$this->responseToClient && ($seatsAvailable <= 0)) {
+            $out = parent::renderDataTable();
             return $this->lzy->trans->translateVariable('lzy-reservation-full', true);
         }
 
@@ -324,9 +347,8 @@ class Reservation extends Forms
         if (@$userSuppliedData['_lizzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
             exit;
         }
-
-
-        $currForm = parent::restoreFormDescr( $userSuppliedData['_lizzy-form'] );
+        $formId = $userSuppliedData['_lizzy-form'];
+        $currForm = parent::restoreFormDescr( $formId );
         $formId = $currForm? $currForm->formId: 'generic';
 
         // deadline for reservations: reject if deadline has passed:
@@ -429,11 +451,16 @@ emailField:
 requireEmail:
 : If true, the e-mail field is made mandatory.
 
+eventDate:
+: (ISO date) If defined the next argument 'deadline' may be in relative form, e.g. ``-3 days``.  
+: (Often, the event date is programmatically available, so deadline can easily be derived.)  
+: ISO format, e.g. "2020-12-31 20:50"
+
 deadline:
-: (date) Defines the date (and optionally time) when registration is closed. 
+: (ISO date) Defines the date (and optionally time) when registration is closed. 
 : After that point in time an announcement (i.e. variable ``&#123;{ lzy-reservation-deadline-passed }}`` 
 : appears in place of the form.  
-: Use ISO format, e.g. "2020-12-31 20:50"
+: If 'eventDate' is available, 'deadline' may be supplied as a relative date, such as ``-3 days``.
 
 maxSeats:
 : (integer) Defines the maximum number of seats available. When the number 
