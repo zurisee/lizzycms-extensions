@@ -56,25 +56,35 @@ class Reservation extends Forms
         $this->requireEmail =               isset($args['requireEmail'])? $args['requireEmail']: false;
         $this->dataFile =                   @$args['file'];
         $this->timeDateFormat =             @$args['timeDateFormat']; // strftime
+        $this->timeDeadlineFormat =         @$args['timeDeadlineFormat']; // strftime
         $this->eventDate =                  @$args['eventDate'];
         $this->deadline =                   @$args['deadline'];
 
         if (!$this->timeDateFormat) {
             $this->timeDateFormat = '%x'; // localized date representation, %c to include time
         }
+        if (!$this->timeDeadlineFormat) {
+            $this->timeDeadlineFormat = $this->timeDateFormat . ' %R';
+        }
         if ($this->deadline && is_string($this->deadline)) {
             if ($this->eventDate) {
                 if (is_string($this->eventDate)) {
                     $this->eventDate = strtotime($this->eventDate);
                 }
+                $eventDateStr = strftime($this->timeDateFormat, $this->eventDate);
+
                 if ($this->deadline[0] === '-') {
-                    $this->deadline = strtotime($this->deadline, $this->eventDate);
+                    list($deadline, $time) = explodeTrim(',', $this->deadline);
+                    $deadline = strtotime($deadline, $this->eventDate);
+                    $seconds = strtotime("1970-01-01 $time UTC");
+                    $this->deadline = $deadline + $seconds;
                 }
             } else {
                 $this->deadline = strtotime($this->deadline);
+                $eventDateStr = '';
             }
             $eventDateStr = strftime($this->timeDateFormat, $this->eventDate);
-            $deadlineStr = strftime($this->timeDateFormat, $this->deadline);
+            $deadlineStr = strftime($this->timeDeadlineFormat, $this->deadline);
             if (@$args['formHeader']) {
                 $args['formHeader'] = str_replace('{lzy-event-date}', $eventDateStr, $args['formHeader']);
                 $args['formHeader'] = str_replace('{lzy-event-deadline}', $deadlineStr, $args['formHeader']);
