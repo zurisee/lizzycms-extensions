@@ -76,6 +76,9 @@ class Reservation extends Forms
                 if ($this->deadline[0] === '-') {
                     list($deadline, $time) = explodeTrim(',', $this->deadline);
                     $deadline = strtotime($deadline, $this->eventDate);
+                    if ($time) {
+                        $deadline = strtotime( date('Y-m-d', $deadline) );
+                    }
                     $seconds = strtotime("1970-01-01 $time UTC");
                     $this->deadline = $deadline + $seconds;
                 }
@@ -83,7 +86,6 @@ class Reservation extends Forms
                 $this->deadline = strtotime($this->deadline);
                 $eventDateStr = '';
             }
-            $eventDateStr = strftime($this->timeDateFormat, $this->eventDate);
             $deadlineStr = strftime($this->timeDeadlineFormat, $this->deadline);
             if (@$args['formHeader']) {
                 $args['formHeader'] = str_replace('{lzy-event-date}', $eventDateStr, $args['formHeader']);
@@ -466,33 +468,38 @@ eventDate:
 : (Often, the event date is programmatically available, so deadline can easily be derived.)  
 : ISO format, e.g. "2020-12-31 20:50"
 
+timeDateFormat:
+: By means of argument 'formHeader' you can place some text above the reservation form.  
+: To include the Event-Date, write ``{lzy-event-date}``. 
+: The argument 'timeDateFormat' defines how that output will be formatted.
+
 deadline:
 : (ISO date) Defines the date (and optionally time) when registration is closed. 
 : After that point in time an announcement (i.e. variable ``&#123;{ lzy-reservation-deadline-passed }}`` 
 : appears in place of the form.  
 : If 'eventDate' is available, 'deadline' may be supplied as a relative date, such as ``-3 days``.
 
+timeDeadlineFormat:
+: Like for the Event-Date, this argument specifies the format of ``{lzy-event-deadline}`` output in 'formHeader'.
+
 maxSeats:
 : (integer) Defines the maximum number of seats available. When the number 
 : of reservations reaches that threshold a corresponding message (i.e. variable 
-: ``&#123;{ lzy-reservation-full }}`` 
-: appears 
-: in place of the form.
+: ``&#123;{ lzy-reservation-full }}`` appears in place of the form.
 
 maxSeatsPerReservation:
 : (integer) Defines the maximum number of seats a user can book at the time.  
 : If the number is greater than 1, a 'number of seas' (i.e. variable 
-: &#123;{ lzy-reservation-count-label }}) appears. 
-: (Default: 1)
+: &#123;{ lzy-reservation-count-label }}) appears. (Default: 1)  
+: <br>
+: <strong>Note</strong>: when the reservation form is rendered, ``maxSeatsPerReservation`` are tentatively reserved.  
+: Thus, other users opening the form at the same time will therefore see a temprorarly reduced number of available seats.   
+: Tentatively reserved seats are freed upon submitting the form or after a 15 minute timeout.
 
 formHeader:
 : (string) If defined, this string will appear above the form.  
-: -> Use placeholder ``{seatsAvailable}`` 
-: to present the number of currently available seats.  
-: Note: when a reservation form is rendered, ``maxSeatsPerReservation`` are blocked  
-: for other uses opening the form thereafter. 
-: Thus, ``{seatsAvailable}`` may temporarily differ from the actual number of available seats.  
-: Blocked seats are freed upon submitting the form or after a 15 minute timeout.
+: -> Use placeholders ``{seatsAvailable}``, ``{lzy-event-date}``, ``{lzy-event-deadline}``
+: to present the corresponding values.  
 
 moreThanThreshold:
 : (integer) If set, defines a threshold. If the number of available seats exceeds 
