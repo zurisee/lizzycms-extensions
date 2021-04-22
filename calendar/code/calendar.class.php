@@ -27,36 +27,36 @@ class LzyCalendar
         $this->editingPermission = isset($args['editingPermission']) ? $args['editingPermission'] : false;
         $this->editPermissionWarning = isset($args['editPermissionWarning']) ? $args['editPermissionWarning'] : false;
 
-        $this->fields = isset($args['fields']) ? $args['fields']: false;
+        $this->fields = isset($args['fields']) ? $args['fields'] : false;
         if ($this->fields) {
             $this->fields = explodeTrim(',', $this->fields);
         } else {
             $this->fields = [];
         }
 
-        $this->class = isset($args['class']) ? $args['class']: false;
-        $this->options = isset($args['options']) ? $args['options']: false;
+        $this->class = isset($args['class']) ? $args['class'] : false;
+        $this->options = isset($args['options']) ? $args['options'] : false;
         if (strpos($this->options, 'light') !== false) {
             $this->class .= ' lzy-calendar-light';
         }
 
         // Whether to publish the calendar (i.e. save in an .ics file):
-        $this->publish = isset($args['publish']) ? $args['publish']: false;
-        $this->publishCallback = isset($args['publishCallback']) ? $args['publishCallback']: false;
+        $this->publish = isset($args['publish']) ? $args['publish'] : false;
+        $this->publishCallback = isset($args['publishCallback']) ? $args['publishCallback'] : false;
 
         // Whether to suppress out generation (e.g. if only used to publish .ics)
-        $this->output = isset($args['output']) ? $args['output']: true;
+        $this->output = isset($args['output']) ? $args['output'] : true;
 
         // Tooltips:
-        $tooltips = isset($args['tooltips']) ? $args['tooltips']: false;
-        $this->tooltips = $tooltips? 'true': 'false';
+        $tooltips = isset($args['tooltips']) ? $args['tooltips'] : false;
+        $this->tooltips = $tooltips ? 'true' : 'false';
         if ($tooltips) {
             $lzy->page->addModules('QTIP');
         }
 
         // Event overlap:
         if (isset($args['eventOverlap'])) {
-            $this->fullCalendarOptions .= "\t\teventOverlap: ".($args['eventOverlap']?'true':'false').",\n";
+            $this->fullCalendarOptions .= "\t\teventOverlap: " . ($args['eventOverlap'] ? 'true' : 'false') . ",\n";
         }
 
         // visible hours:
@@ -81,20 +81,20 @@ class LzyCalendar
         }
 
         // Categories:
-        $this->category = isset($args['categories']) ? $args['categories']: '';
+        $this->category = isset($args['categories']) ? $args['categories'] : '';
         $this->categories = $categories = explodeTrim(',', $this->category);
-        $this->showCategories = isset($args['showCategories']) ? $args['showCategories']: '';
+        $this->showCategories = isset($args['showCategories']) ? $args['showCategories'] : '';
 
         // special case '_users_' for categories:
         $cats = $this->category;
-        $cats = preg_replace('|</?em>|','_', $cats);
+        $cats = preg_replace('|</?em>|', '_', $cats);
         if (preg_match_all('|_(.*?)_|', $cats, $m)) { // '_' translated to '<em>' by MD compiler
             foreach ($m[1] as $i => $group) {
                 if (($group === 'all') || ($group === 'users')) {
                     $group = '';
                     $args['sort'] = 'a';
                 }
-                $users = $this->lzy->auth->getListOfUsers( $group );
+                $users = $this->lzy->auth->getListOfUsers($group);
                 $cats = str_replace($m[0][$i], $users, $cats);
             }
 
@@ -110,39 +110,54 @@ class LzyCalendar
             }
 
             $this->categories = $categories;
-            $args['categoryPrefixes'] = $this->category;
-            //???
-            $js = <<<'EOT'
-
-function openPostCalPopupHandler() {
-    $('#lzy-calendar-default-form-$inx [value="' + calUser + '"]').prop('selected', true);
-}
-
-EOT;
-            $this->page->addJs( $js );
         }
 
-        $this->domain = isset($args['domain']) ? $args['domain']: $_SERVER["HTTP_HOST"];
-        $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired']: true;
+        $this->domain = isset($args['domain']) ? $args['domain'] : $_SERVER["HTTP_HOST"];
+        $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired'] : true;
 
         // Prefixes:
         $this->categoryPrefixes = [];
         $n = sizeof($categories);
-        $defaultCatPrefix = isset($args['prefix']) ? $args['prefix']: '';
-        $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix']: $defaultCatPrefix;
-        $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes']: '';
+        $defaultCatPrefix = isset($args['prefix']) ? $args['prefix'] : '';
+        $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix'] : $defaultCatPrefix;
+        $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes'] : '';
         $this->catPrefixesStr = '';
+
+        // handle special case '_group_':
+        if (preg_match_all('|_(.*?)_|', $catPrefixes, $m)) { // '_' translated to '<em>' by MD compiler
+            foreach ($m[1] as $i => $group) {
+                if (($group === 'all') || ($group === 'users')) {
+                    $group = '';
+                    $args['sort'] = 'a';
+                }
+                $users = $this->lzy->auth->getListOfUsers( $group );
+                $catPrefixes = str_replace($m[0][$i], $users, $catPrefixes);
+            }
+
+            $catPrefixes = rtrim(str_replace(',,', ',', $catPrefixes), ',');
+        }
+
         if (strpos($catPrefixes, ',') !== false) {
             $categoryKeys = array_map(function($e) {
                 $e = preg_replace('/\s+/', '-', $e);
                 $e = preg_replace('/[^\w-]/', '', $e);
                 return $e;
             }, $categories);
-            $catPrefixes = explode(',', "$catPrefixes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
+            $catPrefixes = explodeTrim(',', $catPrefixes);
+
+            if ($args['sort']) {
+                if (($args['sort'] === true) || ($args['sort'] && ($args['sort'][0] !== 'd'))) {
+                    sort($catPrefixes, SORT_NATURAL | SORT_FLAG_CASE);
+                } else {
+                    rsort($catPrefixes, SORT_NATURAL | SORT_FLAG_CASE);
+                }
+            }
+            $catPrefixes = array_merge($catPrefixes, ['','','','','','','','','','','','','','','','','','','','','','','','','','']);
+
             $catPrefixes = array_slice($catPrefixes, 0, $n);
             foreach ($catPrefixes as $i => $s) {
                 if (!$s) { continue; }
-                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '$s', ";
+                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '[$s]', ";
             }
             $this->catPrefixesStr = '{ '.rtrim($this->catPrefixesStr, ', ').'}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];

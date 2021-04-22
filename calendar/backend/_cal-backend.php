@@ -22,7 +22,7 @@ if (file_exists(CUSTOM_CAL_BACKEND)) {
 }
 
 if (!isset($_REQUEST['inx'])) {
-    lzyExit('error: inx missing in ajax request');
+    lzyExit('<>Error: inx missing in ajax request');
 }
 
  // prevent "PHPSESSID"-Cookie warning:
@@ -61,7 +61,8 @@ class CalendarBackend {
 
         if (!isset($_SESSION['lizzy']['systemTimeZone'])) {
             mylog('Error in CalendarBackend: systemTimeZone not defined');
-            die('Error in CalendarBackend: systemTimeZone not defined');
+            // <> signals the client that it's a server error msg -> will be shown in debug mode only:
+            die('<>Error in CalendarBackend: systemTimeZone not defined');
         }
         $timezoneStr = $_SESSION['lizzy']['systemTimeZone'];
         $this->timezone = $timezone = new DateTimeZone( $timezoneStr );
@@ -73,6 +74,10 @@ class CalendarBackend {
         $this->tck = new Ticketing();
         $calRec = $this->tck->consumeTicket( $this->tickHash );
         $this->calRec = $calRec;
+
+        if (!isset($calRec['dataSource'])) {
+            die('<>Error cal-backend: "dataSource" not defined.');
+        }
 
         $dataSrc = PATH_TO_APP_ROOT.$calRec['dataSource'];
         $this->dataSrc = $dataSrc;
@@ -201,7 +206,7 @@ class CalendarBackend {
     public function deleteRec($rec)
     {
         if (!isset($rec['rec-id']) || ($rec['rec-id'] === '')) {
-            return 'not ok';
+            return '<>Error deleteRec: rec-id not supplied';
         }
         $recId = $rec['rec-id'];
         $msg = 'Deleted event';

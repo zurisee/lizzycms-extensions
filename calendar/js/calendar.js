@@ -195,6 +195,9 @@ LzyCalendar.prototype.defaultRenderEvent = function( arg ) {
 
     // apply time, prefix and title:
     let title = this.convertMD(arg.event._def.title);
+    if (!title) {
+        title = '&nbsp;';
+    }
     el.innerHTML = '<span class="lzy-cal-title-label">'+ lbl +':</span> <span class="lzy-cal-title-text">' + prefix + ' <span>' + title + '</span></span>';
     let elements = [ elT, el ];
 
@@ -432,6 +435,7 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
 
         } else {    // allday event:
             $('#lzy-cal-start-date-' + this.inx).val(dateStr);
+            end = moment(event._instance.range.end).subtract(tsDiff + 1, 'minutes');
             dateStr = end.format('YYYY-MM-DD');
             $('#lzy-cal-end-date-' + this.inx).val(dateStr);
             $('#lzy-cal-start-time-' + this.inx).attr('type', 'hidden').val('00:00');
@@ -818,7 +822,11 @@ LzyCalendar.prototype.submitForm = function() {
     }).done(function (response) {
         lzyPopupClose();
         if (isServerErrMsg(response)) {
-            // lzyReload();
+            if (!debug) {
+                lzyReload();
+            } else {
+                lzyPopup( response.replace(/<(?:.|\n)*?>/gm, '') );
+            }
             return;
         }
         if (response && response !== 'ok') {
