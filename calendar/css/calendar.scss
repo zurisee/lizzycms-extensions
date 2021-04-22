@@ -330,8 +330,9 @@ $color-light8: #ffebffff;
 	color: white;
 	padding: 0.4em; }
 
-
-
+.fc .fc-timegrid-axis-cushion {
+    max-width: 65px;
+}
 
 /* === Popup Form ======= */
 .lzy-cal-popup-template .lzy-popup-wrapper {

@@ -693,14 +693,25 @@ LzyCalendar.prototype.setupTriggers = function() {
         $endTime.val( newEndTimeStr );
     });
 
+    this.launchWindowFreeze();
+
+}; // setupTriggers
+
+
+
+
+LzyCalendar.prototype.launchWindowFreeze = function() {
+    let parent = this;
     freezeWindowAfter('1 hour', function() {
         mylog('freezeWindowAfter...');
         lzyConfirm("{{ Reload page now? }}").then(function() {
             lzyReload();
+        }, function() {
+            mylog('retrigger freezeWindowAfter');
+            parent.launchWindowFreeze();
         });
-    }, true);
-
-}; // setupTriggers
+    });
+}; // launchWindowFreeze
 
 
 

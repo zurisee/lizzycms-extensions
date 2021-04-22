@@ -233,3 +233,5 @@ h2.fc-toolbar-title {
 
 #lzy.lzy-small-screen .lzy-cal-popup-template_wrapper {
   width: 100vh; }
+.fc .fc-timegrid-axis-cushion {
+    max-width: 65px; }
