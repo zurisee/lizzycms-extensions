@@ -237,13 +237,20 @@ class LzyCalendar
         }
 
         $backend = CALENDAR_BACKEND;
+        $viewMode = (isset($this->calSession['calMode'])) ? $this->calSession['calMode'] : $this->defaultView;
         if (isset($this->calSession['initialDate'])) {
-            $this->initialDate = $this->calSession['initialDate'];
+            // try to fix picking wrong week/month after reload:
+            $t = strtotime($this->calSession['initialDate']);
+            if ($viewMode === 'dayGridMonth') {
+                $initialDate = date('Y-m-d', strtotime('+1 week', $t));
+            } else {
+                $initialDate = date('Y-m-d', strtotime('+1 day', $t));
+            }
+            $this->initialDate = $initialDate;
         } else {
             $this->initialDate = date('Y-m-d');
             $this->calSession['initialDate'] = $this->initialDate;
         }
-        $viewMode = (isset($this->calSession['calMode'])) ? $this->calSession['calMode'] : $this->defaultView;
 
 
         // handle editing permissions:
