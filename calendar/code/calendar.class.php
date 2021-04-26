@@ -219,7 +219,8 @@ class LzyCalendar
             $obj[$key] = $elem;
         }
         $calObj = serialize($obj);
-        file_put_contents(CACHE_PATH."$this->id.dat", $calObj);
+        $cacheFile = CACHE_PATH."$this->id.dat";
+        file_put_contents($cacheFile, $calObj);
 
         $this->checkAndFixData();
     } // __construct
@@ -241,7 +242,7 @@ class LzyCalendar
 
         // export ics file if requested:
         if ($this->publish) {
-            $this->publishICal( $this->id );
+            publishICal( $this->id );
         }
 
         // suppress output if requested:
@@ -653,149 +654,6 @@ EOT;
 
 
 
-    public function publishICal( $id )
-    {
-        if (!file_exists(CACHE_PATH."$id.dat")) {
-            return;
-        }
-        $calObj = file_get_contents(CACHE_PATH."$id.dat");
-        $obj = unserialize( $calObj );
-        foreach ($obj as $key => $elem) {
-            $this->$key = $elem;
-        }
-
-        // get destination filename:
-        $destFile = $this->publish;
-        if ($destFile === true) {
-            $destFile = "~/ics/".basename($this->source);
-
-        } elseif ($destFile[0] !== '~') {
-            $destFile = "~/ics/$destFile";
-        }
-        $destFile = fileExt($destFile, true).'.ics';
-        $destFile = resolvePath($destFile);
-
-        // get modif time of destination file:
-        if (!file_exists($destFile)) {
-            preparePath($destFile);
-            if (!is_writable(dirname($destFile))) {
-                die("Error: file '$destFile' is not writable.");
-            }
-            touch($destFile);
-            $lastExported = 0;
-        } else {
-            $lastExported = filemtime($destFile);
-        }
-
-        // check db:
-        $ds = new DataStorage2(['dataFile'=> $this->source]);
-        $lastUpdated = intval($ds->lastDbModified());
-
-        // publishCallback:
-        if ($this->publishCallback) {
-            $publishCallback = base_name($this->publishCallback, false);
-            $publishCallback = '-' . ltrim($publishCallback, '-') . '.php';
-            $publishCallbackCode = USER_CODE_PATH . $publishCallback;
-            if (file_exists($publishCallbackCode)) {
-                require_once $publishCallbackCode;  // -> must define function 'iCalDescriptionCallback($rec)'
-            } else {
-                $this->publishCallback = false;
-            }
-        }
-
-        // update if outdated:
-        if ($lastUpdated > $lastExported) {
-            $out = $this->prepareICal( $ds );
-            file_put_contents($destFile, $out);
-            writeLog("calendar exported to '$destFile'");
-        }
-    } // publishICal
-
-
-
-    private function prepareICal( $ds )
-    {
-        require_once '_lizzy/extensions/calendar/third-party/fullcalendar/php/utils.php';
-        $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'UTC';
-        date_default_timezone_set($timezone);
-
-        $data = $ds->read();
-
-        $recsToShow = $this->filterCalRecords($data);
-
-        $vCalendar = new \Eluceo\iCal\Component\Calendar($this->domain);
-        $name = base_name($this->publish, false);
-
-        foreach ($recsToShow as $rec) {
-            if ($this->categoryPrefixes) {
-                $category = $rec['category'];
-                $prefix = isset($this->categoryPrefixes[$category]) ? $this->categoryPrefixes[$category]: $this->defaultCatPrefix;
-            } else {
-                $prefix = $this->defaultCatPrefix;
-            }
-            // determine UID (unique id that is invariable even if calendar changes):
-            $uid = (isset($rec['_uid']) && $rec['_uid'])? $rec['_uid']: strtotime($rec['start']);
-            $uid = "lzy-cal-$name-{$rec['category']}-$uid";
-
-            // prepare description:
-            if ($this->publishCallback && function_exists('iCalDescriptionCallback')) {
-                $description = iCalDescriptionCallback($rec);
-            } else {
-                $description = isset($rec['comment'])? $rec['comment']: '';
-                $description = preg_replace('|<a href=["\'](.*?)["\'].*?>.*?</a>|', "$1", $description);
-            }
-            $title = trim("$prefix {$rec['title']}");
-
-            // assemble iCalendar entry:
-            $vEvent = new \Eluceo\iCal\Component\Event();
-            $vEvent
-                ->setDtStart(new \DateTime($rec['start']))
-                ->setDtEnd(new \DateTime($rec['end']))
-                ->setSummary($title)
-                ->setLocation( isset($rec['location'])? $rec['location']: '' )
-                ->setDescription( $description )
-                ->setUniqueId($uid)
-            ;
-            $vCalendar->addComponent($vEvent);
-        }
-        return $vCalendar->render();
-    } // prepareICal
-
-
-
-
-    public function filterCalRecords($data)
-    {
-        if (!$this->showCategories) {
-            return $data;
-        }
-
-        $categoriesToShow = ',' . str_replace(' ', '', $this->showCategories) . ',';
-
-        // Accumulate an output array of event data arrays.
-        $output_arrays = array();
-        if (!$data) {
-            return [];
-        }
-
-        foreach ($data as $i => $rec) {
-
-            // Convert the input array into a useful Event object
-            $event = new Event($rec, $this->timezone);
-
-            // check for category:
-            if ($categoriesToShow && isset($event->properties["category"]) && $event->properties["category"]) {
-                $eventsCategory = explode(',', $event->properties["category"]);
-                foreach ($eventsCategory as $evTag) {
-                    if ($evTag && (stripos($categoriesToShow, ",$evTag,") === false)) {
-                        continue 2;
-                    }
-                    $output_arrays[$i] = array_merge($event->toArray(), ['i' => $i]);
-                }
-            }
-        }
-        return $output_arrays;
-    } // filterCalRecords
 
 
 
@@ -844,3 +702,147 @@ EOT;
         $db->write( $data );
     } // checkAndFixData
 } // class LzyCalendar
+
+
+
+
+function publishICal( $id )
+{
+    $cacheFile = CACHE_PATH."$id.dat";
+    if (!file_exists($cacheFile)) {
+        return;
+    }
+    $obj = unserialize( file_get_contents($cacheFile) );
+
+    // get destination filename:
+    $destFile = $obj['publish'];
+    if ($destFile === true) {
+        $destFile = "~/ics/".basename($obj['source']);
+
+    } elseif ($destFile[0] !== '~') {
+        $destFile = "~/ics/$destFile";
+    }
+    $destFile = fileExt($destFile, true).'.ics';
+    $destFile = resolvePath($destFile);
+
+    // get modif time of destination file:
+    if (!file_exists($destFile)) {
+        preparePath($destFile);
+        if (!is_writable(dirname($destFile))) {
+            die("Error: file '$destFile' is not writable.");
+        }
+        touch($destFile);
+        $lastExported = 0;
+    } else {
+        $lastExported = filemtime($destFile);
+    }
+
+    // check db:
+    $ds = new DataStorage2(['dataFile'=> $obj['source']]);
+    $lastUpdated = intval($ds->lastDbModified());
+
+    // publishCallback:
+    if ($obj['publishCallback']) {
+        $publishCallback = base_name($obj['publishCallback'], false);
+        $publishCallback = '-' . ltrim($publishCallback, '-') . '.php';
+        $publishCallbackCode = USER_CODE_PATH . $publishCallback;
+        if (file_exists($publishCallbackCode)) {
+            require_once $publishCallbackCode;  // -> must define function 'iCalDescriptionCallback($rec)'
+        } else {
+            $obj['publishCallback'] = false;
+        }
+    }
+
+    // update if outdated:
+    if ($lastUpdated > $lastExported) {
+        $out = prepareICal( $obj, $ds );
+        file_put_contents($destFile, $out);
+        writeLog("calendar exported to '$destFile'");
+    }
+} // publishICal
+
+
+
+function prepareICal( $obj, $ds )
+{
+    require_once '_lizzy/extensions/calendar/third-party/fullcalendar/php/utils.php';
+    $timezone = isset($_SESSION['lizzy']['systemTimeZone']) ? $_SESSION['lizzy']['systemTimeZone'] : 'UTC';
+    date_default_timezone_set($timezone);
+
+    $data = $ds->read();
+
+    $recsToShow = filterCalRecords($obj, $data);
+
+    $vCalendar = new \Eluceo\iCal\Component\Calendar($obj['domain']);
+    $name = base_name($obj['publish'], false);
+
+    foreach ($recsToShow as $rec) {
+        if ($obj['categoryPrefixes']) {
+            $category = $rec['category'];
+            $prefix = isset($obj['categoryPrefixes[$category']) ? $obj['categoryPrefixes[$category']: $obj['defaultCatPrefix'];
+        } else {
+            $prefix = $obj['defaultCatPrefix'];
+        }
+        // determine UID (unique id that is invariable even if calendar changes):
+        $uid = (isset($rec['_uid']) && $rec['_uid'])? $rec['_uid']: strtotime($rec['start']);
+        $uid = "lzy-cal-$name-{$rec['category']}-$uid";
+
+        // prepare description:
+        if ($obj['publishCallback'] && function_exists('iCalDescriptionCallback')) {
+            $description = iCalDescriptionCallback($rec);
+        } else {
+            $description = isset($rec['comment'])? $rec['comment']: '';
+            $description = preg_replace('|<a href=["\'](.*?)["\'].*?>.*?</a>|', "$1", $description);
+        }
+        $title = trim("$prefix {$rec['title']}");
+
+        // assemble iCalendar entry:
+        $vEvent = new \Eluceo\iCal\Component\Event();
+        $vEvent
+            ->setDtStart(new \DateTime($rec['start']))
+            ->setDtEnd(new \DateTime($rec['end']))
+            ->setSummary($title)
+            ->setLocation( isset($rec['location'])? $rec['location']: '' )
+            ->setDescription( $description )
+            ->setUniqueId($uid)
+        ;
+        $vCalendar->addComponent($vEvent);
+    }
+    return $vCalendar->render();
+} // prepareICal
+
+
+
+
+function filterCalRecords( $obj, $data)
+{
+    if (!$obj['showCategories']) {
+        return $data;
+    }
+
+    $categoriesToShow = ',' . str_replace(' ', '', $obj['showCategories']) . ',';
+
+    // Accumulate an output array of event data arrays.
+    $output_arrays = array();
+    if (!$data) {
+        return [];
+    }
+
+    foreach ($data as $i => $rec) {
+
+        // Convert the input array into a useful Event object
+        $event = new Event($rec, $obj['timezone']);
+
+        // check for category:
+        if ($categoriesToShow && isset($event->properties["category"]) && $event->properties["category"]) {
+            $eventsCategory = explode(',', $event->properties["category"]);
+            foreach ($eventsCategory as $evTag) {
+                if ($evTag && (stripos($categoriesToShow, ",$evTag,") === false)) {
+                    continue 2;
+                }
+                $output_arrays[$i] = array_merge($event->toArray(), ['i' => $i]);
+            }
+        }
+    }
+    return $output_arrays;
+} // filterCalRecords
