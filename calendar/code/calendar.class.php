@@ -34,6 +34,7 @@ class LzyCalendar
             $this->fields = [];
         }
 
+        $this->id = isset($args['id']) ? $args['id'] : "cal-$inx";
         $this->class = isset($args['class']) ? $args['class'] : false;
         $this->options = isset($args['options']) ? $args['options'] : false;
         if (strpos($this->options, 'light') !== false) {
@@ -87,8 +88,8 @@ class LzyCalendar
 
         // special case '_users_' for categories:
         $cats = $this->category;
-        $cats = preg_replace('|</?em>|', '_', $cats);
-        if (preg_match_all('|_(.*?)_|', $cats, $m)) { // '_' translated to '<em>' by MD compiler
+        $cats = preg_replace('|</?em>|', '_', $cats); // '_' may have been translated to '<em>' by MD compiler
+        if (preg_match_all('|_(.*?)_|', $cats, $m)) {
             foreach ($m[1] as $i => $group) {
                 if (($group === 'all') || ($group === 'users')) {
                     $group = '';
@@ -116,7 +117,7 @@ class LzyCalendar
         $this->eventTitleRequired = isset($args['eventTitleRequired']) ? $args['eventTitleRequired'] : true;
 
         // Prefixes:
-        $this->categoryPrefixes = [];
+        $this->categoryPrefixes = $categoryPrefixes = [];
         $n = sizeof($categories);
         $defaultCatPrefix = isset($args['prefix']) ? $args['prefix'] : '';
         $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix'] : $defaultCatPrefix;
@@ -160,8 +161,10 @@ class LzyCalendar
             $catPrefixes = array_slice($catPrefixes, 0, $n);
             foreach ($catPrefixes as $i => $s) {
                 if (!$s) { continue; }
-                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '$lPrfx$s$rPrfx', ";
-//                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '[$s]', ";
+                $catPrefixesStr = "$lPrfx$s$rPrfx";
+                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '$catPrefixesStr', ";
+                $cat = $categories[ $i ];
+                $categoryPrefixes[ $cat ] = $catPrefixesStr;
             }
             $this->catPrefixesStr = '{ '.rtrim($this->catPrefixesStr, ', ').'}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
@@ -171,7 +174,7 @@ class LzyCalendar
         if (!$this->catPrefixesStr) {
             $this->catPrefixesStr = "''";
         }
-
+        $this->categoryPrefixes = $categoryPrefixes;
 
         if (!isset($_SESSION['lizzy']['cal'][$inx]) || !is_array($_SESSION['lizzy']['cal'][$inx])) {
             $_SESSION['lizzy']['cal'][$inx] = [];
@@ -208,6 +211,16 @@ class LzyCalendar
             $this->freezePast = checkPermission( $this->freezePast, $this->lzy, true );
         }
 
+        $obj = [];
+        foreach ($this as $key => $elem) {
+            if (strpos('lzy,page', $key) !== false) {
+                continue;
+            }
+            $obj[$key] = $elem;
+        }
+        $calObj = serialize($obj);
+        file_put_contents(CACHE_PATH."$this->id.dat", $calObj);
+
         $this->checkAndFixData();
     } // __construct
 
@@ -228,7 +241,7 @@ class LzyCalendar
 
         // export ics file if requested:
         if ($this->publish) {
-            $this->publishICal();
+            $this->publishICal( $this->id );
         }
 
         // suppress output if requested:
@@ -640,8 +653,17 @@ EOT;
 
 
 
-    public function publishICal()
+    public function publishICal( $id )
     {
+        if (!file_exists(CACHE_PATH."$id.dat")) {
+            return;
+        }
+        $calObj = file_get_contents(CACHE_PATH."$id.dat");
+        $obj = unserialize( $calObj );
+        foreach ($obj as $key => $elem) {
+            $this->$key = $elem;
+        }
+
         // get destination filename:
         $destFile = $this->publish;
         if ($destFile === true) {
@@ -704,7 +726,7 @@ EOT;
         $vCalendar = new \Eluceo\iCal\Component\Calendar($this->domain);
         $name = base_name($this->publish, false);
 
-        foreach ($recsToShow as $key => $rec) {
+        foreach ($recsToShow as $rec) {
             if ($this->categoryPrefixes) {
                 $category = $rec['category'];
                 $prefix = isset($this->categoryPrefixes[$category]) ? $this->categoryPrefixes[$category]: $this->defaultCatPrefix;
@@ -722,14 +744,14 @@ EOT;
                 $description = isset($rec['comment'])? $rec['comment']: '';
                 $description = preg_replace('|<a href=["\'](.*?)["\'].*?>.*?</a>|', "$1", $description);
             }
-
+            $title = trim("$prefix {$rec['title']}");
 
             // assemble iCalendar entry:
             $vEvent = new \Eluceo\iCal\Component\Event();
             $vEvent
                 ->setDtStart(new \DateTime($rec['start']))
                 ->setDtEnd(new \DateTime($rec['end']))
-                ->setSummary($prefix.$rec['title'])
+                ->setSummary($title)
                 ->setLocation( isset($rec['location'])? $rec['location']: '' )
                 ->setDescription( $description )
                 ->setUniqueId($uid)
