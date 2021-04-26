@@ -800,7 +800,7 @@ EOT;
                         die("Error: enroll() -> time pattern not recognized: '$freq'");
                     }
                     $newSchedule[] = [
-                        'src' => $GLOBALS["globalParams"]["pathToPage"],
+                        'src' => $GLOBALS['globalParams']['pathToPage'],
                         'time' => $time,
                         'from' => date('Y-m-d H:i', $from),
                         'till' => date('Y-m-d H:i', $till),
@@ -967,7 +967,7 @@ EOT;
 
 function resetScheduleFile()
 {
-    $thisSrc = $GLOBALS["globalParams"]["pathToPage"];
+    $thisSrc = $GLOBALS['globalParams']['pathToPage'];
     $file = SCHEDULE_FILE;
     $schedule = getYamlFile($file);
     $modified = false;
