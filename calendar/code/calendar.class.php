@@ -101,7 +101,7 @@ class LzyCalendar
             $cats = rtrim(str_replace(',,', ',', $cats), ',');
             $categories = explodeTrim(',', $cats);
 
-            if ($args['sort']) {
+            if (@$args['sort']) {
                 if (($args['sort'] === true) || ($args['sort'] && ($args['sort'][0] !== 'd'))) {
                     sort($categories, SORT_NATURAL | SORT_FLAG_CASE);
                 } else {
@@ -122,8 +122,11 @@ class LzyCalendar
         $defaultCatPrefix = isset($args['defaultPrefix']) && $args['defaultPrefix'] ? $args['defaultPrefix'] : $defaultCatPrefix;
         $catPrefixes = isset($args['categoryPrefixes']) ? $args['categoryPrefixes'] : '';
         $this->catPrefixesStr = '';
+        $lPrfx = $lzy->trans->getVariable('lzy-cal-l-prefix');
+        $rPrfx = $lzy->trans->getVariable('lzy-cal-r-prefix');
 
         // handle special case '_group_':
+        $catPrefixes = preg_replace('|</?em>|', '_', $catPrefixes);
         if (preg_match_all('|_(.*?)_|', $catPrefixes, $m)) { // '_' translated to '<em>' by MD compiler
             foreach ($m[1] as $i => $group) {
                 if (($group === 'all') || ($group === 'users')) {
@@ -145,7 +148,7 @@ class LzyCalendar
             }, $categories);
             $catPrefixes = explodeTrim(',', $catPrefixes);
 
-            if ($args['sort']) {
+            if (@$args['sort']) {
                 if (($args['sort'] === true) || ($args['sort'] && ($args['sort'][0] !== 'd'))) {
                     sort($catPrefixes, SORT_NATURAL | SORT_FLAG_CASE);
                 } else {
@@ -157,7 +160,8 @@ class LzyCalendar
             $catPrefixes = array_slice($catPrefixes, 0, $n);
             foreach ($catPrefixes as $i => $s) {
                 if (!$s) { continue; }
-                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '[$s]', ";
+                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '$lPrfx$s$rPrfx', ";
+//                $this->catPrefixesStr .= "{$categoryKeys[$i]}: '[$s]', ";
             }
             $this->catPrefixesStr = '{ '.rtrim($this->catPrefixesStr, ', ').'}';
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
