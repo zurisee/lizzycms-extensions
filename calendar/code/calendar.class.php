@@ -167,7 +167,7 @@ class LzyCalendar
                 $categoryPrefixes[ $cat ] = $catPrefixesStr;
             }
             $this->catPrefixesStr = '{ '.rtrim($this->catPrefixesStr, ', ').'}';
-            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: $catPrefixes[0];
+            $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         } else {
             $this->defaultCatPrefix = $defaultCatPrefix? $defaultCatPrefix: '';
         }
