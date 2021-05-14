@@ -7,6 +7,14 @@ define('URL_FILE', PATH_TO_APP_ROOT.'.#cache/curr_slide.url');
 
 //session_start();
 
+if ($el = get_post_data('el')) {
+//if ($el = getUrlArg('el', true)) {
+    session_start();
+    $_SESSION['lizzy']['slideshow-el'] = $el;
+    session_write_close();
+    exit('ok');
+}
+
 if (!isset($_POST['last'])) {
     exit('nok: timestamp missing');
 }

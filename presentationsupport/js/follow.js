@@ -19,12 +19,12 @@ $(function() {
 	// 	// $('body').css('background', 'none');
 	// 	// $('body img#bg').css('display', 'none');
 	// 	// $('body #page').css('box-shadow', '0 0 5px 2px #aaa');
-	// 	console.log('started in short poll mode');
+	// 	mylog('started in short poll mode');
 	// 	longPolling = false;
 	// }
 
 	// $('h1').click(function() {	// for debugging
-	// 	console.log('manual update client');
+	// 	mylog('manual update client');
 	// 	update(0);
 	// });
 
@@ -67,11 +67,11 @@ function handleResponse(data) {
 	if (tt !== null) {
 		updateTime = parseInt(tt[1]);
 	}
-	console.log(t + ' update: ' + data);
+	mylog(t + ' update: ' + data);
 	if (data.match(/^load:/)) {
 		var m = data.match(/load: (.*)\s*\[\d+\]/);
 		var url = m[1].trim();
-		console.log('loading: "' + url + '"');
+		mylog('loading: "' + url + '"');
 		lzyReload('?flw',url);
 		return false;
 	}
