@@ -13,6 +13,14 @@ $( document ).ready(function() {
     mylog('activating slideshow-support', false);
     presi = new LzyPresentationSupport();
     presi.init();
+
+    // highlight mouse clicks:
+    $('body').click(function( e ) {
+        $('#lzy-cursor-mark').show().css({ top: (e.pageY - 24), left: (e.pageX - 24) }).addClass('lzy-wobble-cursor');
+        setTimeout(function() {
+            $('#lzy-cursor-mark').removeClass('lzy-wobble-cursor').hide();
+        }, 2000);
+    });
 });
 
 
@@ -23,7 +31,8 @@ function LzyPresentationSupport() {
         this.initEventHandlers();
         this.resizeSection();
         this.revealPresentationElement();
-    };
+    }; // init
+
 
 
     this.initPresiElements = function(){
@@ -177,8 +186,8 @@ function LzyPresentationSupport() {
             $activeSection.addClass('lzy-active-section').removeClass('lzy-withheld-section');
         }
 
-        // inject current slide-element-number into page->pagenumber:
-        $('.pagenumber .lzy-pg-no').text('.' + currentSlide);
+        // inject current slide-element-number into pagenumber:
+        $('.lzy-pagenumber .lzy-page-nr-postfix').text('.' + currentSlide);
 
         return false;
     }; // revealPresentationElement

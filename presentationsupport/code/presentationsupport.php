@@ -36,8 +36,8 @@ $this->page->addBodyEndInjections($str);
 
 $path = '~/'.$this->config->systemPath . 'extensions/presentationsupport/';
 $this->page->addModules([
-    "{$path}js/slideshow_support.js",
-    "{$path}css/slideshow_support.css",
+    "{$path}js/presentation_support.js",
+    "{$path}css/presentation_support.css",
     "{$path}third-party/jsizes/jquery.sizes.js"
 ]);
 
@@ -106,6 +106,8 @@ EOT;
             }
         }
     }
+
+    $this->page->addBodyEndInjections("\n\t<div id='lzy-cursor-mark' style='display: none;'></div>\n");
 
 
     $str = "<!-- macro $macroName() loaded -->\n";
