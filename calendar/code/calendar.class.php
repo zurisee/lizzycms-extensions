@@ -708,7 +708,7 @@ EOT;
 
 function publishICal( $id )
 {
-    $cacheFile = CACHE_PATH."$id.dat";
+    $cacheFile = CACHE_PATH."cal-$id.dat";
     if (!file_exists($cacheFile)) {
         return;
     }
