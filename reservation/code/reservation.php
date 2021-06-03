@@ -230,13 +230,14 @@ class Reservation extends Forms
             ],
             [
                 'type' => 'text',
-                'label' => '-lzy-reservation-first-name',
+                'label' => 'lzy-reservation-first-name',
+                'labelInOutput' => 'lzy-reservation-first-name',
                 'name' => 'first_name',
                 'required' => true,
             ],
             [
                 'type' => 'text',
-                'label' => '-lzy-reservation-last-name',
+                'label' => 'lzy-reservation-last-name',
                 'name' => 'last_name',
                 'required' => true,
             ],
@@ -246,7 +247,7 @@ class Reservation extends Forms
             $defaultFields[] =
                 [
                     'type' => 'email',
-                    'label' => '-lzy-reservation-email-label',
+                    'label' => 'lzy-reservation-email-label',
                     'name' => 'e-mail',
                     'required' => $this->requireEmail,
                     'info' => '-lzy-form-email-confirmation-info',
@@ -256,7 +257,7 @@ class Reservation extends Forms
             $defaultFields[] =
                 [
                     'type' => 'hidden',
-                    'label' => '-lzy-reservation-count-label',
+                    'label' => 'lzy-reservation-count-label',
                     'name' => 'reservation-count',
                     'labelInOutput' => '-lzy-reservation-count-output-label',
                     'value' => 1,
@@ -266,7 +267,7 @@ class Reservation extends Forms
             $defaultFields[] =
                 [
                     'type' => 'number',
-                    'label' => '-lzy-reservation-count-label',
+                    'label' => 'lzy-reservation-count-label',
                     'name' => 'reservation-count',
                     'labelInOutput' => 'lzy-reservation-count-output-label',
                     'required' => true,
@@ -294,21 +295,25 @@ class Reservation extends Forms
                 }
             }
             if ($label === 'submit') {
-                $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Submit }},';
-                $buttons["value"] .= 'submit,';
+                $buttons['label'] .= isset($arg['label']) ? $arg['label'].',': '{{ Submit }},';
+                $buttons['value'] .= 'submit,';
                 $arg['type'] = 'button';
 
             } elseif (($label === 'cancel') || ($label === 'reset')) {
-                $buttons["label"] .= isset($arg['label']) ? $arg['label'].',': '{{ Cancel }},';
-                $buttons["value"] .= 'cancel,';
+                $buttons['label'] .= isset($arg['label']) ? $arg['label'].',': '{{ Cancel }},';
+                $buttons['value'] .= 'cancel,';
                 $arg['type'] = 'button';
 
             } elseif (strpos('formName,mailto,mailfrom,legend,showData', $label) !== false) {
                 die(__FILE__. ' '.__LINE__.' Error: clause should be obsolete...');
                 // nothing to do
             } elseif (is_bool($arg)) {
-                writeLog("Reservation(): unknown arg '$label' (probablt forgot to add it to RESERVATION_SPECIFIC_ELEMENTS)");
-                exit;
+                if (isLocalhost()) {
+                    exit("Reservation(): unknown arg '$label' <br>(forgot to add it to RESERVATION_SPECIFIC_ELEMENTS?)");
+                } else {
+                    writeLog("Reservation(): unknown arg '$label' (probably forgot to add it to RESERVATION_SPECIFIC_ELEMENTS)");
+                    exit;
+                }
             } else {
                 $arg['label'] = $label;
                 $str .= parent::render($arg);
@@ -527,10 +532,4 @@ moreThanThreshold:
 EOT;
 
 }
-
-
-//notify
-//notifyFrom
-//scheduleAgent
-//reservationCallback
 
