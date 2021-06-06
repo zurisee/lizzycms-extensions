@@ -98,6 +98,9 @@ class Reservation extends Forms
     //        $this->waitingListLength = intval($args['waitingListLength']);
         $this->waitingListLength =          false;
         $this->moreThanThreshold =          intval( @$args['moreThanThreshold'] );
+        if ($this->moreThanThreshold === true) {
+            $this->moreThanThreshold = 10;
+        }
         $this->confirmationEmail =          @$args['confirmationEmail'];
         $this->emailField =                 @$args['emailField'] || $this->confirmationEmail;
     //        $this->notify = @$args['notify'];

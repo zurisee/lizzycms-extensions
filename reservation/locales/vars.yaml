@@ -36,6 +36,10 @@ lzy-timestamp:
   de: 'Abbrechen'
   _:  'Cancel'
 
+lzy-reservation-more-than-seats-available:
+  de: 'mehr als 10'
+  _:  'more than 10'
+
 lzy-reservation-aborted:
   de: |
     <p>Anmeldung abgebrochen.</p>
