@@ -21,6 +21,7 @@
 
 'enroll name required': 
     de: 'Geben Sie Ihren'
+    de2: 'Gib deinen'
     en: Enter your
 
 'illegal email address': 
@@ -53,14 +54,17 @@ lzy-enroll-or:
 
 'Enroll add comment': 
     de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
+    de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
     en: '<p><strong>Comment</strong>:</p><p>You can delete this entry within the next 24 hours.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
 
 'Enroll delete comment': 
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+    de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
 
 'Enroll modify comment': 
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag bearbeiten oder löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+    de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag bearbeiten oder löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     en: '<p><strong>Comment</strong>:</p><p>Do you want to modify or delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
 
 # 'Enroll delete too late comment': 
@@ -101,14 +105,17 @@ placeholder mobile number:
     
 lzy-enroll-name-required:
     de: Sie müssen Ihren Namen eingeben
+    de2: Du musst deinen Namen eingeben
     en: You need to enter your name
 
 lzy-enroll-email-required:
     de: Sie müssen Ihre E-Mail Adresse eingeben
+    de2: Du musst deine E-Mail Adresse eingeben
     en: You need to enter your e-mail address
 
 lzy-enroll-email-invalid:
     de: Bitte geben Sie eine gültige E-Mail Adresse eine
+    de2: Bitte gib eine gültige E-Mail Adresse eine
     en: Please enter a valid e-mail address
 
 lzy-enroll-hdr-name:
@@ -118,22 +125,33 @@ lzy-enroll-hdr-name:
 
 lzy-enroll-info:
     de: |
-        ## Erklärungen
+        <h2>Erklärungen</h2>
+        <ul>
+        <li>Um sich einzutragen, klicken Sie auf eine Zeile mit grünem Kreuz <span class='lzy-enroll-add'>+</span>.</li>
+        <li>Geben Sie im Popup Ihren Namen und Ihre E-Mail Adresse ein und klicken Sie auf [[ "Jetzt eintragen", .lzy-button ]].</li>
+        <li>"Reserve-Felder" sind mit gelblichem Hintergrund gekennzeichnet: sie kommen nur zum Zug, wenn sich andere abmelden.</li>
+        <li>Klicken Sie auf <span class='lzy-enroll-del'>&ndash;</span>, um Ihren Eintrag zu löschen (innerhalb der nächsten 24 Stunden; für spätere Änderungen kontaktieren Sie den {{ webmaster_link }}).</li>
+        </ul>
 
-        - Um sich einzutragen, klicken Sie auf eine Zeile mit grünem Kreuz <span class='lzy-enroll-add'>+</span>.
-        - Geben Sie im Popup Ihren Namen und Ihre E-Mail Adresse ein und klicken Sie auf [[ "Jetzt eintragen", .lzy-button ]].
-        - "Reserve-Felder" sind mit gelblichem Hintergrund gekennzeichnet: sie kommen nur kommen nur zum Zug, wenn sich andere abmelden.
-        - Klicken Sie auf <span class='lzy-enroll-del'>&ndash;</span>, um Ihren Eintrag zu löschen (innerhalb der nächsten 24 Stunden; für spätere Änderungen kontaktieren Sie den {{ webmaster_link }}).
+
+    de2: |
+        <h2>Erklärungen</h2>
+        <ul>
+          <li>Um dich einzutragen, klickst du auf eine Zeile mit grünem Kreuz <span class='lzy-enroll-add'>+</span>.</li>
+          <li>Gib im Popup deinen Namen und deine E-Mail Adresse ein und klicke auf [[ "Jetzt eintragen", .lzy-button ]].</li>
+          <li>"Reserve-Felder" sind mit gelblichem Hintergrund gekennzeichnet: sie kommen nur kommen nur zum Zug, wenn sich andere abmelden.</li>
+          <li>Klicke auf <span class='lzy-enroll-del'>&ndash;</span>, um deinen Eintrag zu löschen (innerhalb der nächsten 24 Stunden; für spätere Änderungen kontaktiere den {{ webmaster_link }}).</li>
+        </ul>
 
 
     _:  |
-        ## Explanations
-
-        - To enroll, click on a line showing the green plus sign <span class='lzy-enroll-add'>+</span>.
-        - In the popup enter your name and e-mail address, then click on  [[ "Sign up now", .lzy-button ]].
-        - "Spare fields" are marked by a yellowish background:  they move up when others cancel their enrollment.
-        - Click on <span class='lzy-enroll-del'>&ndash;</span> to cancel your enrollment (during the next 24 hours, for later cancellations contact the {{ webmaster_link }}).
-
+        <h2>Explanations</h2>
+        <ul>
+          <li>To enroll, click on a line showing the green plus sign <span class='lzy-enroll-add'>+</span>.</li>
+          <li>In the popup enter your name and e-mail address, then click on  [[ "Sign up now", .lzy-button ]].</li>
+          <li>"Spare fields" are marked by a yellowish background:  they move up when others cancel their enrollment.</li>
+          <li>Click on <span class='lzy-enroll-del'>&ndash;</span> to cancel your enrollment (during the next 24 hours, for later cancellations contact the {{ webmaster_link }}).</li>
+        </ul>
 
 
 # lzy-enroll-notify-subject:

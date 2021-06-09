@@ -25,7 +25,8 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'header', 'Optional header describing the enrollment list', false);
     $this->getArg($macroName, 'customFields', '[comma separated list] List of additional field labels (optional)', false);
     $this->getArg($macroName, 'customFieldPlaceholders', "[comma separated list] List of placeholder used in custom-fields (optional).<br>Special case: \"[val1|val2|...]\" creates dropdown selection.", '');
-    $this->getArg($macroName, 'dataPath', 'Where to store data files, default is folder local to current page', '~page/');
+    $this->getArg($macroName, 'file', 'The file in which to store enrollment data. Default: "&#126;page/enroll.yaml". ', '~page/enroll.yaml');
+//    $this->getArg($macroName, 'dataPath', 'Where to store data files, default is folder local to current page', '~page/');
     $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
     $this->getArg($macroName, 'freezeTime', "[false, 0, -n, time-string] Defines how long, resp. until when a user can delete/modify his/her entry. 'false' means forever, '0' means not modifiable at all. Duration is specified as a negative number of seconds (default: -86400 = 1 day)", -86400);
     $this->getArg($macroName, 'editable', '[true|false] If true, users can modify their (custom field-) entries', false);
@@ -37,7 +38,7 @@ $this->addMacro($macroName, function () {
 
     $this->getArg($macroName, 'n_needed', 'Synonym for "nNeeded"', false);
     $this->getArg($macroName, 'n_reserve', 'Synonym for "nReserve"', false);
-    $this->getArg($macroName, 'data_path', 'Synonym for dataPath', false);
+//    $this->getArg($macroName, 'data_path', 'Synonym for dataPath', false);
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($h === 'help') {
@@ -77,10 +78,11 @@ class Enrollment
         }
         $this->customFields = $args['customFields'];
         $this->customFieldPlaceholders = $args['customFieldPlaceholders'];
-        $this->data_path = $args['dataPath'];
-        if ($args['data_path']) {
-            $this->data_path = $args['data_path'];
-        }
+        $this->file = $args['file']? $args['file']: '~page/enroll.yaml';
+//        $this->data_path = $args['dataPath'];
+//        if ($args['data_path']) {
+//            $this->data_path = $args['data_path'];
+//        }
         $this->logAgentData = $args['logAgentData'];
         $this->freezeTime = $args['freezeTime'];
         $this->editable = $args['editable'];
@@ -113,8 +115,10 @@ class Enrollment
         $this->enroll_list_id = base_name(translateToFilename($this->listname), false);
         $this->enroll_list_name = str_replace("'", '&prime;', $this->listname);
 
-        $this->data_path = fixPath($this->data_path);
-		$this->dataFile = resolvePath($this->data_path.ENROLL_DATA_FILE);
+        $this->data_path = dir_name($this->file);
+//        $this->data_path = fixPath($this->data_path);
+//		$this->dataFile = resolvePath($this->data_path.ENROLL_DATA_FILE);
+		$this->dataFile = resolvePath( $this->file, true );
 		$this->logFile = resolvePath($this->data_path.ENROLL_LOG_FILE);
 
         $this->customFieldsList = explodeTrim(',|', $this->customFields);
@@ -152,6 +156,7 @@ class Enrollment
 		if (isset($_POST) && $_POST) {
 			$action = get_post_data('lzy-enroll-type');
 			$id = trim(get_post_data('lzy-enroll-list-id'));
+//			$this->listId = $id = trim(get_post_data('lzy-enroll-list-id'));
 			$name = get_post_data('lzy-enroll-name');
 			if (!$name || ($id !== $this->enroll_list_id)) {
 				return;
@@ -193,7 +198,7 @@ class Enrollment
 			$existingData = $enrollData[$id];
 			if ($action === 'add') {
 				$this->action = 'add';
-                // check whether nane already entered:
+                // check whether name already entered:
                 foreach ($existingData as $n => $rec) {
                     if ($n === '_') {
                         continue;
@@ -238,6 +243,31 @@ class Enrollment
 				$this->action = 'delete';
 				$found = false;
 				$name = trim($name);
+
+				if (isset($enrollData[ $id ])) {
+				    $set = $enrollData[ $id ];
+                } else {
+				    return;
+                }
+
+				// if in 'initials' mode, try to find data rec based on email, check against initials of name:
+                if (strpos($this->hideNames, 'init') === 0) {
+                    $found = false;
+                    foreach ($set as $rec) {
+                        $initials = $this->getInitials($rec['Name']);
+                        if (($name === $initials) && ($email === $rec['EMail'])) {
+                            $name = $rec['Name'];
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) {
+                        writeLog("\tError: enroll email wrong [$name] [$email vs {$rec['EMail']}]");
+                        return;
+                    }
+                }
+
+
 				foreach ($existingData as $n => $rec) {
                     if ($n === '_') {
                         continue;
@@ -249,7 +279,7 @@ class Enrollment
 							break;
 						}
                         if ($this->isInTime($rec['time'])) {
-							if ($rec['EMail'] != $email) {
+							if ($rec['EMail'] !== $email) {
 								writeLog("\tError: enroll email wrong [$name] [$email vs {$rec['EMail']}]");
 								$this->err_msg = '{{ enroll email wrong }}';
 								$this->name = $name;
@@ -909,15 +939,11 @@ EOT;
         }
         if ($hide) {
             if (strpos($this->hideNames, 'init') === 0) {
-                $parts = explode(' ', $name);
-                $name = strtoupper($parts[0][0]);
-                if (sizeof($parts) > 1) {
-                    $name .= strtoupper($parts[sizeof($parts)-1][0]);
-                }
+                $name = $this->getInitials($name);
             } else {
                 $name = '****';
+                $this->freezeTime = 0;
             }
-            $this->freezeTime = 0;
         } elseif ($this->hideNames && $this->trans->lzy->auth->isAdmin()) {
             $name = "<span class='lzy-enroll-admin-only' title='Visible to admins only'>$name</span>";
         }
@@ -959,6 +985,19 @@ EOT;
         }
         return array($from, $till);
     } // deriveFromTill
+
+
+
+
+    private function getInitials($name): string
+    {
+        $parts = explode(' ', $name);
+        $name = strtoupper($parts[0][0]);
+        if (sizeof($parts) > 1) {
+            $name .= strtoupper($parts[sizeof($parts) - 1][0]);
+        }
+        return $name;
+    } // getInitials
 
 } // class enroll
 
