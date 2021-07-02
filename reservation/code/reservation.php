@@ -1,6 +1,6 @@
 <?php
 
-define('RESERVATION_SPECIFIC_ELEMENTS', ',emailField,requireEmail,deadline,maxSeats,maxSeatsPerReservation,'.
+define('RESERVATION_SPECIFIC_ELEMENTS', ',emailField,requireEmail,eventDate,deadline,maxSeats,maxSeatsPerReservation,'.
     'waitingListLength,moreThanThreshold,notify,'.
     'notifyFrom,scheduleAgent,logAgentData,');
 
@@ -17,8 +17,11 @@ $page->addModules('~ext/reservation/css/reservation.css');
 
 $this->addMacro($macroName, function () {
 	$macroName = basename(__FILE__, '.php');
-	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 : ($this->invocationCounter[$macroName]+1);
-    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
+	$this->invocationCounter[$macroName] = (!isset($this->invocationCounter[$macroName])) ? 0 :
+        ($this->invocationCounter[$macroName]+1);
+    $this->disablePageCaching = $this->getArg($macroName, 'disableCaching',
+        '(false) Enables page caching (which is disabled for this macro by default).'.
+        'Note: only active if system-wide caching is enabled.', true);
 
     $args = $this->getArgsArray($macroName);
 
@@ -93,7 +96,11 @@ class Reservation extends Forms
             }
         }
 
-        $this->maxSeats =                   intval(isset($args['maxSeats']) ? $args['maxSeats']: 999 );
+        if (isset($args['maxSeats']) && is_numeric($args['maxSeats'])) {
+            $this->maxSeats = intval($args['maxSeats']);
+        } else {
+            $this->maxSeats = false;
+        }
         $this->maxSeatsPerReservation =     intval(isset($args['maxSeatsPerReservation']) ? $args['maxSeatsPerReservation']: 1 );
     //        $this->waitingListLength = intval($args['waitingListLength']);
         $this->waitingListLength =          false;
@@ -135,20 +142,27 @@ class Reservation extends Forms
             return "<p class='lzy-reservtion-deadline-passed'>{{ lzy-reservation-deadline-passed }}</p>";
         }
 
-        $this->resTick = new Ticketing([
-            'defaultType' => 'pending-reservations',
-            'defaultValidityPeriod' => 900, // 15 min
-            'defaultMaxConsumptionCount' => 1,
-        ]);
+        // if nr of seats is limited, we need to create a ticket and save the pending reservation:
+        if ($this->maxSeats) {
+            $this->resTick = new Ticketing([
+                'defaultType' => 'pending-reservations',
+                'defaultValidityPeriod' => 900, // 15 min
+                'defaultMaxConsumptionCount' => 1,
+            ]);
 
-        $pendingRes = $this->getPendingReservations();
+            $pendingRes = $this->getPendingReservations();
 
 
-        $nReservations = $this->countReservations();
-        $seatsAvailableStr = $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
-        if ($this->moreThanThreshold && ($seatsAvailable > $this->moreThanThreshold)) {
-            $seatsAvailableStr = '{{ lzy-reservation-more-than-seats-available }}';
+            $nReservations = $this->countReservations();
+            $seatsAvailableStr = $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
+            if ($this->moreThanThreshold && ($seatsAvailable > $this->moreThanThreshold)) {
+                $seatsAvailableStr = '{{ lzy-reservation-more-than-seats-available }}';
+            }
+        } else {
+            $seatsAvailableStr = '';
+            $seatsAvailable = PHP_INT_MAX;
         }
+
         if ($formHeader = @$args['formHeader']) {
             $args['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailableStr, $formHeader);
         }
@@ -210,7 +224,7 @@ class Reservation extends Forms
         }
         $str = parent::render( $headArgs );
 
-        if (!$this->skipRenderingForm) {
+        if (!$this->skipRenderingForm && $this->maxSeats) {
             $resTickRec = [
                 'formHash' => parent::getFormHash(),
                 'file' => $this->dataFile,
