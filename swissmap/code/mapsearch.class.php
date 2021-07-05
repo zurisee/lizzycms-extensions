@@ -163,7 +163,8 @@ EOT;
                     $recs = $db->read();
                     $structure = $db->getRecStructure();
                     foreach ($recs as $rec) {
-                        if ($structure['elemKeys'][0] === $rec[0]) {
+                        $elemKeys = array_keys($structure['elements']);
+                        if ($elemKeys[0] === $rec[0]) {
                             continue;
                         }
                         $location = trim($this->getLocation($rec[0]),'"\'');
