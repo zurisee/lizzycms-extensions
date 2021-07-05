@@ -122,8 +122,6 @@ class Reservation extends Forms
 
         parent::__construct($lzy, false);
 
-        $this->formHash = parent::getFormHash();
-
         preparePath($this->dataFile);
         // $this->prepareLog();
         $this->ds = new DataStorage2($this->dataFile);
@@ -381,8 +379,8 @@ class Reservation extends Forms
         if (@$userSuppliedData['_lizzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
             exit;
         }
-        $formId = $userSuppliedData['_lizzy-form'];
-        $currForm = parent::restoreFormDescr( $formId );
+        $formHash = $userSuppliedData['_lizzy-form'];
+        $currForm = parent::restoreFormDescr( $formHash );
         $formId = $currForm? $currForm->formId: 'generic';
 
         // deadline for reservations: reject if deadline has passed:
@@ -392,7 +390,7 @@ class Reservation extends Forms
             return;
         }
 
-        $requestedSeats = $this->getUserSuppliedValue("reservation-count");
+        $requestedSeats = $this->getUserSuppliedValue('reservation-count');
         if ($requestedSeats > $this->maxSeatsPerReservation) {
             // this case is likely result of tampering, so react as if fully booked...
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
@@ -401,13 +399,17 @@ class Reservation extends Forms
         }
 
         $existingReservations = $this->countReservations();
-        if (($existingReservations + $requestedSeats) > $this->maxSeats) {
+        if ($this->maxSeats && (($existingReservations + $requestedSeats) > $this->maxSeats)) {
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
             return;
         }
 
-        $this->evaluateUserSuppliedData();
+        $res = $this->evaluateUserSuppliedData();
+        // if reservation ok, delete the ticket:
+        if ($res) {
+            $tick->deleteTicket($formHash);
+        }
     } // evaluateClientData
 
 
