@@ -344,10 +344,10 @@ class Reservation extends Forms
         }
 
         // add buttons, preset with default buttons if not defined:
-        if (!$buttons["label"]) {
+        if (!$buttons['label']) {
             $buttons = [ 'label' => 'Send,Cancel', 'type' => 'button', 'options' => 'submit,cancel' ];
         }
-        $buttons["value"] = rtrim($buttons["value"], ',');
+        $buttons['value'] = rtrim($buttons['value'], ',');
         $str .= parent::render($buttons);
 
         // inject formFooter:
