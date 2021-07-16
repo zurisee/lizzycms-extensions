@@ -20,9 +20,120 @@ body {
 }
 */
 
-
 /* === Enrollment List: =============================== */
+//#lzy .lzy-form.lzy-encapsulated ,
+//.lzy-form {
+#lzy {
+    .lzy-enroll-dialog {
+        .lzy-form {
+            position: relative;
+        }
+        &.lzy-enroll-add-entry {
+            .lzy-delete-rec,
+            .lzy-form-delete-rec,
+            .lzy-form-button-delete {
+                display: none;
+            }
+        }
 
+        &.lzy-enroll-delete-entry {
+            .lzy-form-button-delete {
+//                display: inline-block;
+            }
+
+            .lzy-form-button-submit,
+            .lzy-form-delete-rec {
+                //.lzy-delete-rec {
+                display: none;
+            }
+            .lzy-enroll-name {
+                background: white;
+                border: 1px solid #ddd;
+            }
+        }
+
+        &.lzy-enroll-delete-entry,
+        &.lzy-enroll-modify-entry {
+            .lzy-form-field-wrapper-3 .lzy-form-required-marker {
+                display: none;
+            }
+        }
+        &.lzy-enroll-modify-entry {
+            .lzy-form-button-delete {
+                display: none;
+            }
+        }
+//        &.lzy-enroll-add-entry,
+        &.lzy-enroll-delete-entry,
+        &.lzy-enroll-modify-entry {
+            .lzy-form-field-type-email input {
+                border-color: red;
+            }
+        }
+        .lzy-form-button-delete.lzy-form-button-delete {
+            color: #444;
+            border-color: #444;
+        }
+        .lzy-form-footer {
+            max-width: var(--lzy-form-width, 30em);
+        }
+    }
+    .lzy-form-delete-rec {
+        margin-top: 2em;
+    }
+    .lzy-form-checkbox-label {
+        &, label {
+//            width: unset !important;
+            width: fit-content !important;
+//            background: cyan;
+        }
+//        background: yellow;
+//        fieldset {
+            position: absolute;
+            right: 0;
+//        }
+    }
+}
+
+.lzy-enroll-form-message {
+    padding: 1em;
+    border: 1px solid #ddd;
+    background: #fee;
+    margin: 1em 0;
+    h2 {
+        font-size: 1.2em;
+        margin: 0;
+    }
+}
+//#lzy .lzy-form.lzy-encapsulated .lzy-form-readonly-elem,
+//.lzy-form .lzy-form-readonly-elem,
+//#lzy .lzy-form.lzy-encapsulated input,
+//.lzy-form input,
+//.lzy-form button
+//{
+//    line-height: 2em;
+//}
+
+#lzy .lzy-form.lzy-encapsulated .lzy-form-field-type-choice.lzy-delete-rec .lzy-legend,
+.lzy-form .lzy-form-field-type-choice.lzy-delete-rec .lzy-legend {
+    display: none;
+}
+#lzy .lzy-enroll-modify-entry {
+    input.lzy-enroll-name {
+        background: white;
+    }
+    .lzy-form-field-wrapper-2 .lzy-form-required-marker {
+        display: none;
+    }
+}
+.lzy-form-response {
+    display: none;
+}
+.lzy-enroll-aux-field {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .lzy-enroll-row {
     font-size: 0;
     * {
@@ -73,26 +184,26 @@ body {
         text-align: right;
         margin-right: 2px;
     }
-    .lzy-name {
+    .lzy-enroll-name {
         width: 14em;
         width: calc(var(--lzy-enroll-list-field1-width, 18em) - 2.8em);
     }
     color: #000;
     color: var(--lzy-enroll-color, #000);
     a,
-    a .lzy-name {
+    a .lzy-enroll-name {
         color: #000;
         color: var(--lzy-enroll-color, #000);
     }
     &.lzy-enroll-add-field {
         a,
-        a .lzy-name {
+        a .lzy-enroll-name {
             color: #999;
             color: var(--lzy-enroll-color, #999);
         }
         &:hover {
             a,
-            a .lzy-name {
+            a .lzy-enroll-name {
                 color: #000;
                 color: var(--lzy-enroll-color, #000);
             }
@@ -131,7 +242,7 @@ body {
 }
 .lzy-enroll-add-field {
     font-style: italic;
-    .lzy-name {
+    .lzy-enroll-name {
         font-weight: lighter;
         color: #aaa;
     }
@@ -181,7 +292,7 @@ body {
     color: black;
     color: var(--lzy-enroll-color-reserve, black);
     a,
-    a .lzy-name {
+    a .lzy-enroll-name {
         color: black;
         color: var(--lzy-enroll-color-reserve, black);
     }
@@ -231,7 +342,7 @@ body {
         width: 14em;
         width: calc(100% - var(--lzy-enroll-dialog-label-width, 4em) - 4px);
     }
-    .lzy-name,
+    .lzy-enroll-name,
     label {
         width: 4em;
         width: var(--lzy-enroll-dialog-label-width, 4em);
@@ -250,13 +361,13 @@ body {
         background: -webkit-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
         background: -ms-linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
         background: linear-gradient(#FFF 0%,#EFEFEF 60%,#E1DFE2 100%);
-        padding: 0.33em 4px;
+//        padding: 0.33em 4px;
         cursor: pointer;
     }
     h3 {
         color: #9B0404;
     }
-    .lzy-name,
+    .lzy-enroll-name,
     .lzy-enroll-name-text,
     .lzy-modify-name-text {
         display: inline-block;
