@@ -1,0 +1,9 @@
+Subject: Confirming Your Reservation on {{ site_title }}
+
+Hello{{ first_name_value }} {{ last_name_value }}
+
+We have received your reservation for {{ reservation-count_value }} seats.
+
+Best Regards
+
+

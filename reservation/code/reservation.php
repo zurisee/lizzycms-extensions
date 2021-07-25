@@ -46,7 +46,7 @@ $this->addMacro($macroName, function () {
  //=== class ====================================================================
 class Reservation extends Forms
 {
-    protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation;
+    protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation, $preReserveThreshold;
     protected $waitingListLength, $moreThanThreshold, $confirmationEmail, $emailField;
     protected $notify, $notifyFrom, $scheduleAgent, $reservationCallback;
     protected $formHash, $ds, $resTick, $resSpecificArgs, $requireEmail;
@@ -56,13 +56,19 @@ class Reservation extends Forms
         $this->lzy = $lzy;
         $this->args = &$args;
 
+        // eliminate any args with numeric keys (i.e. identified by position in arg list):
+        foreach ($args as $key => $elem) {
+            if (is_numeric($key)) {
+                unset($args[$key]);
+            }
+        }
+
         $this->requireEmail =               isset($args['requireEmail'])? $args['requireEmail']: false;
         $this->dataFile =                   @$args['file'];
         $this->timeDateFormat =             @$args['timeDateFormat']; // strftime
         $this->timeDeadlineFormat =         @$args['timeDeadlineFormat']; // strftime
         $this->eventDate =                  @$args['eventDate'];
         $this->deadline =                   @$args['deadline'];
-
         if (!$this->timeDateFormat) {
             $this->timeDateFormat = '%x'; // localized date representation, %c to include time
         }
@@ -75,21 +81,30 @@ class Reservation extends Forms
                     $this->eventDate = strtotime($this->eventDate);
                 }
                 $eventDateStr = strftime($this->timeDateFormat, $this->eventDate);
+                $eventDate = strtotime( date('Y-m-d', $this->eventDate) ); // round to day
 
-                if ($this->deadline[0] === '-') {
-                    list($deadline, $time) = explodeTrim(',', $this->deadline);
-                    $deadline = strtotime($deadline, $this->eventDate);
-                    if ($time) {
-                        $deadline = strtotime( date('Y-m-d', $deadline) );
+                // handle deadline as offset from event-date, e.g. '-2 days':
+                if ($this->deadline && ($this->deadline[0] === '-')) {
+                    // deadline may also contain time, e.g. '-2days, 16:00':
+                    if (strpos($this->deadline, ',') !== false) {
+                        list($deadline, $time) = explodeTrim(',', $this->deadline);
+                        $this->deadline = strtotime($deadline, $this->eventDate);
+                        if ($time) {
+                            $this->deadline += strtotime("1970-01-01 $time UTC");
+                        }
+                    } else {
+                        $this->deadline = strtotime($this->deadline, $this->eventDate);
                     }
-                    $seconds = strtotime("1970-01-01 $time UTC");
-                    $this->deadline = $deadline + $seconds;
+                } else {
+                    $this->deadline = strtotime($this->deadline, $this->eventDate);
                 }
             } else {
+                // no event-date provided, so deadline must be absolute date-time:
                 $this->deadline = strtotime($this->deadline);
                 $eventDateStr = '';
             }
             $deadlineStr = strftime($this->timeDeadlineFormat, $this->deadline);
+            $deadlineStr = str_replace('00:00', '', $deadlineStr);
             if (@$args['formHeader']) {
                 $args['formHeader'] = str_replace('{lzy-event-date}', $eventDateStr, $args['formHeader']);
                 $args['formHeader'] = str_replace('{lzy-event-deadline}', $deadlineStr, $args['formHeader']);
@@ -102,7 +117,11 @@ class Reservation extends Forms
             $this->maxSeats = false;
         }
         $this->maxSeatsPerReservation =     intval(isset($args['maxSeatsPerReservation']) ? $args['maxSeatsPerReservation']: 1 );
-    //        $this->waitingListLength = intval($args['waitingListLength']);
+        $this->preReserveThreshold =        @$args['preReserveThreshold'];
+        if (!$this->preReserveThreshold) {
+            $this->preReserveThreshold = 10;
+        }
+
         $this->waitingListLength =          false;
         $this->moreThanThreshold =          intval( @$args['moreThanThreshold'] );
         if ($this->moreThanThreshold === true) {
@@ -120,9 +139,19 @@ class Reservation extends Forms
         $this->reservationCallback = false;
     //        $this->logAgentData = $args['logAgentData'];
 
+        if (!$this->dataFile) {
+            $this->dataFile = '~page/reservation.yaml';
+        }
+        if ($this->dataFile[0] === '~') {
+            $this->dataFile = resolvePath($this->dataFile);
+        }
+
+        if (!@$args['translateLabels']) {
+            $args['translateLabels'] = true;
+        }
+
         parent::__construct($lzy, false);
 
-        preparePath($this->dataFile);
         // $this->prepareLog();
         $this->ds = new DataStorage2($this->dataFile);
         $this->evaluateClientData();
@@ -141,7 +170,15 @@ class Reservation extends Forms
         }
 
         // if nr of seats is limited, we need to create a ticket and save the pending reservation:
+        $this->preReserveSeats = false;
         if ($this->maxSeats) {
+            $nReservations = $this->countReservations();
+            $safetyMargin = $this->preReserveThreshold * $this->maxSeatsPerReservation;
+            if ($nReservations > ($this->maxSeats - $safetyMargin)) {
+                $this->preReserveSeats = true;
+            }
+        }
+        if ($this->preReserveSeats) {
             $this->resTick = new Ticketing([
                 'defaultType' => 'pending-reservations',
                 'defaultValidityPeriod' => 900, // 15 min
@@ -150,8 +187,6 @@ class Reservation extends Forms
 
             $pendingRes = $this->getPendingReservations();
 
-
-            $nReservations = $this->countReservations();
             $seatsAvailableStr = $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
             if ($this->moreThanThreshold && ($seatsAvailable > $this->moreThanThreshold)) {
                 $seatsAvailableStr = '{{ lzy-reservation-more-than-seats-available }}';
@@ -217,21 +252,30 @@ class Reservation extends Forms
 
         // create form head:
         $headArgs['type'] = 'form-head';
+        if (!isset($headArgs['dataFile'])) {
+            $headArgs['file'] = '~/' . $this->dataFile;
+        }
+        if (!isset($headArgs['keyType'])) {
+            $headArgs['keyType'] = 'hash';
+        }
         if (!isset($headArgs['class'])) {
             $headArgs['class'] = 'lzy-reservation-form lzy-form lzy-form-colored lzy-encapsulated';
         }
+        if (@$headArgs['confirmationEmail'] && !isset($headArgs['confirmationEmailTemplate'])) {
+            $headArgs['confirmationEmailTemplate'] = true;
+        }
         $str = parent::render( $headArgs );
 
-        if (!$this->skipRenderingForm && $this->maxSeats) {
+        if (!$this->skipRenderingForm && $this->preReserveSeats) {
             $resTickRec = [
                 'formHash' => parent::getFormHash(),
                 'file' => $this->dataFile,
                 'deadline' => $this->deadline,
                 'nSeats' => $this->maxSeatsPerReservation,
             ];
-            $ticket = $this->resTick->createTicket($resTickRec);
+            $ticketHash = $this->resTick->createTicket($resTickRec);
         } else {
-            $ticket = '';
+            $ticketHash = '';
         }
         // create form buttons:
         $buttons = [ 'label' => '', 'type' => 'button', 'value' => '' ];
@@ -241,7 +285,7 @@ class Reservation extends Forms
                 'type' => 'hidden',
                 'label' => 'lzy-form lzy-reservation-ticket',
                 'name' => '_res-ticket',
-                'value' => $ticket,
+                'value' => $ticketHash,
             ],
             [
                 'type' => 'text',
@@ -344,10 +388,10 @@ class Reservation extends Forms
         }
 
         // add buttons, preset with default buttons if not defined:
-        if (!$buttons['label']) {
+        if (!@$buttons['label']) {
             $buttons = [ 'label' => 'Send,Cancel', 'type' => 'button', 'options' => 'submit,cancel' ];
         }
-        $buttons['value'] = rtrim($buttons['value'], ',');
+        $buttons['value'] = rtrim(@$buttons['value'], ',');
         $str .= parent::render($buttons);
 
         // inject formFooter:
@@ -373,13 +417,16 @@ class Reservation extends Forms
         $userSuppliedData = $_POST;
         $this->userSuppliedData = $userSuppliedData;
         $resHash = @$userSuppliedData['_res-ticket'];
-        $tick = new Ticketing();
-        $tick->deleteTicket($resHash);
+        $tick = null;
+        if ($resHash) {
+            $tick = new Ticketing();
+            $tick->deleteTicket($resHash);
+        }
 
         if (@$userSuppliedData['_lizzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
             exit;
         }
-        $formHash = $userSuppliedData['_lizzy-form'];
+        $formHash = $userSuppliedData['_lizzy-form-id'];
         $currForm = parent::restoreFormDescr( $formHash );
         $formId = $currForm? $currForm->formId: 'generic';
 
@@ -405,11 +452,7 @@ class Reservation extends Forms
             return;
         }
 
-        $res = $this->evaluateUserSuppliedData();
-        // if reservation ok, delete the ticket:
-        if ($res) {
-            $tick->deleteTicket($formHash);
-        }
+        $this->evaluateUserSuppliedData();
     } // evaluateClientData
 
 
@@ -516,9 +559,15 @@ maxSeatsPerReservation:
 : If the number is greater than 1, a 'number of seas' (i.e. variable 
 : &#123;{ lzy-reservation-count-label }}) appears. (Default: 1)  
 : <br>
-: <strong>Note</strong>: when the reservation form is rendered, ``maxSeatsPerReservation`` are tentatively reserved.  
+: <strong>Note re. pre-reservations mechanism</strong>: when the reservation form is rendered, ``maxSeatsPerReservation`` are tentatively reserved.  
 : Thus, other users opening the form at the same time will therefore see a temprorarly reduced number of available seats.   
 : Tentatively reserved seats are freed upon submitting the form or after a 15 minute timeout.
+
+preReserveThreshold:
+: (integer) Defines the safety margin for pre-reservations. If number of available seats is less 
+: than the margin (i.e. ``preReserveThreshold*maxSeatsPerReservation``) the pre-reservation mechanism is invoked. 
+: Default: 10.  
+: Note: if maxSeats is false, the pre-reservation mechanism is never invoked.
 
 formHeader:
 : (string) If defined, this string will appear above the form.  
@@ -550,5 +599,5 @@ moreThanThreshold:
 
 EOT;
 
-}
+} // renderReservationsHelp
 

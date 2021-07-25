@@ -80,6 +80,14 @@ lzy-confirmation-response-message:
 
     Beste Grüsse
 
+  de2: |
+    Guten Tag {{ first_name-value }} {{ last_name-value }}
+
+    Besten Dank, wir haben deine Reservation empfangen.
+    Anzahl Plätze: {{ reservation-count-value }}
+
+    Beste Grüsse
+
   _:  |
     Hello {{ first_name-value }} {{ last_name-value }}
 
