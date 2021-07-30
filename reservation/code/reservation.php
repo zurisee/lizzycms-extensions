@@ -423,10 +423,10 @@ class Reservation extends Forms
             $tick->deleteTicket($resHash);
         }
 
-        if (@$userSuppliedData['_lizzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
+        if (@$userSuppliedData['_lzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
             exit;
         }
-        $formHash = $userSuppliedData['_lizzy-form-id'];
+        $formHash = $userSuppliedData['_lzy-form-ref'];
         $currForm = parent::restoreFormDescr( $formHash );
         $formId = $currForm? $currForm->formId: 'generic';
 
