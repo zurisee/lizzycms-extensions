@@ -73,6 +73,7 @@ $('.lzy-editable[title]').tooltipster({
     delay: 200,
     animation: 'grow',
     maxWidth: 420,
+    interactive: true,
 });
 
 EOT;
