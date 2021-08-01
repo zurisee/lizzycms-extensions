@@ -79,6 +79,7 @@ class Reservation extends Forms
             if ($this->eventDate) {
                 if (is_string($this->eventDate)) {
                     $this->eventDate = strtotime($this->eventDate);
+                    $this->eventDate = intval($this->eventDate / 86400) * 86400;
                 }
                 $eventDateStr = strftime($this->timeDateFormat, $this->eventDate);
                 $eventDate = strtotime( date('Y-m-d', $this->eventDate) ); // round to day
