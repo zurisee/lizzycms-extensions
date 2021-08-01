@@ -157,11 +157,17 @@ EOT;
             <div class='lzy-textarea-autogrow'>
                 <label for="lzy-journal-multiline-input-$inx" class="lzy-invisible">{{ lzy-journal-multiline-input-label }}</label>
                 <textarea id="lzy-journal-multiline-input-$inx" class="lzy-journal-entry lzy-journal-entry-multiline" 
-                onInput='this.parentNode.dataset.replicatedValue = this.value'
                 aria-controls="lzy-journal-presentation-$inx"></textarea>
            </div><!-- /lzy-textarea-autogrow-->
 
 EOT;
+                $jq = <<<EOT
+$('.lzy-textarea-autogrow textarea.lzy-journal-entry').on('input', function() {
+    this.parentNode.dataset.replicatedValue = this.value;
+});
+EOT;
+
+                $this->page->addJq($jq);
             } else {
                 $html .= <<<EOT
 
