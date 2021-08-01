@@ -1,0 +1,40 @@
+key: '=username'
+elements:
+    username:
+        type: 'string'
+        required: true
+        placeholder: 'unique, ascii-only'
+        info: '{{ lzy-edit-user-username-info }}'
+    email:
+        type: 'email'
+        required: true
+        info: '{{ lzy-edit-user-email-info }}'
+    groups:
+        type: 'checkbox'
+        options: 'guests,staff,editors,admins'
+        required: true
+        layout: 'h'
+        defaultValue: staff
+        formLabel: lzy-groups
+        info: '{{ lzy-edit-user-groups-info }}'
+    password:
+        type: 'password'
+        info: '{{ lzy-edit-user-password-info }}'
+    displayName:
+        type: 'string'
+        info: '{{ lzy-edit-user-displayname-info }}'
+    accessCode:
+        type: 'hash'
+        info: '{{ lzy-edit-user-accesscode-info }}'
+    #    calCatetoryPermission: { type: 'checkbox', options: 'self,kathrin', layout: h }
+    #    emaillist: { type: 'string' }
+    inactive:
+        type: 'toggle'
+        info: '{{ lzy-edit-user-inactive-info }}'
+
+#    maxSessionTime: { type: 'number', max: 60 }
+#    accessCodeValidUntil: { type: 'datetime' }
+#    calCatetoryPermission: { type: 'string', prefill: self }
+#    inactive: { type: 'radio', options: 'true,false', layout: h }
+
+
