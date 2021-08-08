@@ -1,5 +1,5 @@
 <?php
-//define('ENROLLMENT_SPECIFIC_ELEMENTS', ',nNeeded,nReserve,listname,header,customFields,customFieldPlaceholders,'.
+
 define('ENROLLMENT_SPECIFIC_ELEMENTS', ',nNeeded,nReserve,listname,header,tooltips,'.
     'file,globalFile,logAgentData,freezeTime,editable,hideNames,unhideNamesForGroup,notify,notifyFrom,'.
     'scheduleAgent,n_needed,n_reserve,');
@@ -11,6 +11,11 @@ class Enrollment extends Forms
 {
     public function __construct($lzy, $inx, $args)
     {
+        foreach ($args as $key => $arg) {
+            if (is_integer($key)) {
+                unset($args[ $key ]);
+            }
+        }
         $GLOBALS['globalParams']['enrollCnt']++;
         $this->enrollInx = $GLOBALS['globalParams']['enrollCnt'];
         $this->inx = $inx;
@@ -26,8 +31,6 @@ class Enrollment extends Forms
         if ($args['n_reserve'] !== false) {
             $this->nReserve = $args['n_reserve'];
         }
-//        $this->customFields = $args['customFields'];
-//        $this->customFieldPlaceholders = $args['customFieldPlaceholders'];
 
         // determine where to store data:
         if ($args['globalFile']) {
@@ -69,15 +72,6 @@ class Enrollment extends Forms
                 $this->freezeTime = -$this->freezeTime;
             }
         }
-//        if ($this->freezeTime && preg_match('/\D/', $this->freezeTime)) {
-//            $this->freezeTimeStr = $this->freezeTime;
-//            $this->freezeTime = strtotime($this->freezeTime);
-//        } else {
-////            $this->freezeTimeStr = $this->trans->translate(secondsToTime( $this->freezeTime ));
-//            $this->freezeTimeStr = strftime('%c', time() + $this->freezeTime);
-//            $this->freezeTime = -$this->freezeTime;
-//        }
-
 
         if ($this->admin_mode) {
             $this->trans->addTerm('enroll_result_link', "<a href='?enroll_result'>{{ Show Enrollment Result }}</a>");
@@ -90,7 +84,6 @@ class Enrollment extends Forms
         $this->focus = '';
         $this->show_result = false;
 
-//        $this->enroll_list_id = base_name(translateToFilename($this->listname), false);
         $this->enroll_list_id = translateToIdentifier($this->listname);
         $this->enroll_list_name = str_replace("'", '&prime;', $this->listname);
 
@@ -98,31 +91,9 @@ class Enrollment extends Forms
         $this->dataFile = resolvePath( $this->file, true );
         $this->logFile = resolvePath($this->data_path.ENROLL_LOG_FILE);
 
-//        $this->customFieldsList = explodeTrim(',|', $this->customFields);
-//        $this->customFieldsDisplayList = [];
-//        foreach ($this->customFieldsList as $i => $item) {
-//            if (preg_match('/^ \( (.*) \) $/x', $item, $m)) {
-//                $this->customFieldsList[$i] = trim($m[1]);
-//                $this->customFieldsDisplayList[$i] = false;
-//            } else {
-//                $this->customFieldsDisplayList[$i] = $item;
-//            }
-//        }
-//        $this->hash = '';
-//        if ($this->customFields) {
-//            $this->hash = '-'.hash('crc32', $this->customFields . $this->customFieldPlaceholders);
-//        }
-
         preparePath($this->dataFile);
 
         parent::__construct($lzy);
-//        parent::__construct($lzy, false);
-
-        $this->prepareLog();
-        $this->handleClientData();
-        $this->setupScheduler();
-
-        $this->lzy->page->addModules('POPUPS');
     } // __construct
 
 
@@ -138,7 +109,6 @@ class Enrollment extends Forms
         if (isset($_POST) && $_POST) {
             $action = get_post_data('lzy-enroll-type');
             $id = trim(get_post_data('lzy-enroll-list-id'));
-//			$this->listId = $id = trim(get_post_data('lzy-enroll-list-id'));
             $name = get_post_data('lzy-enroll-name');
             if (!$name || ($id !== $this->enroll_list_id)) {
                 return;
@@ -191,9 +161,6 @@ class Enrollment extends Forms
                             $rec['Name'] = $name;
                             $rec['EMail'] = $email;
                             $rec['time'] = time();
-//                            foreach ($this->customFieldsList as $i => $field) {
-//                                $rec[$field] = $customFieldValues[$i];
-//                            }
                             $found = true;
                             break;
                         } else {  // existing name but different email -> reject:
@@ -216,9 +183,6 @@ class Enrollment extends Forms
                     $rec['Name'] = $name;
                     $rec['EMail'] = $email;
                     $rec['time'] = time();
-//                    foreach ($this->customFieldsList as $i => $field) {
-//                        $rec[$field] = $customFieldValues[ $i ];
-//                    }
                 }
 
             } elseif ($action === 'delete') {
@@ -311,7 +275,7 @@ class Enrollment extends Forms
 
     public function render( $args = null )
     {
-        $this->formAnnouncment = @$this->errorDescr[ $this->enrollInx ]['_announcement_'];
+        $this->formAnnouncement = @$this->errorDescr[ $this->enrollInx ]['_announcement_'];
         $hash = $this->renderDialog();
 
         $ds = new DataStorage2($this->dataFile);
@@ -333,45 +297,22 @@ class Enrollment extends Forms
 
         list($out, $hdr) = $this->renderTable();
 
-//        $formHash = parent::getFormHash();
-//        $attr = " data-source='$formHash:set$this->enrollInx'";
-//        $enrollHash = '';
-//        $enrollHash = ['dataSource' => $this->dataFile];
-//        if ($this->ticketHash && $tck->ticketExists($this->ticketHash)) {
-//            $tck->createHash(true);
-//            $tck->updateTicket($this->ticketHash, $tickRec);
-//        } else {
-//        $tickRec = [
-//            '_dataSource' => $this->dataFile,
-//            '_dataKey' => "{$this->enroll_list_id},*",
-//        ];
         $tickRec = [
             "set$this->enrollInx" => [
                     '_dataSource' => $this->dataFile,
                     '_dataKey' => "{$this->enroll_list_id},#",
-//                    '_dataKey' => "{$this->enroll_list_id},*",
                 ]
         ];
         $tck = new Ticketing(['defaultMaxConsumptionCount' => false, 'defaultType' => 'enroll']);
         $enrollHash = $tck->createTicket($tickRec, false);
-//        $enrollHash = $tck->createTicket($tickRec, false, -1);
-//        $enrollHash = $tck->createTicket(['_dataSource' => $this->dataFile], false, -1);
 
         $attr = " data-datasrc-ref='$enrollHash:set$this->enrollInx'";
-//        $attr = " data-source='$enrollHash:set$this->enrollInx'";
         $cls = $this->customFields? ' lzy-enroll-auxfields': '';
 
 
         // assemble output:
-        $out0 = "\n\t<div class='{$this->enroll_list_id} lzy-enrollment-list$cls' data-dialog-id='lzy-enroll-dialog-$hash'$attr>\n";
-//        $out0 = "\n\t<div class='{$this->enroll_list_id} lzy-enrollment-list' data-dialog-id='{$this->enroll_list_id}'$attr>\n";
-//        $out0 = "\n\t<div class='{$this->enroll_list_id} lzy-enrollment-list' data-dialog-title='$this->enroll_list_name' data-dialog-id='{$this->enroll_list_id}' data-dialog-inx='{$this->inx}'$attr>\n";
+        $out0 = "\n\t<div class='{$this->enroll_list_id} lzy-enrollment-list$cls' data-dialog-ref='$hash'$attr>\n";
 
-//        $formAnnouncment = $this->formAnnouncment;
-//        if ($formAnnouncment) {
-//            $out0 .= "\t\t<div class='lzy-enroll-form-message'>$formAnnouncment</div>\n";
-//        }
-//
         if ($this->header) {
             $out0 .= "\n\t  <div class='lzy-enroll-field lzy-enroll-header'>{$this->header}</div>\n";
         }
@@ -383,12 +324,10 @@ class Enrollment extends Forms
         $out0 .= "\t</div> <!-- /lzy-enrollment-list -->\n  ";
         if ($this->err_msg) {
             $this->trans->page->addPopup($this->err_msg);
-//            $this->trans->page->addMessage($this->err_msg);
         }
 
-        if ($this->formAnnouncment) {
-//            $msg = "\t\t<div class='lzy-enroll-form-message'>$this->formAnnouncment</div>\n";
-            $this->lzy->page->addPopup($this->formAnnouncment);
+        if ($this->formAnnouncement) {
+            $this->lzy->page->addPopup($this->formAnnouncement);
         }
 
         return $out0;
@@ -541,13 +480,6 @@ EOT;
     {
         if (!file_exists($this->logFile)) {
             $customFields = '';
-//            foreach ($this->customFieldsList as $item) {
-//                if (preg_match('/[\s,;]/', $item)) {
-//                    $customFields .= "; '$item'";
-//                } else {
-//                    $customFields .= "; $item";
-//                }
-//            }
             if ($this->logAgentData) {
                 file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields; Client; IP\n");
             } else {
@@ -668,24 +600,18 @@ EOT;
                 $name = $this->hideName($name);
 
                 if ($this->customFields && $this->editable) {
-//                    $targId = "#modifyDialog{$this->hash}";
                     $tooltip = '{{ lzy-enroll-modify-entry }}';
                     $icon = "<span class='lzy-enroll-modify'>&#9998;</span>";
                 } else {
-//                    $targId = "#lzy-enroll-delete-dialog{$this->hash}";
-//                    $targId = "#delDialog{$this->hash}";
                     $tooltip = '{{ lzy-enroll-delete-entry }}';
                     $icon = "<span class='lzy-enroll-del'>−</span>";
                 }
-//                $targId = '#';
                 if ($this->isInTime($rec)) {
                     $a = "<a href='#' title='$tooltip'>\n\t\t\t\t  <span class='lzy-enroll-name'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
-//                    $a = "<a href='$targId' title='$tooltip'>\n\t\t\t\t  <span class='lzy-name lzy-col1'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
                     $class = 'lzy-enroll-del-field';
                 } else {
                     $a = "<span class='lzy-enroll-name'>$name</span>";
                     $class = 'lzy-enroll-frozen-field';
-//                    $class = 'lzy-enroll-frozen_field';
                 }
 
             } else {            // add
@@ -693,7 +619,6 @@ EOT;
                     $name = '{{ lzy-enroll-add-text }}';
                     $icon = "<span class='lzy-enroll-add'>+</span>";
                     $a = "<a href='#' title='{{ lzy-enroll-new-name }}'>\n\t\t\t\t  <span class='lzy-enroll-name'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
-//                    $a = "<a href='#lzy-enroll-add-dialog{$this->hash}' title='{{ lzy-enroll-new-name }}' data-rel='popup' data-position-to='window' data-transition='pop'>\n\t\t\t\t  <span class='lzy-name'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
                     $new_field_done = true;
                     $class = 'lzy-enroll-add-field';
 
@@ -723,13 +648,10 @@ EOT;
                 $name = str_replace(' ', '_', $custField);
                 $name = preg_replace("/[^[:alnum:]_-]/m", '', $name);	// remove any non-letters, except _ and -
                 $val = isset($rec[$name]) && $rec[$name] ? $rec[$name] : '&nbsp;';
-//                $val = isset($rec[$custField]) && $rec[$custField] ? $rec[$custField] : '&nbsp;';
                 $aux .= "\n\t\t\t<div class='lzy-enroll-aux-field $cls' title='$val'>\n\t\t\t\t$val\n\t\t\t</div>";
-//                $aux .= "\n\t\t\t<div class='lzy-enroll-aux-field $cls' data-class='lzy-enroll-aux-field$i'>\n\t\t\t\t$val\n\t\t\t</div>";
                 $hdr .= "\n\t\t\t<div class='lzy-enroll-aux-field'>$custField</div>";
             }
             $out .= "\t\t<div class='lzy-enroll-row$res'$recKey>\n$rowContent$aux\n\t\t</div><!-- /lzy-enroll-row -->\n\n";
-//            $out .= "\t\t<div class='lzy-enroll-row$res'>\n$rowContent$aux\n\t\t</div><!-- /lzy-enroll-row -->\n\n";
         }
         return array($out, $hdr);
     } // renderTable
@@ -740,7 +662,7 @@ EOT;
     {
         list($dialog, $hash) = $this->_renderDialog();
         if (isset($GLOBALS['globalParams']['enroll_form_created'][$hash])) {
-            return ''; // already rendered
+            return $hash; // already rendered
         }
         $GLOBALS['globalParams']['enroll_form_created'][$hash] = true;
 
@@ -776,23 +698,31 @@ EOT;
         }
         $this->enrollSpecificElems = array_keys( $formElems );
         $this->customFields = (sizeof($formElems) > 0);
+
+        if ($this->freezeTime === 0) {
+            $hash = 0;
+        } else {
+            $hash = 1;
+        }
+        if ($this->customFields) {
+            $hash += crc32(json_encode($formElems));
+        }
+        $this->formHash = $hash;
+        if (isset($GLOBALS['globalParams']['enroll_form_created'][$hash])) {
+            return ['', $hash]; // already rendered
+        }
+
+
         // render form-head:
         $headArgs['type'] = 'form-head';
         $headArgs['file'] = '~/'.$this->dataFile;
+        $headArgs['id']   = "lzy-enroll-form-$hash";
         $headArgs['novalidate'] = false;
         $headArgs['translateLabels'] = true;
         $headArgs['skipConfirmation'] = true;
         $headArgs['suppressFormFeedback'] = true;
         $headArgs['dataKeyOverride'] = "enrollment-list{$this->enrollInx},#";
-        // dataKeyOverride: '*' -> hash; '#' -> index
-//        $headArgs['dataKeyOverride'] = "enrollment-list{$this->enrollInx},*";
         $headArgs['recModifyCheck'] = 'EMail';
-//        $headArgs['dataKeyOverride'] = "enrollment-list1,*";
-//        if (isset($headArgs['formFooter'])) {
-//            $headArgs['formFooter'] = "<div class='lzy-enroll-comment'>{$headArgs['formFooter']}</div>";
-//        } else {
-//            $headArgs['formFooter'] = '<div class="lzy-enroll-comment">{{ lzy-enroll-add-comment }}</div>';
-//        }
 
         if (isset($headArgs['formFooter'])) {
             $formFooter = $headArgs['formFooter'];
@@ -809,7 +739,6 @@ EOT;
                 }
 
                 $formFooter = $this->trans->translate($formFooter);
-                $formFooter = str_replace('%freezetime%', $this->freezeTimeStr, $formFooter);
 
             } elseif ($this->freezeTime === false) {
                 $formFooter = '{{ lzy-enroll-add-comment-no-freeze }}';
@@ -821,7 +750,6 @@ EOT;
         if ($formFooter) {
             $headArgs['formFooter'] = "<div class='lzy-enroll-comment'>$formFooter</div>";
         }
-//        $headArgs['formFooter'] = $formFooter;
 
         $str = parent::render( $headArgs );
 
@@ -849,13 +777,6 @@ EOT;
                 'required' => true,
                 'class' => 'lzy-enroll-name',
             ],
-//            [
-//                'type' => 'email',
-//                'label' => 'lzy-enroll-email',
-//                'name' => 'EMail',
-//                'required' => true,
-//                'class' => 'lzy-enroll-email',
-//            ],
         ];
         foreach ($defaultFields as $arg) {
             $str .= parent::render($arg);
@@ -924,16 +845,12 @@ EOT;
                 'option' => 'delete-rec',
                 'options' => 'cancel,submit,delete',
                 'label' => 'lzy-enroll-cancel,lzy-enroll-submit,lzy-enroll-delete-btn-short',
-//                'options' => 'cancel,submit',
-//                'label' => 'lzy-enroll-cancel,lzy-enroll-submit',
                 'type' => 'button',
             ];
         }
         $str .= parent::render($buttons);
 
         $str .= parent::render([ 'type' => 'form-tail' ]);
-
-        $hash = crc32( $str );
 
         $form = <<<EOT
 
@@ -943,7 +860,6 @@ EOT;
     <div id="lzy-enroll-dialog-$hash" class="lzy-enroll-dialog" style='display:none;'>
       <div>
 $str
-<!--          <div class="lzy-enroll-comment">{{ lzy-enroll-add-comment }}</div>-->
           <div class="lzy-enroll-add-title" style="display: none">{{ lzy-enroll-add-title }}</div>
           <div class="lzy-enroll-delete-title" style="display: none">{{ lzy-enroll-delete-title }}</div>
           <div class="lzy-enroll-modify-title" style="display: none">{{ lzy-enroll-modify-title }}</div>
@@ -951,6 +867,7 @@ $str
     </div><!-- /lzy-enroll-dialog -->
 
 EOT;
+
         return [$form, $hash];
     } // _renderDialog
 
