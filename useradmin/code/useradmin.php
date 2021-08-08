@@ -7,7 +7,9 @@ $macroName = basename(__FILE__, '.php');
 $this->addMacro($macroName, function () {
     $macroName = basename(__FILE__, '.php');
     
-    $mode = $this->getArg($macroName, 'mode', '[signup,invite] Defines what to do', 'signup');
+    $mode = $this->getArg($macroName, 'mode', '[signup,invite,table,login] Defines what to do: '.
+        'signup &rarr; form for user registration; invite &rarr; form for inviting users; table &rarr; table of users with editing option; '.
+        'login &rarr; normal login form (default: signup)', 'signup');
 
     if ($mode === 'help') {
         $this->getArg($macroName, 'proxyuser', 'Name of a proxy-user for self-signup', 'selfsignup');
