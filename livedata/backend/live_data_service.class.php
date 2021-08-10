@@ -41,6 +41,8 @@ class LiveDataService
     {
         $this->sets = [];
         $elementRefs = $this->getLiveElements();
+
+        // sort elements per dataSrc:
         foreach ($elementRefs as $i => $ref) {
             if ($ref->srcRef) {
                 $setName = preg_replace('/.*?:/', '', $ref->srcRef);;
@@ -50,16 +52,22 @@ class LiveDataService
             $this->sets[ $setName ][] = $ref;
         }
 
+        // all elements have the same ticketHash -> get the first one:
         $rec0 = reset($elementRefs);
         $tickHash = preg_replace('/:.*/', '', $rec0->srcRef);
         $tick = new Ticketing();
         $ticketRec = $tick->consumeTicket($tickHash);
+        if (!is_array($ticketRec)) {
+            return false;
+        }
 
         foreach ($ticketRec as $setName => $set) {
+            if ($setName[0] === '_') {
+                continue;
+            }
             if (isset($set['_pollingTime']) && ($set['_pollingTime'] > 2)) {
                 $this->pollingTime = $set['_pollingTime'];
             }
-
             $db = new DataStorage2([
                 'dataFile' => PATH_TO_APP_ROOT . $set['_dataSource'],
                 'supportBlobType' => @$set['_supportBlobType'],
@@ -67,6 +75,7 @@ class LiveDataService
             ]);
             $this->sets[$setName]['_db'] = $db;
         }
+        return true;
     } // openDataSrcs
 
 
@@ -89,7 +98,7 @@ class LiveDataService
                     return true;
                 }
                 foreach ($set as $k => $elem) {
-                    if ($k[0] === '_') {
+                    if (is_string($k) && $k && ($k[0] === '_')) {
                         continue;
                     }
                     $recId = $elem->dataRef;
@@ -143,11 +152,9 @@ class LiveDataService
         session_abort();
         $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
 
-        $this->openDataSrcs();
-
-        $dumpDB = isset($_GET['dumpDB']) ? $_GET['dumpDB'] : false;
-        if ($dumpDB) {
-            $this->dumpDB();
+        if (!$this->openDataSrcs()) {
+            $json = json_encode(['result' => 'failed#no ticket available']);
+            lzyExit($json);
         }
 
         if ($this->lastUpdated == -1) { // means "skip initial update"
@@ -224,7 +231,9 @@ class LiveDataService
                 if (isset($rec->md) && $rec->md) {
                     $value = compileMarkdownStr( $value );
                 }
-                if (isset( $rec->id )) {
+                if (isset( $rec->targSel )) {
+                    $tmp[ $rec->targSel ] = $value;
+                } elseif (isset( $rec->id )) {
                     $tmp[ $rec->id ] = $value;
                 } else {
                     $tmp["[data-ref='$dataKey']"] = $value;
@@ -252,15 +261,12 @@ class LiveDataService
     //        $dataChanged = $set['_db']->readModified( $this->lastUpdated );
         $r = 0;
         if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $dataKey, $m)) {
-//        if (preg_match('/^ (.*?) \* (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2, $s3) = $m;
         } elseif (preg_match('/^ (.*?) \* (.*?) $/x', $dataKey, $m)) {
-//        } elseif (preg_match('/^ (.*?) \* (.*?) $/x', $targetSelector, $m)) {
             list($dummy, $s1, $s2) = $m;
             $s3 = '';
         } else {
             die("Error in targetSelector '$dataKey' -> '*' missing");
-//            die("Error in targetSelector '$targetSelector' -> '*' missing");
         }
 
         foreach ($data as $key => $rec) {
@@ -310,21 +316,4 @@ if (true) {
         }
         session_abort();
     } // checkAbort
-
-
-
-    private function dumpDB()
-    {
-        $out = "My SessionID: ".session_id()."\n";
-        foreach ($this->sets as $setName => $set) {
-            $db = $set['_db'];
-            $s = $db->dumpDb( true, false );
-            $out .= $s;
-        }
-        $returnData['result'] = 'info';
-        $returnData['data'] = base64_encode($out);
-        $json = json_encode($returnData);
-        lzyExit($json);
-    } // dumpDB
-
 } // LiveDataService

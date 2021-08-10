@@ -14,6 +14,8 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'targetSelector', '(optional) Id of DOM element(s). If not specified, id will be derived from elementName.  Use format "A|B|C" to specify a list of ids.', false);
     $this->getArg($macroName, 'pollingTime', '(optional) Polling time, i.e. the time the server waits for new data before giving up and responding with "No new data".', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no visible output is rendered, only the mechanism is set up. So, you need to create the DOM elements corresponding to targetSelectors by other means.', true);
+    $this->getArg($macroName, 'initJs', '[true|false] If true, the update mechanism will be started. (Default: true)', true);
+//    $this->getArg($macroName, 'autoInit', '[true|false] If true, the update mechanism will be started. (Default: true)', true);
     $this->getArg($macroName, 'callback', '(optional) If defined, the js function will be called before updating the correspondint target value.', false);
     $this->getArg($macroName, 'postUpdateCallback', '(optional) If defined, the js function will be called after updating the correspondint target value.', false);
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);

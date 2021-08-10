@@ -75,12 +75,12 @@ class LiveData
         $this->dataSelectors = $dataSelectors;
         $this->targetSelectors = $targetSelectors;
 
-        $tck = new Ticketing(['defaultType' => 'live-data']);
+        $tck = new Ticketing(['defaultType' => 'live-data', 'defaultMaxConsumptionCount' => false]);
         if ($this->ticketHash && $tck->ticketExists($this->ticketHash)) {
             $ticketHash = $tck->createHash(true);
             $tck->updateTicket($this->ticketHash, $tickRec);
         } else {
-            $ticketHash = $tck->createTicket($tickRec, 99, 86400);
+            $ticketHash = $tck->createTicket($tickRec, false, 86400);
         }
         $dataSrcRef = "$ticketHash:set$this->setInx";
 
@@ -89,6 +89,7 @@ class LiveData
         } else {
             $str = $this->renderHTML($dataSrcRef, $values);
         }
+
         return $str;
     } // render
 
@@ -100,7 +101,7 @@ class LiveData
         $jq = <<<EOT
 
 if ($('[data-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
-    liveData = liveDataInit( $execInitialDataUpload, $activateWatchdog );
+    liveDataInit( $execInitialDataUpload, $activateWatchdog );
 }
 
 EOT;
@@ -148,7 +149,8 @@ EOT;
         $this->output = (isset($args['output'])) ? $args['output'] : true;
         $this->mode = (isset($args['mode'])) ? $args['mode'] : false;
         $this->manual = (isset($args['manual'])) ? $args['manual'] : false;
-        $this->initJs = (isset($args['initJs'])) ? $args['initJs'] : true;
+        $this->initJs = (isset($args['initJs'])) ? $args['initJs'] : false;
+//        $this->initJs = (isset($args['autoInit'])) ? $args['autoInit'] : ((isset($args['initJs'])) ? $args['initJs'] : false);
         $this->execInitialDataUpload = (isset($args['execInitialDataUpload'])) ? $args['execInitialDataUpload'] : true;
 
         $this->watchdog = (isset($args['watchdog'])) ? $args['watchdog'] : false;
@@ -169,6 +171,7 @@ EOT;
         ]);
 
         $_SESSION['lizzy']['hasLockedElements'] = false;
+        $_SESSION['lizzy']['ajaxServerAbort'] = false;
     } // init
 
 

@@ -1,5 +1,4 @@
 // LiveData
-//  Note: requires explicit invokation in livedata.php, resp. editable module
 
 "use strict";
 
@@ -27,22 +26,7 @@ function LiveData() {
             }
 
             parent.elemInx++;
-
-            // check dataRef for '=' -> indirect addressing of data element:
-            var m = dataRef.match(/=([-\w]*)/);
-            if (m) {
-                var patt = m[1]? m[1]: 'data-reckey';
-                var str = $this.attr( patt );
-                if (typeof str === 'undefined') {
-                    str = $this.closest('[' + patt + ']').attr('data-reckey');
-                }
-                var re = new RegExp( m[0] );
-                dataRef = dataRef.replace(re, str);
-            }
-            var srcRef = $this.attr('data-datasrc-ref');
-            if (typeof srcRef === 'undefined') {
-                srcRef = $this.closest('[data-datasrc-ref]').attr('data-datasrc-ref');
-            }
+            const srcRef = $this.closest('[data-datasrc-ref]').attr('data-datasrc-ref');
 
             var targSel = $this.attr('id');
             if (typeof targSel === 'undefined') {
@@ -51,7 +35,11 @@ function LiveData() {
             }
 
             var compileMd = Boolean( $this.closest('.lzy-compile-md').length );
-            parent.refs.push({ srcRef: srcRef, dataRef: dataRef, targSel: targSel, md: compileMd });
+            parent.refs.push({
+                srcRef: srcRef,
+                dataRef: dataRef,
+                targSel: '#' + targSel,
+                md: compileMd });
         });
 
         if ((typeof execInitialDataUpload !== 'undefined') && !execInitialDataUpload) {
@@ -76,7 +64,7 @@ function LiveData() {
         }
         var targSel, $rec = null;
         for (var i in lockedElements) {
-            targSel = lockedElements[i];
+            targSel = lockedElements[ i ];
             mylog('livedata markLockedFields: ' + targSel, false);
             $rec = $( targSel );  // direct hit
             if (!$rec.length) {
@@ -115,7 +103,7 @@ function LiveData() {
             return;
         }
         for (var i in frozenElements) {
-            var targSel = frozenElements[i];
+            var targSel = frozenElements[ i ];
             if (targSel === '*') {
                 $('.lzy-live-data').addClass('lzy-element-frozen');
             } else {
@@ -197,7 +185,7 @@ function LiveData() {
             return;
         }
 
-        json = json.replace(/(.*[\]}])\#.*/, '$1');    // remove trailing #comment
+        json = json.replace(/(.*[\]}])#.*/, '$1');    // remove trailing #comment
         try {
             data = JSON.parse( json );
         } catch (e) {
@@ -211,28 +199,32 @@ function LiveData() {
         if (typeof data.result === 'undefined') {
             mylog('livedata: _live_data_service.php reported an error \n==> ' + json);
             return;
+        } else if (data.result.match(/^fail/i)) {
+            var m = data.result.match(/#(.*)/);
+            mylog('livedata: _live_data_service.php reported an error \n==> ' + m[1]);
+            return;
+        } else if (data.result.match(/none/i)) {
+            mylog('livedata updateDOM: ' + timeStamp() + ': No new data', false);
+            // restart update cycle:
+            this.updateLiveData();
+            return;
         }
 
-        // regular response:
-        if (typeof data.data === 'undefined') {
-            mylog('livedata updateDOM: ' + timeStamp() + ': No new data', false);
-
+        // regular response with new data:
+        var goOn = true;
+        if (typeof liveDataCallback === 'function') {
+            goOn = liveDataCallback( data.data );
         } else {
-            var goOn = true;
-            if (typeof liveDataCallback === 'function') {
-                goOn = liveDataCallback( data.data );
-            } else {
-                var preCallback = $('[data-live-pre-update-callback]').attr('data-live-pre-update-callback');
-                if ((typeof preCallback !== 'undefined') && (typeof window[preCallback] === 'function')) {
-                    goOn = window[preCallback]( data.data );
-                }
+            var preCallback = $('[data-live-pre-update-callback]').attr('data-live-pre-update-callback');
+            if ((typeof preCallback !== 'undefined') && (typeof window[preCallback] === 'function')) {
+                goOn = window[preCallback]( data.data );
             }
-            if (goOn) {
-                this.updateDOM(data);
-            }
-            if (typeof liveDataPostUpdateCallback === 'function') {
-                liveDataPostUpdateCallback( data.data );
-            }
+        }
+        if (goOn) {
+            this.updateDOM(data);
+        }
+        if (typeof liveDataPostUpdateCallback === 'function') {
+            liveDataPostUpdateCallback( data.data );
         }
         $('.live-data-update-time').text( timeStamp() );
 
@@ -249,39 +241,15 @@ function LiveData() {
         if ((typeof immediately !== 'undefined') && immediately) {
             this.lastUpdated = 0;
         }
-        var dataRef = null,
-            refs = [],
-            ref = null,
-            m = null,
-            s = null,
-            i = null,
-            tagName = null,
-            $elem = null;
+        var refs = [],
+            ref, i, $elem;
 
+        // get refs, update currDataRef as it might have changed:
         for (i in this.refs) {
             ref = Object.assign({}, this.refs[ i ]);
-            dataRef = ref.dataRef;
-
-            // option: dataRef may contain selector from which to optain actual value:
-            if ((dataRef.charAt(0) === '#') || (dataRef.charAt(0) === '.')) {
-                m = dataRef.match( /(.*?),(.*)/ );
-                if (m) {
-                    $elem = $( m[1] );
-                    tagName = $elem[0].tagName;
-                    if (tagName === 'SELECT') {
-                        s = $(':selected', $elem).val();
-                    } else if (tagName === 'INPUT') {
-                        s = $elem.val();
-                    } else {
-                        s = $elem.text();
-                    }
-                    ref.dataRef = s.trim() + ',' + m[2];
-                } else {
-                    ref.dataRef = dataRef;
-                }
-                $elem = $( '[data-ref="'+dataRef+'"]' );
-                ref.id = '#' + $elem.attr('id');
-            }
+            $elem = $( ref.targSel );
+            ref.origDataRef =  ref.dataRef;
+            ref.dataRef =  parent.resolveDataRef( $elem );
             refs[ i ] = ref;
         }
 
@@ -300,12 +268,12 @@ function LiveData() {
             },
             success: function (json) {
                 parent.liveDataUpdatingIsFine = true; // signal 'still alive'
-                mylog("-- signaling 'liveData still alive' " + timeStamp(true), false);
+                mylog('-- signaling \'liveData still alive\' ' + timeStamp(true), false);
                 parent.ajaxHndl = null;
                 if (json !== 'abort') {
                     return parent.handleAjaxResponse(json);
                 } else {
-                    mylog('livedata aborted');
+                    mylog('livedata aborted', false);
                 }
             }
         });
@@ -313,9 +281,53 @@ function LiveData() {
 
 
 
+
+    this.resolveDataRef = function( $this ) {
+        var $elem, tagName, s, m, rec, dataRecKey;
+        var elem = '';
+        const dataRef = $this.closest('[data-ref]').attr('data-ref');
+
+        m = dataRef.match( /(.*?)(,.*)/ );
+        if (m) {
+            rec = m[1];
+            elem = m[2];
+        } else {
+            rec = dataRef;
+        }
+
+        // check '=data-reckey':
+        m = rec.match(/=([-\w]*)/);
+        if (m) {
+            dataRecKey = m[1]? m[1]: 'data-reckey';
+            rec = $this.closest('[' + dataRecKey + ']').attr( dataRecKey );
+
+        // check '#reckey' or '.reckey':
+        } else {
+            if (rec.match(/[#.][-\w]+/)) {
+                if (rec.charAt(0) === '.') {
+                    $elem = $this.closest( rec );
+                } else {
+                    $elem = $(rec);
+                }
+                tagName = $elem[0].tagName;
+                if (tagName === 'SELECT') {
+                    s = $(':selected', $elem).val();
+                } else if (tagName === 'INPUT') {
+                    s = $elem.val();
+                } else {
+                    s = $elem.text();
+                }
+                rec = s.trim();
+            }
+        }
+        return rec + elem;
+    }; // resolveDataRef
+
+
+
     this.dumpDB = function () {
         var parent = this;
-        var url = appRoot + "_lizzy/extensions/livedata/backend/_live_data_service.php";
+        var url = appRoot + '_lizzy/extensions/livedata/backend/_live_data_service.php';
         $.ajax({
             url: url + "?dumpDB=true",
             type: 'POST',
@@ -360,7 +372,7 @@ function LiveData() {
             mylog('livedata: last ajax call aborted');
         }
         $.ajax({
-            url: appRoot + "_lizzy/_ajax_server.php?abort=true",
+            url: appRoot + '_lizzy/_ajax_server.php?abort=true',
             type: 'GET',
             cache: false,
             success: function () {
@@ -373,19 +385,15 @@ function LiveData() {
 
 
 
-
+liveData = new LiveData();
 
 function liveDataInit( execInitialDataUpload, activateWatchdog ) {
-    if (!liveData) {
-        liveData = new LiveData();
-    }
-    liveData.init( execInitialDataUpload );
-    
+    liveData.init(execInitialDataUpload);
+
     if (typeof activateWatchdog !== 'undefined' && activateWatchdog) {
         mylog('-- starting liveData watchdog ' + timeStamp(true));
         liveData.startWatchdog();
     }
-    return liveData;
 } // liveDataInit
 
 
