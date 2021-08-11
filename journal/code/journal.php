@@ -261,7 +261,7 @@ EOT;
             '_id'                       => $this->id,
             '_supportBlobType'          => $this->supportBlobType,
         ];
-$args['defaultMaxConsumptionCount'] = -1;
+        $args['defaultMaxConsumptionCount'] = -1;
         return parent::render($args, true);
     } // initDataRef
 
