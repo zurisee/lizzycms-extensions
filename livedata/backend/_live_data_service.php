@@ -18,6 +18,5 @@ require_once SYSTEM_PATH . 'ticketing.class.php';
 require_once SYSTEM_PATH . 'extensions/livedata/backend/live_data_service.class.php';
 
 $serv = new LiveDataService();
-$response = $serv->getChangedData();
-lzyExit($response);
+$serv->getChangedData(); // exits and returns response
 

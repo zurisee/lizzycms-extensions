@@ -24,6 +24,41 @@ class LiveDataService
 
 
 
+    public function getChangedData()
+    {
+        session_abort();
+        $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
+
+        if (!$this->openDataSrcs()) {
+            $json = json_encode(['result' => 'failed#no ticket available']);
+            lzyExit($json);
+        }
+
+        if ($this->lastUpdated == -1) { // means "skip initial update"
+            $this->lastUpdated = microtime(true);
+        }
+        if (!$this->lastUpdated) {
+            $this->lastUpdated = microtime( true );
+            $returnData = $this->assembleResponse();
+            $returnData['result'] = 'Ok';
+
+        } else {
+            if ($this->awaitDataChange()) {
+                $returnData = $this->assembleResponse();
+                $returnData['result'] = 'Ok';
+            } else {
+                $returnData['result'] = 'None';
+            }
+        }
+
+        $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001 );
+        $json = json_encode($returnData);
+        lzyExit($json);
+    } // getChangedData
+
+
+
+
     private function getLiveElements()
     {
         if (!isset($_POST['ref'])) {
@@ -143,41 +178,6 @@ class LiveDataService
         }
         return $outData;
     } // assembleResponse
-
-
-
-
-    public function getChangedData()
-    {
-        session_abort();
-        $this->lastUpdated = isset($_POST['lastUpdated']) ? floatval($_POST['lastUpdated']) : false;
-
-        if (!$this->openDataSrcs()) {
-            $json = json_encode(['result' => 'failed#no ticket available']);
-            lzyExit($json);
-        }
-
-        if ($this->lastUpdated == -1) { // means "skip initial update"
-            $this->lastUpdated = microtime(true);
-        }
-        if (!$this->lastUpdated) {
-            $this->lastUpdated = microtime( true );
-            $returnData = $this->assembleResponse();
-            $returnData['result'] = 'Ok';
-
-        } else {
-            if ($this->awaitDataChange()) {
-                $returnData = $this->assembleResponse();
-                $returnData['result'] = 'Ok';
-            } else {
-                $returnData['result'] = 'None';
-            }
-        }
-
-        $returnData['lastUpdated'] = str_replace(',', '.', microtime(true) + 0.000001 );
-        $json = json_encode($returnData);
-        lzyExit($json);
-    } // getChangedData
 
 
 
@@ -308,6 +308,9 @@ if (true) {
             return;
         }
         $abortRequest = $_SESSION['lizzy']['ajaxServerAbort'];
+        if (is_int($abortRequest)) {
+            $abortRequest = ($abortRequest > (time() - 101)); // ignore old abortRequests
+        }
         if ($abortRequest !== false) {
             writeLog("live-data ajax-server aborting (\$_SESSION['lizzy']['ajaxServerAbort'] = {$_SESSION['lizzy']['ajaxServerAbort']})");
             $_SESSION['lizzy']['ajaxServerAbort'] = false;

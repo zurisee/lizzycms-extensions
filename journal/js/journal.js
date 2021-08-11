@@ -33,6 +33,7 @@ function Journal() {
             if ($(this).hasClass('lzy-activated')) {
                 return;
             }
+            liveData.abortAjax();
             $(this).addClass('lzy-activated');
             const $journalElem = $(this).closest('.lzy-journal');
             parent.srcRef = $journalElem.attr('data-datasrc-ref');
@@ -286,6 +287,7 @@ function journalOnCloseCallback()
     if (journal.journalLocked) {
         journal.unlockRec();
     }
+    liveData.init(true);
 } // journalOnCloseCallback
 
 
@@ -307,6 +309,10 @@ $(window).bind('beforeunload', function() {
 });
 
 
+
+$('.lzy-textarea-autogrow textarea.lzy-journal-entry').on('input', function() {
+    this.parentNode.dataset.replicatedValue = this.value;
+});
 
 // $.fn.journal = function () {
 //     // initialize:

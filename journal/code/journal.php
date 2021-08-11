@@ -18,6 +18,7 @@ $this->page->addModules(
     '~sys/extensions/journal/css/_journal.css,'.
     '~sys/extensions/journal/js/journal.js,'.
     'POPUPS,'.
+    'TOOLTIPSTER,'.
     '~sys/js/editor.js,'.
     '~sys/third-party/simplemde/simplemde.min.js,~sys/third-party/simplemde/simplemde.min.css',
 );
@@ -68,19 +69,18 @@ $this->addMacro($macroName, function () {
 
 class Journal extends LiveData
 {
-    public function __construct($lzy, $args)
+    public function __construct($lzy, $args = [])
     {
-        $this->lzy = $lzy;
         $this->page = $lzy->page;
-        $this->args = $args;
+        parent::__construct($lzy, $args);
     } // __construct
 
 
 
     public function render( $args = [], $returnAttrib = false )
     {
-        if (isset($_SESSION['lizzy']['ajaxServerAbort'])) {
-            unset( $_SESSION['lizzy']['ajaxServerAbort'] );
+        if (!isset($_SESSION['lizzy']['ajaxServerAbort'])) {
+            $_SESSION['lizzy']['ajaxServerAbort'] = false;
         }
         $GLOBALS['lizzy']['journalCount']++;
         $inx = $this->inx = $GLOBALS['lizzy']['journalCount'];
@@ -161,13 +161,6 @@ EOT;
            </div><!-- /lzy-textarea-autogrow-->
 
 EOT;
-                $jq = <<<EOT
-$('.lzy-textarea-autogrow textarea.lzy-journal-entry').on('input', function() {
-    this.parentNode.dataset.replicatedValue = this.value;
-});
-EOT;
-
-                $this->page->addJq($jq);
             } else {
                 $html .= <<<EOT
 
@@ -234,13 +227,12 @@ EOT;
 
         if ($this->liveData) {
             if (!$GLOBALS['lizzy']['journalLiveDataInitialized']) {
-                $liveData = @$args['liveData'];
-                if ($liveData) {
-                    $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
-                }
+                $this->page->addModules('~sys/extensions/livedata/js/live_data.js');
                 $GLOBALS['lizzy']['journalLiveDataInitialized'] = true;
             }
         }
+        $args['initJs'] = $this->liveData;
+
         if ($this->writePermission) {
             if ($this->writePermission !== true) {
                 $this->writePermission = $this->lzy->auth->checkPrivilege( $this->writePermission );
@@ -265,12 +257,11 @@ EOT;
             '_useRecycleBin'            => $this->useRecycleBin,
             '_writePermission'          => $this->writePermission,
             '_editableBy'               => $this->editableBy,
-            '_entryAggregationPeriod'   => $this->entryAggregationPeriod,
             '_dataRef'                  => $this->dataSelector,
             '_id'                       => $this->id,
             '_supportBlobType'          => $this->supportBlobType,
         ];
-
+$args['defaultMaxConsumptionCount'] = -1;
         return parent::render($args, true);
     } // initDataRef
 
