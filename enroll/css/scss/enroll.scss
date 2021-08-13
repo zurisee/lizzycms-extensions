@@ -28,6 +28,8 @@ body {
         .lzy-form {
             position: relative;
         }
+
+        // add mode:
         &.lzy-enroll-add-entry {
             .lzy-delete-rec,
             .lzy-form-delete-rec,
@@ -52,6 +54,7 @@ body {
             }
         }
 
+        // modify/delete mode:
         &.lzy-enroll-delete-entry,
         &.lzy-enroll-modify-entry {
             .lzy-form-field-wrapper-3 .lzy-form-required-marker {
@@ -126,7 +129,7 @@ body {
         display: none;
     }
 }
-.lzy-form-response {
+.lzy-enroll-dialog .lzy-form-response {
     display: none;
 }
 .lzy-enroll-aux-field {
