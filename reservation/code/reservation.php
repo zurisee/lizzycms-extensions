@@ -49,7 +49,7 @@ class Reservation extends Forms
     protected $args, $dataFile, $deadline, $maxSeats, $maxSeatsPerReservation, $preReserveThreshold;
     protected $waitingListLength, $moreThanThreshold, $confirmationEmail, $emailField;
     protected $notify, $notifyFrom, $scheduleAgent, $reservationCallback;
-    protected $formHash, $ds, $resTick, $resSpecificArgs, $requireEmail;
+    protected $ds, $resTick, $resSpecificArgs, $requireEmail;
 
     public function __construct($lzy, $args)
     {
