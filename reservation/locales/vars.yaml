@@ -108,6 +108,9 @@ lzy-reservation-email-sent:
 #  de: 'Wenn Sie Ihre E-Mail Adresse hier eingeben, erhalten Sie eine Bestästigung per E-Mail.'
 #  _:  'If you fill in your e-mail address, we will send you confirmation message.'
 
+lzy-reservation-infinite:
+  de: 'unbeschränkt'
+  _:  'unlimited'
 
 __END__
 '':

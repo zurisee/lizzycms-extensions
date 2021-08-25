@@ -185,7 +185,8 @@ class Reservation extends Forms
                 'defaultValidityPeriod' => 900, // 15 min
                 'defaultMaxConsumptionCount' => 1,
             ]);
-
+        }
+        if ($this->maxSeats) {
             $pendingRes = $this->getPendingReservations();
 
             $seatsAvailableStr = $seatsAvailable = $this->maxSeats - $nReservations - $pendingRes;
@@ -193,12 +194,8 @@ class Reservation extends Forms
                 $seatsAvailableStr = '{{ lzy-reservation-more-than-seats-available }}';
             }
         } else {
-            $seatsAvailableStr = '';
+            $seatsAvailableStr = '{{ lzy-reservation-infinite }}';
             $seatsAvailable = PHP_INT_MAX;
-        }
-
-        if ($formHeader = @$args['formHeader']) {
-            $args['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailableStr, $formHeader);
         }
         if (!$this->responseToClient && ($seatsAvailable <= 0)) {
             $out = parent::renderDataTable();
@@ -243,7 +240,7 @@ class Reservation extends Forms
 
         $headArgs['formHeader'] = isset($headArgs['formHeader'])? $headArgs['formHeader']: '';
         if (strpos($headArgs['formHeader'], '{seatsAvailable}') !== 0) {
-            $headArgs['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailable, $headArgs['formHeader']);
+            $headArgs['formHeader'] = str_replace('{seatsAvailable}', $seatsAvailableStr, $headArgs['formHeader']);
         }
 
         if ($formHint) {
@@ -447,7 +444,7 @@ class Reservation extends Forms
         }
 
         $existingReservations = $this->countReservations();
-        if ($this->maxSeats && (($existingReservations + $requestedSeats) > $this->maxSeats)) {
+        if ($this->maxSeats && (($existingReservations + intval($requestedSeats) > $this->maxSeats))) {
             $this->errorDescr[ $formId ]['_announcement_'] = '{{ lzy-reservation-full-error }}';
             $this->skipRenderingForm = true;
             return;
@@ -494,11 +491,15 @@ class Reservation extends Forms
 
     private function getPendingReservations()
     {
-        $hash = @$_SESSION["lizzy"][ $_SESSION["lizzy"]["pathToPage"] ]["tickets"]["pending-reservations"];
-        $pendingRes = $this->resTick->sum('nSeats', $hash);
-        // if reloading page one ticket is pending for ourself, so discount it:
-        if (isset($_SESSION['lizzy']['reservation'][$this->inx])) {
-            $pendingRes = max(0, $pendingRes - $this->maxSeatsPerReservation);
+        $hash = @$_SESSION['lizzy'][ $_SESSION['lizzy']['pathToPage'] ]['tickets']['pending-reservations'];
+        if ($this->preReserveSeats) {
+            $pendingRes = $this->resTick->sum('nSeats', $hash);
+            // if reloading page one ticket is pending for ourself, so discount it:
+            if (isset($_SESSION['lizzy']['reservation'][$this->inx])) {
+                $pendingRes = max(0, $pendingRes - $this->maxSeatsPerReservation);
+            }
+        } else {
+            $pendingRes = 0;
         }
         return $pendingRes;
     } // getPendingReservations
