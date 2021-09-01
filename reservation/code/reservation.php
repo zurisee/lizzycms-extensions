@@ -224,7 +224,7 @@ class Reservation extends Forms
                 $resSpecificArgs[$key] = $value;
 
             } else {
-                if (isset($value[ 0 ])) {
+                if (is_array($value) && isset($value[ 0 ])) {
                     if (strpos(SUPPORTED_TYPES, $value[ 0 ]) !== false) {
                         $value['type'] = $value[ 0 ];
                         unset( $value[ 0 ] );
