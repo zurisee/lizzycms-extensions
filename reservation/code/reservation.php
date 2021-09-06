@@ -318,6 +318,7 @@ class Reservation extends Forms
                     'name' => 'reservation-count',
                     'labelInOutput' => '-lzy-reservation-count-output-label',
                     'value' => 1,
+                    'class' => 'lzy-form-short-field',
                 ];
 
         } else {
@@ -331,6 +332,7 @@ class Reservation extends Forms
                     'min' => 1,
                     'max' => min($this->maxSeatsPerReservation, $seatsAvailable),
                     'value' => 1,
+                    'class' => 'lzy-form-short-field',
                 ];
         }
 
