@@ -82,13 +82,13 @@
 
 {{ reveal(
 	label: '{{ lzy-extended-settings }}',
-	target: '#reveal-useradmin-misc',
+	target: '#reveal-useradmin-extended-settings',
 	class: 'lzy-reveal-controller-elem lzy-reveal-icon',
 	frame: true,
 	) 
 }}
 
-::: #reveal-useradmin-misc
+::: #reveal-useradmin-extended-settings
 
 {{ formelem(
 	label: '-lzy-access-code-enabled',
