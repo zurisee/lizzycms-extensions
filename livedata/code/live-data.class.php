@@ -14,7 +14,9 @@ class LiveData
     public function __construct($lzy, $args = [])
     {
         $this->lzy = $lzy;
-        $GLOBALS['lizzy']['liveDataInx']++;
+        if (!@$args[ticketHash]) {
+            $GLOBALS['lizzy']['liveDataInx']++;
+        }
         $this->setInx = $GLOBALS['lizzy']['liveDataInx'];
         $this->inx = 0; // index per set
         $this->args = $args;
@@ -38,7 +40,7 @@ class LiveData
 
         $tickRec = [];
         if (@$args['tickRecCustomFields']) {
-            $tickRec["set$this->setInx"] = $args['tickRecCustomFields'];
+            $tickRec[$setId] = $args['tickRecCustomFields'];
         }
 
         // dataSelector can be scalar or array:
@@ -105,6 +107,9 @@ if ($('[data-datasrc-ref]').length && (typeof LiveData !== 'undefined')) {
 }
 
 EOT;
+        if ($this->timeout) {
+            $jq = $this->initiateTimeout($jq);
+        }
         if ($inject && !$GLOBALS['lizzy']['liveDataInitialized']) {
             $this->lzy->page->addJq( $jq );
             $GLOBALS['lizzy']['liveDataInitialized'] = true;
@@ -135,6 +140,9 @@ EOT;
         } else {
             $this->dataSelector = (isset($args['dataSel'])) ? $args['dataSel'] : '*,*';
         }
+        if (strpos($this->dataSelector, '.') !== false) {
+            $this->dataSelector = str_replace('.', ',', $this->dataSelector);
+        }
 
         $this->ticketHash = (isset($args['ticketHash'])) ? $args['ticketHash'] : false;
 
@@ -150,16 +158,17 @@ EOT;
         $this->mode = (isset($args['mode'])) ? $args['mode'] : false;
         $this->manual = (isset($args['manual'])) ? $args['manual'] : false;
         $this->initJs = (isset($args['initJs'])) ? $args['initJs'] : false;
-//        $this->initJs = (isset($args['autoInit'])) ? $args['autoInit'] : ((isset($args['initJs'])) ? $args['initJs'] : false);
         $this->execInitialDataUpload = (isset($args['execInitialDataUpload'])) ? $args['execInitialDataUpload'] : true;
 
-        $this->watchdog = (isset($args['watchdog'])) ? $args['watchdog'] : false;
+        $this->watchdog = (isset($args['watchdog'])) ? $args['watchdog'] : true;
 
         if ($this->manual !== 'silent') {
             $this->manual = !$this->output || (strpos($this->mode, 'manual') !== false);
         }
         $this->callback = (isset($args['callback'])) ? $args['callback'] : false;
         $this->postUpdateCallback = (isset($args['postUpdateCallback'])) ? $args['postUpdateCallback'] : false;
+
+        $this->timeout = (isset($args['timeout'])) ? $args['timeout'] : '10min';
 
         if ($this->initJs) {
             $this->renderJs( true, $this->execInitialDataUpload);
@@ -216,6 +225,24 @@ $str
 EOT;
         return $str;
     } // renderHTML
+
+
+
+    private function initiateTimeout(string $jq): string
+    {
+        $jq .= <<<EOT
+
+mylog('-- starting timeout: {$this->timeout}');
+freezeWindowAfter( 
+    '{$this->timeout}', false, function() {
+        mylog('liveData: timed out -> signal stopping watchdogs', false);
+        abortWatchdogs = true; 
+    }
+);
+
+EOT;
+        return $jq;
+    } // initiateTimeout
 
 } // class
 

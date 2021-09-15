@@ -350,6 +350,10 @@ function LiveData() {
     
     this.startWatchdog = function() {
         const parent = this;
+        if (abortWatchdogs) { // global signal to abort all watchdogs
+            mylog('-- liveUpdate Watchdog stopped');
+            return;
+        }
         setTimeout(function () {
             if (!parent.liveDataUpdatingIsFine) {
                 if (parent.ajaxHndl === null) {

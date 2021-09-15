@@ -6,7 +6,6 @@
 
 define('SYSTEM_PATH',           '../../../');
 define('PATH_TO_APP_ROOT',      SYSTEM_PATH.'../');
-define('DEFAULT_POLLING_TIME', 	60);		 // s
 define('MAX_POLLING_TIME', 	    90);		 // s
 define('POLLING_INTERVAL', 	330000);		 // us
 

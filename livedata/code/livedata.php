@@ -17,6 +17,10 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'initJs', '[true|false] If true, the update mechanism will be started. (Default: true)', true);
     $this->getArg($macroName, 'callback', '(optional) If defined, the js function will be called before updating the correspondint target value.', false);
     $this->getArg($macroName, 'postUpdateCallback', '(optional) If defined, the js function will be called after updating the correspondint target value.', false);
+    $this->getArg($macroName, 'watchdog', '[true|false] If true, a watchdog routine will be running in the background, '.
+        'regularly checking whether communication with the server is still working. Default: true.', true);
+    $this->getArg($macroName, 'timeout', '[time] After timing out, live updates will stop and the window will be frozen. '.
+        'Time defined as string, e.g. "1hour". Default: 10min.', '10min');
     $this->disablePageCaching = $this->getArg($macroName, 'disableCaching', '(false) Enables page caching (which is disabled for this macro by default). Note: only active if system-wide caching is enabled.', true);
 
     if ($file === 'help') {

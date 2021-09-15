@@ -1,5 +1,7 @@
 <?php
 
+define('DEFAULT_POLLING_TIME', 	60);		 // s
+
 class LiveDataService
 {
     public function __construct()
