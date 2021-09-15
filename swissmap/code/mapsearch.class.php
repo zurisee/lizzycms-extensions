@@ -94,8 +94,8 @@ EOT;
         }
 
         $lang = '';
-        if ($GLOBALS['globalParams']['lang']) {
-            $lang = "?lang={$GLOBALS['globalParams']['lang']}";
+        if ($GLOBALS['lizzy']['lang']) {
+            $lang = "?lang={$GLOBALS['lizzy']['lang']}";
         }
 
         $out = "\t<div id='$id' class='lzy-swissmap-container'></div>\n";

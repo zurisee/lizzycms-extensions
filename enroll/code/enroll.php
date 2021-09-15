@@ -66,7 +66,7 @@ $this->addMacro($macroName, function () {
 
 function resetScheduleFile()
 {
-    $thisSrc = $GLOBALS['globalParams']['pathToPage'];
+    $thisSrc = $GLOBALS['lizzy']['pathToPage'];
     $file = SCHEDULE_FILE;
     $schedule = getYamlFile($file);
     $modified = false;

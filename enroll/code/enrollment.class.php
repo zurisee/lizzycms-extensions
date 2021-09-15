@@ -5,7 +5,7 @@ define('ENROLLMENT_SPECIFIC_ELEMENTS', ',nNeeded,nReserve,listname,header,toolti
     'scheduleAgent,n_needed,n_reserve,');
 
 require_once SYSTEM_PATH.'forms.class.php';
-$GLOBALS['globalParams']['enrollCnt'] = 0;
+$GLOBALS['lizzy']['enrollCnt'] = 0;
 
 class Enrollment extends Forms
 {
@@ -16,8 +16,8 @@ class Enrollment extends Forms
                 unset($args[ $key ]);
             }
         }
-        $GLOBALS['globalParams']['enrollCnt']++;
-        $this->enrollInx = $GLOBALS['globalParams']['enrollCnt'];
+        $GLOBALS['lizzy']['enrollCnt']++;
+        $this->enrollInx = $GLOBALS['lizzy']['enrollCnt'];
         $this->inx = $inx;
         $this->lzy = $lzy;
         $this->args = $args;
@@ -34,12 +34,12 @@ class Enrollment extends Forms
 
         // determine where to store data:
         if ($args['globalFile']) {
-            $GLOBALS['globalParams']['enrollFile'] = $args['globalFile'];
+            $GLOBALS['lizzy']['enrollFile'] = $args['globalFile'];
         }
         if ($args['file']) {
             $this->file = $args['file'] ? $args['file'] : '~page/enroll.yaml';
-        } elseif (isset($GLOBALS['globalParams']['enrollFile']) && $GLOBALS['globalParams']['enrollFile']) {
-            $this->file = $GLOBALS['globalParams']['enrollFile'];
+        } elseif (isset($GLOBALS['lizzy']['enrollFile']) && $GLOBALS['lizzy']['enrollFile']) {
+            $this->file = $GLOBALS['lizzy']['enrollFile'];
         } else {
             $this->file = '~page/enroll.yaml';
         }
@@ -408,7 +408,7 @@ class Enrollment extends Forms
                         die("Error: enroll() -> time pattern not recognized: '$freq'");
                     }
                     $newSchedule[] = [
-                        'src' => $GLOBALS['globalParams']['pathToPage'],
+                        'src' => $GLOBALS['lizzy']['pathToPage'],
                         'time' => $time,
                         'from' => date('Y-m-d H:i', $from),
                         'till' => date('Y-m-d H:i', $till),
@@ -661,10 +661,10 @@ EOT;
     private function renderDialog()
     {
         list($dialog, $hash) = $this->_renderDialog();
-        if (isset($GLOBALS['globalParams']['enroll_form_created'][$hash])) {
+        if (isset($GLOBALS['lizzy']['enroll_form_created'][$hash])) {
             return $hash; // already rendered
         }
-        $GLOBALS['globalParams']['enroll_form_created'][$hash] = true;
+        $GLOBALS['lizzy']['enroll_form_created'][$hash] = true;
 
         $dialog .= $this->createErrorMsgs();
         $this->trans->page->addBodyEndInjections( $dialog );
@@ -708,7 +708,7 @@ EOT;
             $hash += crc32(json_encode($formElems));
         }
         $this->formHash = $hash;
-        if (isset($GLOBALS['globalParams']['enroll_form_created'][$hash])) {
+        if (isset($GLOBALS['lizzy']['enroll_form_created'][$hash])) {
             return ['', $hash]; // already rendered
         }
 
