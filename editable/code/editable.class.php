@@ -2,8 +2,8 @@
 
 define('DEFAULT_EDITABLE_DATA_FILE', 'editable.yaml');
 
-$GLOBALS['globalParams']['editaleSetInx'] = 0;
-$GLOBALS['globalParams']['editableInitialized'] = false;
+$GLOBALS['lizzy']['editaleSetInx'] = 0;
+$GLOBALS['lizzy']['editableInitialized'] = false;
 
 if (isset($this->page)) {
     $page = $this->page;
@@ -51,17 +51,19 @@ class Editable extends LiveData
         }
 
         // initialize Editable mechanism:
-        if (!$GLOBALS['globalParams']['editableInitialized']) {
+        if (!$GLOBALS['lizzy']['editableInitialized']) {
             $this->page->addModules('~sys/extensions/editable/css/editable.css');
             if ($args['edEnabled']) {
                 $this->page->addModules('~sys/extensions/editable/js/editable.js');
                 $jq = <<<EOT
 
-editables[ editableInx ] = new Editable( this );
-editables[ editableInx ].init();
-editableInx++;
+editables = new Editable( this );
+editables.init();
 
 EOT;
+                if (@$args['liveData']) {
+                    $jq .= "liveDataInit(true, false);\n";
+                }
                 $this->page->addJq( $jq );
             } else {
                 $this->page->addJq('mylog("Editable feature disabled - insufficient privilege.");');
@@ -80,8 +82,7 @@ EOT;
             $this->page->addJq( $jq );
             $this->page->addModules( 'TOOLTIPSTER' );
 
-
-            $GLOBALS['globalParams']['editableInitialized'] = true;
+            $GLOBALS['lizzy']['editableInitialized'] = true;
         }
 
         if (isset($args['allowMultiLine']) && $args['allowMultiLine']) {
@@ -109,8 +110,8 @@ EOT;
 
     public function render( $args = [], $returnAttrib = false )
     {
-        $GLOBALS['globalParams']['editaleSetInx']++;
-        $this->editaleSetInx = $GLOBALS['globalParams']['editaleSetInx'];
+        $GLOBALS['lizzy']['editaleSetInx']++;
+        $this->editaleSetInx = $GLOBALS['lizzy']['editaleSetInx'];
 
         $args = $this->prepareArguments( $args );
 
@@ -215,7 +216,6 @@ EOT;
                     $args['dataSelector'] = '*';
                 }
             } else {
-                $editaleFldInx1 = $this->editaleFldInx;
                 $args['dataSelector'] = "elem-$setInx-$this->editaleFldInx";
                 if (@$args['nFields']) {
                     $n = intval($args['nFields']);
@@ -230,6 +230,9 @@ EOT;
         $args['id'] = @$args['id']? translateToClassName($args['id']) : '';
         $args['wrapperClass'] = @$args['class'] ? " {$args['class']}" : '';
 
+        if (@$args['timeout']) {
+            $args['freezeFieldAfter'] = $args['timeout']; // timeout is synonym for freezeFieldAfter
+        }
         if (@$args['freezeFieldAfter']) {
             $args['freezeThreshold'] = time() - intval($args['freezeFieldAfter']);
             $this->freezeFieldAfter = intval($args['freezeFieldAfter']);
@@ -284,7 +287,7 @@ EOT;
                 $args['dataSource'] = $dataSource1;
             }
         } else {
-            $args['dataSource'] = $GLOBALS['globalParams']['pageFolder'] . DEFAULT_EDITABLE_DATA_FILE;
+            $args['dataSource'] = $GLOBALS['lizzy']['pageFolder'] . DEFAULT_EDITABLE_DATA_FILE;
         }
         $this->args = $args;
         return $args;

@@ -85,7 +85,7 @@ class EditableBackend extends LiveDataService
 
         if (!$this->openDB()) {
             $cmd = str_replace(['ds', '_', 'srcRef'], '', implode('', array_keys($_GET)));
-            mylog("### openDB -> failed: $cmd");
+            mylog("### editableBackend:openDB -> failed: $cmd");
             $this->sendResponse( false, "failed#openDB:$cmd");
         }
 
@@ -344,6 +344,10 @@ class EditableBackend extends LiveDataService
         $ticketRec = $tick->consumeTicket($srcRef);
         $this->ticketRec = $ticketRec;
 
+        if (!is_array($this->ticketRec)) {
+            return false;
+        }
+
         // loop over sets:
         foreach ($ticketRec as $setInx => $set) {
             if (strpos($setInx, 'set') === false) {
@@ -363,10 +367,6 @@ class EditableBackend extends LiveDataService
             ]);
         }
         $this->set = &$this->sets[ $this->setInx ];
-        if (!in_array($this->dataRef, array_values($this->set))) {
-            mylog("### openDB -> failed: dataRef '$this->dataRef' unknown");
-            $this->sendResponse( false, "failed#openDB: dataRef unknown");
-        }
         return true;
     } // openDB
 
