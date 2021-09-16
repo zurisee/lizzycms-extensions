@@ -4,11 +4,12 @@
 	type: "form-head", 
 	id: 'lzy-edit-data-form-#tableCounter#',
 	class: 'lzy-form lzy-edit-data-form',
-	file: '~/data/users.yaml',
+	file: '~/config/users.yaml',
 	ticketHash: #tickHash#,
 	cancelButtonCallback: false,
 	validate: true,
 	labelColons: true,
+	skipConfirmation: true,
 	)
 }}
 
