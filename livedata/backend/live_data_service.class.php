@@ -80,7 +80,7 @@ class LiveDataService
         $elementRefs = $this->getLiveElements();
 
         // sort elements per dataSrc:
-        foreach ($elementRefs as $i => $ref) {
+        foreach ($elementRefs as $ref) {
             if ($ref->srcRef) {
                 $setName = preg_replace('/.*?:/', '', $ref->srcRef);;
             } else {

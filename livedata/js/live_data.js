@@ -14,13 +14,13 @@ function LiveData() {
 
 
     this.init = function( execInitialDataUpload ) {
-        var parent = this;
+        const parent = this;
         this.refs = [];
 
         // collect all references within page:
         $('[data-ref]').each(function () {
             const $this = $( this );
-            var dataRef = $this.attr('data-ref');
+            const dataRef = $this.attr('data-ref');
             if (!dataRef) {
                 return;
             }
@@ -28,18 +28,19 @@ function LiveData() {
             parent.elemInx++;
             const srcRef = $this.closest('[data-datasrc-ref]').attr('data-datasrc-ref');
 
-            var targSel = $this.attr('id');
+            let targSel = $this.attr('id');
             if (typeof targSel === 'undefined') {
                 targSel = 'lzy-livedata-0' + parent.elemInx;
                 $this.attr('id', targSel);
             }
 
-            var compileMd = Boolean( $this.closest('.lzy-compile-md').length );
+            const compileMd = Boolean( $this.closest('.lzy-compile-md').length );
             parent.refs.push({
                 srcRef: srcRef,
                 dataRef: dataRef,
                 targSel: '#' + targSel,
-                md: compileMd });
+                md: compileMd,
+            });
         });
 
         if ((typeof execInitialDataUpload !== 'undefined') && !execInitialDataUpload) {
@@ -62,8 +63,8 @@ function LiveData() {
         if (typeof lockedElements !== 'object') {
             return;
         }
-        var targSel, $rec = null;
-        for (var i in lockedElements) {
+        let targSel, $rec = null;
+        for (let i in lockedElements) {
             targSel = lockedElements[ i ];
             mylog('livedata markLockedFields: ' + targSel, false);
             $rec = $( targSel );  // direct hit
@@ -102,8 +103,8 @@ function LiveData() {
         if (typeof frozenElements !== 'object') {
             return;
         }
-        for (var i in frozenElements) {
-            var targSel = frozenElements[ i ];
+        for (let i in frozenElements) {
+            const targSel = frozenElements[ i ];
             if (targSel === '*') {
                 $('.lzy-live-data').addClass('lzy-element-frozen');
             } else {
@@ -115,17 +116,19 @@ function LiveData() {
 
 
     this.updateDOM = function( data ) {
+        const parent = this;
         this.markLockedFields(data.locked);
         this.markFrozenFields(data.frozen);
         if (typeof data.data !== 'object') {
             return;
         }
 
-        var $targ = null;
-        var updatedElems = '';
-        for (var targSel in data.data) {
+        let $targ = null;
+        let updatedElems = '';
+        let redrawDataTables = false;
+        for (let targSel in data.data) {
             updatedElems += targSel + ' ';
-            var val = data.data[targSel];
+            const val = data.data[targSel];
 
             // targSel can address multiple instances, therefore '.each()':
             $( targSel ).each( function() {
@@ -137,32 +140,57 @@ function LiveData() {
                     return;
                 }
 
-                var goOn = true;
-                var callback = $targ.attr('data-live-callback');
+                let goOn = true;
+                const callback = $targ.attr('data-live-callback');
                 if (typeof window[callback] === 'function') {
                     mylog('livedata callback: ' + targSel + ' <= ' + val, false);
                     goOn = window[callback]( targSel, val );
                 }
 
                 if (goOn) {
-                    var tag = $targ.prop('tagName');
-                    var valTags = 'INPUT,SELECT,TEXTAREA';
-                    if (valTags.includes(tag)) {
-                        $targ.val(val);
-                    } else {
-                        $targ.html(val);
+                    let dataTable = false;
+                    if (($targ.closest('.dataTable').length > 0)) {
+                        const tableInx = $targ.closest('[data-inx]').attr('data-inx');
+                        if (typeof tableInx !== 'undefined') {
+                            dataTable = lzyTable[ parseInt(tableInx) ];
+                            redrawDataTables = true;
+                        }
                     }
-                    mylog('livedata updateDOM: ' + targSel + ' <= ' + val, false);
+
+                    const tag = $targ.prop('tagName');
+                    const valTags = 'INPUT,SELECT,TEXTAREA';
+                    if (dataTable) {
+                        dataTable.cell( $targ[0] ).data( val );
+                    } else {
+                        if (valTags.includes(tag)) {
+                            $targ.val(val);
+                        } else {
+                            $targ.html(val);
+                        }
+                    }
+                    mylog('livedata:updateDOM: ' + targSel + ' <= ' + val, false);
                 }
             });
         } // for
+
+        // if DataTables are active, we need to redraw them:
+        if (redrawDataTables) {
+            mylog('liveData:updateDOM: redraw table', false);
+            for (let i=1; true; i++) {
+                const dataTable = lzyTable[i];
+                if (typeof dataTable === 'undefined') {
+                    break;
+                }
+                dataTable.draw();
+            }
+        }
 
         updatedElems = updatedElems.replace(/\[data-ref=/g, '');
         updatedElems = updatedElems.replace(/]/g, '');
         mylog('livedata updated: ' + updatedElems, false);
 
         if ($targ) {
-            var postCallback = $targ.attr('data-live-post-update-callback');
+            let postCallback = $targ.attr('data-live-post-update-callback');
             if (typeof postCallback === 'undefined') {
                 postCallback = $targ.closest('[data-live-post-update-callback]').attr('data-live-post-update-callback');
             }
@@ -178,7 +206,7 @@ function LiveData() {
 
 
     this.handleAjaxResponse = function( json ) {
-        var data = null;
+        let data = null;
         mylog('livedata ajax response: ' + json, false);
         if (!json) {
             mylog('livedata: No data received - terminating live-data');
@@ -200,7 +228,7 @@ function LiveData() {
             mylog('livedata: _live_data_service.php reported an error \n==> ' + json);
             return;
         } else if (data.result.match(/^fail/i)) {
-            var m = data.result.match(/#(.*)/);
+            const m = data.result.match(/#(.*)/);
             mylog('livedata: _live_data_service.php reported an error \n==> ' + m[1]);
             return;
         } else if (data.result.match(/none/i)) {
@@ -211,11 +239,11 @@ function LiveData() {
         }
 
         // regular response with new data:
-        var goOn = true;
+        let goOn = true;
         if (typeof liveDataCallback === 'function') {
             goOn = liveDataCallback( data.data );
         } else {
-            var preCallback = $('[data-live-pre-update-callback]').attr('data-live-pre-update-callback');
+            const preCallback = $('[data-live-pre-update-callback]').attr('data-live-pre-update-callback');
             if ((typeof preCallback !== 'undefined') && (typeof window[preCallback] === 'function')) {
                 goOn = window[preCallback]( data.data );
             }
@@ -241,7 +269,7 @@ function LiveData() {
         if ((typeof immediately !== 'undefined') && immediately) {
             this.lastUpdated = 0;
         }
-        var refs = [],
+        let refs = [],
             ref, i, $elem;
 
         // get refs, update currDataRef as it might have changed:
@@ -283,8 +311,8 @@ function LiveData() {
 
 
     this.resolveDataRef = function( $this ) {
-        var $elem, tagName, s, m, rec, dataRecKey;
-        var elem = '';
+        let $elem, tagName, s, m, rec, dataRecKey;
+        let elem = '';
         const dataRef = $this.closest('[data-ref]').attr('data-ref');
 
         m = dataRef.match( /(.*?)(,.*)/ );
@@ -326,14 +354,14 @@ function LiveData() {
 
 
     this.dumpDB = function () {
-        var parent = this;
-        var url = appRoot + '_lizzy/extensions/livedata/backend/_live_data_service.php';
+        const parent = this;
+        let url = appRoot + '_lizzy/extensions/livedata/backend/_live_data_service.php';
         $.ajax({
             url: url + "?dumpDB=true",
             type: 'POST',
             data: { ref: parent.refs },
             success: function (json) {
-                var res = null;
+                let res = null;
                 try {
                     res = JSON.parse( json );
                 } catch (e) {
