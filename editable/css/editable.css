@@ -1,6 +1,7 @@
 /* Editable.css */
 /*
 	CSS Variables:
+	--lzy-editable-height
 	--lzy-editable-padding-x
 	--lzy-editable-padding-y
 	--lzy-editable-bg
@@ -8,26 +9,22 @@
 	--lzy-editable-bg-inactive
 */
 
-.lzy-editable-active,
+.lzy-editable-active.lzy-editable-active,
 .lzy-editable.lzy-editable {
 	position: relative;
 	overflow: hidden;
 	min-width: 8em;
-	min-height: 1.7em;
+	min-height: var(--lzy-editable-height, 1.8em);
+	line-height: 1.2em;
 	white-space: pre-wrap;
 	background: #eff;
 	background: var(--lzy-editable-bg, transparent);
 	border: 1px solid #ddd;
-	padding: 4px 8px;
-	padding-left: var(--lzy-editable-padding-x, 8px);
-	padding-right: var(--lzy-editable-padding-x, 8px);
-	padding-top: var(--lzy-editable-padding-y, 4px);
-	padding-bottom: var(--lzy-editable-padding-y, 4px);
+	padding: 2px 2px 0 6px;
+	padding-top: calc( (var(--lzy-editable-height, 1.8em) - 1.2em) / 2);
+	padding-left: var(--lzy-editable-padding-x, 6px);
+	padding-right: var(--lzy-editable-padding-x, 4px);
 	cursor: pointer;
-}
-td.lzy-editable-active,
-td.lzy-editable.lzy-editable {
-	height: 1.7em;
 }
 #lzy .lzy-editable-active {
 	padding: 0;
@@ -36,32 +33,33 @@ td.lzy-editable.lzy-editable {
 .lzy-editable-multiline textarea,
 .lzy-editable-active textarea,
 .lzy-editable-active input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 100%;
 	background: #efe;
 	background: var(--lzy-editable-bg-active, #efe);
-	width: 100%;
-	height: 100%;
-	text-align: left;
 	border: 0 solid transparent;
-	padding: 4px 8px;
-	padding-left: var(--lzy-editable-padding-x, 8px);
-	padding-right: var(--lzy-editable-padding-x, 8px);
-	padding-top: var(--lzy-editable-padding-y, 2px);
-	padding-bottom: var(--lzy-editable-padding-y, 4px);
-	opacity: 0.999;
-	z-index: 0;
+	padding: 2px 2px 0 6px;
+	padding-top: calc( (var(--lzy-editable-height, 1.8em) - 1.2em) / 2 - 2px);
+	padding-left: var(--lzy-editable-padding-x, 6px);
+	line-height: 1.2em;
 }
-.lzy-editable-multiline textarea,
-.lzy-editable-active textarea {
-	padding-top: 4px;
-	line-height: 1em;
+td.lzy-editable-active,
+td.lzy-editable.lzy-editable {
+	height: var(--lzy-editable-height, 1.8em);
+}
+td.lzy-editable-active textarea,
+td.lzy-editable-active input {
+	top: -1px;
 }
 
-.lzy-editable-active input:focus {
+.lzy-editable-active input:focus,
+.lzy-editable-active textarea:focus {
 	outline: none;
 }
 
-
-/*.lzy-element-locked,.lzy-element-frozen => _lizzy_misc.css */
 
 
 
@@ -96,11 +94,11 @@ td.lzy-editable.lzy-editable {
 	vertical-align: top;
 	padding: 0;
 	margin: 0;
+	margin: 1px 1px 0 0;
 	width: 2.2em;
 	line-height: 1em !important;
 	height: calc(100% - 2px);
 	display: inline-block;
-	margin: 1px 1px 0 0;
 	font-size: 14pt;
 }
 .lzy-editable-show-buttons .lzy-editable-active .lzy-editable-submit-button {
@@ -130,23 +128,31 @@ td.lzy-editable.lzy-editable {
 .lzy-editable-multiline.lzy-editable,
 .lzy-editable-multiline .lzy-editable-active,
 .lzy-editable-multiline .lzy-editable {
-	min-height: 2.5em;
 	white-space: pre;
 	overflow: auto;
-	line-height: 1em;
+	line-height: 1.2em;
 }
 .lzy-editable-multiline.lzy-editable-active,
-.lzy-editable-multiline .lzy-editable-active,
+.lzy-editable-multiline .lzy-editable-active {
+	min-height: 4.6em;
+	min-height: calc(var(--lzy-editable-height, 1.8em) * 2.6);
+	line-height: 1.2em;
+}
 .lzy-editable-multiline.lzy-editable-active textarea,
 .lzy-editable-multiline .lzy-editable-active textarea {
-	min-height: 3.7em;
+	min-height: 4.5em;
+	min-height: calc(var(--lzy-editable-height, 1.8em) * 2.6 - 4px);
+	line-height: 1.2em;
 }
-td.lzy-editable-multiline.lzy-editable-active,
-td.lzy-editable-multiline.lzy-editable,
+
+.lzy-editable-multiline.lzy-editable-active,
+.lzy-editable-multiline .lzy-editable-active,
 .lzy-editable-multiline td.lzy-editable-active,
-.lzy-editable-multiline td.lzy-editable {
-	height: 2.5em;
+td.lzy-editable-multiline.lzy-editable-active {
+	height: 4.6em;
+	height: calc(var(--lzy-editable-height, 1.8em) * 2.8);
 }
+
 .lzy-editable-multiline.lzy-editable-active,
 .lzy-editable-multiline .lzy-editable-active {
 	padding: 0;

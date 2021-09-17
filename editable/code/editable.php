@@ -19,7 +19,7 @@ $this->addMacro($macroName, function () {
 
     if (($help == 'help') || ($help === false)) {
         $this->getArg($macroName, 'class', 'Class name that will be applied to editable fields', '');
-        $this->getArg($macroName, 'showButton', '[false|true|auto] Defines whether the submit button is displayed (default: true).<br />"auto" means it will be displayed only on touch devices.', true);
+        $this->getArg($macroName, 'showButtons', '[false|true|auto] Defines whether submit and cancel buttons are displayed (default: true).<br />"auto" means it will be displayed only on touch devices.', true);
         $this->getArg($macroName, 'dataSource', '<code>path</code> (optional) defines path&filename where to store data (default: page folder)', '');
 
         $this->getArg($macroName, 'dataSelector', 'Name of the element(s) to be visualized. Use format "A|B|C" to specify a list of names.', false);

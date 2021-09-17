@@ -243,14 +243,17 @@ EOT;
 
         $args['showButtonClass'] = '';
         if (isset($args['showButton'])) {
+            $args['showButtons'] = $args['showButton'];
+        }
+        if (isset($args['showButtons'])) {
 
-            if ($args['showButton'] === 'ok') {                 // explicit: ok
+            if ($args['showButtons'] === 'ok') {                 // explicit: ok
                 $args['showButtonClass'] = ' lzy-editable-show-button';
 
-            } elseif ($args['showButton'] === 'auto') {         // explicit: auto
+            } elseif ($args['showButtons'] === 'auto') {         // explicit: auto
                 $args['showButtonClass'] = ' lzy-editable-auto-show-button';
 
-            } elseif ($args['showButton']) {                    // explicit: true
+            } elseif ($args['showButtons']) {                    // explicit: true
                 $args['showButtonClass'] = ' lzy-editable-show-buttons';
             }
         } else {                                                // implicit: true
