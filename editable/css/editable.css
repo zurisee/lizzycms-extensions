@@ -30,8 +30,7 @@
 	padding: 0;
 	text-align: left;
 }
-.lzy-editable-multiline textarea,
-.lzy-editable-active textarea,
+.lzy-editable-active.lzy-editable-multiline textarea,
 .lzy-editable-active input {
 	position: absolute;
 	top: 0;
