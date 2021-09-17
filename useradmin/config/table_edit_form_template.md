@@ -10,6 +10,7 @@
 	validate: true,
 	labelColons: true,
 	skipConfirmation: true,
+	customResponseEvaluationFunction: lzyUserAdminCallback,
 	)
 }}
 
