@@ -6,7 +6,7 @@ define('DEFAULT_EVENT_DURATION', 120); // in minutes
 $GLOBALS['lizzy']['calInitialized'] = false;
 
 if (isset($page)) {
-    $page->addModules('POPUPS');
+    $page->addModules('POPUPS,TOOLTIPSTER');
 }
 
 class LzyCalendar
