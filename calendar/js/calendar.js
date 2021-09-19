@@ -125,6 +125,8 @@ LzyCalendar.prototype.init = function( $elem, options ) {
     this.onResize();
     this.setupTriggers();
 
+    this.hideRestrictedCategories();
+
 }; // init
 
 
@@ -342,8 +344,6 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
     let res = false;
     let defaultEventDuration = this.options.defaultEventDuration;
     let header = '';
-
-    this.hideRestrictedCategories();
 
     if ( isNewEvent ) {                                       // new entry
         if (typeof customOpenNewCalPopup === 'function') {
@@ -884,14 +884,25 @@ LzyCalendar.prototype.hideRestrictedCategories = function() {
     let cats = this.options.calCatPermission;
     if ( cats ) {
         cats = cats.toLocaleLowerCase();
-        $('.lzy-cal-category option', this.$form).each(function() {
+        let nOptions = 0;
+        let val = null;
+
+        // remove all options that don't match:
+        $('.lzy-cal-category option', this.$formWrapper).each(function() {
             let opt = $(this).val().toLocaleLowerCase();
-            if (cats.indexOf(opt) !== -1) {
-                $(this).show();
+            if (!opt || (cats.indexOf(opt) === -1)) {
+                $(this).remove();
             } else {
-                $(this).hide();
+                nOptions++;
+                val = $(this).val();
             }
         });
+
+        // case only one option left -> replace with readonly input field:
+        if (nOptions === 1) {
+            const inputElem = '<input name="category" value="' + val + '" readonly />';
+            $('#lzy-cal-category-1').replaceWith( inputElem );
+        }
     }
 }; // hideRestrictedCategories
 
