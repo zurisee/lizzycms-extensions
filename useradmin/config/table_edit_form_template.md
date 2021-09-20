@@ -122,7 +122,8 @@
 
 {{ formelem(
 	label: '-lzy-email-list',
-	type: 'string',
+	type: 'email',
+	inputAttr: multiple,
 	name: 'emaillist',
 	dataKey: emaillist,
 	info: '{{ lzy-email-list-info }}',
