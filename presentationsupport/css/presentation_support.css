@@ -1,4 +1,4 @@
-/**** auto-created from 'css/scss/presentatio_support.scss' - do not modify! ****/
+/**** auto-created from 'css/scss/presentation_support.scss' - do not modify! ****/
 
 #lzy.lzy-slideshow-supportbody {
   position: absolute;
@@ -81,6 +81,8 @@
   float: right; }
 #lzy.lzy-slideshow-support .lzy-logged-in-user {
   display: none; }
+#lzy.lzy-slideshow-support code, #lzy.lzy-slideshow-support kbd, #lzy.lzy-slideshow-support pre, #lzy.lzy-slideshow-support samp {
+  font-size: 90%; }
 
 .revealedSection, .lzy-revealedSection {
   display: none; }
