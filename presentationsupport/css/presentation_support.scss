@@ -32,7 +32,7 @@ html {
         top: 0;
         left: 0;
         right: 0;
-        width: 100vw;
+        width: 100%;
         z-index: 100;
     }
 
@@ -41,11 +41,12 @@ html {
         top: $headerHeight;
         left: 0;
         z-index: 1;
-        width: 100vw;
+        width: 100%;
         height: calc(#{$height} - #{$headerHeight} - #{$footerHeight});
         max-height: calc(100vh - #{$headerHeight} - #{$footerHeight});
         padding: 0;
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     //.slideshow-support section {

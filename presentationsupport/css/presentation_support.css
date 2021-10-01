@@ -26,10 +26,11 @@
   top: 3rem;
   left: 0;
   z-index: 1;
-  width: 100vw;
+  width: 100%;
   height: calc(67vw - 3rem - 2rem);
   max-height: calc(100vh - 3rem - 2rem);
   padding: 0;
+  overflow-x: hidden;
   overflow-y: auto; }
 #lzy.lzy-slideshow-support .lzy-presentation-section {
   position: absolute;
