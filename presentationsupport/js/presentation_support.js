@@ -5,19 +5,18 @@
 var currentSlide = 1;
 
 $( document ).ready(function() {
-
     if ($('.lzy-slideshow-support').length) {
         mylog('activating slideshow-support', false);
         presi = new LzyPresentationSupport();
         presi.init();
     }
-
 });
 
 
 function LzyPresentationSupport() {
 
     this.init = function() {
+        this.initSlides();
         this.initPresiElements();
         this.initEventHandlers();
         this.resizeSections();
@@ -26,8 +25,26 @@ function LzyPresentationSupport() {
 
 
 
+    this.initSlides = function () {
+        const bg = $('.lzy-main').css('background-color');
+        if (bg === 'rgb(255, 255, 255)') { // apply scroll-hints only on white background
+            $('.lzy-section').addClass('lzy-slide lzy-scroll-hints');
+        } else {
+            $('.lzy-section').addClass('lzy-slide');
+        }
+        $('.lzy-slide').wrapInner('<div class="lzy-slide-inner-wrapper"></div>');
+        $('.lzy-slide-inner-wrapper').prepend('<br />'); // prevent margin-collapse
+
+        // attempt to overcome ios 100vh bug:
+        if ($('body').hasClass('touch')) {
+            $('.lzy-slide-inner-wrapper').append('<div class="lzy-ios-bottom-gap"></div>'); // prevent margin-collapse
+        }
+    }; // initSlides
+
+
+
     this.initPresiElements = function(){
-        let $sections = $('section');
+        let $sections = $('.lzy-slide');
         if (!$sections.length) {
             return; // no sections found
         }
@@ -153,7 +170,6 @@ function LzyPresentationSupport() {
                 let url = $('.lzy-next-page-link a').attr('href');
                 mylog('go to next page: ' + url);
                 lzyReload('', url);
-                // lzyReload('fresh', url);
                 return false;
             }
 
@@ -169,7 +185,7 @@ function LzyPresentationSupport() {
             return true;
         }
 
-        // Follow feature unfinished:
+        // Following feature unfinished:
         // if (typeof presBackend !== 'undefined') {
         //     execAjax({ el: currentSlide }, '',  null, presBackend);
         //     // execAjax(null, 'el=' + currentSlide,  null, presBackend);
@@ -209,100 +225,125 @@ function LzyPresentationSupport() {
 
     this.resizeSections = function() {
         let parent = this;
-        if ($('.lzy-slideshow-no-size-adjusting').length ) {
-            $('.lzy-slide-hide-initially').removeClass('lzy-slide-hide-initially');
-            return;
-        }
+        const bodyW = $(window).width();
+        const bodyH = $(window).height();
+        mylog(`Body: w: ${bodyW}  h: ${bodyH}`, false);
 
-        // handle fixed size provided in attribute data-font-size:
-        let $fixSize = $('[data-font-size]');
-        if ($fixSize.length ) {
-            let fixSize = $fixSize.attr('data-font-size');
-            let $section = $fixSize.closest('section');
-            if ($section.length) {
-                $section.css({ fontSize: fixSize });
-                $('.lzy-slide-hide-initially').removeClass('lzy-slide-hide-initially');
+        const $slideWrapper = $('.lzy-slide');
+        const availableW = $slideWrapper.width() + 1;
+        const availableH = $slideWrapper.height() + 1 - 60;
+        // const availableH = $slideWrapper.height() + 1;
+        mylog(`Main: w: ${availableW}  h: ${availableH}`, false);
+
+        const $slides = $('.lzy-slide-inner-wrapper');
+
+        let maxFSize = 40;
+        let minFSize = 20;
+
+        const maxFSize0 = this.convertToPixel(maxFSize);
+        const minFSize0 = this.convertToPixel(minFSize);
+
+        // loop over all slides:
+        $slides.each(function () {
+            const $slide = $(this);
+
+            minFSize = minFSize0;
+            maxFSize = maxFSize0;
+            const $fontSize = $('[data-font-size]', $slide);
+            if ($fontSize.length) {
+                const fixFontSize = parent.convertToPixel($fontSize.attr('data-font-size'));
+                $slide.css({fontSize: fixFontSize + 'px'});
+                mylog(`final (fixed): ${fixFontSize}px`, false);
                 return;
             }
-        }
 
-        let fSize = 10;
-        let minFSize = 10;
-        let maxFSize = 28;
-        let bodyH = $('body').height();
-
-        let $main = $( 'main' );
-        let $sections = $('.lzy-presentation-section');
-
-        let mainH = $main.innerHeight();
-        let vPagePaddingPx = $main.padding();
-        let vPageMarginPx = $main.margin();
-        let vPadding = vPagePaddingPx.top + vPagePaddingPx.bottom + vPageMarginPx.top + vPageMarginPx.bottom;
-        let mainHavail = mainH - 5;
-        mylog('bodyH: ' + bodyH + ' mainH: ' + mainH + ' vPad: ' + vPadding + ' => ' + mainHavail, false);
-
-        $sections.hide();    // hide while determening height of each section
-        let debug = $('body').hasClass('debug');
-        const $slideshowSupport = $('.lzy-slideshow-support');
-        if ( debug ) {
-            $slideshowSupport.addClass('lzy-slide-visible').removeClass('lzy-slide-hide-initially');
-        }
-        const corr = 37; // -> padding top+bottom ToDo: compute that
-
-        mainHavail -= corr;
-        $sections.each(function () {
-            let $section = $( this );
-            $section.show();
-            if ( debug ) {
-                $section.css('opacity', 0.4);
+            const $min = $('[data-min-font-size]', $slide);
+            if ($min.length) {
+                minFSize = parent.convertToPixel($min.attr('data-min-font-size'));
+                mylog(`min fontsize: ${minFSize}px`, false);
+            }
+            const $max = $('[data-max-font-size]', $slide);
+            if ($max.length) {
+                maxFSize = parent.convertToPixel($max.attr('data-max-font-size'));
+                mylog(`max fontsize: ${maxFSize}px`, false);
             }
 
-            //data-section-font-size -> fixed font-size for current section:
-            let $fixSize = $('[data-section-font-size]', $section);
-            if ($fixSize.length ) {
-                let fixSize = $fixSize.attr('data-section-font-size');
-                $section.css({ fontSize: fixSize });
+            let fSize = maxFSize;
+            let step = (maxFSize - minFSize) * 0.5;
+            while (true) {
+                $slide.css({fontSize: fSize + 'px'});
 
-            } else {
-                // check 'data-section-min-fontsize', return pt value
-                minFSize = parent.getMinMaxFontSize('min', minFSize, $section);
-
-                // check 'data-section-max-fontsize', return pt value
-                maxFSize = parent.getMinMaxFontSize('max', maxFSize, $section);
-
-                let contentH = $section.height() + corr;
-                let f = mainHavail / contentH;
-                let diff = mainHavail - contentH;
-                fSize = minFSize;
-
-                mylog('====== mainH: ' + mainHavail, false);
-                for (let i = 0; i < 10; i++) {
-                    diff = mainHavail - contentH;
-                    fSize = fSize * f;
-                    mylog(i + ': diff: ' + Math.trunc(diff) + ' fontSize: ' + Number(fSize.toFixed(1)) +
-                        ' sectionH: ' + Math.trunc(contentH), false);
-                    if (Math.abs(diff) < 3) {
-                        break;
-                    }
-                    $section.css({fontSize: fSize.toString() + 'pt'});
-                    contentH = $section.height();
-                    f = mainHavail / contentH;
+                let w = $slide.width();
+                let h = $slide.height();
+                let dx = (availableW - w);
+                let dy = (availableH - h);
+                if ((dx > 0) && (dy > 0)) {
+                    mylog(`up: ${step}  fSize: ${fSize}  ${w} ${dx}`, false);
+                    fSize += step;
+                } else {
+                    mylog(`down: ${step}  fSize: ${fSize}  ${w} ${dx}`, false);
+                    fSize -= step;
                 }
-                if (fSize > maxFSize) {
-                    $section.css({fontSize: maxFSize.toString() + 'pt'});
-                } else if (fSize < minFSize) {
-                    $section.css({fontSize: minFSize.toString() + 'pt'});
+                if (fSize < minFSize) {
+                    fSize = minFSize;
+                    mylog(`final (min): ${fSize}`, false);
+                    return;
+                } else if (fSize > maxFSize) {
+                    fSize = maxFSize;
+                    mylog(`final (max): ${fSize}`, false);
+                    return;
+                }
+
+                step = step * 0.5;
+                if (step < 0.5) {
+                    mylog(`w: ${dx}  h: ${dy}  fSize: ${fSize}  step: ${step}`, false);
+                    mylog(`final: ${fSize}`, false);
+                    break;
                 }
             }
-            $section.hide();
-            if ( debug ) {
-                $section.css('opacity', '');
+
+            mylog('Phase 2:', false);
+            fSize += 0.5;
+            for (let i = 0; i < 20; i++) {
+                $slide.css({fontSize: fSize + 'px'});
+                let w = $slide.width();
+                let h = $slide.height();
+                let dx = (availableW - w);
+                let dy = (availableH - h);
+                mylog(`w: ${dx}  h: ${dy}  fSize: ${fSize}`, false);
+                if ((dx > 0) && (dy > 0)) {
+                    mylog(`final: ${fSize}`, false);
+                    break;
+                }
+                fSize -= 0.1;
+                if (fSize < minFSize) {
+                    fSize = minFSize;
+                    mylog(`final (min): ${fSize}`, false);
+                    break;
+                }
             }
+            const scaleFactor = parent.getScaleFactor( $slide );
+            if (scaleFactor) {
+                fSize  *= scaleFactor;
+                $slide.css({fontSize: fSize + 'px'});
+            }
+
+            mylog('main w: ' + $slide.width() + '  h: ' + $slide.width(), false);
+            mylog(`font-size: ${fSize}`);
         });
-        $sections.show();
-        $slideshowSupport.addClass('lzy-slide-visible').removeClass('lzy-slide-hide-initially');
-
     }; // resizeSections
+
+
+
+    this.getScaleFactor = function( $section ) {
+        let scaleFactor = false;
+        const $scaleFactor = $('[data-scale-factor]', $section);
+        if ($scaleFactor.length) {
+            const scaleF = $scaleFactor.attr('data-scale-factor');
+            scaleFactor = parseFloat( scaleF );
+        }
+        return scaleFactor;
+    }; // getScaleFactor
 
 
 
@@ -316,9 +357,35 @@ function LzyPresentationSupport() {
             } else if (tmpF.match('px') || !tmpF.match(/\D/)) {
                 minmaxFSize *= 0.75;
             }
-            mylog('minmaxFSize: ' + minmaxFSize + 'pt', false);
         }
         return minmaxFSize;
     }; // getMinMaxFontSize
+
+
+
+    this.convertToPixel = function( value ) {
+        if (typeof value === 'string') {
+            if (value.match('px')) {
+                value = parseFloat(value);
+
+            } else if (value.match('em')) {
+                value = parseFloat(value) * 16;
+
+            } else if (value.match('pt')) {
+                value = parseFloat(value) / 3 * 4;
+
+            } else if (value.match('vw')) {
+                const bodyW = $(window).width();
+                value = parseFloat(value) * bodyW / 100;
+
+            } else if (value.match('vh')) {
+                const bodyH = $(window).height();
+                value = parseFloat(value) * bodyH / 100;
+            }
+        } else if (typeof value === 'number') {
+            value = parseFloat(value);
+        }
+        return value;
+    }; // convertToPixel
 
 } // LzyPresentationSupport

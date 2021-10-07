@@ -55,6 +55,8 @@ $this->addMacro($macroName, function () {
 	$inx = $this->invocationCounter[$macroName] + 1;
 
     $init = $this->getArg($macroName, 'init', 'If false, only initializes presentation-support when url-arg "?present" is set. Default: true', true);
+    $defaultStyling = $this->getArg($macroName, 'defaultStyling', '. Default: true', true);
+
     $help = $this->getArg($macroName, 'help', 'Show help-text', false);
 
 
@@ -76,6 +78,10 @@ EOT;
         initPresentation( $this );
     } else {
         return '';
+    }
+
+    if ($defaultStyling) {
+        $this->page->addBodyClasses(' lzy-default-presentation-styling ');
     }
 
     // save current url for other clients following this presentation (?flw):

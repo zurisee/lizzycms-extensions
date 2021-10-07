@@ -3,61 +3,76 @@
 <head>
 	<meta charset="utf-8" />
 	<title>{{ page_title }}</title>
-	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
+
+	<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1" />
+    <meta name="referrer" content="no-referrer">
     <meta name="generator" content="Lizzy {{ lzy-version }}" />
-	<link href="~sys/css/normalize.min.css" rel="stylesheet" />
-	<link href="~sys/css/_lizzy.css" rel="stylesheet" />
-	<link href="~/css/__styles.css" rel="stylesheet" />
+{{# favicon() }}
+
 {{ head_injections }}
+
 </head>
 
-<body id='lzy'{{  body_tag_injections }}>
-{{ body_top_injections }}
 
-  <div class="skiplinks">
+<!-- default-template -->
+<body id='lzy' class='{{ body_classes }} lzy-default-layout'{{ body_tag_attributes }}>
+{{ body_top_injections }}
+<!--
+  <div class="lzy-skiplinks">
+  	  <h1>{{ Skip-links }}</h1>
 	  <a href="#main">{{ Skip to Main }}</a>
 	  <a href="#lzy-primary-nav">{{ Skip to Navigation }}</a>
 	  <a href="~/sitemap">{{ Skip to Sitemap }}</a>
   </div>
-
+--> 
 {{ presentation-support() }}
+{{#^ presentation-preview }}
 
-<!--  <div class='page lzy-slide-show-speaker-notes'>-->
-  <div class='page'>
 
-    <header class='header'>
-{{^ header }}
-{{^ nav( top, options:noDefaultColoring ) }}
-    </header>
+  <div class='lzy-page page'>
+
+		<header class='lzy-header header'>{{^ header }}{{ nav( top ) }}</header>
+
 
 
 <!-- === page content =============== -->
-    <main id='main' class='main lzy-slideshow-support lzy-slide-hide-initially'>
-{{ content }}
-<!--
-      <aside class="notes lzy-speaker-notes">
-          Lörem üpsüm dolor sit ämet, consectetur adipisici elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
-      </aside>
--->
+		<main id='main' class='lzy-main main'>
 
-    </main>
+{{ content }}
+
+		</main>
 <!-- === /page content =============== -->
 
-{{^ presentation-preview }}
-      
-    <footer class='footer'>
-      <div class="course">
-    MAS HCID: Accessibility
-      </div>
-      <div class='pagenumber'>
-{{ pagenumber(0,true) }}
-      </div>
 
-      <div id='loggedInUser'>{{  toggle-edit-mode }}{{ Log-in }}</div>
-    </footer>
 
-{{^ nav( small-screen-header ) }}
-  </div><!-- /.page -->
+		<footer class="lzy-footer footer" data-iframe-height=''>
+			<div class="lzy-footer-left">
+{{ lzy-logged-in-as-user }}
+{{^ footer }}
+				<div class="lzy-large-only">{{^ large-screen-footer-left }}</div>
+				<div class="lzy-small-only">{{^ small-screen-footer }}</div>
+			</div>
+
+			<div>
+				<div class="lzy-large-only">{{^ large-screen-footer }}</div>
+			</div>
+
+	        <div class='lzy-footer-right lzy-logged-in-user'>
+{{ lzy-lang-selection }}
+				<div class="lzy-large-only">{{^ lzy-config--open-button }}
+{{^ lzy-toggle-edit-mode }}
+{{^ lzy-fileadmin-button }}
+				</div>
+{{ lzy-login-button }}
+	        </div><!-- /lzy-footer-right -->
+		</footer>
+
+{{ lzy-login-menu }}
+
+
+{{ nav( small-screen-header ) }}
+
+  </div><!-- /.lzy-page -->
 
 
 {{ body_end_injections }}

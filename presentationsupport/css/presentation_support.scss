@@ -1,62 +1,161 @@
-//	Presentation-Support
+//	Presentation Styling
 
-$height: 67vw;
-$headerHeight: 3rem;
-$footerHeight: 2rem;
+$headerHeight:  var(--presentation-header-height, 3rem);
+$footerHeight:  var(--presentation-footer-height, 3rem);
+$paddingX:      var(--presentation-horizontal-padding, 5vw);
+$bgColor:       var(--presentation-bg-color, white);
+$scrollbarColor: var(--presentation-scrollbar-color, #deedfd);
 
 html {
-//    font-size: 1.5vw;
+    height: -webkit-fill-available;
 }
-#lzy.lzy-slideshow-support {
-    &body {
+body.lzy-default-presentation-styling {
+
+// === Layout =====================
+    position: relative;
+    overflow: hidden;
+    height: -webkit-fill-available;
+
+    .lzy-page {
         position: absolute;
         top: 0;
         left: 0;
-        width: 100vw;
-    }
-
-    &body,
-    .lzy-page {
-        height: $height;
-        max-height: 100vh;
-        padding: 0;
-        position: relative;
-        top: 0;
-        left: 0;
-        margin: 0;
-        overflow: hidden;
-    }
-
-    .lzy-header {
-        position: fixed;
-        top: 0;
-        left: 0;
         right: 0;
-        width: 100%;
-        z-index: 100;
+        height: 100vh;
+        //height: -webkit-fill-available;
     }
 
     .lzy-main {
         position: absolute;
         top: $headerHeight;
         left: 0;
-        z-index: 1;
-        width: 100%;
-        height: calc(#{$height} - #{$headerHeight} - #{$footerHeight});
-        max-height: calc(100vh - #{$headerHeight} - #{$footerHeight});
-        padding: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
+        right: 0;
+        bottom: $footerHeight;
+        padding: 0 $paddingX;
+        background-color: $bgColor;
     }
 
-    //.slideshow-support section {
-    .lzy-presentation-section {
+    .lzy-slide {
         position: absolute;
-        width: 100%;
-        font-size: 6pt;
-        padding: 1rem 3vw 1rem 5vw;
+        width: calc(100vw - 2 * #{$paddingX});
+        height: calc(100vh - #{$headerHeight} - #{$footerHeight});
+        padding: 0!important; // don't modify
+        background-color: $bgColor;
     }
 
+    .lzy-slide-inner-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: fit-content;
+        height: fit-content;
+        padding: 0;
+        line-height: 1.4em;
+
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; }
+        h3 { font-size: 1.2em; }
+        h4 { font-size: 1.1em; }
+        h5 { font-size: 1em; }
+    }
+    .lzy-page,
+    .lzy-page a {
+        cursor: auto;
+        cursor: url(../rsc/red-arrow.png), auto;
+    }
+
+    .right {
+        width: 40vw;
+        float: right;
+        margin: 0 0 1em 1em;
+    }
+    .center {
+        width: 80%;
+    }
+
+
+    // === Text =========================
+    h1 {
+        font-size: 200%;
+        margin: 0.5em 0 0.5em;
+        line-height: 100%;
+    }
+
+    h2 {
+        font-size: 150%;
+        margin: 0.6em 0 0.4em;
+    }
+
+    h3 {
+        font-size: 120%;
+        margin: 0.6em 0 0.4em;
+    }
+
+    h4 {
+        font-size: 110%;
+        margin: 0.6em 0 0.4em;
+    }
+
+    ul {
+        margin: 0.5em;
+    }
+    pre, code {
+        line-height: 1.1em;
+    }
+    pre {
+        background: ivory;
+        padding: 1em;
+        box-shadow: inset 0.5px 0.5px 5px rgba(100,100,100,0.5);
+    }
+    code, kbd, pre, samp {
+        font-size: 90%;
+    }
+
+
+
+// === header =======================
+    .lzy-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: $headerHeight;
+        line-height: 1.2em;
+        padding-top: calc((#{$headerHeight} - 1.2em) / 2);
+        padding-left: $paddingX;
+        padding-right: $paddingX;
+        z-index: 2;
+        box-shadow: 0 0 5px gray;
+        background: white;
+    }
+
+// === footer =======================
+    .lzy-footer {
+        position: absolute;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: $footerHeight;
+        line-height: 1.2em;
+        padding-top: calc((#{$footerHeight} - 1.2em) / 2);
+        padding-left: $paddingX;
+        padding-right: $paddingX;
+        margin: 0;
+        border: none;
+        background: white;
+        z-index: 2;
+        box-shadow: 0 0 5px gray;
+        > div {
+            padding-top: 0 !important;
+        }
+        .lzy-footer-right {
+            margin-top: -0.4em;
+        }
+    }
+
+
+// === page switching links =================
     .lzy-prev-page-link,
     .lzy-next-page-link {
         position: absolute;
@@ -64,338 +163,184 @@ html {
         font-size: 5vw;
         opacity: 0;
         z-index: 999;
+
         a {
             border-bottom: none;
             color: black;
             -webkit-text-stroke: 2px red;
             text-stroke: 2px red;
         }
+
         &:hover {
             opacity: 1;
         }
     }
+
     .lzy-prev-page-link {
         left: -0.5em;
     }
+
     .lzy-next-page-link {
         right: -0.5em;
     }
 
-    h1 { font-size: 200%; margin: 0.5em 0 0.5em;}
-    h2 { font-size: 150%; margin: 0.6em 0 0.4em;}
-    h3 { font-size: 120%; margin: 0.6em 0 0.4em;}
-    h4 { font-size: 110%; margin: 0.6em 0 0.4em;}
-
-    ul {
-        margin: 0.5em;
+    // === Revealing =====================
+    .revealedSection,
+    .lzy-revealedSection {
+        display: none;
+    }
+    .withheldSection,
+    .lzy-withheld-section {
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.1s;
     }
 
-    footer {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100vw;
-        height: $footerHeight;
-        border-top: 1px solid var(--blau, gray);
-        font-size: 0.8rem;
-        padding: 0 2rem;
-        margin-top: 0;
+    .debug section {
+        box-shadow: inset 0 0 3px red;
+    }
+    #lzy-log { display: none; }
+
+    .revealed,
+    .lzy-revealed {
+        color: black;
+        transition: opacity 0.1s;
+        opacity: 1;
+        z-index: 9;
+    }
+    .withhold,
+    .lzy-withhold {
+        color: #ddd;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.1s;
+    }
+
+    .hl {
+        color: red;
+    }
+
+    .two-col > div,
+    .two-cols > div,
+    .cols-50-50 > div {
+        display: inline-block;
+        width: calc(50% - 6px);
+        padding: 0 1em 0 0;
+        vertical-align: top;
+    }
+
+    .cols-60-40 > div {
+        display: inline-block;
+        padding: 0 1em 0 0; }
+    .cols-60-40 > div:first-child, .cols-2-60_40 > div:first-child {
+        width: 59%; }
+    .cols-60-40 > div:nth-child(2), .cols-2-60_40 > div:nth-child(2) {
+        width: 39%; }
+
+    .cols-67-33 > div {
+        display: inline-block;
+        padding: 0 1em 0 0; }
+    .cols-67-33 > div:first-child {
+        width: 66%; }
+    .cols-67-33 > div:nth-child(2) {
+        width: 33%; }
+
+    .cols-75-25 > div {
+        display: inline-block;
+        padding: 0 1em 0 0; }
+    .cols-75-25 > div:first-child {
+        width: 75%; }
+    .cols-75-25 > div:nth-child(2) {
+        width: 25%; }
+
+    .three-cols > div,
+    .cols-33-33-33 > div {
+        display: inline-block;
+        width: 32.5%;
+        padding: 0 1em 0 0;
+        vertical-align: top;
     }
 
     .lzy-pagenumber {
-        float: right;
+        font-size: 1rem;
     }
 
-    .lzy-logged-in-user {
+    body.lzy-screen-off {
+        filter: blur(15px);
+        transition: all 0.3s;
+    }
+    body.screen-black {
+        background: #333; }
+    body.screen-black .page {
+        display: none; }
+
+    aside {
         display: none;
     }
-    code, kbd, pre, samp {
-        font-size: 90%;
+
+    .lzy-slide-hide-initially {
+        opacity: 0;
     }
-} // lzy-slideshow-support
-
-
-
-// ==============
-
-.revealedSection,
-.lzy-revealedSection {
-    display: none;
-}
-.withheldSection,
-.lzy-withheld-section {
-    opacity: 0;
-    z-index: -1;
-    transition: opacity 0.1s;
-}
-
-.debug section {
-    box-shadow: inset 0 0 3px red;
-}
-#lzy #lzy-log { display: none; }
-
-#lzy .lzy-page,
-#lzy .lzy-page a {
-    cursor: auto;
-    cursor: url(../rsc/red-arrow.png), auto;
-}
-
-.lzy-section {
-    padding: 0;
-}
-.revealed,
-.lzy-revealed {
-    color: black;
-    transition: opacity 0.1s;
-    opacity: 1;
-    z-index: 9;
-}
-.withhold,
-.lzy-withhold {
-    color: #ddd;
-    opacity: 0;
-    z-index: -1;
-    transition: opacity 0.1s;
-}
-
-.hl {
-    color: red;
-}
-
-.two-col > div,
-.two-cols > div,
-.cols-50-50 > div {
-    display: inline-block;
-    width: calc(50% - 4px);
-    padding: 0 1em 0 0;
-    vertical-align: top;
-}
-
-.cols-60-40 > div {
-    display: inline-block;
-    padding: 0 1em 0 0; }
-.cols-60-40 > div:first-child, .cols-2-60_40 > div:first-child {
-    width: 59%; }
-.cols-60-40 > div:nth-child(2), .cols-2-60_40 > div:nth-child(2) {
-    width: 39%; }
-
-.cols-67-33 > div {
-    display: inline-block;
-    padding: 0 1em 0 0; }
-.cols-67-33 > div:first-child {
-    width: 66%; }
-.cols-67-33 > div:nth-child(2) {
-    width: 33%; }
-
-.cols-75-25 > div {
-    display: inline-block;
-    padding: 0 1em 0 0; }
-.cols-75-25 > div:first-child {
-    width: 75%; }
-.cols-75-25 > div:nth-child(2) {
-    width: 25%; }
-
-.three-cols > div,
-.cols-33-33-33 > div {
-    display: inline-block;
-    width: 32.5%;
-    padding: 0 1em 0 0;
-    vertical-align: top;
-}
-
-.lzy-pagenumber {
-    font-size: 1rem;
-}
-
-body.lzy-screen-off {
-    filter: blur(15px);
-    transition: all 0.3s;
-}
-body.screen-black {
-    background: #333; }
-body.screen-black .page {
-    display: none; }
-
-aside {
-    display: none;
-}
-/*
-.speaker-notes {
-	font-size: 140%;
-	border: 1px solid blue;
-	background: #eef;
-	padding: 0 1em;
-}
-*/
-
-.lzy-slide-hide-initially {
-    opacity: 0;
-}
-.lzy-slide-visible {
-    opacity: 1;
-    transition: opacity 0.1s;
-    transition-delay: 0.1s;
-}
-
-.lzy-slide-show-speaker-notes .main {
-    min-height: 70vh;
-}
-.lzy-slide-show-speaker-notes .lzy-speaker-notes {
-    display: block;
-    position: absolute;
-    left: 0;
-    height: 15vh;
-    bottom: -15vh;
-    width: 100vw;
-    background: #ffffbe;
-    /*border: 1px solid red;*/
-    padding: 10px;
-    overflow: auto;
-    font-size: 3vw;
-}
-
-#lzy-presentation-preview {
-    position: absolute;
-    top: 0;
-    top: calc(var(--preview-height) * -0.25);
-    left: 0;
-    left: calc(var(--preview-width) * -0.25);
-    width: var(--preview-width);
-    height: var(--preview-height);
-    transform: scale(var(--scale-factor));
-}
-.lzy-presentation-preview {
-    position: relative;
-    float: right;
-    width: calc(var(--preview-width) * var(--scale-factor));
-    height: calc(var(--preview-height) * var(--scale-factor));
-    background: white;
-    z-index: 300;
-}
-
-.lzy-presentation-dashboard {
-    --preview-width: 500px;
-    --preview-height: 360px;
-    --scale-factor: 0.5;
-    --speaker-notes-height: 20vh;
-}
-.lzy-presentation-dashboard main {
-    width: calc(100vw - var(--preview-width) * var(--scale-factor));
-    min-height: calc(86vh - var(--speaker-notes-height));
-    /*min-height: 75vh;*/
-}
-
-.lzy-presentation-dashboard aside {
-    position: absolute;
-    left: 0;
-    bottom: calc(0vh - var(--speaker-notes-height));
-    /*bottom: -10vh;*/
-    display: block;
-    height: var(--speaker-notes-height);
-    width: calc(100vw - var(--preview-width) * var(--scale-factor));
-    /*box-shadow: inset 0 0 10px blue;*/
-    background: #e3f2ff;
-    overflow: auto;
-    font-size: 1.5vw;
-}
-
-.lzy-next-prev-page-links {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-}
-.lzy-next-prev-page-links .lzy-next-page-link,
-.lzy-next-prev-page-links .lzy-prev-page-link {
-    position: absolute;
-    top: 0;
-    font-size: 60px;
-    opacity: 0;
-}
-.lzy-next-prev-page-links .lzy-next-page-link:hover,
-.lzy-next-prev-page-links .lzy-prev-page-link:hover {
-    opacity: 0.8;
-}
-.lzy-next-prev-page-links .lzy-prev-page-link {
-    left: -0.5em;
-}
-.lzy-next-prev-page-links .lzy-next-page-link {
-    right: -0.5em;
-}
-
-
-
-
-/* === Cursor ===================== */
-#lzy-cursor-mark {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 4px solid red;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 999;
-    cursor: url(../rsc/red-arrow.png), auto;
-}
-
-
-@keyframes lzy-wobble-cursor {
-    0%  { opacity: 1; transform: scale(1.0, 1.0); }
-    5%  { transform: scale(1.3, 1.3); }
-    10% { transform: scale(0.9, 0.9); }
-    15% { transform: scale(1.1, 1.1); }
-    20% { transform: scale(1.0, 1.0); }
-    50% {  }
-    100% { opacity: 0; }
-}
-
-.lzy-wobble-cursor {
-    -webkit-animation-name: lzy-wobble-cursor;
-    animation-name: lzy-wobble-cursor;
-    animation-duration: 2s;
-}
-
-
-.output,
-.lzy-source-code {
-    border: 1px solid green;
-    background: #feffee;
-    padding: 0.5em 1em;
-    width: 40em;
-    max-width: 100%;
-    margin: 0.5em 0;
-    em { color: red; font-style: normal; }
-}
-
-.lzy-source-code {
-    code {
-        font-size: 0.8rem !important;
-        line-height: 1rem;
+    .lzy-slide-visible {
+        opacity: 1;
+        transition: opacity 0.1s;
+        transition-delay: 0.1s;
     }
-    border: 1px solid orange;
-    background: #feffee;
-    padding: 0.5em 1em;
-    width: 40em;
-    max-width: 100%;
-    margin: 0.5em 0;
-    em { color: red; font-style: normal; }
-    pre { margin: 0; }
-}
 
-.smaller {
-    //    font-size: 1.3rem !important;
-    transform: scale(0.8, 0.8);
-    transform-origin: 0% 50%;
-}
+    /* === Cursor ===================== */
+    #lzy-cursor-mark {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 4px solid red;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 999;
+        cursor: url(../rsc/red-arrow.png), auto;
+    }
 
-.right {
-    float: right;
-    width: 10em;
-    height: auto;
-    margin: 0 0 1em 1em;
-}
+
+    @keyframes lzy-wobble-cursor {
+        0%  { opacity: 1; transform: scale(1.0, 1.0); }
+        5%  { transform: scale(1.3, 1.3); }
+        10% { transform: scale(0.9, 0.9); }
+        15% { transform: scale(1.1, 1.1); }
+        20% { transform: scale(1.0, 1.0); }
+        50% {  }
+        100% { opacity: 0; }
+    }
+
+    .lzy-wobble-cursor {
+        -webkit-animation-name: lzy-wobble-cursor;
+        animation-name: lzy-wobble-cursor;
+        animation-duration: 2s;
+    }
+
+    //=== Scrollbars ===================
+    @at-root html {
+        scrollbar-color: $scrollbarColor $bgColor;
+        scrollbar-width: thin;
+    }
+
+    /* WebKit and Chromiums */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+        background-color: $bgColor;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: $scrollbarColor;
+        border-radius: 5px;
+    }
+
+    // === iOS 100vh bug -> work-around =========
+    .lzy-ios-bottom-gap {
+        height: 70px;
+    }
+} // lzy-default-presentation-styling
+
 
 
 @media print {
