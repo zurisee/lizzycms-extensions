@@ -11,6 +11,8 @@ function initPresentation( $trans )
             $trans->page->addBodyClasses(' lzy-slideshow-support ');
         }
     }
+    $trans->addVariable('slide', "\n</section>\n<section class='lzy-slide'>\n");
+    $trans->addVariable('section', "\n</section>\n<section class='lzy-slide'>\n"); // backwards compatibility
     $trans->addVariable('comments', "\n</section>\n<section class='comments'>\n\n<h2>{{ SlideShow Comments }}</h2>\n");
     //$trans->addVariable('speaker-notes', "\n</section>\n<section class='speaker-notes'>\n");
     //$trans->trans->addVariable('speaker-notes', "\n</section>\n<section class='speaker-notes'>\n");
