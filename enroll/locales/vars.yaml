@@ -1,4 +1,5 @@
 # Macro Enroll()
+
 lzy-enroll-name:
     de: Name
     _:  Name
@@ -44,9 +45,6 @@ lzy-enroll-add2-comment:
     de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag noch bis %freezetime% selbstständig ändern oder löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
     de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag noch bis %freezetime% selbstständig ändern oder löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
     en: '<p><strong>Comment</strong>:</p><p>You can modify or delete this entry until %freezetime%.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
-#    de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
-#    de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
-#    en: '<p><strong>Comment</strong>:</p><p>You can delete this entry within the next 24 hours.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
 
 lzy-enroll-delete-comment:
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
@@ -82,6 +80,55 @@ lzy-enroll-delete-rec:
     de: Diesen Eintrag löschen
     _:  Delete this entry
 
+
+lzy-enroll-info:
+    de: |
+        <h2>Erklärungen</h2>
+        <ul>
+          <li>Um sich einzutragen, klicken Sie auf eine Zeile mit grünem Kreuz <span class='lzy-enroll-add'>+</span>.</li>
+          <li>Geben Sie im Popup Ihren Namen und Ihre E-Mail Adresse ein und klicken Sie auf <span  class="button">Speichern</span>.</li>
+          <li>Alle bläulichen Felder müssen belegt sein, damit die Veranstaltung durchgeführt werden kann.</li>
+          <li>Klicken Sie auf <span class='lzy-enroll-del'>&ndash;</span>, um Ihren Eintrag zu löschen (innerhalb der nächsten 24 Stunden; für spätere Änderungen kontaktieren Sie bitte den {{ webmaster_link }}).</li>
+        </ul>
+
+    de2: |
+        <h2>Erklärungen</h2>
+        <ul>
+          <li>Um dich einzutragen, klickst du auf eine Zeile mit grünem Kreuz <span class='lzy-enroll-add'>+</span>.</li>
+          <li>Gib im Popup deinen Namen und deine E-Mail Adresse ein und klicke auf <span  class="button">Speichern</span>.</li>
+          <li>Alle bläulichen Felder müssen belegt sein, damit die Veranstaltung durchgeführt werden kann.</li>
+          <li>Klicke auf <span class='lzy-enroll-del'>&ndash;</span>, um deinen Eintrag zu löschen (innerhalb der nächsten 24 Stunden; für spätere Änderungen kontaktiere den {{ webmaster_link }}).</li>
+        </ul>
+
+
+    _:  |
+        <h2>Explanations</h2>
+        <ul>
+          <li>To enroll, click on a line showing the green plus sign <span class='lzy-enroll-add'>+</span>.</li>
+          <li>In the popup enter your name and e-mail address, then click on  <span  class="button">Save</span>.</li>
+          <li>All blueish fields need to be filled for the event to take place.</li>
+          <li>Click on <span class='lzy-enroll-del'>&ndash;</span> to cancel your enrollment (during the next 24 hours, for later cancellations contact the {{ webmaster_link }}).</li>
+        </ul>
+
+todays-event-ok:
+    de: 'Das Treffen heute um %time% findet statt.'
+    _:  'The event today at %time% is on.'
+
+next-event-ok:
+    de: 'Das Treffen vom %date% findet um %time% statt.'
+    _:  'The next event on %date% starts at %time% as planned.'
+
+next-planned-event:
+    de: 'Nächstes Treffen: <em>%date%</em> um %time%.'
+    _:  'Next event: <em>%date%</em> at %time%.'
+
+todays-event-canceled:
+    de: 'Das Treffen heute um %time% ist abgesagt.'
+    _:  "Today's event at %time% has been canceled."
+
+next-event-canceled:
+    de: 'Nächstes Treffen am %date% um %time% ist abgesagt.'
+    _:  'Next event on %date% at %time% has been canceled.'
 
 
 

@@ -35,7 +35,7 @@
         display: none; }
     #lzy .lzy-enroll-dialog.lzy-enroll-delete-entry, #lzy .lzy-enroll-dialog.lzy-enroll-modify-entry {
       /* content: 'enroll.scss:71'; */ }
-      #lzy .lzy-enroll-dialog.lzy-enroll-delete-entry .lzy-form-field-type-email input, #lzy .lzy-enroll-dialog.lzy-enroll-modify-entry .lzy-form-field-type-email input {
+      #lzy:not(.lzy-admin) .lzy-enroll-dialog.lzy-enroll-delete-entry .lzy-form-field-type-email input, #lzy .lzy-enroll-dialog.lzy-enroll-modify-entry .lzy-form-field-type-email input {
         /* content: 'enroll.scss:72'; */
         border-color: red; }
     #lzy .lzy-enroll-dialog .lzy-form-button-delete.lzy-form-button-delete {

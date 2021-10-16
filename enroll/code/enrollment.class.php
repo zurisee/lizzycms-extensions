@@ -55,7 +55,7 @@ class Enrollment extends Forms
         $this->scheduleAgent = $args['scheduleAgent'];
         $this->tooltips = $args['tooltips'];
 
-        $this->admin_mode = false;
+        $this->admin_mode = $GLOBALS['lizzy']['isAdmin'];
         $this->trans = $this->lzy->trans;
 
         // editable time: false=forever; 0=never; string=specfic date; int=duration after rec stored/modified:
@@ -76,10 +76,6 @@ class Enrollment extends Forms
             }
         }
 
-        if ($this->admin_mode) {
-            $this->trans->addTerm('enroll_result_link', "<a href='?enroll_result'>{{ Show Enrollment Result }}</a>");
-        }
-
         $this->err_msg = '';
         $this->name = '';
         $this->email = '';
@@ -98,180 +94,6 @@ class Enrollment extends Forms
 
         parent::__construct($lzy);
     } // __construct
-
-
-
-
-    private function handleClientData() {
-
-        if ($this->admin_mode && getUrlArg('enroll_result')) {
-            $this->show_result = true;
-            return;
-        }
-
-        if (isset($_POST) && $_POST) {
-            $action = get_post_data('lzy-enroll-type');
-            $id = trim(get_post_data('lzy-enroll-list-id'));
-            $name = get_post_data('lzy-enroll-name');
-            if (!$name || ($id !== $this->enroll_list_id)) {
-                return;
-            }
-            $admin_mode = '';
-            if ($this->admin_mode) {
-                $name = preg_replace('/\s*\(.*\)$/m', '', $name);
-                $admin_mode = 'admin ';
-            }
-            $email = strtolower(get_post_data('lzy-enroll-email'));
-
-            $sep = "; ";
-            $log = "$sep$admin_mode$action$sep{$this->enroll_list_id}$sep$name$sep$email";
-
-            $i = 0;
-            $customFieldValues = [];
-            while (isset($_POST["lzy-enroll-custom-$i"])) {
-                $log .= "$sep".$_POST["lzy-enroll-custom-$i"];
-                $customFieldValues[$i] = $_POST["lzy-enroll-custom-$i"];
-                $i++;
-            }
-
-            if (!is_legal_email_address($email) && !$this->admin_mode) {
-                writeLog("\tError: illegal email address [$name] [$email]");
-                $this->err_msg = '{{ illegal email address }}';
-                $this->name = $name;
-                $this->email = $email;
-                $this->focus = 'email';
-                $this->enrollLog($log);
-                return;
-            }
-            $_POST = [];
-
-            $ds = new DataStorage2(['dataFile' => $this->dataFile, 'lockDB' => true]);
-            $enrollData = $ds->read();
-            if (!isset($enrollData[$id])) {
-                $enrollData[$id] = array();
-            }
-            $existingData = $enrollData[$id];
-            if ($action === 'add') {
-                $this->action = 'add';
-                // check whether name already entered:
-                foreach ($existingData as $n => $rec) {
-                    if ($n === '_') {
-                        continue;
-                    }
-                    if ($rec['Name'] === $name) { // name already exists:
-                        if ($existingData[$n]['EMail'] === $email) {   // with same email, so we let it pass:
-                            $rec = &$existingData[$n];
-                            $rec['Name'] = $name;
-                            $rec['EMail'] = $email;
-                            $rec['time'] = time();
-                            $found = true;
-                            break;
-                        } else {  // existing name but different email -> reject:
-                            writeLog("\tError: enrolling twice [$name] [$email]");
-                            $this->err_msg = '{{ enroll entry already exists }}';
-                            $this->name = $name;
-                            $this->email = $email;
-                            $this->focus = 'name';
-                            $this->enrollLog($log);
-                            return;
-                        }
-                    }
-                }
-                if (!isset($found)) {   // new entry:
-                    $i = sizeof($existingData) - 1; // -1 -> to take system field '_' into account
-                    if ($i >= ($this->nNeeded + $this->nReserve)) {
-                        return; // request probably tampered: attempt to add more records than allowed
-                    }
-                    $rec = &$existingData[ $i ];
-                    $rec['Name'] = $name;
-                    $rec['EMail'] = $email;
-                    $rec['time'] = time();
-                }
-
-            } elseif ($action === 'delete') {
-                $this->action = 'delete';
-                $found = false;
-                $name = trim($name);
-
-                if (isset($enrollData[ $id ])) {
-                    $set = $enrollData[ $id ];
-                } else {
-                    return;
-                }
-
-                // if in 'initials' mode, try to find data rec based on email, check against initials of name:
-                if (strpos($this->hideNames, 'init') === 0) {
-                    $found = false;
-                    foreach ($set as $rec) {
-                        $initials = $this->getInitials($rec['Name']);
-                        if (($name === $initials) && ($email === $rec['EMail'])) {
-                            $name = $rec['Name'];
-                            $found = true;
-                            break;
-                        }
-                    }
-                    if (!$found) {
-                        writeLog("\tError: enroll email wrong [$name] [$email vs {$rec['EMail']}]");
-                        return;
-                    }
-                }
-
-
-                foreach ($existingData as $n => $rec) {
-                    if ($n === '_') {
-                        continue;
-                    }
-                    if ($rec['Name'] === $name) {
-                        if ($this->admin_mode) {       	// admin-mode needs no email and has no timeout
-                            $found = true;
-                            unset($existingData[$n]);
-                            break;
-                        }
-                        if ($this->isInTime($rec)) {
-                            if ($rec['EMail'] !== $email) {
-                                writeLog("\tError: enroll email wrong [$name] [$email vs {$rec['EMail']}]");
-                                $this->err_msg = '{{ enroll email wrong }}';
-                                $this->name = $name;
-                                $this->email = $email;
-                                $this->focus = 'email';
-                            } else {
-                                unset($existingData[$n]);
-                                $found = true;
-                                continue;
-                            }
-                        } else{
-                            writeLog("\tError: enroll entry too old [$name] [$email]");
-                            $this->err_msg = '{{ enroll entry too old }}';
-                            $this->name = $name;
-                            $this->email = $email;
-                        }
-                        $found = true;
-                    }
-                }
-                if (!$found) {
-                    writeLog("\tError: no enroll entry found [$name] [$email]");
-                    $this->err_msg = '{{ no enroll entry found }}';
-                    $this->name = $name;
-                    $this->email = $email;
-                }
-            } else {
-                return; // nothing to do
-            }
-
-            // update data:
-            $nRequired = $existingData['_'];
-            unset($existingData['_']);
-            $enrollData[$id] = array_values($existingData);
-            $enrollData[$id]['_'] = $nRequired;
-
-            if ($this->notify) {
-                $this->sendNotification($enrollData);
-            }
-
-            $ds->write($enrollData);
-            $this->enrollLog($log);
-        }
-    } // handle $_POST
 
 
 
@@ -587,6 +409,11 @@ EOT;
         $nn = $this->nNeeded + $this->nReserve;
         $new_field_done = false;
 
+        // in admin-mode add extra column showing EMail (which is otherwise hidden):
+        if ($this->admin_mode) {
+            array_unshift($this->enrollSpecificElems, 'EMail');
+        }
+
         // loop over list:
         for ($n = 0; $n < $nn; $n++) {
             $res = ($n >= $this->nNeeded) ? ' lzy-enroll-reserve-field' : '';
@@ -596,11 +423,10 @@ EOT;
 
             if (isset($rec['Name'])) {    // Name exists -> delete
                 $name = $rec['Name'];
-                $email = @$rec['EMail'];
-                if ($this->admin_mode) {
-                    $name .= " &lt;$email>";
+                // $email = @$rec['EMail'];
+                if (!$this->admin_mode) {
+                    $name = $this->hideName($name);
                 }
-                $name = $this->hideName($name);
 
                 if ($this->customFields && $this->editable) {
                     $tooltip = '{{ lzy-enroll-modify-entry }}';
@@ -609,7 +435,7 @@ EOT;
                     $tooltip = '{{ lzy-enroll-delete-entry }}';
                     $icon = "<span class='lzy-enroll-del'>−</span>";
                 }
-                if ($this->isInTime($rec)) {
+                if ($this->admin_mode || $this->isInTime($rec)) {
                     $a = "<a href='#' title='$tooltip'>\n\t\t\t\t  <span class='lzy-enroll-name'>$name</span>\n\t\t\t\t  $icon\n\t\t\t\t</a>";
                     $class = 'lzy-enroll-del-field';
                 } else {
@@ -647,12 +473,13 @@ EOT;
                 if (!$custField) {
                     continue;
                 }
-                $cls = "{$tooltipCls}lzy-col".($i+3);
+                $cls0 = "{$tooltipCls}lzy-col".($i+3);
+                $cls = "{$tooltipCls}$cls0";
                 $name = str_replace(' ', '_', $custField);
                 $name = preg_replace("/[^[:alnum:]_-]/m", '', $name);	// remove any non-letters, except _ and -
                 $val = isset($rec[$name]) && $rec[$name] ? $rec[$name] : '&nbsp;';
                 $aux .= "\n\t\t\t<div class='lzy-enroll-aux-field $cls' title='$val'>\n\t\t\t\t$val\n\t\t\t</div>";
-                $hdr .= "\n\t\t\t<div class='lzy-enroll-aux-field'>$custField</div>";
+                $hdr .= "\n\t\t\t<div class='lzy-enroll-aux-field $cls0'>$custField</div>";
             }
             $out .= "\t\t<div class='lzy-enroll-row$res'$recKey>\n$rowContent$aux\n\t\t</div><!-- /lzy-enroll-row -->\n\n";
         }
@@ -725,7 +552,7 @@ EOT;
             'responseViaSideChannels' => true,
             'translateLabels' => true,
             'dataKeyOverride' => "enrollment-list{$this->enrollInx},#",
-            'recModifyCheck' => 'EMail',
+            'recModifyCheck' => ($this->admin_mode? 'EMail':false),
         ];
         $headArgs = array_merge($rgs, $headArgs);
 
@@ -797,7 +624,7 @@ EOT;
                 'type' => 'email',
                 'label' => 'lzy-enroll-email',
                 'name' => 'EMail',
-                'required' => true,
+                'required' => !$this->admin_mode,
                 'class' => 'lzy-enroll-email',
             ]);
         }
