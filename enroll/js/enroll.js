@@ -80,6 +80,8 @@ $('.lzy-enrollment-list a').click(function(e) {
         $('.lzy-form-field-wrapper input', $dialogWrapper).each(function () {
             $(this).val('');
         });
+        $('.lzy-enroll-comment', $dialogWrapper).hide();
+        $('.lzy-enroll-add-comment', $dialogWrapper).show();
 
 
     // delete/modify mode:
@@ -87,11 +89,15 @@ $('.lzy-enrollment-list a').click(function(e) {
         let addTitle = null;
         if (extendedMode) {
             addTitle = $('.lzy-enroll-modify-title', $dialogWrapper).text();
-            // let $addTitle = $('.lzy-enroll-modify-title', $dialogWrapper);
             $dialogWrapper.removeClass('lzy-enroll-delete-entry lzy-enroll-add-entry').addClass('lzy-enroll-modify-entry');
+            $('.lzy-enroll-comment', $dialogWrapper).hide();
+            $('.lzy-enroll-modify-comment', $dialogWrapper).show();
+
         } else {
             addTitle = $('.lzy-enroll-delete-title', $dialogWrapper).text();
             $dialogWrapper.removeClass('lzy-enroll-add-entry lzy-enroll-modify-entry').addClass('lzy-enroll-delete-entry');
+            $('.lzy-enroll-comment', $dialogWrapper).hide();
+            $('.lzy-enroll-delete-comment', $dialogWrapper).show();
         }
         $popupTitle.text( addTitle );
 

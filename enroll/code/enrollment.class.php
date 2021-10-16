@@ -68,7 +68,10 @@ class Enrollment extends Forms
                 $this->freezeTimeStr = $this->freezeTime;
                 $this->freezeTime = strtotime($this->freezeTime);
             } else {
-                $this->freezeTimeStr = strftime('%c', time() + $this->freezeTime);
+                $t =  time() + $this->freezeTime;
+                $d = strftime('%x', $t);
+                $h = substr(strftime('%X', $t), 0, -3);
+                $this->freezeTimeStr = "$d, $h";
                 $this->freezeTime = -$this->freezeTime;
             }
         }
@@ -714,15 +717,17 @@ EOT;
 
 
         // render form-head:
-        $headArgs['type'] = 'form-head';
-        $headArgs['file'] = '~/'.$this->dataFile;
-        $headArgs['id']   = "lzy-enroll-form-$hash";
-        $headArgs['novalidate'] = false;
-        $headArgs['translateLabels'] = true;
-        $headArgs['skipConfirmation'] = true;
-        $headArgs['suppressFormFeedback'] = true;
-        $headArgs['dataKeyOverride'] = "enrollment-list{$this->enrollInx},#";
-        $headArgs['recModifyCheck'] = 'EMail';
+        $rgs = [
+            'type' => 'form-head',
+            'file' => '~/'.$this->dataFile,
+            'id'   => "lzy-enroll-form-$hash",
+            'novalidate' => false,
+            'responseViaSideChannels' => true,
+            'translateLabels' => true,
+            'dataKeyOverride' => "enrollment-list{$this->enrollInx},#",
+            'recModifyCheck' => 'EMail',
+        ];
+        $headArgs = array_merge($rgs, $headArgs);
 
         if (isset($headArgs['formFooter'])) {
             $formFooter = $headArgs['formFooter'];
@@ -739,16 +744,21 @@ EOT;
                 }
 
                 $formFooter = $this->trans->translate($formFooter);
+                // replace %freezetime%:
+                $formFooter = str_replace('%freezetime%', $this->freezeTimeStr, $formFooter);
 
             } elseif ($this->freezeTime === false) {
                 $formFooter = '{{ lzy-enroll-add-comment-no-freeze }}';
             } else {
                 $formFooter = '';
             }
+            $formFooter = "<div class='lzy-enroll-comment lzy-enroll-add-comment' style='display: none'>$formFooter</div>\n";
+            $formFooter .= "<div class='lzy-enroll-comment lzy-enroll-delete-comment' style='display: none'>{{ lzy-enroll-delete-comment }}</div>\n";
+            $formFooter .= "<div class='lzy-enroll-comment lzy-enroll-modify-comment' style='display: none'>{{ lzy-enroll-modify-comment }}</div>\n";
         }
 
         if ($formFooter) {
-            $headArgs['formFooter'] = "<div class='lzy-enroll-comment'>$formFooter</div>";
+            $headArgs['formFooter'] = $formFooter;
         }
 
         $str = parent::render( $headArgs );
@@ -842,7 +852,6 @@ EOT;
         // add buttons, preset with default buttons if not defined:
         if (!$buttons['value']) {
             $buttons = [
-                'option' => 'delete-rec',
                 'options' => 'cancel,submit,delete',
                 'label' => 'lzy-enroll-cancel,lzy-enroll-submit,lzy-enroll-delete-btn-short',
                 'type' => 'button',

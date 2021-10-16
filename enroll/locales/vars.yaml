@@ -48,12 +48,12 @@ lzy-enroll-add2-comment:
 #    de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag innerhalb der nächsten 24h noch selbstständig löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
 #    en: '<p><strong>Comment</strong>:</p><p>You can delete this entry within the next 24 hours.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
 
-Enroll delete comment:
+lzy-enroll-delete-comment:
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
 
-Enroll modify comment: 
+lzy-enroll-modify-comment:
     de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag bearbeiten oder löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag bearbeiten oder löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
     en: '<p><strong>Comment</strong>:</p><p>Do you want to modify or delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'

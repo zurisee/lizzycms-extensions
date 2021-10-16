@@ -262,6 +262,7 @@ class Reservation extends Forms
         if (@$headArgs['confirmationEmail'] && !isset($headArgs['confirmationEmailTemplate'])) {
             $headArgs['confirmationEmailTemplate'] = true;
         }
+        $headArgs['responseViaSideChannels'] = true;
         $str = parent::render( $headArgs );
 
         if (!$this->skipRenderingForm && $this->preReserveSeats) {

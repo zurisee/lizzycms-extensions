@@ -9,7 +9,7 @@
 	cancelButtonCallback: false,
 	validate: true,
 	labelColons: true,
-	skipConfirmation: true,
+	responseViaSideChannels: true,
 	customResponseEvaluationFunction: lzyUserAdminCallback,
 	)
 }}
