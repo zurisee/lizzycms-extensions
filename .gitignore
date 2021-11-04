@@ -6,6 +6,4 @@
 
 
 # ignore compiled SCSS files:
-css/[_]*.css
-madeline.phar
-madeline.phar.version
+/**/css/[_]*.css

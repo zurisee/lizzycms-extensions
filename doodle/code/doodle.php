@@ -4,8 +4,7 @@
 
 $macroName = basename(__FILE__, '.php');
 
-$page->addCssFiles("~ext/$macroName/css/doodle.css");
-$page->addJqFiles("~ext/$macroName/js/doodle.js");
+$page->addModules("~ext/$macroName/css/_doodle.css,~ext/$macroName/js/doodle.js");
 
 $this->readTransvarsFromFile( resolvePath("~ext/$macroName/" .LOCALES_PATH. "vars.yaml"), false, true);
 

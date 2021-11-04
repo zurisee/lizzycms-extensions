@@ -12,7 +12,7 @@ $this->readTransvarsFromFile( resolvePath("~ext/$macroName/" .LOCALES_PATH. "var
 define('RESERVATION_DATA_FILE','reservation.csv');
 define('RESERVATION_LOG_FILE', 'reservation.log.txt');
 
-$page->addModules('~ext/reservation/css/reservation.css');
+$page->addModules('~ext/reservation/css/_reservation.css');
 
 
 $this->addMacro($macroName, function () {

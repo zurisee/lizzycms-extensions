@@ -52,7 +52,7 @@ class Editable extends LiveData
 
         // initialize Editable mechanism:
         if (!$GLOBALS['lizzy']['editableInitialized']) {
-            $this->page->addModules('~sys/extensions/editable/css/editable.css');
+            $this->page->addModules('~sys/extensions/editable/css/_editable.css');
             if ($args['edEnabled']) {
                 $this->page->addModules('~sys/extensions/editable/js/editable.js');
                 $jq = <<<EOT

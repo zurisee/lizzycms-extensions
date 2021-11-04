@@ -168,7 +168,7 @@ $color-light8: #ffebffff;
 }
 
 
-.lzy-calendar.lzy-calendar-light {
+.lzy-calendar.lzy-cal-dark-mode {
 	.fc-timegrid,
 	.fc-daygrid {
 		.fc-event div {
@@ -331,7 +331,7 @@ $color-light8: #ffebffff;
 	padding: 0.4em; }
 
 .fc .fc-timegrid-axis-cushion {
-    max-width: 65px;
+    max-width: 70px;
 }
 
 /* === Popup Form ======= */
@@ -371,4 +371,81 @@ h2.fc-toolbar-title {
 	width: 100vh;
 }
 
+
+
+/* === Coloring =============== */
+
+.lzy-calendar.lzy-cal-light-mode,
+.lzy-cal-light-mode .lzy-calendar {
+	--lzy-cal-bg: hsla(var(--lzy-cal-color-base), 95%, 100%);
+	--fc-neutral-bg-color: hsla(var(--lzy-cal-color-base), 10%, 20%);
+	--fc-neutral-text-color: var(--lzy-cal-txt, #333);
+	--lzy-cal-header-bg: hsla(var(--lzy-cal-color-base), 0%, 70%);
+	--fc-button-bg-color1: hsla(var(--lzy-cal-color-base), 0%, 70%);
+	--fc-button-bg-color: var(--fc-button-bg-color1, #222);
+	--fc-button-active-bg-color1:  hsla(var(--lzy-cal-color-base), 5%, 50%);
+	--fc-button-active-day-bg-color1:  hsla(var(--lzy-cal-color-base), 85%, 50%);
+	--fc-button-active-bg-color: var(--fc-button-active-bg-color1, #555);
+	--fc-button-text-color: hsla(var(--lzy-cal-color-base), 100%, 100%);
+	--fc-today-bg-color: var(--fc-button-active-day-bg-color1, #d8d8d8);
+	background: var(--lzy-cal-bg, white);
+	color: var(--lzy-cal-txt, #333);
+	.fc-scrollgrid-section-sticky > * {
+		background: var(--lzy-cal-header-bg, #444);
+		color: var(--lzy-cal-header-txt, #ddd);
+	}
+	.fc-list-sticky .fc-list-day > * {
+		--lzy-cal-list-bg: hsla(var(--lzy-cal-color-base), 90%, 70%);
+		background: var(--lzy-cal-list-bg, #ddd);
+	}
+	.qtip-content .lzy-cal-title-text, 
+	.fc-list-event-title .lzy-cal-title-text, 
+	.qtip-content .lzy-cal-custom-label, 
+	.fc-list-event-title .lzy-cal-custom-label {
+		--lzy-cal-list-text: hsla(var(--lzy-cal-color-base), 10%, 100%);
+		color: var(--lzy-cal-list-text, #222);
+	}
+	--fc-event-bg-color: var(--lzy-cal-event-bg);
+	--fc-event-border-color: var(--lzy-cal-event-bg);
+}
+
+.lzy-calendar.lzy-cal-dark-mode,
+.lzy-cal-dark-mode .lzy-calendar {
+	--lzy-cal-bg: hsla(var(--lzy-cal-color-base), 20%, 100%);
+	--fc-neutral-bg-color: hsla(var(--lzy-cal-color-base), 90%, 10%);
+	--fc-neutral-text-color: var(--lzy-cal-txt, #fff);
+	--lzy-cal-header-bg: hsla(var(--lzy-cal-color-base), 100%, 70%);
+	--fc-button-bg-color1: hsla(var(--lzy-cal-color-base), 0%, 70%);
+	--fc-button-bg-color: var(--fc-button-bg-color1, #222);
+	--fc-button-active-bg-color1:  hsla(var(--lzy-cal-color-base), 30%, 70%);
+	--fc-button-active-bg-color: var(--fc-button-active-bg-color1, #555);
+	--fc-button-text-color: hsla(var(--lzy-cal-color-base), 100%, 100%);
+	--fc-today-bg-color: var(--fc-button-active-bg-color1, #222);
+	background: var(--lzy-cal-bg, #444);
+	color: var(--lzy-cal-txt, #eee);
+	--fc-event-bg-color: var(--lzy-cal-event-bg);
+	--fc-event-border-color: var(--lzy-cal-event-bg);
+
+	.fc .fc-scrollgrid-section-sticky > * {
+		background: var(--lzy-cal-header-bg, #aaa);
+		color: var(--lzy-cal-header-txt, #000);
+	}
+	.fc .fc-list-sticky .fc-list-day > * {
+		--lzy-cal-list-bg: hsla(var(--lzy-cal-color-base), 0%, 70%);
+		background: var(--lzy-cal-list-bg, #222);
+	}
+	.qtip-content .lzy-cal-title-text,
+	.fc-list-event-title .lzy-cal-title-text,
+	.qtip-content .lzy-cal-custom-label,
+	.fc-list-event-title .lzy-cal-custom-label {
+		--lzy-cal-list-text: hsla(var(--lzy-cal-color-base), 90%, 100%);
+		color: var(--lzy-cal-list-text, #eee);
+	}
+	.fc-col-header {
+		--lzy-cal-header-text: hsla(var(--lzy-cal-color-base), 20%, 100%);
+		color: var(--lzy-cal-header-text, #333);
+		--lzy-cal-header-bg: hsla(var(--lzy-cal-color-base), 80%, 100%);
+		background: var(--lzy-cal-header-bg, #ddd);
+	}
+}
 

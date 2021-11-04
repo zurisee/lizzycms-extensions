@@ -16,8 +16,7 @@ $localeFile1 = resolvePath($localeFile);
 if (file_exists(resolvePath($localeFile))) {
     $this->page->addJqFiles($localeFile);
 }
-$this->page->addJqFiles("~sys/extensions/calendar/js/calendar.js");
-$this->page->addCssFiles("~sys/extensions/calendar/css/_calendar.css");
+$this->page->addModules("~sys/extensions/calendar/js/calendar.js,~sys/extensions/calendar/css/_calendar.css");
 
 $this->readTransvarsFromFile(resolvePath("~ext/$macroName/" .LOCALES_PATH. "vars.yaml"), true, true);
 
@@ -32,7 +31,8 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'fields', '[comma-separated-list] Comma separated list of (custom-) fields, e.g. "fields:\'title,topic,speaker,moderator,start,end,location,comment,category,time\',"', false);
     $this->getArg($macroName, 'defaultEventDuration', '[allday|minutes] In month and year view: defines the default duration of new events.', false);
     $this->getArg($macroName, 'class', 'Class applied to wrapper div.', '');
-    $this->getArg($macroName, 'options', '[light] For further options, currently just "light" -> light color scheme for categories', '');
+    $this->getArg($macroName, 'colorMode', '[light,dark] Selects light or dark coloring mode. If set, a baseColor must be defined as well.', '');
+    $this->getArg($macroName, 'baseColor', '[hue,saturation%] Defines the base color used for the Calendar: hue -> [0 .. 359]; saturation -> [0 .. 100%], e.g. "baseColor: \'200, 80%\'"', false);
     $this->getArg($macroName, 'publish', '[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false);
     $this->getArg($macroName, 'publishCallback', '[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false);
     $this->getArg($macroName, 'output', '[true|false] If false, no output will be rendered (useful in conjunction with publish).', true);

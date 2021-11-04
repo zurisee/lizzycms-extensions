@@ -10,7 +10,7 @@ define('ENROLL_DATA_FILE', 'enroll.yaml');
 
 $GLOBALS['enroll_form_created']['std'] = false;
 
-$page->addModules('~ext/enroll/js/enroll.js, ~ext/enroll/css/enroll.css, POPUPS');
+$page->addModules('~ext/enroll/js/enroll.js, ~ext/enroll/css/_enroll.css, POPUPS');
 
 //resetScheduleFile();
 

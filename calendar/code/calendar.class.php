@@ -11,6 +11,8 @@ if (isset($page)) {
 
 class LzyCalendar
 {
+    private $calSession = null;
+
     public function __construct($lzy, $inx, $args)
     {
         $this->lzy = $lzy;
@@ -36,9 +38,28 @@ class LzyCalendar
 
         $this->id = isset($args['id']) ? $args['id'] : "cal-$inx";
         $this->class = isset($args['class']) ? $args['class'] : false;
-        $this->options = isset($args['options']) ? $args['options'] : false;
-        if (strpos($this->options, 'light') !== false) {
-            $this->class .= ' lzy-calendar-light';
+
+        $css = '';
+        $this->colorMode = isset($args['colorMode']) ? $args['colorMode'] : false;
+        if (strpos($this->colorMode, 'light') !== false) {
+            $this->class .= ' lzy-cal-light-mode';
+            $css = ".lzy-section { --lzy-cal-color-base: 202, 30%; --lzy-cal-event-bg: hsl( 202, 30%, 80%); }";
+        } elseif (strpos($this->colorMode, 'dark') !== false) {
+            $this->class .= ' lzy-cal-dark-mode';
+            $css = ".lzy-section { --lzy-cal-color-base: 202, 30%; --lzy-cal-event-bg: hsl( 202, 30%, 20%); }";
+        }
+        if (@$args['baseColor']) {
+            $this->page->addCss(".lzy-section .lzy-calendar { --lzy-cal-color-base: {$args['baseColor']}; }");
+            if (!$this->colorMode) {
+                $this->class .= ' lzy-cal-light-mode';
+            }
+
+        } elseif ($this->colorMode && $css) {
+            $this->page->addCss( $css );
+
+        } elseif (strpos($this->colorMode, 'no') === false) {
+            $this->page->addCss(".lzy-section { --lzy-cal-color-base: 60, 50%; --lzy-cal-event-bg: hsl( 199, 30%, 30%); }");
+            $this->class .= ' lzy-cal-light-mode';
         }
 
         // Whether to publish the calendar (i.e. save in an .ics file):

@@ -38,7 +38,7 @@ EOT;
     $path = '~/' . $trans->config->systemPath . 'extensions/presentationsupport/';
     $trans->page->addModules([
         "{$path}js/presentation_support.js",
-        "{$path}css/presentation_support.css",
+        "{$path}css/_presentation_support.css",
         "{$path}third-party/jsizes/jquery.sizes.js"
     ]);
 } // initPresentation
