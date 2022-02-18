@@ -51,8 +51,8 @@ lzy-confirmation-response-subject:
   _:  'Reservation confirmed'
 
 lzy-reservation-full:
-  de: '<p>Die Veranstaltung ist ausgebucht.</p>'
-  _:  '<p>Sorry, this event is fully booked.</p>'
+  de: '<p class="lzy-reservation-full">Die Veranstaltung ist ausgebucht.</p>'
+  _:  '<p class="lzy-reservation-full">Sorry, this event is fully booked.</p>'
 
 lzy-reservation-full-error:
   de: '<p>Die Reservation konnte nicht ausgeführt werden, alle Plätze sind bereits ausgebucht.</p>'

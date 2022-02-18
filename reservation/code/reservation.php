@@ -154,7 +154,13 @@ class Reservation extends Forms
         parent::__construct($lzy, false);
 
         // $this->prepareLog();
-        $this->ds = new DataStorage2($this->dataFile);
+        $formArgs = [
+            'dataFile' => $this->dataFile,
+            'useRecycleBin' => $args['useRecycleBin'] ?? true,
+            'includeKeys' => $args['includeKeys'] ?? true,
+            'includeTimestamp' => $args['includeTimestamp'] ?? true,
+        ];
+        $this->ds = new DataStorage2($formArgs);
         $this->evaluateClientData();
     //        $this->setupScheduler();
     } // __construct
@@ -262,7 +268,7 @@ class Reservation extends Forms
         if (@$headArgs['confirmationEmail'] && !isset($headArgs['confirmationEmailTemplate'])) {
             $headArgs['confirmationEmailTemplate'] = true;
         }
-        $headArgs['responseViaSideChannels'] = true;
+        $headArgs['responseViaSideChannels'] = false;
         $str = parent::render( $headArgs );
 
         if (!$this->skipRenderingForm && $this->preReserveSeats) {
@@ -427,7 +433,7 @@ class Reservation extends Forms
         if (@$userSuppliedData['_lzy-form-cmd'] === '_clear_') {     // _clear_ -> just clear reservation ticket
             exit;
         }
-        $formHash = $userSuppliedData['_lzy-form-ref'];
+        $formHash = @$userSuppliedData['__lzy-form-ref'];
         $currForm = parent::restoreFormDescr( $formHash );
         $formId = $currForm? $currForm->formId: 'generic';
 
@@ -452,8 +458,6 @@ class Reservation extends Forms
             $this->skipRenderingForm = true;
             return;
         }
-
-        $this->evaluateUserSuppliedData();
     } // evaluateClientData
 
 
