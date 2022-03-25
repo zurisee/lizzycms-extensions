@@ -423,51 +423,63 @@ LzyCalendar.prototype.defaultOpenCalPopup = function( inx, event0, isNewEvent ) 
         start = moment(event._instance.range.start).subtract(tsDiff, 'minutes');
         end = moment(event._instance.range.end).subtract(tsDiff, 'minutes');
         dateStr = start.format('YYYY-MM-DD');
-        $('#lzy-cal-start-date-' + this.inx).val(dateStr).attr('data-prev-val', dateStr);
+        let parent = this;
+        let $startTime = $('#lzy-cal-start-time-' + this.inx);
+        let $startDate = $('#lzy-cal-start-date-' + this.inx);
+        $startDate.val(dateStr).attr('data-prev-val', dateStr);
         if (event.allDay === false) {    // normal event
             timeStr = start.format('HH:mm');
-            $('#lzy-cal-start-time-' + this.inx).val(timeStr).attr('data-prev-val', timeStr);
-            $('.lzy-allday', this.$form).val('false');
+            $startTime.val(timeStr).attr('data-prev-val', timeStr);
+            $('.lzy-allday', parent.$form).val('false');
             dateStr = end.format('YYYY-MM-DD');
             $('#lzy-cal-end-date-' + this.inx).val(dateStr);
             timeStr = end.format('HH:mm');
             $('#lzy-cal-end-time-' + this.inx).val(timeStr);
 
         } else {    // allday event:
-            $('#lzy-cal-start-date-' + this.inx).val(dateStr);
+            $startDate.val(dateStr);
             end = moment(event._instance.range.end).subtract(tsDiff + 1, 'minutes');
             dateStr = end.format('YYYY-MM-DD');
             $('#lzy-cal-end-date-' + this.inx).val(dateStr);
-            $('#lzy-cal-start-time-' + this.inx).attr('type', 'hidden').val('00:00');
+            $startTime.attr('type', 'hidden').val('00:00');
             $('#lzy-cal-end-time-' + this.inx).attr('type', 'hidden').val('00:00');
-            $('.lzy-allday', this.$form).val('true');
-            $('.lzy-cal-allday-event-checkbox', this.$form).prop('checked', true);
+            $('.lzy-allday', parent.$form).val('true');
+            $('.lzy-cal-allday-event-checkbox', parent.$form).prop('checked', true);
         }
 
-        $('.lzy-cal-event-name', this.$form).val(event._def.title);
+        $('.lzy-cal-event-name', parent.$form).val(event._def.title);
 
-        let $startTime = $('#lzy-cal-start-time-' + this.inx);
         let startTime = $startTime.val();
         $startTime.attr('data-prev-val', startTime);
 
         // populate custom fields:
         let extendedProps = event._def.extendedProps;
         if (typeof extendedProps !== 'undefined') {
-            $('.lzy-cal-comment', this.$form).text(extendedProps.comment);
+            if (typeof extendedProps.comment !== 'undefined') {
+                $('#lzy-cal-comment', parent.$form).text(extendedProps.comment);
+            } else {
+                $('#lzy-cal-comment', parent.$form).text('');
+            }
 
             for (let fld in extendedProps) {
                 if (this.fcStdElems.indexOf(fld) === -1) {
-                    $('.lzy-cal-event-' + fld, this.$form).val(extendedProps[fld]);
+                    $('#lzy-cal-event-' + fld, parent.$form).val(extendedProps[fld]);
+                } else {
+                    $('#lzy-cal-event-' + fld, parent.$form).val('');
                 }
             }
 
             // set selected option:
             if (extendedProps.category) {
-                $('.lzy-cal-category option[value=' + extendedProps.category + ']', this.$form).prop('selected', true);
+                $('.lzy-cal-category option[value=' + extendedProps.category + ']', parent.$form).prop('selected', true);
                 catClass = extendedProps.category.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-_]+/g, '');
-                $('#lzy-calendar-default-form-' + this.inx).addClass('lzy-cal-category-' + catClass);
+
+                // remove all lzy-cal-category-* classes, add current one:
+                parent.$form.removeClass(function (index, className) {
+                    return (className.match (/(^|\s)lzy-cal-category-\S+/g) || []).join(' ');
+                }).addClass('lzy-cal-category-' + catClass);
             }
-            $('.lzy-rec-id', this.$form).val(extendedProps.i);
+            $('.lzy-rec-id', parent.$form).val(extendedProps.i);
         }
 
         this.resetDeleteCheckbox();
@@ -577,7 +589,7 @@ LzyCalendar.prototype.convertMD = function( text ) {
     text = text.replace(/\\\\/, '\\'); // \\ -> \
 
     // links []():
-    let m = text.match(/(.*)\[(.+?)\]\((.+?)\)(.*)/);
+    let m = text.match(/(.*)\[(.+?)]\((.+?)\)(.*)/);
     if ( m ) {
         let href = m[3];
         if (!href.match(/^https?/)) {
@@ -606,15 +618,27 @@ LzyCalendar.prototype.setupTriggers = function() {
         let $this = $( this );
         let allday = $this.prop('checked');
         if (allday) {
-            $('.lzy-allday', this.$form).val('true');
+            $('.lzy-allday', parent.$form).val('true');
             $('#lzy-cal-start-time-' + parent.inx).attr('type', 'hidden');
             $('#lzy-cal-end-time-' + parent.inx).attr('type', 'hidden');
         } else {
-            $('.lzy-allday', this.$form).val('false');
+            $('.lzy-allday', parent.$form).val('false');
             $('#lzy-cal-start-time-' + parent.inx).attr('type', 'time');
             $('#lzy-cal-end-time-' + parent.inx).attr('type', 'time');
         }
     }); // All-day toggle
+
+    // category:
+    $('.lzy-cal-category', this.$form).change(function () {
+        // get newly selected label, derive class-name:
+        const label = $('option:selected', this)[0].label;
+        const catClass = label.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-_]+/g, '');
+
+        // remove all lzy-cal-category-* classes, add current one:
+        parent.$form.removeClass(function (index, className) {
+            return (className.match (/(^|\s)lzy-cal-category-\S+/g) || []).join(' ');
+        }).addClass('lzy-cal-category-' + catClass);
+    });
 
 
     // Delete Entry checkbox:

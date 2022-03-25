@@ -635,8 +635,8 @@ EOT;
                 $div = <<<EOT
 
             <div class='lzy-field-wrapper lzy-field-type-text lzy-cal-$field'>
-                <label for='lzy-cal-event_$field' class="lzy-cal-label">{{ $field }}:</label>
-                <input type='text' id='lzy-cal-event_$field' class="lzy-cal-field" name='$field'  placeholder='{{^ lzy-cal-$field-placeholder }}' />
+                <label for='lzy-cal-event-$field' class="lzy-cal-label">{{ $field }}:</label>
+                <input type='text' id='lzy-cal-event-$field' class="lzy-cal-field" name='$field'  placeholder='{{^ lzy-cal-$field-placeholder }}' />
             </div><!-- /lzy-field-wrapper -->
 
 EOT;
