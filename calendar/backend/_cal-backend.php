@@ -140,7 +140,7 @@ class CalendarBackend {
         } else {
             $suppliedRec = $post;
         }
-        $suppliedRec['_user'] = @$_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: 'anon';
+        $suppliedRec['.user'] = @$_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']: 'anon';
 
         // check freezePast:
         $freezePast = false;
@@ -164,8 +164,8 @@ class CalendarBackend {
             $oldRec = $data[ $oldRecId ];
             $isNewRec = false;
             $msg = 'Modified event';
-            $suppliedRec['_uid'] = $oldRec['_uid'];
-            $suppliedRec['_creator'] =  $oldRec['_creator'];
+            $suppliedRec['.uid'] = $oldRec['.uid'];
+            $suppliedRec['.creator'] =  $oldRec['.creator'];
             if ($freezePast) {
                 $oldEnd = strtotime($oldRec['start']);
                 $suppliedRec['start-date'] = date('Y-m-d', $oldEnd);
@@ -175,8 +175,8 @@ class CalendarBackend {
         } else {                // New Entry:
             $isNewRec = true;
             $msg = 'Created new event';
-            $suppliedRec['_uid'] = createHash(12);
-            $suppliedRec['_creator'] =  $suppliedRec['_user'];
+            $suppliedRec['.uid'] = createHash(12);
+            $suppliedRec['.creator'] =  $suppliedRec['.user'];
             if ($freezePast) {
                 $this->writeLogEntry("freezePast", $suppliedRec);
                 return 'Events in the past may not be created or modified.';
@@ -226,7 +226,7 @@ class CalendarBackend {
         }
 
         $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anon';
-        $rec['_user'] = $user;
+        $rec['.user'] = $user;
         $this->writeLogEntry($msg, $this->prepareRecord($rec));
         $this->_deleteRec($recId, $deletePast);
         return '';
@@ -318,7 +318,7 @@ class CalendarBackend {
     private function prepareDataForClient($data)
     {
         foreach ($data as $key => $rec) {
-            unset($data[$key]['_user']);
+            unset($data[$key]['.user']);
         }
         return $data;
     } // prepareDataForClient
@@ -359,12 +359,13 @@ class CalendarBackend {
             $outRec['start'] = trim("$startDate $startTime");
             $outRec['end']   = trim("$endDate $endTime");
             foreach ($rec as $key => $elem) {
-                if (strpos(',start,end,inx,rec-id,lzy-cal-ref,start-time,start-date,end-time,end-date,allday,_creator,', ",$key,") === false) {
+                if (strpos(',start,end,inx,rec-id,lzy-cal-ref,start-time,start-date,end-time,end-date,allday,.creator,', ",$key,") === false) {
                     $outRec[$key] = $elem;
                 }
             }
-            $outRec['_creator'] = @$rec['_creator'];
-            $outRec['_user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anon';
+            $outRec['__uid'] = @$rec['.uid'];
+            $outRec['__creator'] = @$rec['.creator'];
+            $outRec['__user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anon';
         }
         return $outRec;
     } // prepareRecord
@@ -378,7 +379,7 @@ class CalendarBackend {
         $logEntry = json_encode($rec);
 
         $user = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user']? $_SESSION['lizzy']['user']:'anonymous';
-        $rec['_user'] = $user;
+        $rec['.user'] = $user;
 
         if (!is_string($msg)) {
             $msg = var_export($msg, true);

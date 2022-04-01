@@ -744,7 +744,8 @@ LzyCalendar.prototype.checkPermission = function( event ) {
     let creatorOnlyPermission = this.options.creatorOnlyPermission;
     if (creatorOnlyPermission) {
         try {
-            let creator = event._def.extendedProps._creator;
+            let creator = event._def.extendedProps[".creator"];
+            // let creator = event._def.extendedProps._creator;
             if (creatorOnlyPermission !== creator) {
                 mylog(`Attempt to modify event created by other user ${creator} -> blocked.`);
                 return false;
