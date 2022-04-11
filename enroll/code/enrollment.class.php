@@ -160,114 +160,6 @@ class Enrollment extends Forms
 
 
 
-    private function sendNotification($enrollData)
-    {
-        $notifies = explodeTrim(',', $this->notify);
-        foreach ($notifies as $notify) {
-            if (preg_match('/\( (.*) \) (.*)/x', $notify, $m)) {
-                $time = trim($m[1]);
-                $to = trim($m[2]);
-                if (preg_match('/(.*) :: (.*)/x', $time, $mm)) {
-                    $time = $mm[1];
-                    $freq = $mm[2];
-                    $this->setupScheduler($time, $freq, $to);
-                    continue;
-                }
-                list($from, $till) = $this->deriveFromTill($time);
-                $now = time();
-                if (($now > $from) && ($now < $till)) {
-                    $this->_sendNotification($enrollData, $to);
-                }
-            } else {
-                $this->_sendNotification($enrollData, $notify);
-            }
-        }
-    } // sendNotification
-
-
-
-    private function _sendNotification($enrollData, $to)
-    {
-        $msg = "{{ lzy-enroll-notify-text-1 }}\n";
-
-        foreach ($enrollData as $listName => $list) {
-            $n = sizeof($list) - 1;
-            list($nRequired, $title) = isset($list['_']) ? explode('=>', $list['_']) : ['?', ''];
-            $listName = $title ? $title : $listName;
-            $listName = str_pad("$listName: ", 24, '.');
-            $msg .= "$listName $n {{ of }} $nRequired\n";
-        }
-        $msg .= "{{ lzy-enroll-notify-text-2 }}\n";
-        $msg = $this->trans->translate($msg);
-        $msg = str_replace('\\n', "\n", $msg);
-        $subject = $this->trans->translate('{{ lzy-enroll-notify-subject }}');
-
-        require_once SYSTEM_PATH.'messenger.class.php';
-
-        $mess = new Messenger($this->notifyFrom, $this->trans->lzy);
-        $mess->send($to, $msg, $subject);
-    } // _sendNotification
-
-
-
-    private function setupScheduler()
-    {
-        if (!$this->notify) {
-            return;
-        }
-
-        $newSchedule = [];
-        $notifies = explode(',', $this->notify);
-        foreach ($notifies as $notify) {
-            if (preg_match('/\( (.*) \) (.*)/x', $notify, $m)) {
-                $time = trim($m[1]);
-                $to = trim($m[2]);
-                if (preg_match('/(.*) :: (.*)/x', $time, $mm)) {
-                    list($from, $till) = $this->deriveFromTill(trim($mm[1]));
-                    $freq = trim(strtolower($mm[2]));
-                    if ($freq === 'daily') {
-                        $time = '****-**-** 08:00';
-                    } elseif ($freq === 'weekly') {
-                        $time = 'Mo 08:00';
-                    } else {
-                        die("Error: enroll() -> time pattern not recognized: '$freq'");
-                    }
-                    $newSchedule[] = [
-                        'src' => $GLOBALS['lizzy']['pathToPage'],
-                        'time' => $time,
-                        'from' => date('Y-m-d H:i', $from),
-                        'till' => date('Y-m-d H:i', $till),
-                        'loadLizzy' => true,
-                        'do' => $this->scheduleAgent,
-                        'args' => [
-                            'to' => $to,
-                            'from' => $this->notifyFrom,
-                            'dataFile' => $this->dataFile,
-                        ]
-                    ];
-                }
-            }
-        }
-
-        $file = SCHEDULE_FILE;
-        $schedule = getYamlFile($file);
-
-        // clean up existing schedule entries:
-        $now = time();
-        foreach ($schedule as $i => $rec) {
-            $from = strtotime($rec['from']);
-            $till = strtotime($rec['till']);
-            if (($now < $from) || ($now > $till)) {
-                unset($schedule[$i]);
-            }
-        }
-
-        $schedule = array_merge($schedule, $newSchedule);
-        writeToYamlFile($file, $schedule);
-    } // setupScheduler
-
-
-
     private function createErrorMsgs()
     {
         $errMsg = <<<EOT
@@ -283,35 +175,6 @@ class Enrollment extends Forms
 EOT;
         return $errMsg;
     } // createErrorMsgs
-
-
-
-    private function enrollLog($out)
-    {
-        $err = '';
-        if ($this->err_msg) {
-            $err = "\tError: {$this->err_msg}";
-        }
-        if ($this->logAgentData) {
-            file_put_contents($this->logFile, timestamp() . "$out\t{$_SERVER["HTTP_USER_AGENT"]}\t{$_SERVER['REMOTE_ADDR']}$err\n", FILE_APPEND);
-        } else {
-            file_put_contents($this->logFile, timestamp() . "$out$err\n", FILE_APPEND);
-        }
-    } // enrollLog
-
-
-
-    private function prepareLog()
-    {
-        if (!file_exists($this->logFile)) {
-            $customFields = '';
-            if ($this->logAgentData) {
-                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields; Client; IP\n");
-            } else {
-                file_put_contents($this->logFile, "Timestamp; Action; List; Name; Email$customFields\n");
-            }
-        }
-    } // prepareLog
 
 
 
@@ -366,23 +229,6 @@ EOT;
         }
         return $inTime;
     } // isInTime
-
-
-
-    private function deriveFromTill($time)
-    {
-        $from = 0;
-        $till = time() + 1000;
-
-        if (preg_match('/^ (\d\d\d\d-\d\d-\d\d) (.*) /x', $time, $m)) {
-            $from = strtotime(trim($m[1]));
-            $time = $m[2];
-        }
-        if (preg_match('/- \s*(\d\d\d\d-\d\d-\d\d) /x', $time, $m)) {
-            $till = strtotime('+1 day', strtotime(trim($m[1])));
-        }
-        return array($from, $till);
-    } // deriveFromTill
 
 
 
@@ -544,7 +390,7 @@ EOT;
 
 
         // render form-head:
-        $rgs = [
+        $args = [
             'type' => 'form-head',
             'file' => '~/'.$this->dataFile,
             'id'   => "lzy-enroll-form-$hash",
@@ -553,8 +399,9 @@ EOT;
             'translateLabels' => true,
             'dataKeyOverride' => "enrollment-list{$this->enrollInx},#",
             'recModifyCheck' => ($this->admin_mode? 'EMail':false),
+            'is2Ddata' => false,
         ];
-        $headArgs = array_merge($rgs, $headArgs);
+        $headArgs = array_merge($args, $headArgs);
 
         if (isset($headArgs['formFooter'])) {
             $formFooter = $headArgs['formFooter'];
