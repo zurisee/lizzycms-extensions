@@ -28,6 +28,18 @@ lzy-enroll-new-name:
     de: Neuen Eintrag erzeugen
     _:  Create a new entry
 
+lzy-enroll-delete-wrong-email:
+    de: "Löschen fehlgeschlagen, E-Mail stimmte nicht überein"
+    _:  "Delete failed, e-mail did not match"
+
+lzy-enroll-delete-failed:
+    de: "Löschen fehlgeschlagen"
+    _:  "Delete failed"
+
+lzy-enroll-delete-succeded:
+    de: "Eintrag gelöscht"
+    _:  "Element deleted"
+
 lzy-enroll-add-comment-no-freeze:
     de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag später wieder löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
     de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag später wieder löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'

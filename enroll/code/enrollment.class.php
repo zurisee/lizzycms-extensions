@@ -92,6 +92,10 @@ class Enrollment extends Forms
 
         preparePath($this->dataFile);
 
+        if (@$_POST['_lzy-form-cmd'] === 'delete') {
+            $this->deleteEntry(); // will not return, reloads agent
+        }
+
         parent::__construct($lzy);
     } // __construct
 
@@ -554,6 +558,50 @@ EOT;
         return [$form, $hash];
     } // _renderDialog
 
+
+
+    private function deleteEntry()
+    {
+        $email = @$_POST['EMail'];
+        $dataRef = $_POST['_lizzy-data-ref'];
+        list($dataRef, $set) = explode(':', $dataRef);
+        $recKey = $_POST['_rec-key'];
+        $tck = new Ticketing();
+        $tickRec = $tck->consumeTicket($dataRef);
+        $dataKey = @$tickRec['set1']['_dataKey'];
+        if ($dataKey) {
+            $dataKey = str_replace('#', $recKey, $dataKey);
+            if (isset($tickRec[$set]['_dataSource'])) {
+                $file = $tickRec[$set]['_dataSource'];
+                $ds = new DataStorage2($file);
+                $rec = $ds->readElement($dataKey);
+                if ($this->admin_mode) {
+                    $res = $ds->deleteElement($dataKey);
+                    if ($res === true) {
+                        $msg = $this->trans->translateVariable('lzy-enroll-delete-succeded');
+                        reloadAgent(false, $msg);
+                    }
+                } else {
+                    if (isset($rec['EMail'])) {
+                        $emailFromDb = $rec['EMail'];
+                        if (strtolower(trim($email)) !== strtolower(trim($emailFromDb))) {
+                            $msg = $this->trans->translateVariable('lzy-enroll-delete-wrong-email');
+                            reloadAgent(false, $msg);
+                        } else {
+                            $res = $ds->deleteElement($dataKey);
+                            if ($res === true) {
+                                $msg = $this->trans->translateVariable('lzy-enroll-delete-succeded');
+                                reloadAgent(false, $msg);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $msg = $this->trans->translateVariable('lzy-enroll-delete-failed');
+        reloadAgent(false, $msg);
+    } // deleteEntry
 
 } // class Enrollment
 
