@@ -568,7 +568,11 @@ EOT;
         $recKey = $_POST['_rec-key'];
         $tck = new Ticketing();
         $tickRec = $tck->consumeTicket($dataRef);
-        $dataKey = @$tickRec['set1']['_dataKey'];
+        if ($set) {
+            $dataKey = @$tickRec[$set]['_dataKey'];
+        } else {
+            $dataKey = @$tickRec['set1']['_dataKey'];
+        }
         if ($dataKey) {
             $dataKey = str_replace('#', $recKey, $dataKey);
             if (isset($tickRec[$set]['_dataSource'])) {
