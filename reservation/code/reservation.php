@@ -223,22 +223,24 @@ class Reservation extends Forms
             } elseif ($key === 'formFooter') {
                 $formFooter = $value;
 
-            } elseif ($this->isHeadAttribute( $key )) {
+            } elseif ($this->isHeadAttribute($key)) {
                 $headArgs[$key] = $value;
 
             } elseif (strpos(RESERVATION_SPECIFIC_ELEMENTS, ",$key,") !== false) {
                 $resSpecificArgs[$key] = $value;
 
-            } else {
-                if (is_array($value) && isset($value[ 0 ])) {
-                    if (strpos(SUPPORTED_TYPES, $value[ 0 ]) !== false) {
-                        $value['type'] = $value[ 0 ];
-                        unset( $value[ 0 ] );
+            } elseif (is_array($value)) {
+                if (isset($value[0])) {
+                    if (strpos(SUPPORTED_TYPES, $value[0]) !== false) {
+                        $value['type'] = $value[0];
+                        unset($value[0]);
                     }
                 }
                 if (@$value['type'] === 'email') {
                     $emailFound = true;
                 }
+                $formElems[$key] = $value;
+            } else {
                 $formElems[$key] = $value;
             }
         }
