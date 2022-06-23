@@ -363,9 +363,9 @@ class CalendarBackend {
                     $outRec[$key] = $elem;
                 }
             }
-            $outRec['__uid'] = @$rec['.uid'];
-            $outRec['__creator'] = @$rec['.creator'];
-            $outRec['__user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anon';
+            $outRec['.uid'] = @$rec['.uid'];
+            $outRec['.creator'] = @$rec['.creator'];
+            $outRec['.user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anon';
         }
         return $outRec;
     } // prepareRecord
