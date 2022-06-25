@@ -101,6 +101,8 @@ class CalendarBackend {
             'dataFile' => $dataSrc,
             'useRecycleBin' => $useRecycleBin,
             'exportInternalFields' => true,
+            'includeKeys' => true,
+            'useNormalizedDb' => true,
             ]);
 
         $this->calCatPermission = @$calRec['calCatPermission'];
@@ -164,7 +166,6 @@ class CalendarBackend {
             $oldRec = $data[ $oldRecId ];
             $isNewRec = false;
             $msg = 'Modified event';
-            $suppliedRec['.uid'] = $oldRec['.uid'];
             $suppliedRec['.creator'] =  $oldRec['.creator'];
             if ($freezePast) {
                 $oldEnd = strtotime($oldRec['start']);
@@ -175,7 +176,6 @@ class CalendarBackend {
         } else {                // New Entry:
             $isNewRec = true;
             $msg = 'Created new event';
-            $suppliedRec['.uid'] = createHash(12);
             $suppliedRec['.creator'] =  $suppliedRec['.user'];
             if ($freezePast) {
                 $this->writeLogEntry("freezePast", $suppliedRec);
@@ -192,9 +192,6 @@ class CalendarBackend {
             $data[ $oldRecId ] = $newRec;
         }
 
-        usort($data, function($a, $b) {
-            return ($a['start'] < $b['start']) ? -1 : 1;
-        });
         $this->ds->write( $data );
 
         return 'ok';
@@ -363,7 +360,6 @@ class CalendarBackend {
                     $outRec[$key] = $elem;
                 }
             }
-            $outRec['.uid'] = @$rec['.uid'];
             $outRec['.creator'] = @$rec['.creator'];
             $outRec['.user'] = isset($_SESSION['lizzy']['user']) && $_SESSION['lizzy']['user'] ? $_SESSION['lizzy']['user'] : 'anon';
         }

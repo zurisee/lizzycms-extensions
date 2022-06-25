@@ -686,13 +686,14 @@ EOT;
             'dataFile' => $this->source,
             'useRecycleBin' => $this->useRecycleBin,
             'exportInternalFields' => true,
+            'includeKeys' => true,
             'useNormalizedDb' => true,
         ]);
         $data = $db->read();
 
-        // check whether _uid is defined:
+        // check whether .user/.creator is defined:
         foreach ($data as $key => $rec) {
-            if (!@$rec['.uid'] || !@$rec['.user'] || !@$rec['.creator']) {
+            if (!@$rec['.user'] || !@$rec['.creator']) {
                 $modify = true;
             }
 
@@ -710,9 +711,6 @@ EOT;
             return;
         }
         foreach ($data as $key => $rec) {
-            if (!isset($rec['.uid']) || !$rec['.uid']) {
-                $rec['.uid'] = createHash(12);
-            }
             if (!isset($rec['.user']) || !$rec['.user']) {
                 $rec['.user'] = 'anon';
             }
@@ -806,7 +804,7 @@ function prepareICal( $obj, $ds )
             $prefix = $obj['defaultCatPrefix'];
         }
         // determine UID (unique id that is invariable even if calendar changes):
-        $uid = (isset($rec['.uid']) && $rec['.uid'])? $rec['.uid']: strtotime($rec['start']);
+        $uid = (isset($rec[REC_KEY_ID]) && $rec[REC_KEY_ID])? $rec[REC_KEY_ID]: strtotime($rec['start']);
         $uid = "lzy-cal-$name-{$rec['category']}-$uid";
 
         // prepare description:
