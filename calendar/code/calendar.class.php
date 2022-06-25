@@ -555,8 +555,8 @@ $customFields
             </div>
             
             <div class="lzy-cal-form-buttons">
-                <input type='submit' id='lzy-calendar-default-submit-$inx' value='{{ Save }}' class='lzy-button form-button lzy-calendar-default-submit' />
                 <input type='reset' id='lzy-calendar-default-cancel-$inx' value='{{ Cancel }}' class='lzy-button form-button lzy-calendar-default-cancel' />
+                <input type='submit' id='lzy-calendar-default-submit-$inx' value='{{ Save }}' class='lzy-button form-button lzy-calendar-default-submit lzy-button-submit' />
             </div>
         
              <div style="display: none;">
