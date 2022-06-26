@@ -241,6 +241,7 @@ class LzyCalendar
         }
         $calObj = serialize($obj);
         $cacheFile = CACHE_PATH."$this->id.dat";
+        preparePath(CACHE_PATH);
         file_put_contents($cacheFile, $calObj);
 
         $this->checkAndFixData();
