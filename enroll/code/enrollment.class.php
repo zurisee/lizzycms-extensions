@@ -360,7 +360,7 @@ EOT;
         $enrollSpecificArgs = [];
         $formElems = [];
         foreach ($this->args as $key => $value) {
-            if ($this->isHeadAttribute( $key )) {
+            if ($this->isHeadAttribute( $key ) && ($value !== null)) {
                 $headArgs[$key] = $value;
 
             } elseif (strpos(ENROLLMENT_SPECIFIC_ELEMENTS, ",$key,") !== false) {
@@ -582,7 +582,7 @@ EOT;
                 if ($this->admin_mode) {
                     $res = $ds->deleteElement($dataKey);
                     if ($res === true) {
-                        $msg = $this->trans->translateVariable('lzy-enroll-delete-succeded');
+                        $msg = $this->trans->translateVariable('lzy-enroll-delete-as-admin-succeded');
                         reloadAgent(false, $msg);
                     }
                 } else {

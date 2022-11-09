@@ -23,7 +23,7 @@ $this->addMacro($macroName, function () {
     $this->getArg($macroName, 'nReserve', 'Number of fields in category "reserve" -> will be visualized differently', 0);
     $this->getArg($macroName, 'listname', 'Any word identifying the enrollment list', "Enrollment-List$inx");
     $this->getArg($macroName, 'header', 'Optional header describing the enrollment list', false);
-    $this->getArg($macroName, 'file', 'The file in which to store enrollment data. Default: "&#126;page/enroll.yaml". ', false);
+    $this->getArg($macroName, 'file', 'The file in which to store enrollment data. Default: "&#126;page/enroll.yaml". ', null);
     $this->getArg($macroName, 'globalFile', 'The file to be used by all subsequent instances of enroll(). Default: false. ', false);
     $this->getArg($macroName, 'logAgentData', "[true,false] If true, logs visitor's IP and browser info (illegal if not announced to users)", false);
     $this->getArg($macroName, 'freezeTime', "[false, 0, seconds, ISO-datetime] Defines how long, resp. until when a user can delete/modify his/her entry. 'false' means forever, '0' means not modifiable at all. Duration is specified as a number of seconds. Deadline as an ISO datetime (default: 86400 = 1 day)", 86400);
