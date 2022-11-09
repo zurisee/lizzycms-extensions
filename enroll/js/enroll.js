@@ -77,8 +77,13 @@ $('.lzy-enrollment-list a').click(function(e) {
         $dialogWrapper.removeClass('lzy-enroll-delete-entry lzy-enroll-modify-entry').addClass('lzy-enroll-add-entry');
 
         $('.lzy-enroll-name', $dialogWrapper).val('').prop('readonly', false);
+
+        // clear form fields skipping hidden system fields, e.g. _rec-key:
         $('.lzy-form-field-wrapper input', $dialogWrapper).each(function () {
-            $(this).val('');
+            let name = $(this).attr('name');
+            if ((typeof name !== 'undefined') && (name.charAt(0) !== '_')) {
+                $(this).val('');
+            }
         });
         $('.lzy-enroll-comment', $dialogWrapper).hide();
         $('.lzy-enroll-add-comment', $dialogWrapper).show();
